@@ -1,0 +1,101 @@
+/**
+ * Layout cartes / grilles (dashboard, devis, factures, etc.)
+ * Source de vérité : règles dupliquées en fin de app/globals.css (après @tailwind).
+ * Ne pas @import ce fichier dans globals.css — @import en fin de fichier casse le build CSS.
+ */
+
+.btp-page-container {
+  width: 100%;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1.75rem, 3.5vw, 3rem);
+  padding-right: clamp(1.75rem, 3.5vw, 3rem);
+  padding-top: clamp(2rem, 3vw, 2.75rem);
+  padding-bottom: clamp(2rem, 3vw, 2.75rem);
+  box-sizing: border-box;
+}
+
+.btp-page-container--workshop {
+  max-width: min(calc(100vw - 260px), 1920px);
+  padding-top: 0.75rem;
+  padding-bottom: 1rem;
+  padding-left: clamp(0.75rem, 1.25vw, 1.25rem);
+  padding-right: clamp(0.75rem, 1.25vw, 1.25rem);
+}
+
+@media (max-width: 767px) {
+  .btp-page-container--workshop {
+    max-width: 100%;
+    padding-top: 1rem;
+    padding-left: clamp(1rem, 3vw, 1.25rem);
+    padding-right: clamp(1rem, 3vw, 1.25rem);
+  }
+}
+
+.btp-dashboard,
+.btp-app-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+.btp-dashboard .btp-page-header,
+.btp-app-page .btp-page-header {
+  margin-bottom: 0;
+}
+
+.btp-dashboard-stats {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 640px) {
+  .btp-dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .btp-dashboard-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .btp-dashboard-stats {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.btp-dashboard-panels {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1024px) {
+  .btp-dashboard-panels {
+    gap: 2rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.btp-dashboard-panels > .btp-dashboard-panel-wide {
+  grid-column: 1 / -1;
+}
+
+.btp-planning-week-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1024px) {
+  .btp-planning-week-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
