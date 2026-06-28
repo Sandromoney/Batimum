@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
-import { ThemeSync } from "@/components/theme-sync";
-import { StoreProvider } from "@/lib/store";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
@@ -32,10 +30,7 @@ export default function RootLayout({
       <body
         className={`min-h-full bg-background font-sans text-foreground antialiased ${GeistSans.className}`}
       >
-        <StoreProvider>
-          <ThemeSync />
-          {children}
-        </StoreProvider>
+        {children}
       </body>
     </html>
   );
