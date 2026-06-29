@@ -34,6 +34,43 @@ export type GmailOAuthConfigCheck = {
   redirectUri: string;
 };
 
+export function getGoogleRedirectUriFromEnv(): string | null {
+  const value = process.env.GOOGLE_REDIRECT_URI?.trim();
+  return value ? value.replace(/\/$/, "") : null;
+}
+
+export function logGmailRedirectUriDiagnostics(
+  context: "[gmail-oauth-start]" | "[gmail-oauth-callback]",
+): {
+  redirectUriSent: string;
+  googleRedirectUriEnv: string | null;
+  match: boolean;
+} {
+  const redirectUriSent = getOAuthRedirectUri("google");
+  const googleRedirectUriEnv = getGoogleRedirectUriFromEnv();
+  const match =
+    googleRedirectUriEnv !== null && redirectUriSent === googleRedirectUriEnv;
+
+  console.log(`${context} redirect_uri sent to Google: ${redirectUriSent}`);
+  console.log(
+    `${context} GOOGLE_REDIRECT_URI env: ${googleRedirectUriEnv ?? "(non définie)"}`,
+  );
+  console.log(`${context} redirect_uri match: ${match ? "oui" : "non"}`);
+
+  if (!match) {
+    console.log(`${context} redirect_uri comparison`, {
+      sentToGoogle: redirectUriSent,
+      googleRedirectUriEnv,
+      expected: EXPECTED_GOOGLE_REDIRECT_URI,
+      matchesExpected: redirectUriSent === EXPECTED_GOOGLE_REDIRECT_URI,
+      envMatchesExpected:
+        googleRedirectUriEnv === EXPECTED_GOOGLE_REDIRECT_URI,
+    });
+  }
+
+  return { redirectUriSent, googleRedirectUriEnv, match };
+}
+
 export function validateGmailOAuthConfig(): GmailOAuthConfigCheck {
   const missing: string[] = [];
 

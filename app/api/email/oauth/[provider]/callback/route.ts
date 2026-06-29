@@ -19,6 +19,7 @@ import {
   formatGmailConfigMissingMessage,
   isEmailConnectionsTableMissingError,
   logGmailConfigMissing,
+  logGmailRedirectUriDiagnostics,
   validateGmailOAuthConfig,
 } from "@/lib/gmail-oauth-config";
 import { isPrivateBetaEnabled } from "@/lib/private-beta";
@@ -47,6 +48,7 @@ export async function GET(
       hasState: Boolean(state),
       hasError: Boolean(error),
     });
+    logGmailRedirectUriDiagnostics("[gmail-oauth-callback]");
   }
 
   const cookieStore = await cookies();

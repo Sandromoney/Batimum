@@ -9,6 +9,7 @@ import {
 import {
   formatGmailConfigMissingMessage,
   logGmailConfigMissing,
+  logGmailRedirectUriDiagnostics,
   validateGmailOAuthConfig,
 } from "@/lib/gmail-oauth-config";
 function appUrl(): string {
@@ -36,9 +37,12 @@ export function buildGoogleAuthorizeUrl(state: string): string {
     logGmailConfigMissing(check.missing);
     throw new Error(formatGmailConfigMissingMessage(check.missing));
   }
+  const redirectUri = getOAuthRedirectUri("google");
+  logGmailRedirectUriDiagnostics("[gmail-oauth-start]");
+
   const params = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: getOAuthRedirectUri("google"),
+    redirect_uri: redirectUri,
     response_type: "code",
     scope: [
       "https://www.googleapis.com/auth/gmail.send",
@@ -90,7 +94,7 @@ export async function exchangeGoogleCode(
   }
 
   const redirectUri = getOAuthRedirectUri("google");
-  console.log("[gmail-oauth-callback] token exchange start", { redirectUri });
+  logGmailRedirectUriDiagnostics("[gmail-oauth-callback]");
 
   let tokenRes: Response;
   try {
@@ -109,6 +113,7 @@ export async function exchangeGoogleCode(
     console.error("[gmail-oauth-callback] token exchange error", {
       error,
       cause: error instanceof Error ? error.cause : undefined,
+      redirect_uri: redirectUri,
     });
     throw new Error("Impossible de contacter les serveurs Google pour le moment.");
   }

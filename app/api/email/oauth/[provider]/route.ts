@@ -19,6 +19,7 @@ import {
   formatGmailConfigMissingMessage,
   GMAIL_CONFIG_INCOMPLETE_MESSAGE,
   logGmailConfigMissing,
+  logGmailRedirectUriDiagnostics,
   validateGmailOAuthConfig,
 } from "@/lib/gmail-oauth-config";
 
@@ -52,6 +53,8 @@ export async function GET(
       flow,
       redirectUri: config.redirectUri,
     });
+
+    logGmailRedirectUriDiagnostics("[gmail-oauth-start]");
   }
 
   if (provider !== "google" && provider !== "microsoft") {
