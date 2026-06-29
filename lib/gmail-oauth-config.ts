@@ -15,13 +15,33 @@ export const GOOGLE_REDIRECT_URI_ENV_NAME = "GOOGLE_REDIRECT_URI";
 export const EXPECTED_GOOGLE_REDIRECT_URI =
   "https://batimum.vercel.app/api/email/oauth/google/callback";
 
-/** Noms d'environnement testés pour la clé service Supabase (ordre de priorité). */
+export const SUPABASE_SERVICE_ROLE_KEY_ENV_NAME = "SUPABASE_SERVICE_ROLE_KEY";
+
+export const SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE =
+  "SUPABASE_SERVICE_ROLE_KEY introuvable dans Vercel";
+
+/** Noms listés pour le diagnostic config (seul SUPABASE_SERVICE_ROLE_KEY est utilisé en écriture). */
 export const SUPABASE_SERVICE_ROLE_ENV_NAMES = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "SUPABASE_SERVICE_KEY",
   "SUPABASE_SERVICE_ROLE",
   "SUPABASE_SECRET_KEY",
 ] as const;
+
+export function hasSupabaseServiceRoleKeyEnv(): boolean {
+  return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim());
+}
+
+export function logGmailDbClientMode(): void {
+  console.log(
+    "[gmail-db] using service role key:",
+    hasSupabaseServiceRoleKeyEnv(),
+  );
+  console.log(
+    "[gmail-db] supabase client mode:",
+    hasSupabaseServiceRoleKeyEnv() ? "service_role" : "anon",
+  );
+}
 
 export function getSupabaseUrl(): string {
   return process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ?? "";
@@ -58,15 +78,19 @@ function readFirstEnv(names: readonly string[]): {
   return { value: "", source: null };
 }
 
+export function getSupabaseServiceRoleKey(): string {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? "";
+}
+
 export function getSupabaseServiceRoleKeyWithSource(): {
   value: string;
   source: string | null;
 } {
-  return readFirstEnv(SUPABASE_SERVICE_ROLE_ENV_NAMES);
-}
-
-export function getSupabaseServiceRoleKey(): string {
-  return getSupabaseServiceRoleKeyWithSource().value;
+  const value = getSupabaseServiceRoleKey();
+  return {
+    value,
+    source: value ? SUPABASE_SERVICE_ROLE_KEY_ENV_NAME : null,
+  };
 }
 
 export function getAppBaseUrl(): string {
@@ -277,6 +301,9 @@ export function formatGmailDbErrorForUser(error: GmailDbSupabaseError): string {
   const normalized = message.toLowerCase();
 
   if (code === "42501" || normalized.includes("permission denied")) {
+    if (!hasSupabaseServiceRoleKeyEnv()) {
+      return SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE;
+    }
     return "Permission refusée sur email_connections (policy RLS ou droits insuffisants).";
   }
 
@@ -330,5 +357,5 @@ export function assertGmailOAuthConfig(): GmailOAuthConfigCheck {
 }
 
 export function hasSupabaseServiceRoleForGmailSave(): boolean {
-  return Boolean(getSupabaseServiceRoleKey());
+  return hasSupabaseServiceRoleKeyEnv();
 }

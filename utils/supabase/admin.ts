@@ -1,30 +1,38 @@
 import { createClient } from "@supabase/supabase-js";
 import {
-  getSupabaseServiceRoleKeyWithSource,
   getSupabaseUrl,
+  hasSupabaseServiceRoleKeyEnv,
+  logGmailDbClientMode,
+  SUPABASE_SERVICE_ROLE_KEY_ENV_NAME,
 } from "@/lib/gmail-oauth-config";
 
 export function createAdminClient() {
-  const supabaseUrl = getSupabaseUrl();
-  const serviceRole = getSupabaseServiceRoleKeyWithSource();
+  logGmailDbClientMode();
 
-  if (!supabaseUrl || !serviceRole.value) {
-    if (!serviceRole.value) {
+  const supabaseUrl = getSupabaseUrl();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    if (!serviceRoleKey) {
       console.log(
-        "[gmail-config] createAdminClient: aucune clé service trouvée",
+        `[gmail-db] createAdminClient: ${SUPABASE_SERVICE_ROLE_KEY_ENV_NAME} absente`,
       );
     }
     return null;
   }
 
   console.log(
-    `[gmail-config] createAdminClient: clé lue depuis ${serviceRole.source}`,
+    `[gmail-db] createAdminClient: clé lue depuis ${SUPABASE_SERVICE_ROLE_KEY_ENV_NAME}`,
   );
 
-  return createClient(supabaseUrl, serviceRole.value, {
+  return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   });
+}
+
+export function isAdminClientAvailable(): boolean {
+  return Boolean(getSupabaseUrl() && hasSupabaseServiceRoleKeyEnv());
 }

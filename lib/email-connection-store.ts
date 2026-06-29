@@ -1,9 +1,10 @@
 import { cookies } from "next/headers";
 import {
   GmailDbError,
-  isEmailConnectionsTableMissingError,
+  logGmailDbClientMode,
   logGmailDbSupabaseError,
   logGmailDbTableCheck,
+  SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE,
 } from "@/lib/gmail-oauth-config";
 import {
   decryptEmailToken,
@@ -60,14 +61,15 @@ export async function saveEmailConnectionForUser(
   userId: string,
   tokens: StoredEmailOAuthTokens,
 ): Promise<void> {
-  const usingServiceRole = true;
-  console.log(`[gmail-db] using service role: ${usingServiceRole}`);
+  logGmailDbClientMode();
+
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    throw new Error(SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE);
+  }
 
   const supabase = createAdminClient();
   if (!supabase) {
-    throw new Error(
-      "Clé service role Supabase manquante — impossible d'enregistrer le token Gmail.",
-    );
+    throw new Error(SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE);
   }
 
   const provider = oauthProviderToStorage(tokens.provider);
@@ -91,6 +93,12 @@ export async function saveEmailConnectionForUser(
     .upsert(payload, { onConflict: "user_id,provider" });
 
   if (error) {
+    console.error("[gmail-db] upsert error", {
+      code: error.code ?? null,
+      message: error.message ?? null,
+      details: error.details ?? null,
+      hint: error.hint ?? null,
+    });
     logGmailDbSupabaseError(error);
     throw new GmailDbError(error);
   }
@@ -165,11 +173,16 @@ export async function disconnectEmailConnectionForUser(
   userId: string,
   provider?: EmailOAuthProvider,
 ): Promise<void> {
-  const usingServiceRole = Boolean(createAdminClient());
-  console.log(`[gmail-db] using service role: ${usingServiceRole}`);
+  logGmailDbClientMode();
 
-  const supabase = createAdminClient() ?? (await getSupabaseForRequest());
-  if (!supabase) return;
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    throw new Error(SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE);
+  }
+
+  const supabase = createAdminClient();
+  if (!supabase) {
+    throw new Error(SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE);
+  }
 
   let query = supabase.from("email_connections").delete().eq("user_id", userId);
 
