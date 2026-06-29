@@ -4,6 +4,14 @@ import { saveEmailConnectionForUser } from "@/lib/email-connection-store";
 import { emailProviderService } from "@/lib/email-provider";
 import { toFriendlyGmailOAuthError } from "@/lib/email-provider/oauth-errors";
 import {
+  getEmailOAuthTokenCookieOptions,
+  getOAuthStateCookieOptions,
+  OAUTH_STATE_EXPIRED_MESSAGE,
+  OAUTH_STATE_INVALID_MESSAGE,
+  readCookieFromRequest,
+} from "@/lib/email-provider/oauth-cookies";
+import { verifyOAuthState } from "@/lib/email-provider/oauth-state";
+import {
   EMAIL_OAUTH_COOKIE,
   EMAIL_OAUTH_FLOW_COOKIE,
   EMAIL_OAUTH_STATE_COOKIE,
@@ -30,6 +38,20 @@ export const runtime = "nodejs";
 
 type Provider = "google" | "microsoft";
 
+function redirectOAuthError(
+  appUrl: string,
+  flow: ReturnType<typeof parseGoogleOAuthFlow>,
+  message: string,
+): NextResponse {
+  const response = NextResponse.redirect(
+    `${oauthFlowRedirectBase(appUrl, flow)}?${oauthFlowErrorQuery(flow, message)}`,
+  );
+  const clearOptions = { ...getOAuthStateCookieOptions(), maxAge: 0 };
+  response.cookies.set(EMAIL_OAUTH_STATE_COOKIE, "", clearOptions);
+  response.cookies.set(EMAIL_OAUTH_FLOW_COOKIE, "", clearOptions);
+  return response;
+}
+
 export async function GET(
   request: Request,
   context: { params: Promise<{ provider: string }> },
@@ -39,24 +61,30 @@ export async function GET(
   const provider = rawProvider as Provider;
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const state = url.searchParams.get("state");
+  const receivedState = url.searchParams.get("state");
   const error = url.searchParams.get("error");
+  const callbackHost = url.host;
+
+  const cookieStore = await cookies();
+  const flow = parseGoogleOAuthFlow(
+    cookieStore.get(EMAIL_OAUTH_FLOW_COOKIE)?.value ??
+      readCookieFromRequest(request, EMAIL_OAUTH_FLOW_COOKIE),
+  );
+  const isSignup = isGoogleSignupFlow(flow);
+  const isLogin = isGoogleLoginFlow(flow);
 
   if (provider === "google") {
     console.log("[gmail-oauth-callback] code received", {
       hasCode: Boolean(code),
-      hasState: Boolean(state),
       hasError: Boolean(error),
+      callbackHost,
+    });
+    console.log("[gmail-oauth-callback] state received", {
+      hasState: Boolean(receivedState),
+      stateLength: receivedState?.length ?? 0,
     });
     logGmailRedirectUriDiagnostics("[gmail-oauth-callback]");
   }
-
-  const cookieStore = await cookies();
-  const flow = parseGoogleOAuthFlow(
-    cookieStore.get(EMAIL_OAUTH_FLOW_COOKIE)?.value,
-  );
-  const isSignup = isGoogleSignupFlow(flow);
-  const isLogin = isGoogleLoginFlow(flow);
 
   if (isPrivateBetaEnabled() && (isSignup || isLogin)) {
     return NextResponse.redirect(
@@ -66,21 +94,45 @@ export async function GET(
 
   if (error) {
     const message = toFriendlyGmailOAuthError(new Error(error));
-    return NextResponse.redirect(
-      `${oauthFlowRedirectBase(appUrl, flow)}?${oauthFlowErrorQuery(flow, message)}`,
-    );
+    return redirectOAuthError(appUrl, flow, message);
   }
 
-  const expectedState = cookieStore.get(EMAIL_OAUTH_STATE_COOKIE)?.value;
-  cookieStore.delete(EMAIL_OAUTH_STATE_COOKIE);
-  cookieStore.delete(EMAIL_OAUTH_FLOW_COOKIE);
+  const cookieNonce =
+    cookieStore.get(EMAIL_OAUTH_STATE_COOKIE)?.value ??
+    readCookieFromRequest(request, EMAIL_OAUTH_STATE_COOKIE);
 
-  if (!code || !state || !expectedState || state !== expectedState) {
-    const message = "État OAuth invalide.";
-    return NextResponse.redirect(
-      `${oauthFlowRedirectBase(appUrl, flow)}?${oauthFlowErrorQuery(flow, message)}`,
-    );
+  console.log(
+    `[gmail-oauth-callback] state cookie ${cookieNonce ? "found" : "missing"}`,
+    { callbackHost },
+  );
+
+  if (!code) {
+    console.log("[gmail-oauth-callback] state invalid", {
+      reason: "missing-code",
+    });
+    return redirectOAuthError(appUrl, flow, OAUTH_STATE_INVALID_MESSAGE);
   }
+
+  const verification = verifyOAuthState(receivedState, cookieNonce);
+
+  if (!verification.ok) {
+    if (verification.reason === "missing" && !cookieNonce) {
+      console.log("[gmail-oauth-callback] state invalid", {
+        reason: "cookie-missing",
+      });
+      return redirectOAuthError(appUrl, flow, OAUTH_STATE_EXPIRED_MESSAGE);
+    }
+
+    console.log("[gmail-oauth-callback] state invalid", {
+      reason: verification.reason,
+      hasCookie: Boolean(cookieNonce),
+    });
+    return redirectOAuthError(appUrl, flow, OAUTH_STATE_INVALID_MESSAGE);
+  }
+
+  console.log("[gmail-oauth-callback] state valid", {
+    method: verification.method,
+  });
 
   if (provider !== "google" && provider !== "microsoft") {
     return NextResponse.redirect(
@@ -92,8 +144,10 @@ export async function GET(
     const config = validateGmailOAuthConfig();
     if (!config.ok) {
       logGmailConfigMissing(config.missing);
-      return NextResponse.redirect(
-        `${oauthFlowRedirectBase(appUrl, flow)}?${oauthFlowErrorQuery(flow, formatGmailConfigMissingMessage(config.missing))}`,
+      return redirectOAuthError(
+        appUrl,
+        flow,
+        formatGmailConfigMissingMessage(config.missing),
       );
     }
   }
@@ -101,14 +155,6 @@ export async function GET(
   try {
     const tokens = await emailProviderService.exchangeOAuthCode(provider, code);
     const sealed = emailProviderService.sealTokens(tokens);
-
-    cookieStore.set(EMAIL_OAUTH_COOKIE, sealed, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 90,
-    });
 
     const authUser = await getAuthenticatedSupabaseUser();
     if (authUser && flow === "connect") {
@@ -136,9 +182,7 @@ export async function GET(
             ));
 
         if (isBlockingSaveError) {
-          return NextResponse.redirect(
-            `${oauthFlowRedirectBase(appUrl, flow)}?${oauthFlowErrorQuery(flow, saveMessage)}`,
-          );
+          return redirectOAuthError(appUrl, flow, saveMessage);
         }
       }
     } else if (flow === "connect" && provider === "google") {
@@ -147,36 +191,39 @@ export async function GET(
       });
     }
 
+    let successUrl = `${appUrl}/parametres?email_oauth=success&provider=${provider}&email=${encodeURIComponent(tokens.email)}`;
+
     if (isSignup && provider === "google") {
       const params = new URLSearchParams();
       if (tokens.displayName) {
         params.set("name", tokens.displayName);
       }
       const query = params.toString();
-      return NextResponse.redirect(
-        `${appUrl}/signup/google-complete${query ? `?${query}` : ""}`,
-      );
-    }
-
-    if (isLogin && provider === "google") {
+      successUrl = `${appUrl}/signup/google-complete${query ? `?${query}` : ""}`;
+    } else if (isLogin && provider === "google") {
       const params = new URLSearchParams();
       if (tokens.displayName) {
         params.set("name", tokens.displayName);
       }
       const query = params.toString();
-      return NextResponse.redirect(
-        `${appUrl}/login/google-complete${query ? `?${query}` : ""}`,
-      );
+      successUrl = `${appUrl}/login/google-complete${query ? `?${query}` : ""}`;
     }
 
-    return NextResponse.redirect(
-      `${appUrl}/parametres?email_oauth=success&provider=${provider}&email=${encodeURIComponent(tokens.email)}`,
+    const response = NextResponse.redirect(successUrl);
+    const clearOptions = { ...getOAuthStateCookieOptions(), maxAge: 0 };
+
+    response.cookies.set(EMAIL_OAUTH_STATE_COOKIE, "", clearOptions);
+    response.cookies.set(EMAIL_OAUTH_FLOW_COOKIE, "", clearOptions);
+    response.cookies.set(
+      EMAIL_OAUTH_COOKIE,
+      sealed,
+      getEmailOAuthTokenCookieOptions(60 * 60 * 24 * 90),
     );
+
+    return response;
   } catch (callbackError) {
     console.error("[gmail-oauth-callback] token exchange error", callbackError);
     const message = toFriendlyGmailOAuthError(callbackError);
-    return NextResponse.redirect(
-      `${oauthFlowRedirectBase(appUrl, flow)}?${oauthFlowErrorQuery(flow, message)}`,
-    );
+    return redirectOAuthError(appUrl, flow, message);
   }
 }

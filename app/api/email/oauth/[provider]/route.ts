@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { randomBytes } from "crypto";
 import {
   buildGoogleAuthorizeUrl,
   buildMicrosoftAuthorizeUrl,
 } from "@/lib/email-provider/oauth";
+import { getOAuthStateCookieOptions } from "@/lib/email-provider/oauth-cookies";
+import { createSignedOAuthState } from "@/lib/email-provider/oauth-state";
 import {
   EMAIL_OAUTH_FLOW_COOKIE,
   EMAIL_OAUTH_STATE_COOKIE,
@@ -26,6 +27,7 @@ import {
 export const runtime = "nodejs";
 
 type Provider = "google" | "microsoft";
+
 export async function GET(
   request: Request,
   context: { params: Promise<{ provider: string }> },
@@ -35,8 +37,10 @@ export async function GET(
   const requestUrl = new URL(request.url);
   const flow = parseGoogleOAuthFlow(requestUrl.searchParams.get("flow"));
   const appUrl = getAppBaseUrl();
+  const requestHost = requestUrl.host;
+
   if (provider === "google") {
-    console.log("[gmail-oauth-start] start", { flow });
+    console.log("[gmail-oauth-start] start", { flow, requestHost });
 
     const config = validateGmailOAuthConfig();
     if (!config.ok) {
@@ -45,11 +49,6 @@ export async function GET(
         `${oauthFlowRedirectBase(appUrl, flow)}?${oauthFlowErrorQuery(flow, formatGmailConfigMissingMessage(config.missing))}`,
       );
     }
-
-    console.log("[gmail-oauth-start] start", {
-      flow,
-      redirectUri: config.redirectUri,
-    });
 
     logGmailRedirectUriDiagnostics("[gmail-oauth-start]");
   }
@@ -65,29 +64,40 @@ export async function GET(
   }
 
   try {
-    const state = randomBytes(24).toString("hex");
-    const cookieStore = await cookies();
-    cookieStore.set(EMAIL_OAUTH_STATE_COOKIE, state, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 600,
-    });
-    cookieStore.set(EMAIL_OAUTH_FLOW_COOKIE, flow, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 600,
+    const { state, nonce } = createSignedOAuthState();
+    console.log("[gmail-oauth-state] generated", {
+      nonceLength: nonce.length,
+      stateLength: state.length,
+      flow,
+      provider,
+      requestHost,
     });
 
-    const url =
+    const authorizeUrl =
       provider === "google"
         ? buildGoogleAuthorizeUrl(state)
         : buildMicrosoftAuthorizeUrl(state);
 
-    return NextResponse.redirect(url);
+    const response = NextResponse.redirect(authorizeUrl);
+    const cookieOptions = getOAuthStateCookieOptions();
+
+    response.cookies.set(EMAIL_OAUTH_STATE_COOKIE, nonce, cookieOptions);
+    response.cookies.set(EMAIL_OAUTH_FLOW_COOKIE, flow, cookieOptions);
+
+    const cookieStore = await cookies();
+    cookieStore.set(EMAIL_OAUTH_STATE_COOKIE, nonce, cookieOptions);
+    cookieStore.set(EMAIL_OAUTH_FLOW_COOKIE, flow, cookieOptions);
+
+    console.log("[gmail-oauth-state] cookie set", {
+      names: [EMAIL_OAUTH_STATE_COOKIE, EMAIL_OAUTH_FLOW_COOKIE],
+      secure: cookieOptions.secure,
+      sameSite: cookieOptions.sameSite,
+      path: cookieOptions.path,
+      maxAge: cookieOptions.maxAge,
+      requestHost,
+    });
+
+    return response;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : GMAIL_CONFIG_INCOMPLETE_MESSAGE;
