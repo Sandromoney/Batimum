@@ -123,13 +123,7 @@ export default function ParametresPage() {
           </section>
         </ParametresSection>
 
-        <ParametresConnexionEmailSection
-          form={form}
-          onChange={setForm}
-          onPersist={(next) =>
-            setData((prev) => ({ ...prev, parametres: next }))
-          }
-        />
+        <ParametresConnexionEmailSection />
 
         <ParametresSection
           title="Entreprise"

@@ -49,7 +49,10 @@ export function mergeConnexionEmailMetadata(
 
 export async function fetchEmailConnectionStatus(): Promise<EmailConnectionStatus> {
   try {
-    const response = await fetch("/api/email/status", { cache: "no-store" });
+    const response = await fetch("/api/email/status", {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
     if (!response.ok) {
       return {
         connected: false,

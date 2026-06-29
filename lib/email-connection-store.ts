@@ -199,6 +199,69 @@ export async function disconnectEmailConnectionForUser(
   }
 }
 
+type EmailConnectionStatusRow = Pick<
+  EmailConnectionRow,
+  "email" | "provider" | "connected" | "expires_at" | "refresh_token"
+>;
+
+async function getSupabaseForEmailConnectionRead() {
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    return createAdminClient();
+  }
+  return getSupabaseForRequest();
+}
+
+/** Lecture statut sans déchiffrer les tokens (affichage UI / API status). */
+export async function loadEmailConnectionStatusForUser(
+  userId: string,
+  provider?: EmailOAuthProvider,
+): Promise<{
+  row: EmailConnectionStatusRow | null;
+  error: { message: string; code?: string } | null;
+}> {
+  const supabase = await getSupabaseForEmailConnectionRead();
+  if (!supabase) {
+    return {
+      row: null,
+      error: { message: "Client Supabase indisponible." },
+    };
+  }
+
+  let query = supabase
+    .from("email_connections")
+    .select("email, provider, connected, expires_at, refresh_token")
+    .eq("user_id", userId)
+    .eq("connected", true);
+
+  if (provider) {
+    query = query.eq("provider", oauthProviderToStorage(provider));
+  }
+
+  logGmailDbTableCheck("select-status");
+
+  const { data, error } = await query
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    logGmailDbSupabaseError(error);
+    return {
+      row: null,
+      error: {
+        message: new GmailDbError(error).message,
+        code: error.code,
+      },
+    };
+  }
+
+  if (!data) {
+    return { row: null, error: null };
+  }
+
+  return { row: data as EmailConnectionStatusRow, error: null };
+}
+
 export async function getEmailConnectionStatusFromSupabase(
   userId: string,
 ): Promise<{
@@ -211,26 +274,27 @@ export async function getEmailConnectionStatusFromSupabase(
   } | null;
   error: { message: string; code?: string } | null;
 }> {
-  const { tokens, error } = await loadEmailConnectionForUser(userId);
+  const { row, error } = await loadEmailConnectionStatusForUser(userId);
 
   if (error) {
     return { status: null, error };
   }
 
-  if (!tokens?.email) {
+  if (!row?.email || !row.connected) {
     return { status: null, error: null };
   }
 
+  const expiresAtMs = new Date(row.expires_at).getTime();
   const expired =
-    Date.now() >= tokens.expiresAt - 60_000 && !tokens.refreshToken;
+    Date.now() >= expiresAtMs - 60_000 && !row.refresh_token;
 
   return {
     status: {
       connected: !expired,
       expired,
-      provider: tokens.provider,
-      email: tokens.email,
-      expiresAt: new Date(tokens.expiresAt).toISOString(),
+      provider: storageProviderToOAuth(row.provider),
+      email: row.email,
+      expiresAt: new Date(expiresAtMs).toISOString(),
     },
     error: null,
   };

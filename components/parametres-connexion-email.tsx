@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ParametresSection } from "@/components/parametres-section";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,19 +10,12 @@ import {
   GMAIL_CONFIG_INCOMPLETE_MESSAGE,
   fetchEmailConnectionStatus,
   getConnexionEmailStatutLabel,
-  mergeConnexionEmailMetadata,
-  resolveConnexionEmail,
+  toFriendlyFlashOAuthMessage,
 } from "@/lib/email-provider";
-import { toFriendlyFlashOAuthMessage } from "@/lib/email-provider/oauth-errors";
-import type { ConnexionEmailStatut, Parametres } from "@/lib/types";
+import type { EmailConnectionStatus } from "@/lib/email-provider/types";
+import type { ConnexionEmailStatut } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Loader2, LogOut, Mail } from "lucide-react";
-
-type ParametresConnexionEmailSectionProps = {
-  form: Parametres;
-  onChange: (next: Parametres) => void;
-  onPersist?: (next: Parametres) => void;
-};
 
 function statutBadgeClass(statut: ConnexionEmailStatut): string {
   switch (statut) {
@@ -35,50 +28,38 @@ function statutBadgeClass(statut: ConnexionEmailStatut): string {
   }
 }
 
-export function ParametresConnexionEmailSection({
-  form,
-  onChange,
-  onPersist,
-}: ParametresConnexionEmailSectionProps) {
+function statusToStatut(status: EmailConnectionStatus | null): ConnexionEmailStatut {
+  if (!status) return "non_connecte";
+  if (status.connected) return "connecte";
+  if (status.expired) return "expire";
+  return "non_connecte";
+}
+
+function logEmailStatusClient(status: EmailConnectionStatus): void {
+  console.log("[email-status] connected:", status.connected);
+  console.log("[email-status] email:", status.email ?? null);
+}
+
+export function ParametresConnexionEmailSection() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const connexion = resolveConnexionEmail(form);
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState(false);
   const [flashMessage, setFlashMessage] = useState<string | null>(null);
-  const [statusError, setStatusError] = useState(false);
-  const [configError, setConfigError] = useState(false);
-  const [configErrorMessage, setConfigErrorMessage] = useState<string | null>(
-    null,
-  );
+  const [status, setStatus] = useState<EmailConnectionStatus | null>(null);
 
-  const applyStatus = useCallback(
-    async (persist = true) => {
-      const status = await fetchEmailConnectionStatus();
-      setStatusError(Boolean(status.statusError));
-      setConfigError(Boolean(status.configError));
-      setConfigErrorMessage(status.message ?? null);
-      const next = mergeConnexionEmailMetadata(form, status);
-      onChange(next);
-      if (persist) onPersist?.(next);
-      return status;
-    },
-    [form, onChange, onPersist],
-  );
+  const refreshStatus = useCallback(async () => {
+    setLoading(true);
+    const next = await fetchEmailConnectionStatus();
+    logEmailStatusClient(next);
+    setStatus(next);
+    setLoading(false);
+    return next;
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function sync() {
-      setLoading(true);
-      await applyStatus(true);
-      if (!cancelled) setLoading(false);
-    }
-
-    void sync();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void refreshStatus();
+  }, [refreshStatus]);
 
   useEffect(() => {
     const oauth = searchParams.get("email_oauth");
@@ -88,8 +69,9 @@ export function ParametresConnexionEmailSection({
 
     async function handleOAuthRedirect() {
       if (oauth === "success") {
-        const email = searchParams.get("email");
-        await applyStatus(true);
+        router.refresh();
+        const next = await refreshStatus();
+        const email = next.email ?? searchParams.get("email");
         setFlashMessage(
           email
             ? `Compte ${email} connecté avec succès.`
@@ -112,7 +94,7 @@ export function ParametresConnexionEmailSection({
     }
 
     void handleOAuthRedirect();
-  }, [searchParams, applyStatus]);
+  }, [searchParams, refreshStatus, router]);
 
   async function handleDisconnect() {
     setDisconnecting(true);
@@ -120,21 +102,19 @@ export function ParametresConnexionEmailSection({
 
     try {
       await fetch("/api/email/disconnect", { method: "POST" });
-      const next = mergeConnexionEmailMetadata(form, {
-        connected: false,
-        expired: false,
-        provider: null,
-      });
-      onChange(next);
-      onPersist?.(next);
+      await refreshStatus();
       setFlashMessage("Adresse email déconnectée.");
     } finally {
       setDisconnecting(false);
     }
   }
 
-  const isConnected = connexion.statut === "connecte";
-  const isExpired = connexion.statut === "expire";
+  const statut = statusToStatut(status);
+  const isConnected = statut === "connecte";
+  const isExpired = statut === "expire";
+  const statusError = Boolean(status?.statusError);
+  const configError = Boolean(status?.configError);
+  const configErrorMessage = status?.message ?? null;
 
   return (
     <ParametresSection
@@ -147,21 +127,19 @@ export function ParametresConnexionEmailSection({
           <span
             className={cn(
               "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold",
-              statutBadgeClass(connexion.statut),
+              statutBadgeClass(statut),
             )}
           >
             <Mail className="h-3.5 w-3.5" />
-            {loading ? "Vérification…" : getConnexionEmailStatutLabel(connexion.statut)}
+            {loading ? "Vérification…" : getConnexionEmailStatutLabel(statut)}
           </span>
-          {connexion.connectedEmail ? (
+          {status?.email ? (
             <span className="text-sm text-muted-foreground">
               Connecté :{" "}
-              <span className="font-medium text-foreground">
-                {connexion.connectedEmail}
-              </span>
-              {connexion.provider === "google"
+              <span className="font-medium text-foreground">{status.email}</span>
+              {status.provider === "google"
                 ? " · Gmail"
-                : connexion.provider === "microsoft"
+                : status.provider === "microsoft"
                   ? " · Microsoft 365"
                   : null}
             </span>
@@ -231,7 +209,7 @@ export function ParametresConnexionEmailSection({
               ) : (
                 <LogOut className="mr-2 h-4 w-4" />
               )}
-              Déconnecter l&apos;email
+              Déconnecter
             </Button>
           )}
         </div>

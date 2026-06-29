@@ -135,7 +135,11 @@ export type GmailOAuthConfigCheck = {
 };
 
 export function logGmailEnvDiagnostics(
-  context: "[gmail-oauth-start]" | "[gmail-oauth-callback]" | "[gmail-status]",
+  context:
+    | "[gmail-oauth-start]"
+    | "[gmail-oauth-callback]"
+    | "[gmail-status]"
+    | "[email-status]",
 ): void {
   console.log(
     `${context} env ${GOOGLE_REDIRECT_URI_ENV_NAME}: ${
