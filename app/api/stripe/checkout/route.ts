@@ -102,8 +102,8 @@ export async function POST(request: Request) {
         utilisateur,
         telephone,
       },
-      success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/signup?checkout=cancel`,
+      success_url: `${appUrl}/abonnement/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/abonnement/cancel`,
     });
 
     if (!session.url) {

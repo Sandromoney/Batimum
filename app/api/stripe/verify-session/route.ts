@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { syncUserAiUsageFromStripeSubscription } from "@/lib/ai-usage-store";
 import { getStripe } from "@/lib/stripe-server";
 import { subscriptionFromStripe } from "@/lib/stripe-subscription";
+import { getAuthenticatedSupabaseUser } from "@/lib/supabase-auth-server";
 
 export async function POST(request: Request) {
   const stripe = getStripe();
@@ -46,6 +48,11 @@ export async function POST(request: Request) {
         ? session.customer
         : session.customer?.id;
 
+    const authUser = await getAuthenticatedSupabaseUser();
+    if (authUser) {
+      await syncUserAiUsageFromStripeSubscription(authUser.id, subscription);
+    }
+
     return NextResponse.json({
       email: session.customer_email ?? session.customer_details?.email,
       entreprise: session.metadata?.entreprise,
@@ -56,6 +63,7 @@ export async function POST(request: Request) {
       subscriptionStatus: mapped.status,
       trialEndsAt: mapped.trialEndsAt,
       currentPeriodEnd: mapped.currentPeriodEnd,
+      currentPeriodStart: mapped.currentPeriodStart,
     });
   } catch (error) {
     console.error("[stripe/verify-session]", error);

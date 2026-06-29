@@ -607,9 +607,13 @@ export interface Parametres {
   aiGenerationsMonth?: string;
   /** Limite mensuelle IA (sinon selon abonnement). */
   aiGenerationsLimit?: number;
+  /** Couleur principale des devis PDF / aperçu. */
+  couleurDevis?: DevisBrandColorId;
   /** Métadonnées connexion email OAuth (tokens côté serveur uniquement). */
   connexionEmail?: ParametresConnexionEmail;
 }
+
+import type { DevisBrandColorId } from "@/lib/devis-brand-colors";
 
 export type EmailOAuthProvider = "google" | "microsoft";
 

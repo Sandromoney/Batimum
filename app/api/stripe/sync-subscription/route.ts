@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { syncUserAiUsageFromStripeSubscription } from "@/lib/ai-usage-store";
 import { getStripe } from "@/lib/stripe-server";
 import { subscriptionFromStripe } from "@/lib/stripe-subscription";
+import { getAuthenticatedSupabaseUser } from "@/lib/supabase-auth-server";
 
 export async function POST(request: Request) {
   const stripe = getStripe();
@@ -30,10 +32,16 @@ export async function POST(request: Request) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     const mapped = subscriptionFromStripe(subscription);
 
+    const authUser = await getAuthenticatedSupabaseUser();
+    if (authUser) {
+      await syncUserAiUsageFromStripeSubscription(authUser.id, subscription);
+    }
+
     return NextResponse.json({
       status: mapped.status,
       trialEndsAt: mapped.trialEndsAt,
       currentPeriodEnd: mapped.currentPeriodEnd,
+      currentPeriodStart: mapped.currentPeriodStart,
     });
   } catch (error) {
     console.error("[stripe/sync-subscription]", error);

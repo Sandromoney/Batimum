@@ -17,6 +17,7 @@ import { normalizeClient } from "@/lib/clients";
 import { normalizeMumIaHistorique } from "@/lib/mum-ia-historique";
 import { normalizeParametres } from "./parametres";
 import { applyTheme, normalizeThemePreference } from "./theme";
+import { fetchUserSettings } from "./user-settings-client";
 import type { AppData } from "./types";
 
 const STORAGE_KEY = "btp-gestion-data";
@@ -200,6 +201,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     applyTheme(loaded.parametres.theme);
     setData(loaded);
     setHydrated(true);
+
+    void (async () => {
+      const remote = await fetchUserSettings();
+      if (remote.unauthorized || !remote.parametres) return;
+
+      const parametres = normalizeParametres(remote.parametres);
+      setData((prev) =>
+        syncAppData({
+          ...prev,
+          parametres,
+          employes:
+            remote.employes && remote.employes.length > 0
+              ? remote.employes
+              : prev.employes,
+        }),
+      );
+      applyTheme(parametres.theme);
+    })();
   }, []);
 
   useLayoutEffect(() => {

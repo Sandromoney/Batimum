@@ -27,6 +27,7 @@ import {
   isTvaClassique,
 } from "@/lib/parametres";
 import { getClientFacingDevis } from "@/lib/mum-ia-mode";
+import { resolveDevisBrandColor } from "@/lib/devis-brand-colors";
 import type { Client, Devis, Parametres } from "@/lib/types";
 import { loadSignedDevisPdf } from "@/lib/store";
 import { formatDate, formatDateTimeFR } from "@/lib/utils";
@@ -65,6 +66,7 @@ export async function buildDevisPdfDoc({
   const doc = new JsPDF({ unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 12;
+  const brandColor = resolveDevisBrandColor(parametres);
   let y = 14;
 
   const addText = (
@@ -88,14 +90,14 @@ export async function buildDevisPdfDoc({
 
   const addSectionTitle = (title: string) => {
     y += 4;
-    doc.setDrawColor(37, 99, 235);
+    doc.setDrawColor(...brandColor.rgb);
     doc.setLineWidth(0.6);
     doc.line(margin, y, pageWidth - margin, y);
     y += 5;
     y = addText(title, margin, y, {
       size: 10,
       style: "bold",
-      color: [37, 99, 235],
+      color: brandColor.rgb,
     });
   };
 
@@ -132,7 +134,7 @@ export async function buildDevisPdfDoc({
         logoHeight,
       );
     } catch {
-      doc.setFillColor(37, 99, 235);
+      doc.setFillColor(...brandColor.rgb);
       doc.roundedRect(margin, y - 4, 12, 12, 3, 3, "F");
       y = addText("B", margin + 4.2, y + 3.7, {
         size: 13,
@@ -141,7 +143,7 @@ export async function buildDevisPdfDoc({
       });
     }
   } else {
-    doc.setFillColor(37, 99, 235);
+    doc.setFillColor(...brandColor.rgb);
     doc.roundedRect(margin, y - 4, 12, 12, 3, 3, "F");
     y = addText("B", margin + 4.2, y + 3.7, {
       size: 13,
@@ -214,7 +216,7 @@ export async function buildDevisPdfDoc({
   });
 
   y = 50;
-  doc.setDrawColor(37, 99, 235);
+  doc.setDrawColor(...brandColor.rgb);
   doc.setLineWidth(0.6);
   doc.line(margin, y, pageWidth - margin, y);
   y += 6;
@@ -224,7 +226,7 @@ export async function buildDevisPdfDoc({
   doc.roundedRect(pageWidth - margin - 88, y - 4, 88, 30, 3, 3, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
-  doc.setTextColor(37, 99, 235);
+  doc.setTextColor(...brandColor.rgb);
   doc.text("Client", margin + 4, y);
   doc.text("Informations devis", pageWidth - margin - 84, y);
   doc.setTextColor(20, 20, 20);
@@ -346,7 +348,7 @@ export async function buildDevisPdfDoc({
       doc.line(margin, y - 3, table.right, y - 3);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(8);
-      doc.setTextColor(37, 99, 235);
+      doc.setTextColor(...brandColor.rgb);
       doc.text(descriptionLines, table.description, y);
       y += rowHeight - 4;
       return;
@@ -446,7 +448,7 @@ export async function buildDevisPdfDoc({
   doc.line(totalsBoxX + 5, recapY + 1, totalsBoxX + 73, recapY + 1);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.setTextColor(37, 99, 235);
+  doc.setTextColor(...brandColor.rgb);
   doc.text("Total TTC", totalsBoxX + 5, recapY + 8);
   doc.text(formatPdfCurrency(pdfTotalTTC), totalsBoxX + 73, recapY + 8, {
     align: "right",
@@ -551,7 +553,7 @@ export async function buildDevisPdfDoc({
     y = addText("Devis accepté et signé électroniquement", margin + 4, y, {
       size: 9,
       style: "bold",
-      color: [37, 99, 235],
+      color: brandColor.rgb,
     });
     y = addText(
       `Nom signataire : ${devis.signedBy ?? devis.nomSignataire ?? "-"}`,

@@ -14,8 +14,8 @@ import type { AiChantierAnalysis } from "@/lib/ai-devis-analysis";
 import type { BtpNiveauPrix } from "@/lib/btp-tarifs-reference";
 import {
   canUseAiGeneration,
-  incrementAiGenerationsUsed,
   resolveAiQuota,
+  type AiQuotaState,
 } from "@/lib/ai-quota";
 import {
   filterAiDevisForClientView,
@@ -75,7 +75,7 @@ function formatPrixSourceLabel(source?: string) {
 }
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 
 const TVA_OPTIONS = [
   { value: "20", label: "20 %" },
@@ -129,6 +129,11 @@ export function BatimumAiAssistant() {
   const [transformingHistoryId, setTransformingHistoryId] = useState<string | null>(null);
   const [entrepriseLocalisation, setEntrepriseLocalisation] =
     useState<EntrepriseLocalisation | null>(null);
+  const [serverQuota, setServerQuota] = useState<{
+    used: number;
+    limit: number;
+    remaining: number;
+  } | null>(null);
   const geoPrefillDone = useRef(false);
   const previewRef = useRef<HTMLDivElement | null>(null);
 
@@ -142,10 +147,40 @@ export function BatimumAiAssistant() {
     [data.bibliothequeEntreprise],
   );
 
-  const quota = useMemo(
-    () => resolveAiQuota(data.parametres, account),
-    [data.parametres, account],
-  );
+  const refreshServerQuota = useCallback(async () => {
+    try {
+      const response = await fetch("/api/ai/usage", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const payload = (await response.json()) as {
+        used: number;
+        limit: number;
+        remaining: number;
+      };
+      setServerQuota(payload);
+    } catch {
+      /* quota serveur indisponible */
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshServerQuota();
+  }, [refreshServerQuota]);
+
+  const quota = useMemo((): AiQuotaState => {
+    if (serverQuota) {
+      return {
+        used: serverQuota.used,
+        limit: serverQuota.limit,
+        month: "",
+        remaining: serverQuota.remaining,
+        isPro: serverQuota.limit >= 100,
+      };
+    }
+    return resolveAiQuota(data.parametres, account);
+  }, [serverQuota, data.parametres, account]);
 
   useEffect(() => {
     if (geoPrefillDone.current) return;
@@ -206,7 +241,9 @@ export function BatimumAiAssistant() {
   const validateForm = (): ChantierContext | null => {
     if (!canUseAiGeneration(quota)) {
       setError(
-        `Quota mensuel atteint (${quota.used}/${quota.limit}). Passez à l'offre Pro pour plus de générations.`,
+        serverQuota
+          ? "Vous avez atteint votre limite de 100 demandes IA ce mois-ci"
+          : `Quota mensuel atteint (${quota.used}/${quota.limit}). Passez à l'offre Pro pour plus de générations.`,
       );
       return null;
     }
@@ -267,6 +304,14 @@ export function BatimumAiAssistant() {
       };
 
       if (!response.ok || !payload.success || !payload.devis) {
+        if (response.status === 429) {
+          setError(
+            payload.message ??
+              "Vous avez atteint votre limite de 100 demandes IA ce mois-ci",
+          );
+          await refreshServerQuota();
+          return;
+        }
         setError(payload.message ?? "Erreur lors de la génération.");
         return;
       }
@@ -308,8 +353,8 @@ export function BatimumAiAssistant() {
       setData((prev) => ({
         ...prev,
         mumIaHistorique: [historyEntry, ...(prev.mumIaHistorique ?? [])].slice(0, 200),
-        parametres: incrementAiGenerationsUsed(prev.parametres, account),
       }));
+      await refreshServerQuota();
     } catch {
       setError("Connexion impossible. Vérifiez votre réseau et réessayez.");
     } finally {
@@ -554,9 +599,9 @@ export function BatimumAiAssistant() {
         </div>
         <span
           className="shrink-0 whitespace-nowrap rounded-md border border-border/60 bg-card/50 px-2 py-0.5 text-[10px] tabular-nums text-muted-foreground"
-          title="Générations IA utilisées ce mois-ci"
+          title="Demandes MUM IA utilisées sur la période d'abonnement en cours"
         >
-          {quota.used} / {quota.limit} devis IA
+          {quota.used} / {quota.limit} devis IA utilisés ce mois-ci
         </span>
       </header>
 

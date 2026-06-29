@@ -43,6 +43,7 @@ import {
   sendDevisToClient,
   sendReminderEmail,
 } from "@/lib/relances";
+import { publishDevisSignatureLink } from "@/lib/devis-public-signature-client";
 import {
   calculateMontantTTC,
   DEVIS_STATUT_LABELS,
@@ -120,6 +121,9 @@ export default function DevisDetailPage() {
   const [reminderSendMessage, setReminderSendMessage] = useState("");
   const [sendingToClient, setSendingToClient] = useState(false);
   const [sendClientMessage, setSendClientMessage] = useState("");
+  const [signatureUrl, setSignatureUrl] = useState("");
+  const [confirmSendToClientOpen, setConfirmSendToClientOpen] = useState(false);
+  const [sendSuccessFlash, setSendSuccessFlash] = useState(false);
   const [ligneToDelete, setLigneToDelete] = useState<string | null>(null);
   const [confirmRealEmailOpen, setConfirmRealEmailOpen] = useState(false);
   const [confirmRelanceOpen, setConfirmRelanceOpen] = useState(false);
@@ -305,6 +309,33 @@ export default function DevisDetailPage() {
     );
   }, [devisItem, setDevis, devisActor]);
 
+  useEffect(() => {
+    if (!devisItem) return;
+
+    void fetch(`/api/devis/${devisItem.id}/signature-sync`, {
+      credentials: "same-origin",
+      cache: "no-store",
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then(
+        (
+          body: {
+            updated?: boolean;
+            devis?: typeof devisItem;
+            signatureUrl?: string;
+          } | null,
+        ) => {
+          if (body?.signatureUrl) {
+            setSignatureUrl(body.signatureUrl);
+          }
+          if (body?.updated && body.devis) {
+            applyDevisChange(() => body.devis!);
+          }
+        },
+      )
+      .catch(() => undefined);
+  }, [devisItem?.id]);
+
   function validateCurrentDevis() {
     if (!devisItem) return {};
     const client = clients.find((clientItem) => clientItem.id === devisItem.clientId);
@@ -339,11 +370,6 @@ export default function DevisDetailPage() {
   const totalTTC = tvaRecap.totalTTC;
   const montantTVA = tvaRecap.tvaTotale;
   const client = clients.find((clientItem) => clientItem.id === devisItem.clientId);
-  const signaturePath = `/signature/devis/${devisItem.id}`;
-  const signatureUrl =
-    typeof window === "undefined"
-      ? signaturePath
-      : `${window.location.origin}${signaturePath}`;
   const isSigned = Boolean(devisItem.signature && devisItem.dateSignature);
   const displayStatut = getDevisDisplayStatut(devisItem);
   const canShowRelances = devisItem.statut !== "brouillon";
@@ -412,7 +438,7 @@ export default function DevisDetailPage() {
     return false;
   }
 
-  async function handleSendToClient() {
+  function requestSendToClient() {
     if (!devisItem) return;
     if (hasValidationErrors(validateCurrentDevis())) return;
     if (!ensureEntrepriseReadyForDevisSend()) return;
@@ -422,23 +448,47 @@ export default function DevisDetailPage() {
       );
       return;
     }
+    setConfirmSendToClientOpen(true);
+  }
+
+  async function handleSendToClient() {
+    if (!devisItem) return;
 
     setSendingToClient(true);
     setSendClientMessage("");
+    setSendSuccessFlash(false);
     setClientLinkCopied(false);
+
+    const published = await publishDevisSignatureLink({
+      devis: devisItem,
+      client,
+      parametres: data.parametres,
+    });
+
+    if (!published.signatureUrl) {
+      setSendClientMessage(
+        published.error ??
+          "Impossible de générer le lien de signature public.",
+      );
+      setSendingToClient(false);
+      return;
+    }
+
+    setSignatureUrl(published.signatureUrl);
 
     const result = await sendDevisToClient({
       devis: devisItem,
       client,
       parametres: data.parametres,
-      signatureUrl,
+      signatureUrl: published.signatureUrl,
       totalHT: total,
     });
 
-    setSendClientMessage(result.message ?? "");
-
     if (result.success) {
       applyDevisChange((current) => markDevisEnvoye(current, devisActor));
+      setSendSuccessFlash(true);
+      setSendClientMessage("Devis envoyé à l'instant");
+      setTimeout(() => setSendSuccessFlash(false), 5000);
 
       if (result.simulated) {
         await downloadDevisPdf({
@@ -451,13 +501,17 @@ export default function DevisDetailPage() {
           devis: devisItem,
           client,
           parametres: data.parametres,
-          signatureUrl,
+          signatureUrl: published.signatureUrl,
         });
         await navigator.clipboard?.writeText(
           `À: ${email.destinataire}\nObjet: ${email.objet}\n\n${email.message}`,
         );
         setClientLinkCopied(true);
       }
+    } else {
+      setSendClientMessage(
+        result.message ?? "Impossible d'envoyer le devis au client.",
+      );
     }
 
     setSendingToClient(false);
@@ -478,9 +532,6 @@ ${reminderEmail.message}`,
     setReminderSendMessage("");
     const result = await sendReminderEmail(reminderEmail);
     setReminderSendMessage(result.message ?? "Envoi réel non configuré");
-    if (result.success) {
-      applyDevisChange((current) => markDevisEnvoye(current, devisActor));
-    }
     setReminderSending(false);
   }
 
@@ -752,7 +803,7 @@ ${reminderEmail.message}`,
           onReorderLignes={reorderLignes}
           onSaveDraft={() => undefined}
           onPreview={handleOpenPreview}
-          onSendToClient={handleSendToClient}
+          onSendToClient={requestSendToClient}
           canSendToClient={canSendDevisEmail}
           sendToClientDisabledTitle={devisSendDisabledTitle}
           displayStatut={displayStatut}
@@ -1054,7 +1105,7 @@ ${reminderEmail.message}`,
                   variant="secondary"
                   disabled={sendingToClient || !canSendDevisEmail}
                   title={devisSendDisabledTitle}
-                  onClick={() => void handleSendToClient()}
+                  onClick={() => requestSendToClient()}
                 >
                   <Send className="h-4 w-4" />
                   {sendingToClient ? "Envoi en cours…" : "Envoyer au client"}
@@ -1063,7 +1114,21 @@ ${reminderEmail.message}`,
                   variant="secondary"
                   onClick={() => {
                     if (hasValidationErrors(validateCurrentDevis())) return;
-                    router.push(signaturePath);
+                    const url = signatureUrl;
+                    if (url) {
+                      window.open(url, "_blank", "noopener,noreferrer");
+                      return;
+                    }
+                    void publishDevisSignatureLink({
+                      devis: devisItem,
+                      client,
+                      parametres: data.parametres,
+                    }).then((published) => {
+                      if (published.signatureUrl) {
+                        setSignatureUrl(published.signatureUrl);
+                        window.open(published.signatureUrl, "_blank", "noopener,noreferrer");
+                      }
+                    });
                   }}
                 >
                   <ExternalLink className="h-4 w-4" />
@@ -1321,6 +1386,22 @@ ${reminderEmail.message}`,
       />
 
       <ConfirmDialog
+        open={confirmSendToClientOpen}
+        title="Envoyer le devis au client"
+        message={
+          client?.email
+            ? `Voulez-vous envoyer ce devis à ${client.email} ?`
+            : "Voulez-vous envoyer ce devis au client ?"
+        }
+        confirmLabel="Confirmer l'envoi"
+        onCancel={() => setConfirmSendToClientOpen(false)}
+        onConfirm={() => {
+          setConfirmSendToClientOpen(false);
+          void handleSendToClient();
+        }}
+      />
+
+      <ConfirmDialog
         open={confirmRealEmailOpen}
         message="Confirmer l’envoi de l’email de relance ?"
         confirmLabel="Confirmer"
@@ -1447,7 +1528,7 @@ ${reminderEmail.message}`,
             : null
         }
         onDownload={handleDownloadPdf}
-        onSendToClient={handleSendToClient}
+        onSendToClient={requestSendToClient}
         canSendToClient={canSendDevisEmail}
         sendToClientDisabledTitle={devisSendDisabledTitle}
       />

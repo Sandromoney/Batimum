@@ -306,3 +306,37 @@ export async function updateEmailConnectionTokens(
 ): Promise<void> {
   await saveEmailConnectionForUser(userId, tokens);
 }
+
+/** Lecture tokens OAuth via service role (envoi email côté serveur, ex. signature publique). */
+export async function loadEmailConnectionTokensForUserId(
+  userId: string,
+): Promise<StoredEmailOAuthTokens | null> {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    return null;
+  }
+
+  const supabase = createAdminClient();
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("email_connections")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("connected", true)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error) logGmailDbSupabaseError(error);
+    return null;
+  }
+
+  try {
+    return rowToTokens(data as EmailConnectionRow);
+  } catch {
+    return null;
+  }
+}

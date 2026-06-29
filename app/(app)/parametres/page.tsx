@@ -17,8 +17,13 @@ import {
   normalizeParametres,
   syncParametresForSave,
 } from "@/lib/parametres";
+import { ParametresDevisColorPicker } from "@/components/parametres-devis-color-picker";
 import { ParametresFacturationElectroniqueSection } from "@/components/parametres-facturation-electronique";
 import { ParametresConnexionEmailSection } from "@/components/parametres-connexion-email";
+import {
+  fetchUserSettings,
+  saveUserSettings,
+} from "@/lib/user-settings-client";
 import {
   hasValidationErrors,
   validateParametresSave,
@@ -42,14 +47,47 @@ export default function ParametresPage() {
   const [form, setForm] = useState<Parametres>(() =>
     normalizeParametres(data.parametres),
   );
+  const [loadingSettings, setLoadingSettings] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState(false);
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [saveErrors, setSaveErrors] = useState<ValidationErrors>({});
   const invalidClass = "border-red-500 focus:border-red-500 focus:ring-red-500/20";
 
   useEffect(() => {
-    setForm(normalizeParametres(data.parametres));
-  }, [data.parametres]);
+    let cancelled = false;
+
+    async function loadSettings() {
+      setLoadingSettings(true);
+      const remote = await fetchUserSettings();
+
+      if (cancelled) return;
+
+      if (remote.parametres) {
+        const synced = normalizeParametres(remote.parametres);
+        setForm(synced);
+        setData((prev) => ({
+          ...prev,
+          parametres: synced,
+          employes:
+            remote.employes && remote.employes.length > 0
+              ? remote.employes
+              : prev.employes,
+        }));
+        applyTheme(synced.theme);
+      }
+
+      setLoadingSettings(false);
+    }
+
+    void loadSettings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setData]);
 
   useEffect(() => {
     if (searchParams.get("section") !== "connexion-email") return;
@@ -62,7 +100,7 @@ export default function ParametresPage() {
     setForm((previous) => ({ ...previous, ...partial }));
   }
 
-  function save(e: React.FormEvent) {
+  async function save(e: React.FormEvent) {
     e.preventDefault();
     const errors = validateParametresSave(form);
     if (hasValidationErrors(errors)) {
@@ -70,12 +108,35 @@ export default function ParametresPage() {
       return;
     }
     setSaveErrors({});
+    setSaveMessage(null);
+    setSaveError(false);
+    setSaving(true);
+
     const synced = syncParametresForSave(form);
+    const result = await saveUserSettings({
+      parametres: synced,
+      employes: data.employes,
+    });
+
+    setSaving(false);
+
+    if (!result.ok) {
+      setSaveError(true);
+      setSaveMessage(result.error ?? "Impossible d'enregistrer les paramètres");
+      setSaved(false);
+      return;
+    }
+
     setData((prev) => ({ ...prev, parametres: synced }));
     setForm(synced);
     applyTheme(synced.theme);
     setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    setSaveError(false);
+    setSaveMessage("Paramètres enregistrés");
+    setTimeout(() => {
+      setSaved(false);
+      setSaveMessage(null);
+    }, 3000);
   }
 
   const exempleDevis = formatNumeroExample(
@@ -98,13 +159,35 @@ export default function ParametresPage() {
           saved ? (
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-opacity duration-300">
               <Check className="h-3.5 w-3.5" />
-              Sauvegardé
+              Paramètres enregistrés
             </span>
+          ) : loadingSettings ? (
+            <span className="text-xs text-muted-foreground">Chargement…</span>
           ) : undefined
         }
       />
 
       <form className="space-y-6" onSubmit={save}>
+        {saveMessage ? (
+          <p
+            className={cn(
+              "rounded-lg border px-3 py-2 text-sm",
+              saveError
+                ? "btp-alert-error"
+                : "border-primary/30 bg-primary/10 text-primary",
+            )}
+          >
+            {saveMessage}
+          </p>
+        ) : null}
+
+        <fieldset
+          disabled={loadingSettings || saving}
+          className={cn(
+            "space-y-6",
+            (loadingSettings || saving) && "pointer-events-none opacity-60",
+          )}
+        >
         <ParametresSection
           title="Compte utilisateur"
           description="Profil affiché dans la barre latérale"
@@ -350,6 +433,10 @@ export default function ParametresPage() {
               onChange={(logoPdf) => patch({ logoPdf })}
             />
           </div>
+          <ParametresDevisColorPicker
+            value={form.couleurDevis ?? "bleu_batimum"}
+            onChange={(couleurDevis) => patch({ couleurDevis })}
+          />
         </ParametresSection>
 
         <ParametresSection
@@ -708,17 +795,19 @@ export default function ParametresPage() {
             "sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center gap-3 rounded-2xl border border-border/80 bg-background/95 px-4 py-4 backdrop-blur-sm",
           )}
         >
-          <Button type="submit" className="min-w-[140px]">
-            {saved ? "Enregistré ✓" : "Enregistrer"}
+          <Button type="submit" className="min-w-[140px]" disabled={saving || loadingSettings}>
+            {saving ? "Enregistrement…" : saved ? "Enregistré ✓" : "Enregistrer"}
           </Button>
           <Button
             type="button"
             variant="danger"
+            disabled={saving || loadingSettings}
             onClick={() => setConfirmResetOpen(true)}
           >
             Réinitialiser les données
           </Button>
         </footer>
+        </fieldset>
       </form>
 
       <ConfirmDialog

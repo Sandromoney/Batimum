@@ -17,6 +17,8 @@ import {
   logMumIa,
   openAiNotConfiguredResponse,
 } from "@/lib/openai-server";
+import { checkUserAiQuota, incrementUserAiUsage } from "@/lib/ai-usage-store";
+import { getAuthenticatedSupabaseUser } from "@/lib/supabase-auth-server";
 
 const VALID_TYPES_CHANTIER = new Set<TypeChantier>([
   "renovation",
@@ -152,6 +154,23 @@ export async function POST(request: Request) {
     );
   }
 
+  const authUser = await getAuthenticatedSupabaseUser();
+  if (authUser) {
+    const quota = await checkUserAiQuota(authUser.id);
+    if (!quota.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            quota.message ??
+            "Vous avez atteint votre limite de 100 demandes IA ce mois-ci",
+          quota,
+        },
+        { status: 429 },
+      );
+    }
+  }
+
   const client = createOpenAiClient();
   if (!client) {
     return NextResponse.json(openAiNotConfiguredResponse(), { status: 503 });
@@ -221,6 +240,10 @@ export async function POST(request: Request) {
       coefficientRegionalManuel: input.coefficientRegionalManuel,
       ratioEntries: input.ratioEntries,
     });
+
+    if (authUser) {
+      await incrementUserAiUsage(authUser.id);
+    }
 
     return NextResponse.json({
       success: true,

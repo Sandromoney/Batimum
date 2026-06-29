@@ -8,9 +8,12 @@ export function subscriptionFromStripe(
   status: SubscriptionStatus;
   trialEndsAt?: string;
   currentPeriodEnd?: string;
+  currentPeriodStart?: string;
+  subscriptionStartDate?: string;
 } {
-  const periodEnd =
-    subscription.items?.data?.[0]?.current_period_end ?? undefined;
+  const item = subscription.items?.data?.[0];
+  const periodEnd = item?.current_period_end ?? undefined;
+  const periodStart = item?.current_period_start ?? undefined;
 
   return {
     status: mapStripeSubscriptionStatus(subscription.status),
@@ -19,6 +22,12 @@ export function subscriptionFromStripe(
       : undefined,
     currentPeriodEnd: periodEnd
       ? new Date(periodEnd * 1000).toISOString()
+      : undefined,
+    currentPeriodStart: periodStart
+      ? new Date(periodStart * 1000).toISOString()
+      : undefined,
+    subscriptionStartDate: subscription.start_date
+      ? new Date(subscription.start_date * 1000).toISOString()
       : undefined,
   };
 }

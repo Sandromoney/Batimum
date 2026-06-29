@@ -27,6 +27,10 @@ import {
 import { RELANCE_NIVEAU_LABELS } from "@/lib/facture-relances-auto";
 import { markFactureEnvoyee, markFactureRelancee } from "@/lib/facture-statut";
 import { formatCurrency, generateId } from "@/lib/utils";
+import {
+  buildDevisSignatureHtmlBlock,
+  buildDevisSignaturePlainTextBlock,
+} from "@/lib/devis-signature-url";
 
 type RelanceTarget =
   | { documentType: "devis"; document: Devis }
@@ -36,6 +40,7 @@ export type ReminderEmailPreview = {
   destinataire: string;
   objet: string;
   message: string;
+  html?: string;
 };
 
 export type DevisEmailPayload = ReminderEmailPreview & {
@@ -348,8 +353,7 @@ export function buildDevisClientSendEmail({
 
 Veuillez trouver ci-joint le devis ${devis.numero} pour ${devis.titre}.
 
-Vous pouvez consulter et signer votre devis en ligne via le lien suivant :
-${signatureUrl}
+${buildDevisSignaturePlainTextBlock(signatureUrl)}
 
 Le devis est également joint à cet email au format PDF.
 
@@ -360,15 +364,15 @@ ${appendSignatureEmail(parametres)}`,
     parametres,
   );
 
+  const signatureBlock = buildDevisSignatureHtmlBlock(signatureUrl);
+
   const html = `<!DOCTYPE html>
 <html lang="fr">
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;">
   <p>Bonjour ${clientName},</p>
   <p>Veuillez trouver ci-joint le devis <strong>${devis.numero}</strong> pour ${devis.titre}.</p>
-  <p>Le devis est joint à cet email au format PDF. Vous pouvez également le consulter et le signer en ligne :</p>
-  <p style="margin: 24px 0;">
-    <a href="${signatureUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Voir et signer mon devis</a>
-  </p>
+  <p>Le devis est joint à cet email au format PDF.</p>
+  ${signatureBlock}
   <p>Nous restons à votre disposition pour toute question.</p>
   <p>Cordialement,<br>${appendSignatureEmail(parametres).replace(/\n/g, "<br>")}</p>
 </body>
@@ -452,13 +456,22 @@ export function buildDevisReminderEmail({
 
 Nous nous permettons de revenir vers vous concernant le devis ${devis.numero} d’un montant de ${montant} TTC.
 
-Vous pouvez le consulter et le signer directement via le lien ci-dessous :
-${signatureUrl}
+${buildDevisSignaturePlainTextBlock(signatureUrl)}
 
 Nous restons à votre disposition pour toute question ou précision.
 
 Cordialement,
 ${appendSignatureEmail(parametres)}`,
+    html: `<!DOCTYPE html>
+<html lang="fr">
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;">
+  <p>Bonjour ${getClientDisplayName(client)},</p>
+  <p>Nous nous permettons de revenir vers vous concernant le devis <strong>${devis.numero}</strong> d'un montant de <strong>${montant} TTC</strong>.</p>
+  ${buildDevisSignatureHtmlBlock(signatureUrl)}
+  <p>Nous restons à votre disposition pour toute question ou précision.</p>
+  <p>Cordialement,<br>${appendSignatureEmail(parametres).replace(/\n/g, "<br>")}</p>
+</body>
+</html>`,
   };
 }
 

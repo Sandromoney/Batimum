@@ -21,6 +21,8 @@ export type CompleteDevisClientSignatureInput = {
   signedBy: string;
   clientIp?: string;
   totalHT?: number;
+  /** Ne pas envoyer les emails (flux signature publique serveur). */
+  skipNotifications?: boolean;
 };
 
 export type CompleteDevisClientSignatureResult = {
@@ -102,6 +104,7 @@ export async function completeDevisClientSignature({
   signedBy,
   clientIp,
   totalHT,
+  skipNotifications = false,
 }: CompleteDevisClientSignatureInput): Promise<CompleteDevisClientSignatureResult> {
   if (!canClientSignDevis(devis)) {
     throw new Error("Ce devis ne peut pas être signé.");
@@ -138,13 +141,21 @@ export async function completeDevisClientSignature({
 
   signedDevis = appendOfficialPdfHistorique(signedDevis, trimmedSignedBy, clientIp);
 
-  const emailResults = await sendDevisSignedNotifications({
-    devis: signedDevis,
-    client,
-    parametres,
-    totalHT: resolvedTotalHT,
+  let emailResults: Awaited<ReturnType<typeof sendDevisSignedNotifications>> = {
+    company: { success: false, simulated: false, message: "" },
+    client: { success: false, simulated: false, message: "" },
     pdfBase64,
-  });
+  };
+
+  if (!skipNotifications) {
+    emailResults = await sendDevisSignedNotifications({
+      devis: signedDevis,
+      client,
+      parametres,
+      totalHT: resolvedTotalHT,
+      pdfBase64,
+    });
+  }
 
   const companyDest = parametres.email?.trim();
   const clientDest = client?.email?.trim();

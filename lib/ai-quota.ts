@@ -3,7 +3,7 @@ import { hasUnrestrictedDevAccess } from "@/lib/dev-access";
 import type { Parametres } from "@/lib/types";
 
 export const AI_QUOTA_FREE_MONTHLY = 5;
-export const AI_QUOTA_PRO_MONTHLY = 300;
+export const AI_QUOTA_PRO_MONTHLY = 100;
 
 export type AiQuotaState = {
   used: number;

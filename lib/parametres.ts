@@ -69,6 +69,7 @@ export const DEFAULT_PARAMETRES: Parametres = {
   relanceJ15: true,
   relanceJ30: true,
   connexionEmail: DEFAULT_CONNEXION_EMAIL,
+  couleurDevis: "bleu_batimum",
 };
 
 export function normalizeParametres(
@@ -132,6 +133,14 @@ export function normalizeParametres(
       statut: p.connexionEmail?.statut ?? "non_connecte",
       provider: p.connexionEmail?.provider ?? null,
     },
+    couleurDevis:
+      p.couleurDevis === "noir" ||
+      p.couleurDevis === "or" ||
+      p.couleurDevis === "vert" ||
+      p.couleurDevis === "rouge_brique" ||
+      p.couleurDevis === "gris_premium"
+        ? p.couleurDevis
+        : "bleu_batimum",
   };
 }
 
