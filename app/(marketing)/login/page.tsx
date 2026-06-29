@@ -8,28 +8,10 @@ import { GoogleContinueButton } from "@/components/google-continue-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
-import {
-  canAccessApp,
-  getAccount,
-  isLegacyAppUser,
-  saveAccount,
-} from "@/lib/account";
-import { authenticateCredentials, getCredentials, saveVerifiedPasswordCredentials } from "@/lib/auth-credentials";
 import { isEmployeLoginIdentifier } from "@/lib/employee-access";
-import { needsCompanyOnboarding } from "@/lib/onboarding";
-import {
-  createPrivateBetaAccount,
-  isPrivateBetaEnabled,
-  isPrivateBetaTestCredentials,
-  PRIVATE_BETA_LOGIN_DENIED_MESSAGE,
-  PRIVATE_BETA_TEST_EMAIL,
-  PRIVATE_BETA_TEST_PASSWORD,
-} from "@/lib/private-beta";
-import {
-  createDevAdminAccount,
-  isDevAdminCredentials,
-  isDevOpenAccess,
-} from "@/lib/dev-access";
+import { isPrivateBetaEnabled } from "@/lib/private-beta";
+import { ensureAppAccountFromSupabaseUser } from "@/lib/supabase-auth";
+import { createClient } from "@/utils/supabase/client";
 
 function LoginPageContent() {
   const router = useRouter();
@@ -89,32 +71,6 @@ function LoginPageContent() {
               setError("");
               setLoading(true);
 
-              if (isPrivateBetaEnabled()) {
-                if (!isPrivateBetaTestCredentials(email, password)) {
-                  setLoading(false);
-                  setError(PRIVATE_BETA_LOGIN_DENIED_MESSAGE);
-                  return;
-                }
-                await saveVerifiedPasswordCredentials(
-                  PRIVATE_BETA_TEST_EMAIL,
-                  PRIVATE_BETA_TEST_PASSWORD,
-                );
-                saveAccount(createPrivateBetaAccount());
-                router.push("/dashboard");
-                return;
-              }
-
-              if (isDevAdminCredentials(email, password)) {
-                saveAccount(createDevAdminAccount());
-                router.push("/dashboard");
-                return;
-              }
-
-              if (isLegacyAppUser() || isDevOpenAccess()) {
-                router.push("/dashboard");
-                return;
-              }
-
               if (isEmployeLoginIdentifier(email)) {
                 setLoading(false);
                 setError(
@@ -123,44 +79,50 @@ function LoginPageContent() {
                 return;
               }
 
-              const account = getAccount();
-              const credentials = getCredentials(email);
-
-              if (credentials && credentials.role !== "employe") {
-                const auth = await authenticateCredentials(email, password);
-                if (!auth.ok) {
-                  setLoading(false);
-                  if (auth.message.includes("Vérifiez votre email")) {
-                    router.push("/verifier-email");
-                    return;
-                  }
-                  setError(auth.message);
-                  return;
-                }
-                if (!canAccessApp(account)) {
-                  setLoading(false);
-                  router.push("/abonnement");
-                  return;
-                }
-                router.push(
-                  needsCompanyOnboarding(account)
-                    ? "/configurer-entreprise"
-                    : "/dashboard",
-                );
+              const supabase = createClient();
+              if (!supabase) {
+                setLoading(false);
+                setError("Configuration Supabase manquante.");
                 return;
               }
 
-              if (account && canAccessApp(account) && account.role !== "employe") {
-                router.push(
-                  needsCompanyOnboarding(account)
-                    ? "/configurer-entreprise"
-                    : "/dashboard",
+              const { data: signInData, error: signInError } =
+                await supabase.auth.signInWithPassword({
+                  email: email.trim(),
+                  password,
+                });
+
+              if (signInError) {
+                console.log(
+                  "[login] Supabase signInWithPassword error:",
+                  signInError,
                 );
+                console.log(
+                  "[login] Supabase error message:",
+                  signInError.message,
+                );
+                console.log(
+                  "[login] Supabase error status:",
+                  signInError.status,
+                );
+                setLoading(false);
+                setError(signInError.message);
                 return;
               }
 
-              setLoading(false);
-              setError("Email ou mot de passe incorrect.");
+              const sessionUser =
+                signInData.session?.user ??
+                (await supabase.auth.getSession()).data.session?.user;
+
+              if (!sessionUser) {
+                console.log("[login] No Supabase session after signInWithPassword");
+                setLoading(false);
+                setError("Session invalide après connexion.");
+                return;
+              }
+
+              ensureAppAccountFromSupabaseUser(sessionUser);
+              router.push("/dashboard");
             }}
           >
             <section>

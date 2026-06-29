@@ -30,6 +30,8 @@ export interface UserAccount {
   employeId?: string;
   /** Acceptation CGU/CGV lors de la création de compte. */
   legalAcceptance?: LegalAcceptance;
+  /** Identifiant Supabase Auth — source de vérité pour la connexion. */
+  supabaseUserId?: string;
 }
 
 export const ACCOUNT_STORAGE_KEY = "btp-gestion-account";
@@ -96,6 +98,7 @@ export function hasActiveSubscription(
 
 export function canAccessApp(account: UserAccount | null): boolean {
   if (isLegacyAppUser()) return true;
+  if (account?.supabaseUserId) return true;
   if (hasPrivateBetaAppAccess(account)) return true;
   if (hasUnrestrictedDevAccess(account)) return true;
   if (!account) return false;

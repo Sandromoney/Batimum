@@ -18,9 +18,13 @@ import { getCredentials } from "@/lib/auth-credentials";
 import { needsCompanyOnboarding } from "@/lib/onboarding";
 import {
   getPublicSignupHref,
-  hasPrivateBetaAppAccess,
   isPrivateBetaEnabled,
 } from "@/lib/private-beta";
+import {
+  ensureAppAccountFromSupabaseUser,
+  isSupabaseAuthenticatedAccount,
+} from "@/lib/supabase-auth";
+import { createClient } from "@/utils/supabase/client";
 
 type AccessState = "loading" | "granted" | "redirecting";
 
@@ -44,16 +48,25 @@ export function SubscriptionGuard({ children }: { children: ReactNode }) {
         return;
       }
 
+      const supabase = createClient();
+      if (supabase) {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.log("[subscription-guard] Supabase getSession error:", error);
+        }
+        if (data.session?.user) {
+          ensureAppAccountFromSupabaseUser(data.session.user);
+          setAccessState("granted");
+          return;
+        }
+      }
+
       if (isLegacyAppUser() || isDevOpenAccess()) {
         setAccessState("granted");
         return;
       }
 
       const account = getAccount();
-      if (hasPrivateBetaAppAccess(account)) {
-        setAccessState("granted");
-        return;
-      }
 
       if (isEmployeAccount(account)) {
         setAccessState("granted");
@@ -111,12 +124,19 @@ export function SubscriptionGuard({ children }: { children: ReactNode }) {
       }
 
       const credentials = updated ? getCredentials(updated.email) : null;
-      if (credentials && !credentials.emailVerified) {
+      if (
+        credentials &&
+        !credentials.emailVerified &&
+        !isSupabaseAuthenticatedAccount(updated)
+      ) {
         redirectTo("/verifier-email");
         return;
       }
 
-      if (needsCompanyOnboarding(updated)) {
+      if (
+        needsCompanyOnboarding(updated) &&
+        !isSupabaseAuthenticatedAccount(updated)
+      ) {
         redirectTo("/configurer-entreprise");
         return;
       }

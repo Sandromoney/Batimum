@@ -36,7 +36,8 @@ export function isPrivateBetaTestAccount(
 export function hasPrivateBetaAppAccess(
   account: UserAccount | null | undefined,
 ): boolean {
-  return isPrivateBetaEnabled() && isPrivateBetaTestAccount(account);
+  if (!isPrivateBetaEnabled()) return false;
+  return Boolean(account?.supabaseUserId);
 }
 
 export function getPublicSignupHref(): string {

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { DEFAULT_PARAMETRES } from "@/lib/parametres";
 import { clearAccount, getAccount, getAppRole } from "@/lib/account";
+import { signOutSupabase } from "@/lib/supabase-auth";
 import { APP_ROLE_LABELS } from "@/lib/auth-types";
 import { UserAvatar } from "@/components/user-avatar";
 import { useHoverDropdown } from "@/lib/use-hover-dropdown";
@@ -50,8 +51,9 @@ export function AppUserMenu() {
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [closeMenu, hoverOpenEnabled, open]);
 
-  function handleLogout() {
+  async function handleLogout() {
     closeMenu();
+    await signOutSupabase();
     clearAccount();
     router.replace("/login");
   }
