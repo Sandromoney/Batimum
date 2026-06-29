@@ -4,11 +4,12 @@ import { getEmailConnectionStatusFromSupabase } from "@/lib/email-connection-sto
 import { emailProviderService } from "@/lib/email-provider";
 import { EMAIL_OAUTH_COOKIE } from "@/lib/email-provider/token-cookie";
 import {
-  EMAIL_CONNECTIONS_TABLE,
   formatGmailConfigMissingMessage,
-  getEmailConnectionsTableMissingMessage,
+  formatGmailDbErrorForUser,
+  GmailDbError,
   isEmailConnectionsTableMissingError,
   logGmailConfigMissing,
+  logGmailDbSupabaseError,
   logGmailEnvDiagnostics,
   validateGmailOAuthConfig,
 } from "@/lib/gmail-oauth-config";
@@ -50,20 +51,19 @@ export async function GET() {
         await getEmailConnectionStatusFromSupabase(authUser.id);
 
       if (supabaseError) {
+        logGmailDbSupabaseError(supabaseError);
         console.error("[gmail-status] supabase query error", supabaseError);
-        if (isEmailConnectionsTableMissingError(supabaseError)) {
-          console.log(`[gmail-config] missing: ${EMAIL_CONNECTIONS_TABLE}`);
-          return NextResponse.json(
-            {
-              connected: false,
-              expired: false,
-              provider: null,
-              configError: true,
-              message: getEmailConnectionsTableMissingMessage(),
-            },
-            { status: 200 },
-          );
-        }
+        return NextResponse.json(
+          {
+            connected: false,
+            expired: false,
+            provider: null,
+            configError: true,
+            message: formatGmailDbErrorForUser(supabaseError),
+            code: supabaseError.code,
+          },
+          { status: 200 },
+        );
       } else if (supabaseStatus) {
         console.log("[gmail-status] supabase query success", {
           userId: authUser.id,

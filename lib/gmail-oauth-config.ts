@@ -7,6 +7,8 @@ export const GMAIL_CONFIG_INCOMPLETE_MESSAGE =
   "Configuration Gmail incomplète côté serveur";
 
 export const EMAIL_CONNECTIONS_TABLE = "email_connections";
+export const EMAIL_CONNECTIONS_SCHEMA = "public";
+export const EMAIL_CONNECTIONS_QUALIFIED_NAME = `${EMAIL_CONNECTIONS_SCHEMA}.${EMAIL_CONNECTIONS_TABLE}`;
 
 export const GOOGLE_REDIRECT_URI_ENV_NAME = "GOOGLE_REDIRECT_URI";
 
@@ -230,24 +232,92 @@ export function logGmailConfigMissing(missing: string[]): void {
   }
 }
 
-export function isEmailConnectionsTableMissingError(error: {
+export function logGmailDbTableCheck(operation: string): void {
+  console.log(`[gmail-db] checking table: ${EMAIL_CONNECTIONS_QUALIFIED_NAME}`, {
+    operation,
+    schema: EMAIL_CONNECTIONS_SCHEMA,
+    table: EMAIL_CONNECTIONS_TABLE,
+    via: "supabase.from(email_connections) → schéma public par défaut (PostgREST)",
+  });
+}
+
+export type GmailDbSupabaseError = {
   message?: string;
   code?: string;
-}): boolean {
-  const message = error.message?.toLowerCase() ?? "";
-  const code = error.code?.toLowerCase() ?? "";
+  details?: string | null;
+  hint?: string | null;
+};
 
-  return (
-    code === "pgrst205" ||
-    code === "42p01" ||
-    message.includes("email_connections") ||
-    message.includes("could not find the table") ||
-    (message.includes("relation") && message.includes("does not exist"))
-  );
+export function logGmailDbSupabaseError(
+  error: GmailDbSupabaseError,
+  _operation?: string,
+): void {
+  console.error("[gmail-db]", {
+    code: error.code ?? null,
+    message: error.message ?? null,
+    details: error.details ?? null,
+    hint: error.hint ?? null,
+  });
+}
+
+export function isEmailConnectionsTableMissingError(error: {
+  code?: string | null;
+}): boolean {
+  const code = error.code?.toUpperCase() ?? "";
+  return code === "PGRST205" || code === "42P01";
+}
+
+export function formatGmailDbErrorForUser(error: GmailDbSupabaseError): string {
+  if (isEmailConnectionsTableMissingError(error)) {
+    return "table email_connections manquante";
+  }
+
+  const code = error.code?.toUpperCase() ?? "";
+  const message = error.message ?? "";
+  const normalized = message.toLowerCase();
+
+  if (code === "42501" || normalized.includes("permission denied")) {
+    return "Permission refusée sur email_connections (policy RLS ou droits insuffisants).";
+  }
+
+  if (
+    code === "PGRST301" ||
+    normalized.includes("jwt") ||
+    normalized.includes("invalid claim")
+  ) {
+    return "JWT invalide ou session Supabase expirée.";
+  }
+
+  if (normalized.includes("invalid api key") || normalized.includes("apikey")) {
+    return "Clé API Supabase invalide.";
+  }
+
+  if (
+    normalized.includes("service role") ||
+    normalized.includes("service_role")
+  ) {
+    return "Clé service role Supabase manquante ou invalide.";
+  }
+
+  return message || "Erreur base de données lors de l'accès à email_connections.";
+}
+
+export class GmailDbError extends Error {
+  readonly code?: string;
+  readonly details?: string | null;
+  readonly hint?: string | null;
+
+  constructor(error: GmailDbSupabaseError) {
+    super(formatGmailDbErrorForUser(error));
+    this.name = "GmailDbError";
+    this.code = error.code;
+    this.details = error.details ?? null;
+    this.hint = error.hint ?? null;
+  }
 }
 
 export function getEmailConnectionsTableMissingMessage(): string {
-  return formatSingleGmailConfigMissingLabel(EMAIL_CONNECTIONS_TABLE);
+  return "table email_connections manquante";
 }
 
 export function assertGmailOAuthConfig(): GmailOAuthConfigCheck {

@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
 import {
-  EMAIL_CONNECTIONS_TABLE,
-  getEmailConnectionsTableMissingMessage,
+  GmailDbError,
   isEmailConnectionsTableMissingError,
+  logGmailDbSupabaseError,
+  logGmailDbTableCheck,
 } from "@/lib/gmail-oauth-config";
 import {
   decryptEmailToken,
@@ -58,14 +59,15 @@ async function getSupabaseForRequest() {
 export async function saveEmailConnectionForUser(
   userId: string,
   tokens: StoredEmailOAuthTokens,
-  options?: { useServiceRole?: boolean },
 ): Promise<void> {
-  const supabase = options?.useServiceRole
-    ? createAdminClient()
-    : await getSupabaseForRequest();
+  const usingServiceRole = true;
+  console.log(`[gmail-db] using service role: ${usingServiceRole}`);
 
+  const supabase = createAdminClient();
   if (!supabase) {
-    throw new Error("Configuration Supabase manquante.");
+    throw new Error(
+      "Clé service role Supabase manquante — impossible d'enregistrer le token Gmail.",
+    );
   }
 
   const provider = oauthProviderToStorage(tokens.provider);
@@ -82,16 +84,15 @@ export async function saveEmailConnectionForUser(
     updated_at: new Date().toISOString(),
   };
 
+  logGmailDbTableCheck("upsert");
+
   const { error } = await supabase
     .from("email_connections")
     .upsert(payload, { onConflict: "user_id,provider" });
 
   if (error) {
-    if (isEmailConnectionsTableMissingError(error)) {
-      console.log(`[gmail-config] missing: ${EMAIL_CONNECTIONS_TABLE}`);
-      throw new Error(getEmailConnectionsTableMissingMessage());
-    }
-    throw error;
+    logGmailDbSupabaseError(error);
+    throw new GmailDbError(error);
   }
 }
 
@@ -120,24 +121,22 @@ export async function loadEmailConnectionForUser(
     query = query.eq("provider", oauthProviderToStorage(provider));
   }
 
+  logGmailDbTableCheck("select");
+
   const { data, error } = await query
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (error) {
-    if (isEmailConnectionsTableMissingError(error)) {
-      console.log(`[gmail-config] missing: ${EMAIL_CONNECTIONS_TABLE}`);
-      return {
-        tokens: null,
-        error: {
-          message: getEmailConnectionsTableMissingMessage(),
-          code: "TABLE_MISSING",
-        },
-      };
-    }
-
-    return { tokens: null, error: { message: error.message, code: error.code } };
+    logGmailDbSupabaseError(error);
+    return {
+      tokens: null,
+      error: {
+        message: new GmailDbError(error).message,
+        code: error.code,
+      },
+    };
   }
 
   if (!data) {
@@ -166,6 +165,9 @@ export async function disconnectEmailConnectionForUser(
   userId: string,
   provider?: EmailOAuthProvider,
 ): Promise<void> {
+  const usingServiceRole = Boolean(createAdminClient());
+  console.log(`[gmail-db] using service role: ${usingServiceRole}`);
+
   const supabase = createAdminClient() ?? (await getSupabaseForRequest());
   if (!supabase) return;
 
@@ -175,7 +177,13 @@ export async function disconnectEmailConnectionForUser(
     query = query.eq("provider", oauthProviderToStorage(provider));
   }
 
-  await query;
+  logGmailDbTableCheck("delete");
+
+  const { error } = await query;
+  if (error) {
+    logGmailDbSupabaseError(error);
+    throw new GmailDbError(error);
+  }
 }
 
 export async function getEmailConnectionStatusFromSupabase(
@@ -219,5 +227,5 @@ export async function updateEmailConnectionTokens(
   userId: string,
   tokens: StoredEmailOAuthTokens,
 ): Promise<void> {
-  await saveEmailConnectionForUser(userId, tokens, { useServiceRole: true });
+  await saveEmailConnectionForUser(userId, tokens);
 }

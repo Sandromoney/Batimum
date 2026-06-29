@@ -26,7 +26,6 @@ import {
 import {
   formatGmailConfigMissingMessage,
   getAppBaseUrl,
-  isEmailConnectionsTableMissingError,
   logGmailConfigMissing,
   logGmailRedirectUriDiagnostics,
   validateGmailOAuthConfig,
@@ -159,9 +158,7 @@ export async function GET(
     const authUser = await getAuthenticatedSupabaseUser();
     if (authUser && flow === "connect") {
       try {
-        await saveEmailConnectionForUser(authUser.id, tokens, {
-          useServiceRole: true,
-        });
+        await saveEmailConnectionForUser(authUser.id, tokens);
         console.log("[gmail-oauth-callback] token saved", {
           userId: authUser.id,
           email: tokens.email,
@@ -170,20 +167,9 @@ export async function GET(
         console.error("[gmail-oauth-callback] token saved error", saveError);
         const saveMessage =
           saveError instanceof Error
-            ? toFriendlyGmailOAuthError(saveError)
-            : "table email_connections manquante";
-        const isBlockingSaveError =
-          saveMessage.toLowerCase().includes("manquante") ||
-          (typeof saveError === "object" &&
-            saveError !== null &&
-            "message" in saveError &&
-            isEmailConnectionsTableMissingError(
-              saveError as { message?: string; code?: string },
-            ));
-
-        if (isBlockingSaveError) {
-          return redirectOAuthError(appUrl, flow, saveMessage);
-        }
+            ? saveError.message
+            : "Erreur lors de l'enregistrement du token Gmail.";
+        return redirectOAuthError(appUrl, flow, saveMessage);
       }
     } else if (flow === "connect" && provider === "google") {
       console.log("[gmail-oauth-callback] token saved skipped", {
