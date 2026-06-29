@@ -51,11 +51,21 @@ export async function fetchEmailConnectionStatus(): Promise<EmailConnectionStatu
   try {
     const response = await fetch("/api/email/status", { cache: "no-store" });
     if (!response.ok) {
-      return { connected: false, expired: false, provider: null };
+      return {
+        connected: false,
+        expired: false,
+        provider: null,
+        statusError: true,
+      };
     }
     return (await response.json()) as EmailConnectionStatus;
   } catch {
-    return { connected: false, expired: false, provider: null };
+    return {
+      connected: false,
+      expired: false,
+      provider: null,
+      statusError: true,
+    };
   }
 }
 

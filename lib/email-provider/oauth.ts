@@ -6,6 +6,11 @@ import {
   getMicrosoftClientId,
   getMicrosoftClientSecret,
 } from "./env-config";
+import {
+  formatGmailConfigMissingMessage,
+  logGmailConfigMissing,
+  validateGmailOAuthConfig,
+} from "@/lib/gmail-oauth-config";
 function appUrl(): string {
   return (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3006").replace(
     /\/$/,
@@ -14,13 +19,22 @@ function appUrl(): string {
 }
 
 export function getOAuthRedirectUri(provider: EmailOAuthProvider): string {
+  if (provider === "google") {
+    const explicit = process.env.GOOGLE_REDIRECT_URI?.trim();
+    if (explicit) {
+      return explicit.replace(/\/$/, "");
+    }
+  }
+
   return `${appUrl()}/api/email/oauth/${provider}/callback`;
 }
 
 export function buildGoogleAuthorizeUrl(state: string): string {
   const clientId = getGoogleClientId();
   if (!clientId) {
-    throw new Error("GOOGLE_CLIENT_ID non configuré.");
+    const check = validateGmailOAuthConfig();
+    logGmailConfigMissing(check.missing);
+    throw new Error(formatGmailConfigMissingMessage(check.missing));
   }
   const params = new URLSearchParams({
     client_id: clientId,
@@ -69,24 +83,55 @@ export async function exchangeGoogleCode(
 ): Promise<StoredEmailOAuthTokens> {
   const clientId = getGoogleClientId();
   const clientSecret = getGoogleClientSecret();
-  if (!clientId || !clientSecret) {    throw new Error("Identifiants Google OAuth non configurés.");
+  if (!clientId || !clientSecret) {
+    const check = validateGmailOAuthConfig();
+    logGmailConfigMissing(check.missing);
+    throw new Error(formatGmailConfigMissingMessage(check.missing));
   }
 
-  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      code,
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: getOAuthRedirectUri("google"),
-      grant_type: "authorization_code",
-    }),
-  });
+  const redirectUri = getOAuthRedirectUri("google");
+  console.log("[gmail-oauth-callback] token exchange start", { redirectUri });
+
+  let tokenRes: Response;
+  try {
+    tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: "authorization_code",
+      }),
+    });
+  } catch (error) {
+    console.error("[gmail-oauth-callback] token exchange error", {
+      error,
+      cause: error instanceof Error ? error.cause : undefined,
+    });
+    throw new Error("Impossible de contacter les serveurs Google pour le moment.");
+  }
 
   if (!tokenRes.ok) {
-    throw new Error(await tokenRes.text());
+    const body = await tokenRes.text();
+    console.error("[gmail-oauth-callback] token exchange error", {
+      status: tokenRes.status,
+      body,
+    });
+    if (
+      body.includes("redirect_uri") ||
+      body.includes("invalid_client") ||
+      body.includes("unauthorized_client")
+    ) {
+      const check = validateGmailOAuthConfig();
+      logGmailConfigMissing(check.missing);
+      throw new Error(formatGmailConfigMissingMessage(check.missing));
+    }
+    throw new Error(body || "Échange du code Google échoué.");
   }
+
+  console.log("[gmail-oauth-callback] token exchange success");
 
   const tokenJson = (await tokenRes.json()) as {
     access_token: string;
@@ -94,14 +139,28 @@ export async function exchangeGoogleCode(
     expires_in: number;
   };
 
-  const profileRes = await fetch(
-    "https://www.googleapis.com/oauth2/v2/userinfo",
-    {
-      headers: { Authorization: `Bearer ${tokenJson.access_token}` },
-    },
-  );
+  let profileRes: Response;
+  try {
+    profileRes = await fetch(
+      "https://www.googleapis.com/oauth2/v2/userinfo",
+      {
+        headers: { Authorization: `Bearer ${tokenJson.access_token}` },
+      },
+    );
+  } catch (error) {
+    console.error("[gmail-oauth-callback] token exchange error", {
+      error,
+      cause: error instanceof Error ? error.cause : undefined,
+    });
+    throw new Error("Impossible de récupérer le profil Google.");
+  }
 
   if (!profileRes.ok) {
+    const body = await profileRes.text();
+    console.error("[gmail-oauth-callback] token exchange error", {
+      status: profileRes.status,
+      body,
+    });
     throw new Error("Impossible de récupérer l'email Google.");
   }
 

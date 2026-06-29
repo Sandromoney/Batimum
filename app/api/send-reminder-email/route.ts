@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { updateEmailConnectionTokens } from "@/lib/email-connection-store";
 import { emailProviderService } from "@/lib/email-provider";
+import { resolveEmailOAuthTokens } from "@/lib/email-provider/resolve-tokens";
 import {
   EMAIL_OAUTH_COOKIE,
   sealEmailOAuthTokens,
@@ -28,7 +30,19 @@ export async function POST(request: Request) {
   }
 
   const cookieStore = await cookies();
-  const sealed = cookieStore.get(EMAIL_OAUTH_COOKIE)?.value;
+  const cookieSealed = cookieStore.get(EMAIL_OAUTH_COOKIE)?.value;
+  const { tokens: resolvedTokens, sealed, userId } =
+    await resolveEmailOAuthTokens(cookieSealed);
+
+  if (!sealed && resolvedTokens) {
+    cookieStore.set(EMAIL_OAUTH_COOKIE, sealEmailOAuthTokens(resolvedTokens), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 90,
+    });
+  }
 
   const result = await emailProviderService.send(
     {
@@ -50,24 +64,29 @@ export async function POST(request: Request) {
           : undefined,
     },
     {
-      sealedTokens: sealed,
+      sealedTokens: sealed ?? cookieSealed,
       allowFallback: payload.allowFallback ?? false,
       replyToEmail: payload.replyToEmail,
     },
   );
 
   if (result.refreshedTokens) {
-    cookieStore.set(
-      EMAIL_OAUTH_COOKIE,
-      sealEmailOAuthTokens(result.refreshedTokens),
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 90,
-      },
-    );
+    const refreshedSealed = sealEmailOAuthTokens(result.refreshedTokens);
+    cookieStore.set(EMAIL_OAUTH_COOKIE, refreshedSealed, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 90,
+    });
+
+    if (userId) {
+      try {
+        await updateEmailConnectionTokens(userId, result.refreshedTokens);
+      } catch {
+        /* garde le cookie à jour même si Supabase échoue */
+      }
+    }
   }
 
   if (!result.ok) {

@@ -4,17 +4,23 @@ import { randomBytes } from "crypto";
 import {
   buildGoogleAuthorizeUrl,
   buildMicrosoftAuthorizeUrl,
+  getOAuthRedirectUri,
 } from "@/lib/email-provider/oauth";
 import {
   EMAIL_OAUTH_FLOW_COOKIE,
   EMAIL_OAUTH_STATE_COOKIE,
 } from "@/lib/email-provider/token-cookie";
-import { logEmailOAuthEnvPresence } from "@/lib/email-provider/env-config";
 import {
   oauthFlowErrorQuery,
   oauthFlowRedirectBase,
   parseGoogleOAuthFlow,
 } from "@/lib/email-provider/oauth-flow";
+import {
+  formatGmailConfigMissingMessage,
+  GMAIL_CONFIG_INCOMPLETE_MESSAGE,
+  logGmailConfigMissing,
+  validateGmailOAuthConfig,
+} from "@/lib/gmail-oauth-config";
 
 type Provider = "google" | "microsoft";
 
@@ -31,6 +37,23 @@ export async function GET(
     "",
   );
 
+  if (provider === "google") {
+    console.log("[gmail-oauth-start] start", { flow });
+
+    const config = validateGmailOAuthConfig();
+    if (!config.ok) {
+      logGmailConfigMissing(config.missing);
+      return NextResponse.redirect(
+        `${oauthFlowRedirectBase(appUrl, flow)}?${oauthFlowErrorQuery(flow, formatGmailConfigMissingMessage(config.missing))}`,
+      );
+    }
+
+    console.log("[gmail-oauth-start] start", {
+      flow,
+      redirectUri: config.redirectUri,
+    });
+  }
+
   if (provider !== "google" && provider !== "microsoft") {
     return NextResponse.json({ error: "Fournisseur inconnu." }, { status: 400 });
   }
@@ -42,7 +65,6 @@ export async function GET(
   }
 
   try {
-    logEmailOAuthEnvPresence(`authorize:${provider}:${flow}`);
     const state = randomBytes(24).toString("hex");
     const cookieStore = await cookies();
     cookieStore.set(EMAIL_OAUTH_STATE_COOKIE, state, {
@@ -68,7 +90,10 @@ export async function GET(
     return NextResponse.redirect(url);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Configuration OAuth incomplète.";
+      error instanceof Error ? error.message : GMAIL_CONFIG_INCOMPLETE_MESSAGE;
+    if (provider === "google") {
+      console.error("[gmail-oauth-start] env missing", { message });
+    }
     return NextResponse.redirect(
       `${oauthFlowRedirectBase(appUrl, flow)}?${oauthFlowErrorQuery(flow, message)}`,
     );

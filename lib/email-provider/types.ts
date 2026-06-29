@@ -39,6 +39,9 @@ export type EmailConnectionStatus = {
   provider?: EmailOAuthProvider | null;
   email?: string;
   expiresAt?: string;
+  statusError?: boolean;
+  configError?: boolean;
+  message?: string;
 };
 
 export const EMAIL_NOT_CONNECTED_MESSAGE =

@@ -6,11 +6,14 @@ import { ParametresSection } from "@/components/parametres-section";
 import { Button } from "@/components/ui/button";
 import {
   EMAIL_EXPIRED_MESSAGE,
+  EMAIL_STATUS_FETCH_ERROR_MESSAGE,
+  GMAIL_CONFIG_INCOMPLETE_MESSAGE,
   fetchEmailConnectionStatus,
   getConnexionEmailStatutLabel,
   mergeConnexionEmailMetadata,
   resolveConnexionEmail,
 } from "@/lib/email-provider";
+import { toFriendlyFlashOAuthMessage } from "@/lib/email-provider/oauth-errors";
 import type { ConnexionEmailStatut, Parametres } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Loader2, LogOut, Mail } from "lucide-react";
@@ -42,10 +45,18 @@ export function ParametresConnexionEmailSection({
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState(false);
   const [flashMessage, setFlashMessage] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState(false);
+  const [configError, setConfigError] = useState(false);
+  const [configErrorMessage, setConfigErrorMessage] = useState<string | null>(
+    null,
+  );
 
   const applyStatus = useCallback(
     async (persist = true) => {
       const status = await fetchEmailConnectionStatus();
+      setStatusError(Boolean(status.statusError));
+      setConfigError(Boolean(status.configError));
+      setConfigErrorMessage(status.message ?? null);
       const next = mergeConnexionEmailMetadata(form, status);
       onChange(next);
       if (persist) onPersist?.(next);
@@ -87,7 +98,7 @@ export function ParametresConnexionEmailSection({
       } else if (oauth === "error") {
         setFlashMessage(
           message
-            ? decodeURIComponent(message)
+            ? toFriendlyFlashOAuthMessage(decodeURIComponent(message))
             : "La connexion email a échoué.",
         );
       }
@@ -156,6 +167,18 @@ export function ParametresConnexionEmailSection({
             </span>
           ) : null}
         </div>
+
+        {configError ? (
+          <p className="rounded-lg border btp-alert-error px-3 py-2 text-sm">
+            {configErrorMessage ?? GMAIL_CONFIG_INCOMPLETE_MESSAGE}
+          </p>
+        ) : null}
+
+        {statusError ? (
+          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+            {EMAIL_STATUS_FETCH_ERROR_MESSAGE}
+          </p>
+        ) : null}
 
         {isExpired ? (
           <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">

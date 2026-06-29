@@ -1,18 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/gmail-oauth-config";
 
 export function hasSupabaseConfig(): boolean {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim(),
-  );
+  return Boolean(getSupabaseUrl() && getSupabaseAnonKey());
 }
 
 export const createClient = (
   cookieStore: Awaited<ReturnType<typeof cookies>>,
 ) => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+  const supabaseUrl = getSupabaseUrl();
+  const supabaseKey = getSupabaseAnonKey();
 
   if (!supabaseUrl || !supabaseKey) {
     return null;

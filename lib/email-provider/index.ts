@@ -12,6 +12,13 @@ export {
   mergeConnexionEmailMetadata,
   resolveConnexionEmail,
 } from "./connexion-email";
+export {
+  EMAIL_STATUS_FETCH_ERROR_MESSAGE,
+  GMAIL_CONFIG_INCOMPLETE_MESSAGE,
+  formatGmailConfigMissingMessage,
+  toFriendlyFlashOAuthMessage,
+  toFriendlyGmailOAuthError,
+} from "./oauth-errors";
 export type {
   EmailConnectionStatus,
   EmailSendResult,
