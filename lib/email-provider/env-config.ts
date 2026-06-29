@@ -40,11 +40,11 @@ export function getEmailOAuthEnvPresence(): EmailOAuthEnvPresence {
   };
 }
 
+import { getResolvedGoogleRedirectUri } from "@/lib/gmail-oauth-config";
+
 export function logEmailOAuthEnvPresence(context: string): EmailOAuthEnvPresence {
   const presence = getEmailOAuthEnvPresence();
-  const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI?.trim() ||
-    `${(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3006").replace(/\/$/, "")}/api/email/oauth/google/callback`;
+  const redirectUri = getResolvedGoogleRedirectUri();
   console.info(`[email-oauth:${context}] GOOGLE_CLIENT_ID présent: ${presence.googleClientId ? "oui" : "non"}`);
   console.info(`[email-oauth:${context}] GOOGLE_CLIENT_SECRET présent: ${presence.googleClientSecret ? "oui" : "non"}`);
   console.info(`[email-oauth:${context}] GOOGLE_REDIRECT_URI: ${redirectUri}`);

@@ -8,23 +8,20 @@ import {
 } from "./env-config";
 import {
   formatGmailConfigMissingMessage,
+  getAppBaseUrl,
+  getResolvedGoogleRedirectUri,
   logGmailConfigMissing,
   logGmailRedirectUriDiagnostics,
   validateGmailOAuthConfig,
 } from "@/lib/gmail-oauth-config";
+
 function appUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3006").replace(
-    /\/$/,
-    "",
-  );
+  return getAppBaseUrl();
 }
 
 export function getOAuthRedirectUri(provider: EmailOAuthProvider): string {
   if (provider === "google") {
-    const explicit = process.env.GOOGLE_REDIRECT_URI?.trim();
-    if (explicit) {
-      return explicit.replace(/\/$/, "");
-    }
+    return getResolvedGoogleRedirectUri();
   }
 
   return `${appUrl()}/api/email/oauth/${provider}/callback`;
@@ -37,7 +34,7 @@ export function buildGoogleAuthorizeUrl(state: string): string {
     logGmailConfigMissing(check.missing);
     throw new Error(formatGmailConfigMissingMessage(check.missing));
   }
-  const redirectUri = getOAuthRedirectUri("google");
+  const redirectUri = getResolvedGoogleRedirectUri();
   logGmailRedirectUriDiagnostics("[gmail-oauth-start]");
 
   const params = new URLSearchParams({
@@ -93,7 +90,7 @@ export async function exchangeGoogleCode(
     throw new Error(formatGmailConfigMissingMessage(check.missing));
   }
 
-  const redirectUri = getOAuthRedirectUri("google");
+  const redirectUri = getResolvedGoogleRedirectUri();
   logGmailRedirectUriDiagnostics("[gmail-oauth-callback]");
 
   let tokenRes: Response;

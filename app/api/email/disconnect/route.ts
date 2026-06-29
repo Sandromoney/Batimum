@@ -4,6 +4,8 @@ import { disconnectEmailConnectionForUser } from "@/lib/email-connection-store";
 import { EMAIL_OAUTH_COOKIE } from "@/lib/email-provider/token-cookie";
 import { getAuthenticatedSupabaseUser } from "@/lib/supabase-auth-server";
 
+export const runtime = "nodejs";
+
 export async function POST() {
   const cookieStore = await cookies();
   cookieStore.delete(EMAIL_OAUTH_COOKIE);

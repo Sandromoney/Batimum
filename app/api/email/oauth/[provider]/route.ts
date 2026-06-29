@@ -4,7 +4,6 @@ import { randomBytes } from "crypto";
 import {
   buildGoogleAuthorizeUrl,
   buildMicrosoftAuthorizeUrl,
-  getOAuthRedirectUri,
 } from "@/lib/email-provider/oauth";
 import {
   EMAIL_OAUTH_FLOW_COOKIE,
@@ -18,13 +17,15 @@ import {
 import {
   formatGmailConfigMissingMessage,
   GMAIL_CONFIG_INCOMPLETE_MESSAGE,
+  getAppBaseUrl,
   logGmailConfigMissing,
   logGmailRedirectUriDiagnostics,
   validateGmailOAuthConfig,
 } from "@/lib/gmail-oauth-config";
 
-type Provider = "google" | "microsoft";
+export const runtime = "nodejs";
 
+type Provider = "google" | "microsoft";
 export async function GET(
   request: Request,
   context: { params: Promise<{ provider: string }> },
@@ -33,11 +34,7 @@ export async function GET(
   const provider = rawProvider as Provider;
   const requestUrl = new URL(request.url);
   const flow = parseGoogleOAuthFlow(requestUrl.searchParams.get("flow"));
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3006").replace(
-    /\/$/,
-    "",
-  );
-
+  const appUrl = getAppBaseUrl();
   if (provider === "google") {
     console.log("[gmail-oauth-start] start", { flow });
 

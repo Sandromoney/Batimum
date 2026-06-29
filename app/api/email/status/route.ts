@@ -9,12 +9,16 @@ import {
   getEmailConnectionsTableMissingMessage,
   isEmailConnectionsTableMissingError,
   logGmailConfigMissing,
+  logGmailEnvDiagnostics,
   validateGmailOAuthConfig,
 } from "@/lib/gmail-oauth-config";
 import { getAuthenticatedSupabaseUser } from "@/lib/supabase-auth-server";
 
+export const runtime = "nodejs";
+
 export async function GET() {
   console.log("[gmail-status] start");
+  logGmailEnvDiagnostics("[gmail-status]");
 
   const config = validateGmailOAuthConfig();
   if (!config.ok) {

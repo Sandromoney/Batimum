@@ -17,6 +17,7 @@ import {
 } from "@/lib/email-provider/oauth-flow";
 import {
   formatGmailConfigMissingMessage,
+  getAppBaseUrl,
   isEmailConnectionsTableMissingError,
   logGmailConfigMissing,
   logGmailRedirectUriDiagnostics,
@@ -25,16 +26,15 @@ import {
 import { isPrivateBetaEnabled } from "@/lib/private-beta";
 import { getAuthenticatedSupabaseUser } from "@/lib/supabase-auth-server";
 
+export const runtime = "nodejs";
+
 type Provider = "google" | "microsoft";
 
 export async function GET(
   request: Request,
   context: { params: Promise<{ provider: string }> },
 ) {
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3006").replace(
-    /\/$/,
-    "",
-  );
+  const appUrl = getAppBaseUrl();
   const { provider: rawProvider } = await context.params;
   const provider = rawProvider as Provider;
   const url = new URL(request.url);
