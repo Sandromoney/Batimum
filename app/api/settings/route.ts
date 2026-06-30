@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  formatUserSettingsError,
   loadUserSettingsFromSupabase,
   saveUserSettingsToSupabase,
   type UserSettingsPayload,
@@ -37,7 +38,11 @@ export async function GET() {
   if (error) {
     console.error("[user-settings] load error", error);
     return NextResponse.json(
-      { error: error.message, parametres: null, employes: null },
+      {
+        error: formatUserSettingsError(error),
+        parametres: null,
+        employes: null,
+      },
       { status: 500 },
     );
   }
@@ -101,7 +106,7 @@ export async function PUT(request: Request) {
   if (error) {
     console.error("[user-settings] save error", error);
     return NextResponse.json(
-      { error: "Impossible d'enregistrer les paramètres" },
+      { error: formatUserSettingsError(error) },
       { status: 500 },
     );
   }

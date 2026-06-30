@@ -138,9 +138,11 @@ export function normalizeParametres(
       p.couleurDevis === "or" ||
       p.couleurDevis === "vert" ||
       p.couleurDevis === "rouge_brique" ||
-      p.couleurDevis === "gris_premium"
+      p.couleurDevis === "gris_premium" ||
+      p.couleurDevis === "personnalise"
         ? p.couleurDevis
         : "bleu_batimum",
+    couleurDevisCustom: p.couleurDevisCustom?.trim() || undefined,
   };
 }
 

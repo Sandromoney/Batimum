@@ -60,60 +60,72 @@ const QUESTIONS = [
   },
 ] as const;
 
-type ResultProfile = "admin" | "teams" | "mixed";
+type ResultProfile = "admin" | "teams" | "billing" | "visibility" | "mixed";
 
-const RESULTS: Record<
-  ResultProfile,
-  { title: string; text: string; points: readonly string[] }
-> = {
-  admin: {
-    title: "Vous pourriez récupérer plusieurs heures chaque mois.",
-    text: "Batimum automatise vos devis, votre planning et votre facturation afin d'éviter les doubles saisies et le temps perdu sur l'administratif.",
-    points: [
-      "IA devis automatique",
-      "Zéro ressaisie",
-      "Facturation simplifiée",
-    ],
-  },
-  teams: {
-    title: "Vos équipes gagneraient en autonomie.",
-    text: "Grâce à l'espace employé Batimum, chacun connaît son chantier, ses consignes et ses documents sans avoir accès à vos finances ou à vos devis.",
-    points: [
-      "Espace employé séparé",
-      "Planning terrain",
-      "Notifications automatiques",
-    ],
-  },
-  mixed: {
-    title: "Batimum semble parfaitement adapté à votre entreprise.",
-    text: "Vous perdez actuellement du temps sur l'administratif, la communication interne et l'organisation terrain. Batimum réunit tout dans un seul outil pensé pour les artisans du bâtiment.",
-    points: [
-      "IA devis",
-      "Planning équipes",
-      "Zéro double saisie",
-      "Accès employés distincts",
-    ],
-  },
-};
+function buildPersonalizedResult(answers: number[]) {
+  const profile = computeResultProfile(answers);
+  const mainProblem = answers[6] ?? 0;
 
-const ADVANCE_DELAY_MS = 420;
+  if (mainProblem === 0) {
+    return {
+      title: "Vous pourriez récupérer plusieurs heures chaque semaine.",
+      text: "L'IA Batimum vous fera gagner du temps en générant vos bases de devis et en limitant la double saisie entre devis, planning et facturation.",
+      points: ["100 devis IA / mois", "Zéro ressaisie", "Devis structurés en minutes"],
+    };
+  }
 
-function scoreAnswer(questionIndex: number, answerIndex: number) {
-  const pain = Math.max(0, 2 - answerIndex);
+  if (mainProblem === 1) {
+    return {
+      title: "Vos équipes gagneraient en autonomie.",
+      text: "L'espace employé Batimum permettra à vos équipes de connaître leurs chantiers, consignes et documents sans vous appeler chaque matin.",
+      points: ["Planning terrain", "Espace employé séparé", "Moins d'appels le matin"],
+    };
+  }
 
-  if (questionIndex === 0) return { admin: 0, teams: pain };
-  if (questionIndex === 1) return { admin: pain, teams: 0 };
-  if (questionIndex === 2) return { admin: pain * 1.5, teams: 0 };
-  if (questionIndex === 3) return { admin: 0, teams: pain };
-  if (questionIndex === 4) return { admin: 0, teams: pain };
-  if (questionIndex === 5) return { admin: pain, teams: 0 };
+  if (mainProblem === 2) {
+    return {
+      title: "Batimum accélère votre passage devis → facture.",
+      text: "Batimum vous aidera à passer plus rapidement du devis à la facture, avec signature client intégrée et moins de ressaisie.",
+      points: ["Signature électronique", "Devis → facture", "Suivi des statuts"],
+    };
+  }
 
-  if (answerIndex === 0 || answerIndex === 2) return { admin: 4, teams: 0 };
-  if (answerIndex === 1 || answerIndex === 3) return { admin: 0, teams: 4 };
-  return { admin: 0, teams: 0 };
+  if (mainProblem === 3) {
+    return {
+      title: "Retrouvez une vision claire de vos chantiers.",
+      text: "Batimum centralise devis, planning et suivi chantier pour que vous sachiez où en est chaque dossier sans fouiller vos messages.",
+      points: ["Vue chantiers", "Historique centralisé", "Moins de pertes d'info"],
+    };
+  }
+
+  if (profile === "mixed") {
+    return {
+      title: "Batimum répond à plusieurs de vos irritants.",
+      text: "Entre l'administratif, l'organisation des équipes et la facturation, Batimum réunit l'essentiel dans un seul outil pensé pour le BTP.",
+      points: [
+        "IA devis + moins de double saisie",
+        "Espace employé et planning",
+        "Devis → facture plus rapide",
+      ],
+    };
+  }
+
+  if (profile === "teams") {
+    return {
+      title: "Vos équipes seraient mieux informées, sans accès sensible.",
+      text: "L'espace employé Batimum partage chantiers et consignes tout en protégeant vos devis et votre facturation.",
+      points: ["Espace employé", "Planning partagé", "Accès sécurisé"],
+    };
+  }
+
+  return {
+    title: "Vous pourriez récupérer du temps au bureau.",
+    text: "Batimum automatise vos devis, votre suivi et votre facturation pour réduire le temps passé sur l'administratif.",
+    points: ["MUM IA", "Zéro ressaisie", "Facturation simplifiée"],
+  };
 }
 
-function computeResult(answers: number[]): ResultProfile {
+function computeResultProfile(answers: number[]): ResultProfile {
   let admin = 0;
   let teams = 0;
 
@@ -138,6 +150,23 @@ function computeResult(answers: number[]): ResultProfile {
   return teams > admin ? "teams" : "admin";
 }
 
+const ADVANCE_DELAY_MS = 420;
+
+function scoreAnswer(questionIndex: number, answerIndex: number) {
+  const pain = Math.max(0, 2 - answerIndex);
+
+  if (questionIndex === 0) return { admin: 0, teams: pain };
+  if (questionIndex === 1) return { admin: pain, teams: 0 };
+  if (questionIndex === 2) return { admin: pain * 1.5, teams: 0 };
+  if (questionIndex === 3) return { admin: 0, teams: pain };
+  if (questionIndex === 4) return { admin: 0, teams: pain };
+  if (questionIndex === 5) return { admin: pain, teams: 0 };
+
+  if (answerIndex === 0 || answerIndex === 2) return { admin: 4, teams: 0 };
+  if (answerIndex === 1 || answerIndex === 3) return { admin: 0, teams: 4 };
+  return { admin: 0, teams: 0 };
+}
+
 export function LandingDiagnosticSection({
   afterHero = false,
 }: {
@@ -156,9 +185,8 @@ export function LandingDiagnosticSection({
       ? 100
       : ((step + (selectedOption !== null ? 0.65 : 0.25)) / totalSteps) * 100;
 
-  const resultProfile =
-    phase === "result" ? computeResult(answers) : null;
-  const result = resultProfile ? RESULTS[resultProfile] : null;
+  const result =
+    phase === "result" ? buildPersonalizedResult(answers) : null;
 
   const advance = useCallback(
     (answerIndex: number) => {

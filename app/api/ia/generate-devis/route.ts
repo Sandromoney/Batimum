@@ -18,6 +18,7 @@ import {
   openAiNotConfiguredResponse,
 } from "@/lib/openai-server";
 import { checkUserAiQuota, incrementUserAiUsage } from "@/lib/ai-usage-store";
+import { isPrivateBetaTestEmail } from "@/lib/private-beta";
 import { getAuthenticatedSupabaseUser } from "@/lib/supabase-auth-server";
 
 const VALID_TYPES_CHANTIER = new Set<TypeChantier>([
@@ -156,18 +157,30 @@ export async function POST(request: Request) {
 
   const authUser = await getAuthenticatedSupabaseUser();
   if (authUser) {
-    const quota = await checkUserAiQuota(authUser.id);
-    if (!quota.allowed) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            quota.message ??
-            "Vous avez atteint votre limite de 100 demandes IA ce mois-ci",
-          quota,
-        },
-        { status: 429 },
-      );
+    const bypassQuota =
+      isPrivateBetaTestEmail(authUser.email ?? "") ||
+      (process.env.NODE_ENV === "development" &&
+        process.env.MUM_IA_SKIP_QUOTA === "true");
+
+    if (!bypassQuota) {
+      const quota = await checkUserAiQuota(authUser.id);
+      if (!quota.allowed) {
+        const isLimitReached = quota.message?.includes("limite de 100");
+        const status = isLimitReached ? 429 : 503;
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              quota.message ??
+              (isLimitReached
+                ? "Vous avez atteint votre limite de 100 demandes IA ce mois-ci"
+                : "Quota IA indisponible. Vérifiez la migration user_ai_usage et SUPABASE_SERVICE_ROLE_KEY."),
+            quota,
+            code: isLimitReached ? "ai_quota_exceeded" : "ai_quota_unavailable",
+          },
+          { status },
+        );
+      }
     }
   }
 
@@ -242,7 +255,12 @@ export async function POST(request: Request) {
     });
 
     if (authUser) {
-      await incrementUserAiUsage(authUser.id);
+      const increment = await incrementUserAiUsage(authUser.id);
+      if (increment.error && !increment.error.includes("limite de 100")) {
+        logMumIa("warn", "Compteur IA non incrémenté", {
+          error: increment.error,
+        });
+      }
     }
 
     return NextResponse.json({

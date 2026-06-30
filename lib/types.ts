@@ -609,6 +609,8 @@ export interface Parametres {
   aiGenerationsLimit?: number;
   /** Couleur principale des devis PDF / aperçu. */
   couleurDevis?: DevisBrandColorId;
+  /** Hex personnalisé si couleurDevis = personnalise. */
+  couleurDevisCustom?: string;
   /** Métadonnées connexion email OAuth (tokens côté serveur uniquement). */
   connexionEmail?: ParametresConnexionEmail;
 }

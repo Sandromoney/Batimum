@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { devisTotal } from "@/lib/data";
 import { getClientDisplayName } from "@/lib/clients";
 import { resolveDevisBrandColor } from "@/lib/devis-brand-colors";
+import { getLigneDesignation, getLigneDescriptionCourte } from "@/lib/devis-lignes";
 import { ligneMontantHT } from "@/lib/devis-tva";
 import { getClientFacingDevis } from "@/lib/mum-ia-mode";
 import type { Client, Devis, Parametres } from "@/lib/types";
@@ -250,10 +251,17 @@ export default function PublicDevisSignaturePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {devis.lignes.map((ligne) => (
+                  {devis.lignes.map((ligne) => {
+                    if (ligne.typeLigne === "section") return null;
+                    const designation = getLigneDesignation(ligne);
+                    const detail = getLigneDescriptionCourte(ligne);
+                    return (
                     <tr key={ligne.id} className="border-t border-border/60">
                       <td className="px-3 py-2 text-foreground">
-                        {ligne.description}
+                        <div>{designation}</div>
+                        {detail ? (
+                          <div className="mt-0.5 text-xs text-muted-foreground">{detail}</div>
+                        ) : null}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                         {ligne.quantite}
@@ -262,7 +270,8 @@ export default function PublicDevisSignaturePage() {
                         {formatCurrency(ligneMontantHT(ligne))}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
                 <tfoot>
                   <tr

@@ -5,9 +5,13 @@ export const BATIMUM_PRODUCTION_URL = "https://batimum.vercel.app";
  * URL de base pour les liens envoyés aux clients.
  * Priorité : NEXT_PUBLIC_APP_URL → production Batimum (jamais localhost).
  */
+function isLocalhostAppUrl(url: string): boolean {
+  return /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(url);
+}
+
 export function getClientFacingAppBaseUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (fromEnv) {
+  if (fromEnv && !isLocalhostAppUrl(fromEnv)) {
     return fromEnv.replace(/\/$/, "");
   }
   return BATIMUM_PRODUCTION_URL;

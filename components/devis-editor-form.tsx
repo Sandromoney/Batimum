@@ -77,6 +77,8 @@ const actionBtnSend = cn(
 const actionBtnValidate =
   "rounded-xl px-4 font-semibold shadow-md shadow-primary/25 transition-all duration-200 hover:shadow-lg hover:shadow-primary/30";
 
+const VALIDITE_PRESETS = [15, 30, 45, 60] as const;
+
 export function DevisEditorForm({
   devis,
   client,
@@ -134,8 +136,15 @@ export function DevisEditorForm({
     Boolean(devis.descriptionChantier?.trim() || devis.titre?.trim()),
   );
   const dateDevis = devis.dateDevis ?? devis.date;
+  const validiteJours = devis.validiteJours ?? 30;
+  const validiteIsPreset = VALIDITE_PRESETS.includes(
+    validiteJours as (typeof VALIDITE_PRESETS)[number],
+  );
+  const [validiteMode, setValiditeMode] = useState<"preset" | "custom">(
+    validiteIsPreset ? "preset" : "custom",
+  );
   const dateValidite = dateDevis
-    ? addDaysIso(dateDevis, devis.validiteJours ?? 30)
+    ? addDaysIso(dateDevis, validiteJours)
     : "";
   const manualStatutOptions = allowedManualStatuts ?? MANUAL_DEVIS_STATUT_OPTIONS;
 
@@ -243,12 +252,49 @@ export function DevisEditorForm({
             />
           </CompactField>
 
-          <CompactField label="Date validité">
-            <Input
-              readOnly
-              className={cn(compactControlClass, "bg-card-elevated/30")}
-              value={dateValidite ? formatDate(dateValidite) : "—"}
-            />
+          <CompactField label="Validité du devis">
+            <div className="space-y-1.5">
+              <Select
+                className={compactControlClass}
+                value={
+                  validiteMode === "custom"
+                    ? "custom"
+                    : String(validiteJours)
+                }
+                onChange={(event) => {
+                  const value = event.target.value;
+                  if (value === "custom") {
+                    setValiditeMode("custom");
+                    return;
+                  }
+                  setValiditeMode("preset");
+                  onUpdateDevis({ validiteJours: Number(value) });
+                }}
+              >
+                {VALIDITE_PRESETS.map((days) => (
+                  <option key={days} value={days}>
+                    {days} jours
+                  </option>
+                ))}
+                <option value="custom">Personnalisée</option>
+              </Select>
+              {validiteMode === "custom" ? (
+                <Input
+                  type="number"
+                  min={1}
+                  className={compactControlClass}
+                  value={validiteJours}
+                  onChange={(event) =>
+                    onUpdateDevis({
+                      validiteJours: Math.max(1, Number(event.target.value) || 1),
+                    })
+                  }
+                />
+              ) : null}
+              <p className="text-[10px] text-muted-foreground">
+                Fin de validité : {dateValidite ? formatDate(dateValidite) : "—"}
+              </p>
+            </div>
           </CompactField>
 
           <CompactField label="TVA générale">

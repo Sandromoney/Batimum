@@ -539,11 +539,37 @@ export async function buildDevisPdfDoc({
   if (parametres.signaturePdf?.trim()) {
     y += 14;
     addSectionTitle("Signature entreprise");
-    y = addText(parametres.signaturePdf.trim(), margin, y, {
-      size: 7.5,
-      color: [70, 70, 70],
-      maxWidth: pageWidth - margin * 2,
-    });
+    const signaturePdf = parametres.signaturePdf.trim();
+    if (signaturePdf.startsWith("data:image")) {
+      try {
+        const props = doc.getImageProperties(signaturePdf);
+        const box = { width: 50, height: 18 };
+        const ratio = Math.min(
+          box.width / props.width,
+          box.height / props.height,
+        );
+        doc.addImage(
+          signaturePdf,
+          props.fileType,
+          margin,
+          y,
+          props.width * ratio,
+          props.height * ratio,
+        );
+        y += box.height + 4;
+      } catch {
+        y = addText("Signature entreprise enregistrée", margin, y, {
+          size: 7.5,
+          color: [70, 70, 70],
+        });
+      }
+    } else {
+      y = addText(signaturePdf, margin, y, {
+        size: 7.5,
+        color: [70, 70, 70],
+        maxWidth: pageWidth - margin * 2,
+      });
+    }
   }
 
   if (isSigned) {

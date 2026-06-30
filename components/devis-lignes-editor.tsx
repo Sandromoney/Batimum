@@ -4,6 +4,11 @@ import { Fragment, useLayoutEffect, useMemo, useRef, useState, type DragEvent, t
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import {
+  buildDevisLigneSuggestions,
+  type DevisLigneSuggestion,
+} from "@/lib/devis-ligne-suggestions";
+import { useStore } from "@/lib/store";
+import {
   getLigneDesignation,
   getLigneDescriptionCourte,
   isSectionLigne,
@@ -107,12 +112,32 @@ export function DevisLignesEditor({
   onUpdateLigne: (id: string, patch: Partial<LigneDevis>) => void;
   onRemoveLigne: (id: string) => void;
 }) {
+  const { data } = useStore();
+  const [activeSuggestionLineId, setActiveSuggestionLineId] = useState<string | null>(null);
+  const [suggestionQuery, setSuggestionQuery] = useState("");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const sectionSubtotals = useMemo(
     () => getSectionSubtotalsAfterIndex(lignes, defaultTva),
     [lignes, defaultTva],
   );
+
+  const suggestions = useMemo(
+    () => buildDevisLigneSuggestions(data, suggestionQuery),
+    [data, suggestionQuery],
+  );
+
+  function applySuggestion(ligneId: string, suggestion: DevisLigneSuggestion) {
+    onUpdateLigne(ligneId, {
+      designation: suggestion.designation,
+      unite: suggestion.unite,
+      prixUnitaire: suggestion.prixUnitaireHT,
+      tauxTVA: suggestion.tauxTVA ?? defaultTva,
+      descriptionCourte: "",
+    });
+    setActiveSuggestionLineId(null);
+    setSuggestionQuery("");
+  }
 
   function handleDrop(targetIndex: number) {
     if (readOnly) return;
@@ -283,14 +308,48 @@ export function DevisLignesEditor({
                       {getLigneDesignation(ligne)}
                     </p>
                   ) : (
-                    <LigneCellTextarea
-                      value={getLigneDesignation(ligne)}
-                      className={errors[`lignes.${index}.description`] ? invalidClass : ""}
-                      onChange={(value) =>
-                        onUpdateLigne(ligne.id, { designation: value })
-                      }
-                      placeholder="Ex : Pose carrelage"
-                    />
+                    <div className="relative">
+                      <LigneCellTextarea
+                        value={getLigneDesignation(ligne)}
+                        className={errors[`lignes.${index}.description`] ? invalidClass : ""}
+                        onChange={(value) => {
+                          setActiveSuggestionLineId(ligne.id);
+                          setSuggestionQuery(value);
+                          onUpdateLigne(ligne.id, { designation: value });
+                        }}
+                        placeholder="Ex : Pose carrelage"
+                      />
+                      {activeSuggestionLineId === ligne.id && suggestions.length > 0 ? (
+                        <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-auto rounded-xl border border-border/80 bg-card shadow-lg">
+                          {suggestions.map((suggestion) => (
+                            <li key={suggestion.id}>
+                              <button
+                                type="button"
+                                className="flex w-full items-start justify-between gap-2 px-3 py-2 text-left text-xs hover:bg-primary/10"
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                  applySuggestion(ligne.id, suggestion);
+                                }}
+                              >
+                                <span>
+                                  <span className="font-medium text-foreground">
+                                    {suggestion.designation}
+                                  </span>
+                                  {suggestion.categorie ? (
+                                    <span className="ml-2 text-muted-foreground">
+                                      {suggestion.categorie}
+                                    </span>
+                                  ) : null}
+                                </span>
+                                <span className="shrink-0 text-muted-foreground">
+                                  {formatCurrency(suggestion.prixUnitaireHT)} / {suggestion.unite}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
                   )}
                 </td>
                 <td className="border-r border-border/20 px-1.5 py-1.5 align-top">

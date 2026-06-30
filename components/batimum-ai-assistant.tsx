@@ -101,6 +101,8 @@ type ChantierContext = {
   niveauPrix: BtpNiveauPrix;
 };
 
+const MUM_IA_DRAFT_KEY = "batimum-mum-ia-draft";
+
 export function BatimumAiAssistant() {
   const router = useRouter();
   const { data, setData } = useStore();
@@ -136,6 +138,53 @@ export function BatimumAiAssistant() {
   } | null>(null);
   const geoPrefillDone = useRef(false);
   const previewRef = useRef<HTMLDivElement | null>(null);
+  const draftHydrated = useRef(false);
+
+  useEffect(() => {
+    if (draftHydrated.current) return;
+    draftHydrated.current = true;
+    try {
+      const raw = sessionStorage.getItem(MUM_IA_DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as {
+        description?: string;
+        regionCode?: string;
+        departementCode?: string;
+        typeChantier?: TypeChantier;
+        tauxTVA?: string;
+        result?: AiDevisResult | null;
+        analysis?: AiChantierAnalysis | null;
+      };
+      if (draft.description) setDescription(draft.description);
+      if (draft.regionCode) setRegionCode(draft.regionCode);
+      if (draft.departementCode) setDepartementCode(draft.departementCode);
+      if (draft.typeChantier) setTypeChantier(draft.typeChantier);
+      if (draft.tauxTVA) setTauxTVA(draft.tauxTVA);
+      if (draft.result) setResult(draft.result);
+      if (draft.analysis) setAnalysis(draft.analysis);
+    } catch {
+      /* brouillon illisible */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        MUM_IA_DRAFT_KEY,
+        JSON.stringify({
+          description,
+          regionCode,
+          departementCode,
+          typeChantier,
+          tauxTVA,
+          result,
+          analysis,
+        }),
+      );
+    } catch {
+      /* quota sessionStorage */
+    }
+  }, [description, regionCode, departementCode, typeChantier, tauxTVA, result, analysis]);
 
   const previewResult = useMemo(() => {
     if (!result) return null;
@@ -300,6 +349,7 @@ export function BatimumAiAssistant() {
       const payload = (await response.json()) as {
         success: boolean;
         message?: string;
+        code?: string;
         devis?: AiDevisResult;
       };
 
@@ -312,7 +362,19 @@ export function BatimumAiAssistant() {
           await refreshServerQuota();
           return;
         }
-        setError(payload.message ?? "Erreur lors de la génération.");
+        if (response.status === 503 && payload.code === "ai_quota_unavailable") {
+          setError(
+            payload.message ??
+              "Quota IA indisponible. Vérifiez la migration user_ai_usage et SUPABASE_SERVICE_ROLE_KEY.",
+          );
+          return;
+        }
+        setError(
+          payload.message ??
+            (payload.code
+              ? `Erreur MUM IA (${payload.code}).`
+              : "Erreur lors de la génération."),
+        );
         return;
       }
 

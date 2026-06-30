@@ -432,13 +432,18 @@ export function aiDevisToLignes(
   for (const section of result.sections) {
     lignes.push(createSectionLigne(section.titre));
     for (const ligne of section.lignes) {
+      const descCourte =
+        ligne.description?.trim() &&
+        ligne.description.trim() !== ligne.designation.trim()
+          ? ligne.description.trim()
+          : undefined;
       lignes.push({
         id: generateId(),
         typeLigne: "ligne",
         designation: ligne.designation,
-        descriptionCourte: ligne.description,
-        description: ligne.description
-          ? `${ligne.designation}\n${ligne.description}`
+        descriptionCourte: descCourte,
+        description: descCourte
+          ? `${ligne.designation}\n${descCourte}`
           : ligne.designation,
         quantite: ligne.quantite,
         unite: ligne.unite,

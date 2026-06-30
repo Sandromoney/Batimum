@@ -18,6 +18,7 @@ import {
   syncParametresForSave,
 } from "@/lib/parametres";
 import { ParametresDevisColorPicker } from "@/components/parametres-devis-color-picker";
+import { ParametresSignatureDirigeant } from "@/components/parametres-signature-dirigeant";
 import { ParametresFacturationElectroniqueSection } from "@/components/parametres-facturation-electronique";
 import { ParametresConnexionEmailSection } from "@/components/parametres-connexion-email";
 import {
@@ -435,7 +436,14 @@ export default function ParametresPage() {
           </div>
           <ParametresDevisColorPicker
             value={form.couleurDevis ?? "bleu_batimum"}
-            onChange={(couleurDevis) => patch({ couleurDevis })}
+            customHex={form.couleurDevisCustom ?? "#2563EB"}
+            onChange={(couleurDevis, customHex) =>
+              patch({
+                couleurDevis,
+                couleurDevisCustom:
+                  couleurDevis === "personnalise" ? customHex : form.couleurDevisCustom,
+              })
+            }
           />
         </ParametresSection>
 
@@ -681,15 +689,10 @@ export default function ParametresPage() {
               rows={4}
             />
           </section>
-          <section>
-            <Label>Signature PDF</Label>
-            <Textarea
-              value={form.signaturePdf ?? ""}
-              onChange={(e) => patch({ signaturePdf: e.target.value })}
-              placeholder="Bloc de signature affiché en bas des devis PDF"
-              rows={4}
-            />
-          </section>
+          <ParametresSignatureDirigeant
+            value={form.signaturePdf ?? ""}
+            onChange={(signaturePdf) => patch({ signaturePdf })}
+          />
         </ParametresSection>
 
         <ParametresSection

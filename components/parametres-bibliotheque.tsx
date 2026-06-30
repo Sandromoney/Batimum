@@ -44,6 +44,16 @@ export function ParametresBibliothequePage() {
     [bibliotheque],
   );
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const filteredEntries = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return entries;
+    return entries.filter((entry) => {
+      const haystack = [entry.designation, entry.categorie].join(" ").toLowerCase();
+      return query.split(/\s+/).every((token) => haystack.includes(token));
+    });
+  }, [entries, searchQuery]);
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
   const [form, setForm] = useState(EMPTY_FORM);
@@ -219,12 +229,21 @@ export function ParametresBibliothequePage() {
 
       <ParametresSection
         title="Votre bibliothèque"
-        description={`${entries.length} ligne${entries.length > 1 ? "s" : ""} active${entries.length > 1 ? "s" : ""}`}
+        description={`${filteredEntries.length} ligne${filteredEntries.length > 1 ? "s" : ""} affichée${filteredEntries.length > 1 ? "s" : ""}${searchQuery ? ` sur ${entries.length}` : ""}`}
       >
-        {entries.length === 0 ? (
+        <div className="mb-4">
+          <Label>Rechercher une prestation</Label>
+          <Input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Nom, catégorie ou mot-clé…"
+          />
+        </div>
+        {filteredEntries.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Aucun prix enregistré. Envoyez ou signez des devis pour alimenter la
-            bibliothèque, ou ajoutez des prix manuels.
+            {entries.length === 0
+              ? "Aucun prix enregistré. Envoyez ou signez des devis pour alimenter la bibliothèque, ou ajoutez des prix manuels."
+              : "Aucun résultat pour cette recherche."}
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -243,7 +262,7 @@ export function ParametresBibliothequePage() {
                 </tr>
               </thead>
               <tbody>
-                {entries.map((entry) => (
+                {filteredEntries.map((entry) => (
                   <tr key={entry.id} className="border-b border-border/50">
                     <td className="px-2 py-3 text-muted-foreground">{entry.categorie}</td>
                     <td className="px-2 py-3 font-medium text-foreground">
