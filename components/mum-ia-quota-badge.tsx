@@ -3,19 +3,18 @@
 import {
   buildMumIaQuotaExceededMessage,
   formatMumIaQuotaUsageLabel,
-  formatMumIaRenewalLabel,
   getMumIaQuotaTone,
 } from "@/lib/mum-ia-quota";
 import { cn } from "@/lib/utils";
 
 type MumIaQuotaBadgeProps = {
-  used: number;
+  used?: number;
   monthlyIncluded?: number;
   remaining?: number;
   renewalDate?: string;
+  loading?: boolean;
   className?: string;
   showWarning?: boolean;
-  showRenewal?: boolean;
 };
 
 export function MumIaQuotaBadge({
@@ -23,10 +22,24 @@ export function MumIaQuotaBadge({
   monthlyIncluded = 100,
   remaining,
   renewalDate,
+  loading = false,
   className,
   showWarning = true,
-  showRenewal = true,
 }: MumIaQuotaBadgeProps) {
+  if (loading) {
+    return (
+      <div className={cn("text-right", className)}>
+        <span className="inline-flex shrink-0 whitespace-nowrap rounded-md border border-border/60 bg-card/50 px-2.5 py-1 text-[11px] text-muted-foreground">
+          Quota en cours de chargement…
+        </span>
+      </div>
+    );
+  }
+
+  if (used == null) {
+    return null;
+  }
+
   const isExhausted =
     remaining != null ? remaining <= 0 : used >= monthlyIncluded;
   const tone = getMumIaQuotaTone(used, monthlyIncluded);
@@ -46,11 +59,6 @@ export function MumIaQuotaBadge({
       >
         {formatMumIaQuotaUsageLabel(used, monthlyIncluded)}
       </span>
-      {showRenewal && renewalDate ? (
-        <p className="text-[11px] text-muted-foreground">
-          {formatMumIaRenewalLabel(renewalDate)}
-        </p>
-      ) : null}
       {showWarning && isExhausted && renewalDate ? (
         <p className="text-[11px] leading-relaxed text-red-300">
           {buildMumIaQuotaExceededMessage(renewalDate)}

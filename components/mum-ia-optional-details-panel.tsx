@@ -11,7 +11,7 @@ import {
 } from "@/lib/mum-ia-optional-details";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, ChevronDown, Loader2, Wand2 } from "lucide-react";
-import { MUM_IA_QUOTA_EXCEEDED_MESSAGE } from "@/lib/mum-ia-quota";
+import { buildMumIaQuotaExceededMessage } from "@/lib/mum-ia-quota";
 
 type MumIaOptionalDetailsPanelProps = {
   analysis: AiChantierAnalysis;
@@ -368,7 +368,7 @@ export function MumIaOptionalDetailsPanel({
       <div className="mum-ia-optional-details__actions space-y-3">
         {quotaBlocked ? (
           <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-            {quotaExceededMessage ?? MUM_IA_QUOTA_EXCEEDED_MESSAGE}
+            {quotaExceededMessage ?? buildMumIaQuotaExceededMessage("")}
           </p>
         ) : null}
 

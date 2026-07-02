@@ -192,34 +192,33 @@ export async function POST(request: Request) {
 
   if (!bypassQuota) {
     const quota = await checkUserAiQuota(authUser.id);
-    if (!quota.allowed) {
-      const isLimitReached = Boolean(quota.message?.includes("crédits"));
-      const status = isLimitReached ? 429 : 503;
+    if (quota.limitReached) {
       return NextResponse.json(
         attachMumIaDevDebug(
           {
             success: false,
-            message: isLimitReached
-              ? quota.message ?? getMumIaUserMessage("quota_exceeded")
-              : getMumIaUserMessage("quota_unavailable"),
+            message: quota.message ?? getMumIaUserMessage("quota_exceeded"),
             quota: {
               used: quota.used,
               limit: quota.limit,
-              remaining: Math.max(0, quota.limit - quota.used),
+              remaining: 0,
               monthlyIncluded: quota.monthlyIncluded,
-              packCredits: quota.packCredits,
+              packCredits: 0,
               renewalDate: quota.renewalDate,
               periodStart: quota.periodStart,
               periodEnd: quota.periodEnd,
             },
-            code: isLimitReached ? "ai_quota_exceeded" : "ai_quota_unavailable",
+            code: "ai_quota_exceeded",
           },
-          isLimitReached
-            ? quota.message ?? "Quota exceeded (100/100 MUM IA)"
-            : quota.message ?? "Quota IA indisponible (Supabase service role)",
+          quota.message ?? "Quota exceeded (100/100 MUM IA)",
         ),
-        { status },
+        { status: 429 },
       );
+    }
+    if (!quota.storageAvailable) {
+      console.warn("[MUM IA] quota storage unavailable before generation", {
+        userId: authUser.id,
+      });
     }
   }
 
@@ -332,7 +331,7 @@ export async function POST(request: Request) {
         authUser.id,
         generationId || undefined,
       );
-      if (increment.error && !increment.error.includes("crédits")) {
+      if (increment.error && !increment.error.includes("100 demandes")) {
         logMumIa("warn", "Compteur IA non incrémenté", {
           error: increment.error,
         });

@@ -2,7 +2,6 @@ export type MumIaUserErrorCode =
   | "network"
   | "too_short"
   | "quota_exceeded"
-  | "quota_unavailable"
   | "not_configured"
   | "transform_failed"
   | "generation_failed"
@@ -14,9 +13,7 @@ const USER_MESSAGES: Record<MumIaUserErrorCode, string> = {
   too_short:
     "Votre demande est trop courte, ajoutez quelques détails sur le chantier.",
   quota_exceeded:
-    "Désolé, vous avez utilisé vos 100 demandes IA disponibles pour ce mois-ci.",
-  quota_unavailable:
-    "Le quota IA est temporairement indisponible. Réessayez dans quelques instants.",
+    "Vous avez utilisé vos 100 demandes IA ce mois-ci.",
   not_configured: "Le service IA n'est pas encore configuré.",
   transform_failed:
     "La réponse IA n'a pas pu être transformée en devis. Veuillez réessayer.",
@@ -48,8 +45,6 @@ export function mapMumIaApiError(payload: {
       return "Connectez-vous pour générer un devis MUM IA.";
     case "ai_quota_exceeded":
       return payload.message ?? getMumIaUserMessage("quota_exceeded");
-    case "ai_quota_unavailable":
-      return getMumIaUserMessage("quota_unavailable");
     case "invalid_model":
     case "openai_error":
     case "rate_limit":
@@ -64,8 +59,8 @@ export function mapMumIaApiError(payload: {
         return getMumIaUserMessage("too_short");
       }
       if (
-        payload.message?.toLowerCase().includes("crédits") ||
-        payload.message?.toLowerCase().includes("demandes ia")
+        payload.message?.toLowerCase().includes("demandes ia") ||
+        payload.message?.toLowerCase().includes("100 demandes")
       ) {
         return payload.message;
       }
@@ -107,8 +102,6 @@ export function extractMumIaTechnicalError(payload: {
       return payload.message ?? "OpenAI billing quota exceeded";
     case "ai_quota_exceeded":
       return payload.message ?? "Quota exceeded (100/100 MUM IA)";
-    case "ai_quota_unavailable":
-      return payload.message ?? "Quota IA indisponible (base Supabase / service role)";
     case "invalid_response":
       return payload.message ?? "JSON parsing failed or invalid IA response shape";
     case "openai_error":
@@ -123,4 +116,3 @@ export function extractMumIaTechnicalError(payload: {
 
 export const IS_MUM_IA_CLIENT_DEV =
   typeof process !== "undefined" && process.env.NODE_ENV === "development";
-

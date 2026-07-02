@@ -12,7 +12,7 @@ export function DashboardMumIaQuotaCard() {
   if (loading && !quota) {
     return (
       <Card className="border-border/80 bg-card/60 p-4">
-        <p className="text-xs text-muted-foreground">Chargement du quota MUM IA…</p>
+        <p className="text-xs text-muted-foreground">Quota en cours de chargement…</p>
       </Card>
     );
   }

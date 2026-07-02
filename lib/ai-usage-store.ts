@@ -345,8 +345,10 @@ export async function incrementUserAiUsage(
   return { usage: syncLegacyFields(data as UserAiUsageRow), error: null };
 }
 
-export async function checkUserAiQuota(userId: string): Promise<{
+export type MumIaQuotaCheckResult = {
   allowed: boolean;
+  limitReached: boolean;
+  storageAvailable: boolean;
   used: number;
   limit: number;
   monthlyIncluded: number;
@@ -355,14 +357,24 @@ export async function checkUserAiQuota(userId: string): Promise<{
   periodStart: string;
   periodEnd: string;
   message?: string;
-}> {
+};
+
+export async function checkUserAiQuota(
+  userId: string,
+): Promise<MumIaQuotaCheckResult> {
   const { usage, error } = await getOrCreateUserAiUsage(userId);
   if (!usage) {
     const fallbackRenewal = new Date(
       Date.now() + 30 * 24 * 60 * 60 * 1000,
     ).toISOString();
+    console.warn("[MUM IA] quota storage unavailable", {
+      userId,
+      error: error ?? "unknown",
+    });
     return {
-      allowed: false,
+      allowed: true,
+      limitReached: false,
+      storageAvailable: false,
       used: 0,
       limit: AI_REQUESTS_LIMIT_DEFAULT,
       monthlyIncluded: AI_REQUESTS_LIMIT_DEFAULT,
@@ -370,7 +382,6 @@ export async function checkUserAiQuota(userId: string): Promise<{
       renewalDate: fallbackRenewal,
       periodStart: new Date().toISOString(),
       periodEnd: fallbackRenewal,
-      message: error ?? "Quota IA indisponible.",
     };
   }
 
@@ -380,6 +391,8 @@ export async function checkUserAiQuota(userId: string): Promise<{
   if (remaining <= 0) {
     return {
       allowed: false,
+      limitReached: true,
+      storageAvailable: true,
       used: snapshot.used,
       limit: snapshot.limit,
       monthlyIncluded: snapshot.monthlyIncluded,
@@ -393,6 +406,8 @@ export async function checkUserAiQuota(userId: string): Promise<{
 
   return {
     allowed: true,
+    limitReached: false,
+    storageAvailable: true,
     used: snapshot.used,
     limit: snapshot.limit,
     monthlyIncluded: snapshot.monthlyIncluded,

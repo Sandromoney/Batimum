@@ -10,6 +10,7 @@ export async function fetchMumIaQuota(): Promise<MumIaQuotaSnapshot | null> {
     if (!response.ok) return null;
 
     const body = (await response.json()) as {
+      available?: boolean;
       used?: number;
       limit?: number;
       remaining?: number;
@@ -20,7 +21,7 @@ export async function fetchMumIaQuota(): Promise<MumIaQuotaSnapshot | null> {
       periodEnd?: string;
     };
 
-    if (typeof body.used !== "number") return null;
+    if (body.available === false || typeof body.used !== "number") return null;
 
     return buildMumIaQuotaSnapshot({
       used: body.used,

@@ -31,9 +31,9 @@ export function formatMumIaRenewalLabel(renewalDateIso: string): string {
 export function buildMumIaQuotaExceededMessage(renewalDateIso: string): string {
   const renewalLabel = formatParisDateLabel(renewalDateIso);
   const renewalSentence = renewalLabel
-    ? ` Vos crédits seront automatiquement renouvelés le ${renewalLabel}.`
+    ? ` Renouvellement le ${renewalLabel}.`
     : "";
-  return `Désolé, vous avez utilisé vos 100 demandes IA disponibles pour ce mois-ci.${renewalSentence}`;
+  return `Vous avez utilisé vos 100 demandes IA ce mois-ci.${renewalSentence}`;
 }
 
 export function getMumIaQuotaTone(

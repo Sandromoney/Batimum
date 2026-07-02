@@ -13,11 +13,6 @@ import {
 import type { AiChantierAnalysis } from "@/lib/ai-devis-analysis";
 import type { BtpNiveauPrix } from "@/lib/btp-tarifs-reference";
 import {
-  canUseAiGeneration,
-  resolveAiQuota,
-  type AiQuotaState,
-} from "@/lib/ai-quota";
-import {
   filterAiDevisForClientView,
   isMumIaInterneMode,
   type MumIaViewMode,
@@ -51,10 +46,10 @@ import { TYPE_CHANTIER_LABELS } from "@/lib/chantiers";
 import { FRANCE_REGIONS } from "@/lib/france-regions";
 import { recordDevisCreatedForClient } from "@/lib/historique-events";
 import { useStore } from "@/lib/store";
-import { getAccount } from "@/lib/account";
 import type { MumIaHistoriqueEntry, TypeChantier } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import {
+  ArrowRight,
   CheckCircle2,
   FileText,
   Loader2,
@@ -116,7 +111,6 @@ const MUM_IA_DRAFT_KEY = "batimum-mum-ia-draft";
 export function BatimumAiAssistant() {
   const router = useRouter();
   const { data, setData } = useStore();
-  const account = useMemo(() => getAccount(), []);
 
   const [description, setDescription] = useState("");
   const [regionCode, setRegionCode] = useState(FRANCE_REGIONS[0]?.code ?? "");
@@ -144,6 +138,7 @@ export function BatimumAiAssistant() {
   const [entrepriseLocalisation, setEntrepriseLocalisation] =
     useState<EntrepriseLocalisation | null>(null);
   const [serverQuota, setServerQuota] = useState<MumIaQuotaSnapshot | null>(null);
+  const [quotaLoading, setQuotaLoading] = useState(true);
   const geoPrefillDone = useRef(false);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const draftHydrated = useRef(false);
@@ -226,6 +221,7 @@ export function BatimumAiAssistant() {
     if (snapshot) {
       setServerQuota(snapshot);
     }
+    setQuotaLoading(false);
     return snapshot;
   }, []);
 
@@ -233,20 +229,7 @@ export function BatimumAiAssistant() {
     void refreshServerQuota();
   }, [refreshServerQuota]);
 
-  const quota = useMemo((): AiQuotaState => {
-    if (serverQuota) {
-      return {
-        used: serverQuota.used,
-        limit: serverQuota.limit,
-        month: serverQuota.renewalDate,
-        remaining: serverQuota.remaining,
-        isPro: serverQuota.monthlyIncluded >= 100,
-      };
-    }
-    return resolveAiQuota(data.parametres, account);
-  }, [serverQuota, data.parametres, account]);
-
-  const quotaBlocked = !canUseAiGeneration(quota);
+  const quotaBlocked = Boolean(serverQuota && serverQuota.remaining <= 0);
   const quotaExceededMessage = serverQuota?.renewalDate
     ? buildMumIaQuotaExceededMessage(serverQuota.renewalDate)
     : getMumIaUserMessage("quota_exceeded");
@@ -446,10 +429,6 @@ export function BatimumAiAssistant() {
               `Quota exceeded — HTTP ${response.status}`,
           );
           await refreshServerQuota();
-          return;
-        }
-        if (response.status === 503 && payload.code === "ai_quota_unavailable") {
-          applyMumIaFailure(payload);
           return;
         }
         if (response.status === 401) {
@@ -919,9 +898,10 @@ export function BatimumAiAssistant() {
           </p>
         </div>
         <MumIaQuotaBadge
-          used={quota.used}
+          loading={quotaLoading}
+          used={serverQuota?.used}
           monthlyIncluded={serverQuota?.monthlyIncluded ?? 100}
-          remaining={quota.remaining}
+          remaining={serverQuota?.remaining}
           renewalDate={serverQuota?.renewalDate}
           className="shrink-0 text-right"
         />
@@ -1149,13 +1129,27 @@ export function BatimumAiAssistant() {
                     </p>
                   </>
                 ) : analysis ? (
-                  <>
-                    <CheckCircle2 className="h-8 w-8 text-primary/50" />
-                    <p className="max-w-xs text-xs text-muted-foreground">
-                      Analyse terminée. Ajoutez des précisions si besoin, puis
-                      choisissez comment générer le devis.
-                    </p>
-                  </>
+                  <div className="flex max-w-sm flex-col items-center gap-3 px-2 text-center">
+                    <CheckCircle2 className="h-8 w-8 text-primary/70" aria-hidden />
+                    <div className="w-full space-y-2.5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3.5">
+                      <p className="text-sm font-semibold text-foreground">
+                        Analyse terminée.
+                      </p>
+                      <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                        Veuillez maintenant cliquer sur{" "}
+                        <span className="inline-flex items-center gap-0.5 font-semibold text-primary">
+                          <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          Générer le devis
+                        </span>{" "}
+                        pour lancer la création du devis détaillé.
+                      </p>
+                      <p className="text-[11px] leading-relaxed text-muted-foreground/90 sm:text-xs">
+                        Vous pouvez ajouter des informations complémentaires avant
+                        la génération si besoin, ou ignorer cette étape et générer
+                        directement.
+                      </p>
+                    </div>
+                  </div>
                 ) : (
                   <>
                     <Sparkles className="h-8 w-8 text-primary/40" />
