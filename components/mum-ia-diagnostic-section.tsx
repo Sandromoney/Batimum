@@ -1,5 +1,6 @@
 "use client";
 
+import { authenticatedFetch, MumIaAuthError } from "@/lib/mum-ia-api-client";
 import { ParametresSection } from "@/components/parametres-section";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plug } from "lucide-react";
@@ -20,11 +21,14 @@ export function MumIaDiagnosticSection() {
     setTestKeySource(null);
 
     try {
-      const response = await fetch("/api/ia/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: "Bonjour" }),
-      });
+      const response = await authenticatedFetch(
+        "/api/ia/test",
+        {
+          method: "POST",
+          body: JSON.stringify({ message: "Bonjour" }),
+        },
+        "test-connexion-ia",
+      );
 
       const payload = (await response.json()) as {
         success: boolean;
@@ -42,8 +46,12 @@ export function MumIaDiagnosticSection() {
       setTestReply(payload.reply ?? null);
       setTestModel(payload.model ?? null);
       setTestKeySource(payload.keySource ?? null);
-    } catch {
-      setTestError("Connexion impossible. Vérifiez le serveur et .env.local.");
+    } catch (error) {
+      setTestError(
+        error instanceof MumIaAuthError
+          ? error.message
+          : "Connexion impossible. Vérifiez le serveur et .env.local.",
+      );
     } finally {
       setTesting(false);
     }

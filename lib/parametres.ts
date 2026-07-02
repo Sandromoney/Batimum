@@ -1,4 +1,7 @@
 import type { Avoir, Commande, Devis, Facture, Parametres } from "./types";
+import { normalizeDevisRelanceRegles } from "@/lib/devis-relance-config";
+import { normalizeHex } from "./color-picker-utils";
+import { normalizeDevisBrandColorId } from "./devis-brand-colors";
 import { DEFAULT_CONNEXION_EMAIL } from "./email-provider/connexion-email";
 import { normalizeThemePreference } from "./theme";
 
@@ -63,6 +66,8 @@ export const DEFAULT_PARAMETRES: Parametres = {
   },
   eFacturationPrete: false,
   relancesAutomatiques: true,
+  relancesDevisAutomatiques: true,
+  relancesDevis: undefined,
   relanceAvantEcheance3j: true,
   relanceJourEcheance: true,
   relanceJ7: true,
@@ -104,6 +109,9 @@ export function normalizeParametres(
     relanceAvantEcheance3j: p.relanceAvantEcheance3j !== false,
     relanceJourEcheance: p.relanceJourEcheance !== false,
     relancesAutomatiques: p.relancesAutomatiques !== false,
+    relancesDevisAutomatiques: p.relancesDevisAutomatiques !== false,
+    relancesDevis: normalizeDevisRelanceRegles(p.relancesDevis),
+    aiPackCredits: Math.max(0, Number(p.aiPackCredits) || 0),
     eFacturationPrete: Boolean(p.eFacturationPrete),
     facturationElectronique: {
       ...DEFAULT_PARAMETRES.facturationElectronique,
@@ -133,16 +141,9 @@ export function normalizeParametres(
       statut: p.connexionEmail?.statut ?? "non_connecte",
       provider: p.connexionEmail?.provider ?? null,
     },
-    couleurDevis:
-      p.couleurDevis === "noir" ||
-      p.couleurDevis === "or" ||
-      p.couleurDevis === "vert" ||
-      p.couleurDevis === "rouge_brique" ||
-      p.couleurDevis === "gris_premium" ||
-      p.couleurDevis === "personnalise"
-        ? p.couleurDevis
-        : "bleu_batimum",
-    couleurDevisCustom: p.couleurDevisCustom?.trim() || undefined,
+    couleurDevis: normalizeDevisBrandColorId(p.couleurDevis),
+    couleurDevisCustom:
+      normalizeHex(p.couleurDevisCustom?.trim() ?? "") ?? undefined,
   };
 }
 

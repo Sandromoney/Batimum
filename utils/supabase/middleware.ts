@@ -1,10 +1,16 @@
-import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-function hasSupabaseEnv(): boolean {
+function getMiddlewareSupabaseKey(): string {
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
+    ""
+  );
+}
+
+export function hasSupabaseEnv(): boolean {
   return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim(),
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() && getMiddlewareSupabaseKey(),
   );
 }
 
@@ -15,8 +21,9 @@ export async function createClient(request: NextRequest): Promise<NextResponse> 
     });
   }
 
+  const { createServerClient } = await import("@supabase/ssr");
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!.trim();
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!.trim();
+  const supabaseKey = getMiddlewareSupabaseKey();
 
   try {
     let supabaseResponse = NextResponse.next({

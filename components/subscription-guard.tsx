@@ -5,15 +5,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   canAccessApp,
   getAccount,
-  isEmployeAccount,
-  isLegacyAppUser,
   saveAccount,
   type UserAccount,
 } from "@/lib/account";
-import {
-  isDevAdminAccount,
-  isDevOpenAccess,
-} from "@/lib/dev-access";
 import { getCredentials } from "@/lib/auth-credentials";
 import { needsCompanyOnboarding } from "@/lib/onboarding";
 import {
@@ -49,35 +43,30 @@ export function SubscriptionGuard({ children }: { children: ReactNode }) {
       }
 
       const supabase = createClient();
-      if (supabase) {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) {
-          console.log("[subscription-guard] Supabase getSession error:", error);
-        }
-        if (data.session?.user) {
-          ensureAppAccountFromSupabaseUser(data.session.user);
-          setAccessState("granted");
-          return;
-        }
-      }
-
-      if (isLegacyAppUser() || isDevOpenAccess()) {
-        setAccessState("granted");
+      if (!supabase) {
+        redirectTo("/login?reason=supabase_config_missing");
         return;
       }
+
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.log("[subscription-guard] Supabase getSession error:", error);
+      }
+
+      const hasSupabaseSession = Boolean(data.session?.user && data.session.access_token);
+      if (!hasSupabaseSession) {
+        const target = pathname.startsWith("/ia")
+          ? "/login?reason=mumia_requires_auth"
+          : isPrivateBetaEnabled()
+            ? "/login"
+            : getPublicSignupHref();
+        redirectTo(target);
+        return;
+      }
+
+      ensureAppAccountFromSupabaseUser(data.session!.user);
 
       const account = getAccount();
-
-      if (isEmployeAccount(account)) {
-        setAccessState("granted");
-        return;
-      }
-
-      if (isDevAdminAccount(account)) {
-        setAccessState("granted");
-        return;
-      }
-
       if (!account) {
         redirectTo(isPrivateBetaEnabled() ? "/login" : getPublicSignupHref());
         return;

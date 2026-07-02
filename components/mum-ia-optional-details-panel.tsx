@@ -11,6 +11,7 @@ import {
 } from "@/lib/mum-ia-optional-details";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, ChevronDown, Loader2, Wand2 } from "lucide-react";
+import { MUM_IA_QUOTA_EXCEEDED_MESSAGE } from "@/lib/mum-ia-quota";
 
 type MumIaOptionalDetailsPanelProps = {
   analysis: AiChantierAnalysis;
@@ -20,9 +21,13 @@ type MumIaOptionalDetailsPanelProps = {
   onQuestionAnswerChange: (id: string, value: string) => void;
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
-  loading: boolean;
-  onGenerateWithDetails: () => void;
-  onGenerateWithHypotheses: () => void;
+  generating: boolean;
+  quotaBlocked?: boolean;
+  quotaExceededMessage?: string;
+  additionalPrecisions: string;
+  onAdditionalPrecisionsChange: (value: string) => void;
+  onGenerateIgnore: () => void;
+  onGenerateWithPrecisions: () => void;
 };
 
 function DynamicQuestionField({
@@ -109,9 +114,13 @@ export function MumIaOptionalDetailsPanel({
   onQuestionAnswerChange,
   expanded,
   onExpandedChange,
-  loading,
-  onGenerateWithDetails,
-  onGenerateWithHypotheses,
+  generating,
+  quotaBlocked = false,
+  quotaExceededMessage,
+  additionalPrecisions,
+  onAdditionalPrecisionsChange,
+  onGenerateIgnore,
+  onGenerateWithPrecisions,
 }: MumIaOptionalDetailsPanelProps) {
   const detailsCount = countMumIaOptionalDetails(analysis);
   const groupedQuestions = groupQuestionsByCategory(analysis.questions);
@@ -126,9 +135,7 @@ export function MumIaOptionalDetailsPanel({
               Analyse terminée
             </p>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              Jusqu&apos;à {detailsCount} précision{detailsCount > 1 ? "s" : ""}{" "}
-              utile{detailsCount > 1 ? "s" : ""} au devis (facultatif
-              {detailsCount > 1 ? "s" : ""}).
+              Informations supplémentaires optionnelles pour affiner le devis.
             </p>
             {analysis.messageAnalyse ? (
               <p className="text-xs leading-relaxed text-muted-foreground/90">
@@ -358,29 +365,63 @@ export function MumIaOptionalDetailsPanel({
         </div>
       </div>
 
-      <div className="mum-ia-optional-details__actions">
-        <Button
-          type="button"
-          onClick={onGenerateWithDetails}
-          disabled={loading}
-          className="w-full"
-        >
-          {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Wand2 className="h-4 w-4" />
-          )}
-          Générer le devis
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onGenerateWithHypotheses}
-          disabled={loading}
-          className="w-full"
-        >
-          Ignorer les précisions et générer le devis
-        </Button>
+      <div className="mum-ia-optional-details__actions space-y-3">
+        {quotaBlocked ? (
+          <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {quotaExceededMessage ?? MUM_IA_QUOTA_EXCEEDED_MESSAGE}
+          </p>
+        ) : null}
+
+        <label className="block space-y-1.5">
+          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Ajouter des précisions
+          </span>
+          <textarea
+            value={additionalPrecisions}
+            onChange={(event) => onAdditionalPrecisionsChange(event.target.value)}
+            rows={3}
+            placeholder="Ex. gamme matériaux, étage, stationnement, délais, niveau de finition…"
+            className="mum-ia-optional-details__textarea w-full"
+            disabled={generating || quotaBlocked}
+          />
+        </label>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onGenerateIgnore}
+            disabled={generating || quotaBlocked}
+            className="w-full"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Génération du devis…
+              </>
+            ) : (
+              "Ignorer et générer le devis"
+            )}
+          </Button>
+          <Button
+            type="button"
+            onClick={onGenerateWithPrecisions}
+            disabled={generating || quotaBlocked}
+            className="w-full"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Génération du devis…
+              </>
+            ) : (
+              <>
+                <Wand2 className="h-4 w-4" />
+                Ajouter ces informations et générer
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

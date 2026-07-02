@@ -66,7 +66,15 @@ export const AI_ANALYSIS_JSON_SCHEMA = {
             items: { type: "string" },
           },
         },
-        required: ["id", "question", "categorie"],
+        required: [
+          "id",
+          "question",
+          "categorie",
+          "type",
+          "unite",
+          "placeholder",
+          "options",
+        ],
         additionalProperties: false,
       },
     },
@@ -114,8 +122,10 @@ RÈGLES POUR "questions" (OBLIGATOIRE) :
 - Chaque question doit servir à quantifier ou décrire un poste du devis.
 - categorie = lot métier (ex. "Salle de bain", "Carrelage", "Placo", "Peinture", "Plomberie").
 - type : "text" | "number" | "textarea" | "choice" selon le besoin.
-- Pour "number" : renseigner unite (m², m, u…).
-- Pour "choice" : renseigner options (2 à 4 choix courts).
+- Pour "number" : renseigner unite (m², m, u…), sinon "".
+- Pour "choice" : renseigner options (2 à 4 choix courts), sinon [].
+- type obligatoire sur chaque question ("text" par défaut).
+- placeholder : "" si non pertinent.
 
 Exemples par lot :
 - Salle de bain : type de receveur, dimensions exactes, murs à faïencer, modèle meuble.

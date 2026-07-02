@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DashboardRevenueChart } from "@/components/dashboard-revenue-chart";
 import { DashboardTodayCard } from "@/components/dashboard-today-card";
+import { DashboardMumIaQuotaCard } from "@/components/dashboard-mum-ia-quota-card";
 import { DashboardWelcome } from "@/components/dashboard-welcome";
 import { useStore } from "@/lib/store";
 import { getClientDisplayName } from "@/lib/clients";
@@ -142,6 +143,8 @@ export default function DashboardPage() {
       />
 
       <DashboardTodayCard snapshot={todaySnapshot} data={data} />
+
+      <DashboardMumIaQuotaCard />
 
       <section className="btp-dashboard-stats grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard

@@ -8,7 +8,7 @@ if (process.env.NODE_ENV === "development") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
 
-export const OPENAI_DEFAULT_MODEL = "gpt-5.4-mini";
+export const OPENAI_DEFAULT_MODEL = "gpt-4o-mini";
 
 export type OpenAiEnvSource = "env.local" | "process.env" | "missing";
 

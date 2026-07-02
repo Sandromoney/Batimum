@@ -73,6 +73,30 @@ export function buildMumIaReponsesQuestions(
   return reponses;
 }
 
+export function buildMumIaDescriptionWithPrecisions(
+  baseDescription: string,
+  options: {
+    freeText?: string;
+    reponsesQuestions?: Record<string, string>;
+  },
+): string {
+  const parts = [baseDescription.trim()];
+  const freeText = options.freeText?.trim();
+  if (freeText) {
+    parts.push(`Précisions complémentaires :\n${freeText}`);
+  }
+  const reponses = options.reponsesQuestions ?? {};
+  const reponseLines = Object.values(reponses)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (reponseLines.length > 0) {
+    parts.push(
+      `Informations complémentaires structurées :\n${reponseLines.map((line) => `- ${line}`).join("\n")}`,
+    );
+  }
+  return parts.join("\n\n");
+}
+
 export function groupQuestionsByCategory(
   questions: AiChantierQuestion[],
 ): { category: string; questions: AiChantierQuestion[] }[] {

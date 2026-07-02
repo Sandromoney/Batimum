@@ -30,7 +30,13 @@ export async function GET() {
 
   const authUser = await getAuthenticatedSupabaseUser();
   if (!authUser) {
-    return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+    return NextResponse.json(
+      {
+        error: "Session expirée ou introuvable. Reconnectez-vous.",
+        code: "session_expired",
+      },
+      { status: 401 },
+    );
   }
 
   const { settings, error } = await loadUserSettingsFromSupabase(authUser.id);
@@ -63,7 +69,13 @@ export async function PUT(request: Request) {
 
   const authUser = await getAuthenticatedSupabaseUser();
   if (!authUser) {
-    return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+    return NextResponse.json(
+      {
+        error: "Session expirée ou introuvable. Reconnectez-vous.",
+        code: "session_expired",
+      },
+      { status: 401 },
+    );
   }
 
   let body: { parametres?: Parametres; employes?: Employe[] };

@@ -17,9 +17,16 @@ import {
   logMumIa,
   openAiNotConfiguredResponse,
 } from "@/lib/openai-server";
-import { checkUserAiQuota, incrementUserAiUsage } from "@/lib/ai-usage-store";
+import { checkUserAiQuota, incrementUserAiUsage, buildQuotaSnapshotFromUsage } from "@/lib/ai-usage-store";
+import { getMumIaUserMessage } from "@/lib/mum-ia-errors";
+import { mumIaServerDebug } from "@/lib/mum-ia-debug";
+import {
+  attachMumIaDevDebug,
+  logMumIaOpenAiResponse,
+  logMumIaRouteError,
+} from "@/lib/mum-ia-server-diagnostics";
 import { isPrivateBetaTestEmail } from "@/lib/private-beta";
-import { getAuthenticatedSupabaseUser } from "@/lib/supabase-auth-server";
+import { isMumIaAuthContext, requireMumIaAuth } from "@/lib/supabase-auth-server";
 
 const VALID_TYPES_CHANTIER = new Set<TypeChantier>([
   "renovation",
@@ -130,7 +137,13 @@ function parseRequestBody(body: unknown): AiDevisGenerateRequest | null {
 
 export async function POST(request: Request) {
   if (!isOpenAiConfigured()) {
-    return NextResponse.json(openAiNotConfiguredResponse(), { status: 503 });
+    return NextResponse.json(
+      attachMumIaDevDebug(
+        openAiNotConfiguredResponse(),
+        "Missing OPENAI_API_KEY",
+      ),
+      { status: 503 },
+    );
   }
 
   let body: unknown;
@@ -148,39 +161,65 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message:
-          "Paramètres incomplets. Décrivez le chantier (10 caractères min.), la région, le département, le type, la TVA et le niveau de prix.",
+        code: "too_short",
+        message: getMumIaUserMessage("too_short"),
       },
       { status: 400 },
     );
   }
 
-  const authUser = await getAuthenticatedSupabaseUser();
-  if (authUser) {
-    const bypassQuota =
-      isPrivateBetaTestEmail(authUser.email ?? "") ||
-      (process.env.NODE_ENV === "development" &&
-        process.env.MUM_IA_SKIP_QUOTA === "true");
+  const generationId =
+    body && typeof body === "object" && "generationId" in body
+      ? String((body as Record<string, unknown>).generationId ?? "").trim()
+      : "";
 
-    if (!bypassQuota) {
-      const quota = await checkUserAiQuota(authUser.id);
-      if (!quota.allowed) {
-        const isLimitReached = quota.message?.includes("limite de 100");
-        const status = isLimitReached ? 429 : 503;
-        return NextResponse.json(
+  const authResult = await requireMumIaAuth(request);
+  if (!isMumIaAuthContext(authResult)) {
+    return authResult;
+  }
+  const { user: authUser, companyId } = authResult;
+
+  console.log("[MUM IA] generate auth ok", {
+    userId: authUser.id,
+    companyId,
+    authSource: authResult.authSource,
+  });
+
+  const bypassQuota =
+    isPrivateBetaTestEmail(authUser.email ?? "") ||
+    (process.env.NODE_ENV === "development" &&
+      process.env.MUM_IA_SKIP_QUOTA === "true");
+
+  if (!bypassQuota) {
+    const quota = await checkUserAiQuota(authUser.id);
+    if (!quota.allowed) {
+      const isLimitReached = Boolean(quota.message?.includes("crédits"));
+      const status = isLimitReached ? 429 : 503;
+      return NextResponse.json(
+        attachMumIaDevDebug(
           {
             success: false,
-            message:
-              quota.message ??
-              (isLimitReached
-                ? "Vous avez atteint votre limite de 100 demandes IA ce mois-ci"
-                : "Quota IA indisponible. Vérifiez la migration user_ai_usage et SUPABASE_SERVICE_ROLE_KEY."),
-            quota,
+            message: isLimitReached
+              ? quota.message ?? getMumIaUserMessage("quota_exceeded")
+              : getMumIaUserMessage("quota_unavailable"),
+            quota: {
+              used: quota.used,
+              limit: quota.limit,
+              remaining: Math.max(0, quota.limit - quota.used),
+              monthlyIncluded: quota.monthlyIncluded,
+              packCredits: quota.packCredits,
+              renewalDate: quota.renewalDate,
+              periodStart: quota.periodStart,
+              periodEnd: quota.periodEnd,
+            },
             code: isLimitReached ? "ai_quota_exceeded" : "ai_quota_unavailable",
           },
-          { status },
-        );
-      }
+          isLimitReached
+            ? quota.message ?? "Quota exceeded (100/100 MUM IA)"
+            : quota.message ?? "Quota IA indisponible (Supabase service role)",
+        ),
+        { status },
+      );
     }
   }
 
@@ -190,6 +229,8 @@ export async function POST(request: Request) {
   }
 
   const model = getOpenAiModel();
+  const startedAt = Date.now();
+  const userPrompt = buildAiDevisUserPrompt(input);
 
   try {
     logMumIa("info", "Génération devis IA", {
@@ -199,11 +240,20 @@ export async function POST(request: Request) {
       niveauPrix: input.niveauPrix,
       forceWithHypotheses: input.forceWithHypotheses,
     });
+    mumIaServerDebug("generate_request", {
+      model,
+      regionCode: input.regionCode,
+      departementCode: input.departementCode,
+      typeChantier: input.typeChantier,
+      tauxTVA: input.tauxTVA,
+      descriptionLength: input.descriptionChantier.length,
+      promptPreview: userPrompt.slice(0, 500),
+    });
 
     const response = await client.responses.create({
       model,
       instructions: buildAiDevisSystemPrompt(),
-      input: buildAiDevisUserPrompt(input),
+      input: userPrompt,
       text: {
         format: {
           type: "json_schema",
@@ -214,10 +264,18 @@ export async function POST(request: Request) {
       },
     });
 
+    logMumIaOpenAiResponse({ route: "generate-devis", response });
+
     const rawText = response.output_text?.trim();
+    mumIaServerDebug("generate_response", {
+      durationMs: Date.now() - startedAt,
+      rawLength: rawText?.length ?? 0,
+      rawPreview: rawText?.slice(0, 400),
+    });
+
     if (!rawText) {
       return NextResponse.json(
-        { success: false, message: "Réponse IA vide. Réessayez." },
+        { success: false, code: "invalid_response", message: getMumIaUserMessage("invalid_response") },
         { status: 502 },
       );
     }
@@ -225,17 +283,19 @@ export async function POST(request: Request) {
     let parsed: unknown;
     try {
       parsed = JSON.parse(rawText);
-    } catch {
+    } catch (parseError) {
+      console.error("[MUM IA] generate JSON parse error", parseError, rawText);
       return NextResponse.json(
-        { success: false, message: "Format JSON IA invalide. Réessayez." },
+        { success: false, code: "invalid_response", message: getMumIaUserMessage("invalid_response") },
         { status: 502 },
       );
     }
 
     const normalized = normalizeAiDevisResult(parsed);
     if (!normalized) {
+      console.error("[MUM IA] generate normalize failed", parsed);
       return NextResponse.json(
-        { success: false, message: "Structure de devis IA invalide. Réessayez." },
+        { success: false, code: "invalid_response", message: getMumIaUserMessage("invalid_response") },
         { status: 502 },
       );
     }
@@ -254,12 +314,41 @@ export async function POST(request: Request) {
       ratioEntries: input.ratioEntries,
     });
 
-    if (authUser) {
-      const increment = await incrementUserAiUsage(authUser.id);
-      if (increment.error && !increment.error.includes("limite de 100")) {
+    let quotaPayload:
+      | {
+          used: number;
+          limit: number;
+          remaining: number;
+          monthlyIncluded: number;
+          packCredits: number;
+          renewalDate: string;
+          periodStart: string;
+          periodEnd: string;
+        }
+      | undefined;
+
+    if (!bypassQuota) {
+      const increment = await incrementUserAiUsage(
+        authUser.id,
+        generationId || undefined,
+      );
+      if (increment.error && !increment.error.includes("crédits")) {
         logMumIa("warn", "Compteur IA non incrémenté", {
           error: increment.error,
         });
+      }
+      if (increment.usage) {
+        const snapshot = buildQuotaSnapshotFromUsage(increment.usage);
+        quotaPayload = {
+          used: snapshot.used,
+          limit: snapshot.limit,
+          remaining: snapshot.remaining,
+          monthlyIncluded: snapshot.monthlyIncluded,
+          packCredits: snapshot.packCredits,
+          renewalDate: snapshot.renewalDate,
+          periodStart: snapshot.periodStart,
+          periodEnd: snapshot.periodEnd,
+        };
       }
     }
 
@@ -268,15 +357,33 @@ export async function POST(request: Request) {
       devis: result,
       rapportVerification: rapport,
       model,
+      durationMs: Date.now() - startedAt,
+      quota: quotaPayload,
     });
   } catch (error) {
+    const detail = logMumIaRouteError({
+      route: "generate-devis",
+      error,
+      userId: authUser.id,
+      requestBody: input,
+      extra: { generationId: generationId || undefined, companyId },
+    });
     const classified = classifyOpenAiError(error, model);
+    mumIaServerDebug("generate_error", {
+      durationMs: Date.now() - startedAt,
+      code: classified.code,
+      message: classified.message,
+      httpStatus: classified.httpStatus,
+    });
     return NextResponse.json(
-      {
-        success: false,
-        code: classified.code,
-        message: classified.message,
-      },
+      attachMumIaDevDebug(
+        {
+          success: false,
+          code: classified.code,
+          message: getMumIaUserMessage("openai_unavailable"),
+        },
+        classified.message || detail,
+      ),
       { status: classified.httpStatus },
     );
   }

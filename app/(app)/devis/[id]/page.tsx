@@ -36,13 +36,16 @@ import {
 } from "@/lib/devis-lignes";
 import { downloadDevisPdf, downloadSignedDevisPdf, hasOfficialSignedDevisPdf } from "@/lib/devis-pdf";
 import { loadSignedDevisPdf } from "@/lib/store";
+import { DevisRelancesPanel } from "@/components/devis-relances-panel";
 import {
   buildDevisClientSendEmail,
   buildDevisReminderEmail,
   createManualDevisRelance,
+  sendDevisReminderEmail,
   sendDevisToClient,
   sendReminderEmail,
 } from "@/lib/relances";
+import { appendDevisRelanceEntry } from "@/lib/devis-relances-auto";
 import { publishDevisSignatureLink } from "@/lib/devis-public-signature-client";
 import {
   calculateMontantTTC,
@@ -126,7 +129,6 @@ export default function DevisDetailPage() {
   const [sendSuccessFlash, setSendSuccessFlash] = useState(false);
   const [ligneToDelete, setLigneToDelete] = useState<string | null>(null);
   const [confirmRealEmailOpen, setConfirmRealEmailOpen] = useState(false);
-  const [confirmRelanceOpen, setConfirmRelanceOpen] = useState(false);
   const [confirmTransformOpen, setConfirmTransformOpen] = useState(false);
   const [acompteModalOpen, setAcompteModalOpen] = useState(false);
   const [acompteMode, setAcompteMode] = useState<"pourcentage" | "montant">(
@@ -388,12 +390,6 @@ export default function DevisDetailPage() {
   });
   const canCreateSolde = canTransformToFacture && billingCtx.resteAFacturer > 0;
   const commandeLie = findCommandeByDevisId(data.commandes ?? [], devisItem.id);
-  const relancesDevis = data.relances
-    .filter(
-      (relance) =>
-        relance.documentType === "devis" && relance.documentId === devisItem.id,
-    )
-    .sort((a, b) => b.dateRelance.localeCompare(a.dateRelance));
   const reminderEmail = buildDevisReminderEmail({
     devis: devisItem,
     client,
@@ -527,11 +523,60 @@ ${reminderEmail.message}`,
     setEmailCopied(true);
   }
 
-  async function handleSendReminderEmail() {
+  async function handleRelanceClient() {
+    if (!devisItem) return;
+
     setReminderSending(true);
     setReminderSendMessage("");
-    const result = await sendReminderEmail(reminderEmail);
-    setReminderSendMessage(result.message ?? "Envoi réel non configuré");
+
+    let url = signatureUrl;
+    if (!url) {
+      const published = await publishDevisSignatureLink({
+        devis: devisItem,
+        client,
+        parametres: data.parametres,
+      });
+      url = published.signatureUrl ?? "";
+      if (url) setSignatureUrl(url);
+    }
+
+    const result = await sendDevisReminderEmail({
+      devis: devisItem,
+      client,
+      parametres: data.parametres,
+      signatureUrl: url,
+      niveauRelance: "manuelle",
+    });
+
+    if (!result.success) {
+      setReminderSendMessage(
+        result.message ?? "Impossible d'envoyer la relance.",
+      );
+      setReminderSending(false);
+      return;
+    }
+
+    const { relance, notification } = createManualDevisRelance(devisItem);
+    setStoreData((previous) => ({
+      ...previous,
+      devis: previous.devis.map((devis) => {
+        if (devis.id !== devisItem.id) return devis;
+        const withRelance = appendDevisRelanceEntry(devis, "manuelle", "manuelle");
+        return ["envoye", "accepte"].includes(withRelance.statut)
+          ? { ...withRelance, statut: "en_attente" as const }
+          : withRelance;
+      }),
+      relances: [
+        ...previous.relances,
+        {
+          ...relance,
+          statut: result.simulated ? "envoyee_simulee" : "envoyee",
+        },
+      ],
+      notifications: [...previous.notifications, notification],
+    }));
+    setRelanceModalOpen(false);
+    setEmailCopied(false);
     setReminderSending(false);
   }
 
@@ -663,26 +708,6 @@ ${reminderEmail.message}`,
       }
     }
     handleCreateProgressiveFacture("acompte", acompteMode, valeur);
-  }
-
-  async function handleRelanceClient() {
-    if (!devisItem) return;
-
-    await sendReminderEmail(reminderEmail);
-    const { relance, notification } = createManualDevisRelance(devisItem);
-    setStoreData((previous) => ({
-      ...previous,
-      devis: previous.devis.map((devis) =>
-        devis.id === devisItem.id &&
-        ["envoye", "accepte"].includes(devis.statut)
-          ? { ...devis, statut: "en_attente" }
-          : devis,
-      ),
-      relances: [...previous.relances, relance],
-      notifications: [...previous.notifications, notification],
-    }));
-    setRelanceModalOpen(false);
-    setEmailCopied(false);
   }
 
   async function handleDownloadPdf() {
@@ -1242,44 +1267,30 @@ ${reminderEmail.message}`,
           emptyLabel="Aucun événement enregistré pour ce devis."
         />
 
-        {canShowRelances && !isSigned && (
+        {canShowRelances && !isSigned ? (
           <section className="mt-6">
-            <h3 className="mb-3 text-sm font-semibold tracking-tight">
-              Historique des relances
-            </h3>
-            {relancesDevis.length === 0 ? (
-              <p className="rounded-xl border border-border bg-card-elevated/60 px-4 py-3 text-sm text-muted-foreground">
-                Aucune relance envoyée pour ce devis.
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {relancesDevis.map((relance) => (
-                  <li
-                    key={relance.id}
-                    className="rounded-xl border border-border bg-card-elevated/60 px-4 py-3 text-sm"
-                  >
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                      <span className="font-medium text-foreground">
-                        {relance.typeRelance === "automatique"
-                          ? "Relance automatique"
-                          : "Relance manuelle"}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {formatDateTimeFR(relance.dateRelance)}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-muted-foreground">{relance.message}</p>
-                    <p className="mt-1 text-xs font-medium uppercase tracking-[0.16em] text-primary">
-                      {relance.statut === "envoyee_simulee"
-                        ? "Envoyée simulée"
-                        : "Préparée"}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <DevisRelancesPanel
+              devis={devisItem}
+              client={client}
+              parametres={data.parametres}
+              factures={data.factures}
+              relances={data.relances}
+              canSendEmail={canSendDevisEmail}
+              emailSendDisabledTitle={devisSendDisabledTitle}
+              onSendRelance={() => {
+                setEmailCopied(false);
+                setReminderSendMessage("");
+                setRelanceModalOpen(true);
+              }}
+              onToggleRelancesDesactivees={(disabled) =>
+                applyDevisChange((current) => ({
+                  ...current,
+                  relancesDesactivees: disabled,
+                }))
+              }
+            />
           </section>
-        )}
+        ) : null}
       </Card>
 
       <footer className="mt-6">
@@ -1302,13 +1313,20 @@ ${reminderEmail.message}`,
           <div className="rounded-2xl border border-border bg-card-elevated/70 p-4">
             <div className="mb-4 flex items-center justify-between gap-4">
               <BrandLogo imageClassName="h-10" showSubtitle={false} />
-              <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                Email simulé
+              <span
+                className={
+                  canSendDevisEmail
+                    ? "rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary"
+                    : "rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                }
+              >
+                {canSendDevisEmail ? "Envoi email" : "Aperçu"}
               </span>
             </div>
             <p className="text-sm leading-6 text-muted-foreground">
-              Prévisualisation prête pour un futur envoi réel. Aucun email n’est
-              envoyé pour l’instant.
+              {canSendDevisEmail
+                ? "Vérifiez le message puis envoyez la relance au client depuis votre boîte connectée."
+                : "Connectez votre email dans les paramètres pour envoyer la relance, ou copiez le message ci-dessous."}
             </p>
           </div>
 
@@ -1347,19 +1365,11 @@ ${reminderEmail.message}`,
             </Button>
             <Button
               type="button"
-              variant="secondary"
               onClick={() => setConfirmRealEmailOpen(true)}
-              disabled={reminderSending || !emailConnection.connected}
-              title={
-                emailConnection.connected
-                  ? undefined
-                  : devisSendDisabledTitle
-              }
+              disabled={reminderSending || !canSendDevisEmail}
+              title={canSendDevisEmail ? undefined : devisSendDisabledTitle}
             >
-              {reminderSending ? "Envoi…" : "Envoyer l’email"}
-            </Button>
-            <Button type="button" onClick={() => setConfirmRelanceOpen(true)}>
-              Marquer comme relancé
+              {reminderSending ? "Envoi…" : "Envoyer la relance"}
             </Button>
             <Button
               type="button"
@@ -1403,22 +1413,12 @@ ${reminderEmail.message}`,
 
       <ConfirmDialog
         open={confirmRealEmailOpen}
-        message="Confirmer l’envoi de l’email de relance ?"
-        confirmLabel="Confirmer"
+        title="Envoyer une relance"
+        message="Confirmer l'envoi de la relance au client ? Le message sera envoyé par email et ajouté à l'historique."
+        confirmLabel="Confirmer l'envoi"
         onCancel={() => setConfirmRealEmailOpen(false)}
         onConfirm={() => {
           setConfirmRealEmailOpen(false);
-          void handleSendReminderEmail();
-        }}
-      />
-
-      <ConfirmDialog
-        open={confirmRelanceOpen}
-        message="Confirmer la relance simulée et l’ajout à l’historique ?"
-        confirmLabel="Confirmer"
-        onCancel={() => setConfirmRelanceOpen(false)}
-        onConfirm={() => {
-          setConfirmRelanceOpen(false);
           void handleRelanceClient();
         }}
       />

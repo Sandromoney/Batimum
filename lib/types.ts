@@ -148,6 +148,14 @@ export interface Devis {
   sentAt?: string;
   clientIp?: string;
   signatureId?: string;
+  /** Relances email programmées / envoyées pour ce devis. */
+  relancesProgrammees?: DevisRelanceEntry[];
+  /** Désactive les relances automatiques pour ce devis. */
+  relancesDesactivees?: boolean;
+  /** Nombre total de relances envoyées. */
+  relanceCount?: number;
+  /** Date ISO de la dernière relance. */
+  derniereRelanceAt?: string;
   historique?: DevisHistoriqueEntry[];
   refusedAt?: string;
   refusedBy?: string;
@@ -326,6 +334,30 @@ export type FactureRelanceNiveau =
   | "apres_echeance_15j"
   | "apres_echeance_30j"
   | "manuelle";
+
+export type DevisRelanceNiveau =
+  | "j7"
+  | "j14"
+  | "j21"
+  | "personnalise"
+  | "manuelle";
+
+export interface DevisRelanceEntry {
+  id: string;
+  regleId: string;
+  niveau: DevisRelanceNiveau;
+  date: string;
+  canal: "email";
+}
+
+export interface DevisRelanceRegle {
+  id: string;
+  label: string;
+  actif: boolean;
+  joursApresEnvoi: number;
+  sujet: string;
+  message: string;
+}
 
 export interface FactureRelanceEntry {
   id: string;
@@ -507,6 +539,8 @@ export interface RelanceClient {
   statut: "preparee" | "envoyee" | "envoyee_simulee";
   message: string;
   niveauRelance?: FactureRelanceNiveau;
+  niveauRelanceDevis?: DevisRelanceNiveau;
+  regleRelanceId?: string;
 }
 
 export type ModeTVA = "classique" | "non_applicable_293B";
@@ -601,12 +635,18 @@ export interface Parametres {
   relanceJ7?: boolean;
   relanceJ15?: boolean;
   relanceJ30?: boolean;
+  /** Active les relances email automatiques sur les devis envoyés. */
+  relancesDevisAutomatiques?: boolean;
+  /** Règles de relance devis (J+7, J+14, J+21, personnalisées). */
+  relancesDevis?: DevisRelanceRegle[];
   /** Générations IA consommées ce mois. */
   aiGenerationsUsed?: number;
   /** Mois courant du compteur IA (YYYY-MM). */
   aiGenerationsMonth?: string;
   /** Limite mensuelle IA (sinon selon abonnement). */
   aiGenerationsLimit?: number;
+  /** Crédits IA bonus achetés (packs supplémentaires). */
+  aiPackCredits?: number;
   /** Couleur principale des devis PDF / aperçu. */
   couleurDevis?: DevisBrandColorId;
   /** Hex personnalisé si couleurDevis = personnalise. */
@@ -732,13 +772,15 @@ export interface BibliothequeEntreprise {
   ratios?: BibliothequeRatioEntry[];
 }
 
-export type MumIaHistoriqueStatut = "genere" | "transforme" | "supprime";
+export type MumIaHistoriqueStatut = "analyse" | "genere" | "transforme" | "supprime";
 
 export interface MumIaHistoriqueEntry {
   id: string;
   createdAt: string;
   titre: string;
   descriptionChantier: string;
+  /** Précisions libres ajoutées avant génération. */
+  precisionsSupplementaires?: string;
   regionCode: string;
   regionLabel: string;
   departementCode: string;
@@ -751,7 +793,10 @@ export interface MumIaHistoriqueEntry {
   totalTTC?: number;
   statut: MumIaHistoriqueStatut;
   devisBrouillonId?: string;
-  devisIa: import("@/lib/ai-devis").AiDevisResult;
+  /** Absent tant que le devis n'est pas généré (statut analyse). */
+  devisIa?: import("@/lib/ai-devis").AiDevisResult;
+  /** Snapshot de l'analyse pour reprise depuis l'historique. */
+  analysisSnapshot?: import("@/lib/ai-devis-analysis").AiChantierAnalysis;
 }
 
 export interface AppData {

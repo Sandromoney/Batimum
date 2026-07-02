@@ -31,6 +31,13 @@ function LoginPageContent() {
     if (oauthError) {
       setError(decodeURIComponent(oauthError));
     }
+    const reason = searchParams.get("reason");
+    if (reason === "mumia_requires_auth") {
+      setError("Veuillez vous connecter avec votre compte pour utiliser MUM IA.");
+    }
+    if (reason === "supabase_config_missing") {
+      setError("Configuration Supabase manquante. Contactez le support.");
+    }
     const prefilledEmail = searchParams.get("email");
     if (prefilledEmail) {
       setEmail(prefilledEmail);
@@ -113,12 +120,44 @@ function LoginPageContent() {
               const sessionUser =
                 signInData.session?.user ??
                 (await supabase.auth.getSession()).data.session?.user;
+              const accessToken =
+                signInData.session?.access_token ??
+                (await supabase.auth.getSession()).data.session?.access_token;
 
-              if (!sessionUser) {
+              if (!sessionUser || !accessToken) {
                 console.log("[login] No Supabase session after signInWithPassword");
                 setLoading(false);
-                setError("Session invalide après connexion.");
+                setError("Session Supabase invalide après connexion.");
                 return;
+              }
+
+              if (!sessionUser.id) {
+                setLoading(false);
+                setError("Utilisateur Supabase invalide (user.id absent).");
+                return;
+              }
+
+              if (process.env.NODE_ENV === "development") {
+                const diagnosticsResponse = await fetch("/api/ia/diagnostics", {
+                  credentials: "include",
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                  },
+                });
+
+                if (!diagnosticsResponse.ok) {
+                  const body = (await diagnosticsResponse.json().catch(() => null)) as
+                    | { error?: string; message?: string; debugMessage?: string }
+                    | null;
+                  setLoading(false);
+                  setError(
+                    body?.debugMessage ??
+                      body?.message ??
+                      body?.error ??
+                      "Impossible de valider l'accès MUM IA après connexion.",
+                  );
+                  return;
+                }
               }
 
               ensureAppAccountFromSupabaseUser(sessionUser);

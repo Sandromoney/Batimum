@@ -21,6 +21,7 @@ import { Loader2, Plug } from "lucide-react";
 type ParametresFacturationElectroniqueSectionProps = {
   form: Parametres;
   onChange: (next: Parametres) => void;
+  modified?: boolean;
 };
 
 function connexionBadgeClass(statut: PdpConnexionStatut): string {
@@ -39,6 +40,7 @@ function connexionBadgeClass(statut: PdpConnexionStatut): string {
 export function ParametresFacturationElectroniqueSection({
   form,
   onChange,
+  modified = false,
 }: ParametresFacturationElectroniqueSectionProps) {
   const fe = resolveParametresFacturationElectronique(form);
   const [testing, setTesting] = useState(false);
@@ -87,6 +89,7 @@ export function ParametresFacturationElectroniqueSection({
     <ParametresSection
       title="Facturation électronique"
       description="Préparation réforme 2026/2027 — architecture PDP prête, sans transmission active tant qu'un connecteur n'est pas branché"
+      modified={modified}
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <section className="sm:col-span-2">

@@ -2,6 +2,7 @@ import type {
   AppData,
   Client,
   Devis,
+  DevisRelanceNiveau,
   Facture,
   FactureRelanceNiveau,
   NotificationApp,
@@ -11,6 +12,17 @@ import type {
 import { getClientDisplayName } from "@/lib/clients";
 import { computeDevisTvaRecap } from "@/lib/devis-tva";
 import { isTvaClassique } from "@/lib/parametres";
+import {
+  applyDevisRelanceTemplate,
+  buildDevisRelanceVariables,
+  DEVIS_RELANCE_NIVEAU_LABELS,
+  findDevisRelanceRegle,
+  isDevisEligibleForRelances,
+} from "@/lib/devis-relance-config";
+import {
+  appendDevisRelanceEntry,
+  buildPendingDevisRelanceRecord,
+} from "@/lib/devis-relances-auto";
 import { appendCoordonneesBancairesToText } from "@/lib/coordonnees-bancaires";
 import { getDevisPdfBase64 } from "@/lib/devis-pdf";
 import {
@@ -80,8 +92,8 @@ function relanceMessage(target: RelanceTarget) {
   return `Facture ${target.document.numero} en attente de paiement.`;
 }
 
-function shouldRelanceDevis(devis: Devis) {
-  return ["envoye", "en_attente", "en_retard", "accepte"].includes(devis.statut);
+function shouldRelanceDevis(devis: Devis, factures: Facture[] = []) {
+  return isDevisEligibleForRelances(devis, factures);
 }
 
 function getDevisReminderTotalTTC(devis: Devis, parametresTva = 20, tvaClassique = true) {
@@ -128,7 +140,15 @@ export function createRelanceClient(
 }
 
 export function createManualDevisRelance(devis: Devis) {
-  return createRelanceClient({ documentType: "devis", document: devis }, "manuelle");
+  const relance = createRelanceClient({ documentType: "devis", document: devis }, "manuelle");
+  return {
+    ...relance,
+    relance: {
+      ...relance.relance,
+      niveauRelanceDevis: "manuelle" as DevisRelanceNiveau,
+      regleRelanceId: "manuelle",
+    },
+  };
 }
 
 export function createManualFactureRelance(facture: Facture) {
@@ -435,41 +455,57 @@ export function buildDevisReminderEmail({
   client,
   parametres,
   signatureUrl,
+  regleId,
+  niveauRelance = "manuelle",
 }: {
   devis: Devis;
   client?: Client;
   parametres: Parametres;
   signatureUrl: string;
+  regleId?: string;
+  niveauRelance?: DevisRelanceNiveau;
 }): ReminderEmailPreview {
-  const montant = formatCurrency(
-    getDevisReminderTotalTTC(
-      devis,
-      parametres.tva,
-      isTvaClassique(parametres),
-    ),
-  );
+  const variables = buildDevisRelanceVariables({
+    devis,
+    client,
+    parametres,
+    signatureUrl,
+  });
 
-  return {
-    destinataire: client?.email ?? "",
-    objet: `Relance concernant votre devis ${devis.numero}`,
-    message: `Bonjour ${getClientDisplayName(client)},
+  const regle =
+    (regleId ? findDevisRelanceRegle(parametres, regleId) : undefined) ??
+    (niveauRelance === "j7" || niveauRelance === "j14" || niveauRelance === "j21"
+      ? findDevisRelanceRegle(parametres, niveauRelance)
+      : undefined);
 
-Nous nous permettons de revenir vers vous concernant le devis ${devis.numero} d’un montant de ${montant} TTC.
+  const sujet = regle
+    ? applyDevisRelanceTemplate(regle.sujet, variables)
+    : `Relance concernant votre devis ${devis.numero}`;
+
+  const messageBody = regle
+    ? applyDevisRelanceTemplate(regle.message, variables)
+    : `Bonjour ${variables.nom_client},
+
+Nous nous permettons de revenir vers vous concernant le devis ${devis.numero} (${variables.montant_devis} TTC).
 
 ${buildDevisSignaturePlainTextBlock(signatureUrl)}
 
 Nous restons à votre disposition pour toute question ou précision.
 
 Cordialement,
-${appendSignatureEmail(parametres)}`,
+${appendSignatureEmail(parametres)}`;
+
+  const signatureBlock = buildDevisSignatureHtmlBlock(signatureUrl);
+
+  return {
+    destinataire: client?.email ?? "",
+    objet: sujet,
+    message: messageBody,
     html: `<!DOCTYPE html>
 <html lang="fr">
 <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;">
-  <p>Bonjour ${getClientDisplayName(client)},</p>
-  <p>Nous nous permettons de revenir vers vous concernant le devis <strong>${devis.numero}</strong> d'un montant de <strong>${montant} TTC</strong>.</p>
-  ${buildDevisSignatureHtmlBlock(signatureUrl)}
-  <p>Nous restons à votre disposition pour toute question ou précision.</p>
-  <p>Cordialement,<br>${appendSignatureEmail(parametres).replace(/\n/g, "<br>")}</p>
+  <p>${messageBody.replace(/\n/g, "<br>")}</p>
+  ${signatureUrl ? signatureBlock : ""}
 </body>
 </html>`,
   };
@@ -694,21 +730,154 @@ export async function sendReminderEmail(email: DevisEmailPayload) {
   }
 }
 
-export function buildAutomaticDevisRelances(data: AppData) {
-  const targets: RelanceTarget[] = data.devis
-    .filter(shouldRelanceDevis)
-    .map((document) => ({ documentType: "devis" as const, document }));
+export async function sendDevisReminderEmail({
+  devis,
+  client,
+  parametres,
+  signatureUrl,
+  regleId,
+  niveauRelance = "manuelle",
+}: {
+  devis: Devis;
+  client?: Client;
+  parametres: Parametres;
+  signatureUrl: string;
+  regleId?: string;
+  niveauRelance?: DevisRelanceNiveau;
+}) {
+  if (!canSendClientDocument(parametres)) {
+    return {
+      success: false,
+      simulated: false,
+      message: formatEntrepriseSendGateMessage(
+        getEntrepriseSendMissingFields(parametres),
+      ),
+    };
+  }
 
-  return targets
-    .filter(
-      (target) =>
-        !data.relances.some(
-          (relance) =>
-            relance.typeRelance === "automatique" &&
-            relance.documentType === target.documentType &&
-            relance.documentId === target.document.id,
-        ),
-    )
-    .map((target) => createRelanceClient(target, "automatique"));
+  const emailReady = await ensureEmailConnectionReady();
+  if (!emailReady.ok) {
+    return {
+      success: false,
+      simulated: false,
+      message: emailReady.message,
+    };
+  }
+
+  const email = buildDevisReminderEmail({
+    devis,
+    client,
+    parametres,
+    signatureUrl,
+    regleId,
+    niveauRelance,
+  });
+
+  return sendReminderEmail({
+    ...email,
+    replyToEmail: resolveReplyToEmail(parametres),
+  });
+}
+
+export async function processPendingDevisRelanceEmails(data: AppData) {
+  const pending = data.relances.filter(
+    (relance) =>
+      relance.documentType === "devis" &&
+      relance.statut === "preparee" &&
+      relance.typeRelance === "automatique",
+  );
+  if (pending.length === 0) {
+    return { data, sentCount: 0 };
+  }
+
+  if (!canSendClientDocument(data.parametres)) {
+    return { data, sentCount: 0 };
+  }
+
+  let nextData = data;
+  let sentCount = 0;
+
+  for (const relance of pending) {
+    const devis = nextData.devis.find((item) => item.id === relance.documentId);
+    if (!devis || devis.relancesDesactivees) continue;
+    if (!isDevisEligibleForRelances(devis, nextData.factures)) continue;
+
+    const client = nextData.clients.find((item) => item.id === devis.clientId);
+    const published = await publishDevisSignatureLinkForRelance({
+      devis,
+      client,
+      parametres: nextData.parametres,
+    });
+
+    const niveau = relance.niveauRelanceDevis ?? "personnalise";
+    const result = await sendDevisReminderEmail({
+      devis,
+      client,
+      parametres: nextData.parametres,
+      signatureUrl: published.signatureUrl,
+      regleId: relance.regleRelanceId,
+      niveauRelance: niveau,
+    });
+
+    const statut: RelanceClient["statut"] = result.success
+      ? result.simulated
+        ? "envoyee_simulee"
+        : "envoyee"
+      : "envoyee_simulee";
+
+    const label =
+      DEVIS_RELANCE_NIVEAU_LABELS[niveau] ?? "Relance automatique devis";
+
+    nextData = {
+      ...nextData,
+      devis: nextData.devis.map((item) =>
+        item.id === devis.id
+          ? appendDevisRelanceEntry(
+              item,
+              relance.regleRelanceId ?? niveau,
+              niveau,
+            )
+          : item,
+      ),
+      relances: nextData.relances.map((item) =>
+        item.id === relance.id ? { ...item, statut, message: label } : item,
+      ),
+      notifications: [
+        ...nextData.notifications,
+        {
+          id: generateId(),
+          relanceId: relance.id,
+          titre: "Relance devis envoyée",
+          message: `${label} — ${devis.numero}`,
+          dateCreation: new Date().toISOString(),
+          lue: false,
+          type: "relance" as const,
+        },
+      ],
+    };
+    sentCount += 1;
+  }
+
+  return { data: nextData, sentCount };
+}
+
+async function publishDevisSignatureLinkForRelance({
+  devis,
+  client,
+  parametres,
+}: {
+  devis: Devis;
+  client?: Client;
+  parametres: Parametres;
+}) {
+  const { publishDevisSignatureLink } = await import(
+    "@/lib/devis-public-signature-client"
+  );
+  const published = await publishDevisSignatureLink({ devis, client, parametres });
+  return { signatureUrl: published.signatureUrl ?? "" };
+}
+
+export function buildAutomaticDevisRelances(data: AppData) {
+  return { relances: [] as RelanceClient[], notifications: [] as NotificationApp[] };
 }
 

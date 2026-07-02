@@ -5,7 +5,7 @@ import { Bell, X } from "lucide-react";
 import { cn, formatDateTimeFR, formatTime24h, generateId } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import type { EvenementPlanning, NotificationApp } from "@/lib/types";
-import { buildAutomaticDevisRelances, processPendingFactureRelanceEmails } from "@/lib/relances";
+import { processPendingDevisRelanceEmails, processPendingFactureRelanceEmails } from "@/lib/relances";
 
 function planningDateTime(event: EvenementPlanning) {
   return new Date(`${event.date}T${event.heureDebut}:00`);
@@ -41,8 +41,8 @@ function notificationKey(
 
 export function AppNotifications() {
   const { data, setData, hydrated } = useStore();
-  const devisRelancesInitialized = useRef(false);
   const processingFactureRelances = useRef(false);
+  const processingDevisRelances = useRef(false);
   const notificationsRef = useRef<HTMLSpanElement>(null);
   const [openNotifications, setOpenNotifications] = useState(false);
   const [toast, setToast] = useState<NotificationApp | null>(null);
@@ -118,27 +118,6 @@ export function AppNotifications() {
   ]);
 
   useEffect(() => {
-    if (!hydrated || devisRelancesInitialized.current) return;
-
-    const automaticRelances = buildAutomaticDevisRelances(data);
-    devisRelancesInitialized.current = true;
-    if (automaticRelances.length === 0) return;
-
-    setData((previous) => ({
-      ...previous,
-      relances: [
-        ...previous.relances,
-        ...automaticRelances.map(({ relance }) => relance),
-      ],
-      notifications: [
-        ...previous.notifications,
-        ...automaticRelances.map(({ notification }) => notification),
-      ],
-    }));
-    setToast(automaticRelances[0].notification);
-  }, [data, hydrated, setData]);
-
-  useEffect(() => {
     if (!hydrated || processingFactureRelances.current) return;
 
     const hasPending = data.relances.some(
@@ -154,6 +133,27 @@ export function AppNotifications() {
     void processPendingFactureRelanceEmails(data).then(
       ({ data: updated, sentCount }) => {
         processingFactureRelances.current = false;
+        if (sentCount > 0) setData(updated);
+      },
+    );
+  }, [data.relances, hydrated, setData, data]);
+
+  useEffect(() => {
+    if (!hydrated || processingDevisRelances.current) return;
+
+    const hasPending = data.relances.some(
+      (relance) =>
+        relance.documentType === "devis" &&
+        relance.statut === "preparee" &&
+        relance.typeRelance === "automatique",
+    );
+    if (!hasPending) return;
+
+    processingDevisRelances.current = true;
+
+    void processPendingDevisRelanceEmails(data).then(
+      ({ data: updated, sentCount }) => {
+        processingDevisRelances.current = false;
         if (sentCount > 0) setData(updated);
       },
     );

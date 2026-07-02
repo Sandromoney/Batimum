@@ -119,6 +119,7 @@ export function MumIaHistoriqueSection({
             className="h-8 text-xs"
           >
             <option value="tous">Tous statuts</option>
+            <option value="analyse">Analysé</option>
             <option value="genere">Généré</option>
             <option value="transforme">Transformé</option>
             <option value="supprime">Supprimé</option>
@@ -178,8 +179,18 @@ export function MumIaHistoriqueSection({
                       : ""}
                   </p>
                   <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">
-                    {formatCurrency(entry.totalHT)} HT
+                    {entry.statut === "analyse" ? (
+                      <span className="text-muted-foreground font-normal">—</span>
+                    ) : (
+                      formatCurrency(entry.totalHT)
+                    )}{" "}
+                    {entry.statut !== "analyse" ? "HT" : null}
                   </p>
+                  {entry.precisionsSupplementaires ? (
+                    <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">
+                      Précisions : {entry.precisionsSupplementaires}
+                    </p>
+                  ) : null}
                   <p
                     className={`mt-0.5 text-[11px] ${
                       entry.statut === "transforme"
@@ -204,7 +215,7 @@ export function MumIaHistoriqueSection({
                     <Eye className="h-3 w-3" />
                     Voir
                   </Button>
-                  {entry.statut === "genere" ? (
+                  {entry.statut === "genere" && entry.devisIa ? (
                     <Button
                       type="button"
                       size="sm"

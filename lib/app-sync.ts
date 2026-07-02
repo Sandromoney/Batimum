@@ -1,6 +1,7 @@
 import { syncChantierStatut } from "@/lib/chantier-statut";
 import { syncDevisExpireStatut } from "@/lib/devis-statut";
 import { syncFactureRelancesAutomatiques } from "@/lib/facture-relances-auto";
+import { syncDevisRelancesAutomatiques } from "@/lib/devis-relances-auto";
 import { syncFactureEnRetardStatut } from "@/lib/facture-statut";
 import { normalizeFacture } from "@/lib/electronic-invoice";
 import type { AppData } from "@/lib/types";
@@ -34,6 +35,22 @@ export function syncAppData(data: AppData): AppData {
     relances = relanceSync.relances;
   }
 
+  let devisWithRelances = devis;
+  const devisRelanceSync = syncDevisRelancesAutomatiques({
+    ...data,
+    devis: devisWithRelances,
+    factures: facturesWithRelances,
+    relances,
+  });
+  if (
+    devisRelanceSync.devis !== devisWithRelances ||
+    devisRelanceSync.relances !== relances
+  ) {
+    changed = true;
+    devisWithRelances = devisRelanceSync.devis;
+    relances = devisRelanceSync.relances;
+  }
+
   const chantiers = data.chantiers.map((item) => {
     const next = syncChantierStatut(item);
     if (next !== item) changed = true;
@@ -41,5 +58,11 @@ export function syncAppData(data: AppData): AppData {
   });
 
   if (!changed) return data;
-  return { ...data, devis, factures: facturesWithRelances, relances, chantiers };
+  return {
+    ...data,
+    devis: devisWithRelances,
+    factures: facturesWithRelances,
+    relances,
+    chantiers,
+  };
 }

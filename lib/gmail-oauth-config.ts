@@ -218,7 +218,11 @@ export function validateGmailOAuthConfig(): GmailOAuthConfigCheck {
   if (!getGoogleClientId()) missing.push("GOOGLE_CLIENT_ID");
   if (!getGoogleClientSecret()) missing.push("GOOGLE_CLIENT_SECRET");
   if (!getSupabaseUrl()) missing.push("NEXT_PUBLIC_SUPABASE_URL");
-  if (!getSupabaseAnonKey()) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  if (!getSupabaseAnonKey()) {
+    missing.push(
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (ou NEXT_PUBLIC_SUPABASE_ANON_KEY)",
+    );
+  }
 
   const redirectUri = getResolvedGoogleRedirectUri();
   const redirectUriSource = getGoogleRedirectUriFromEnv()
