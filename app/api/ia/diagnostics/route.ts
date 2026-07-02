@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { checkUserAiQuota } from "@/lib/ai-usage-store";
 import {
   getOpenAiEnvDiagnostics,
   isOpenAiConfigured,
@@ -46,14 +45,10 @@ export async function GET(request: Request) {
   const openAi = getOpenAiEnvDiagnostics();
   const { user: authUser } = authResult;
 
-  let quota: Awaited<ReturnType<typeof checkUserAiQuota>> | null = null;
-  quota = await checkUserAiQuota(authUser.id);
-
   const supabaseUrl = getSupabaseUrl();
   const supabasePublicKey = getSupabaseAnonKey();
   const supabasePublicKeySource = getSupabaseAnonKeySource();
   const hasServiceRoleKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim());
-  const hasDevQuotaBypass = process.env.MUM_IA_SKIP_QUOTA === "true";
   const openAiOk = isOpenAiConfigured();
   const environment = detectRuntimeEnvironment();
 
@@ -64,7 +59,7 @@ export async function GET(request: Request) {
       status:
         Boolean(supabaseUrl) &&
         Boolean(supabasePublicKey) &&
-        (hasServiceRoleKey || (environment === "local" && hasDevQuotaBypass)) &&
+        hasServiceRoleKey &&
         openAiOk
           ? "OK"
           : "KO",
@@ -76,7 +71,6 @@ export async function GET(request: Request) {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim(),
       ),
       hasSupabaseServiceRoleKey: hasServiceRoleKey,
-      hasMumIaSkipQuota: hasDevQuotaBypass,
       hasOpenAiApiKey: Boolean(process.env.OPENAI_API_KEY?.trim()),
     },
     checks: {
@@ -107,16 +101,6 @@ export async function GET(request: Request) {
     },
     auth: { userId: authUser.id, email: authUser.email },
     company: { id: getCompanyIdForUser(authUser) },
-    quota: quota
-      ? {
-          allowed: quota.allowed,
-          used: quota.used,
-          limit: quota.limit,
-          monthlyIncluded: quota.monthlyIncluded,
-          renewalDate: quota.renewalDate,
-          message: quota.message,
-        }
-      : null,
     supabase: {
       hasPublicUrl: Boolean(supabaseUrl),
       hasPublicKey: Boolean(supabasePublicKey),

@@ -58,7 +58,7 @@ export function getMumIaUsedCount(usage: UserAiUsageRow): number {
 }
 
 export function getEffectiveAiLimit(usage: UserAiUsageRow): number {
-  return getMonthlyIncludedQuota(usage) + Math.max(0, usage.ai_pack_credits ?? 0);
+  return getMonthlyIncludedQuota(usage);
 }
 
 function getSubscriptionStart(usage: UserAiUsageRow): Date {
@@ -201,7 +201,6 @@ async function persistUsageRow(
 export function buildQuotaSnapshotFromUsage(usage: UserAiUsageRow): MumIaQuotaSnapshot {
   const used = getMumIaUsedCount(usage);
   const monthlyIncluded = getMonthlyIncludedQuota(usage);
-  const packCredits = Math.max(0, usage.ai_pack_credits ?? 0);
   const periodEnd =
     usage.current_credit_period_end ??
     usage.current_period_end ??
@@ -210,7 +209,7 @@ export function buildQuotaSnapshotFromUsage(usage: UserAiUsageRow): MumIaQuotaSn
   return buildMumIaQuotaSnapshot({
     used,
     monthlyIncluded,
-    packCredits,
+    packCredits: 0,
     renewalDate: periodEnd,
     periodStart:
       usage.current_credit_period_start ??
@@ -384,7 +383,7 @@ export async function checkUserAiQuota(userId: string): Promise<{
       used: snapshot.used,
       limit: snapshot.limit,
       monthlyIncluded: snapshot.monthlyIncluded,
-      packCredits: snapshot.packCredits,
+      packCredits: 0,
       renewalDate: snapshot.renewalDate,
       periodStart: snapshot.periodStart,
       periodEnd: snapshot.periodEnd,
@@ -397,7 +396,7 @@ export async function checkUserAiQuota(userId: string): Promise<{
     used: snapshot.used,
     limit: snapshot.limit,
     monthlyIncluded: snapshot.monthlyIncluded,
-    packCredits: snapshot.packCredits,
+    packCredits: 0,
     renewalDate: snapshot.renewalDate,
     periodStart: snapshot.periodStart,
     periodEnd: snapshot.periodEnd,

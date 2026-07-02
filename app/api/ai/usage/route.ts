@@ -68,7 +68,7 @@ export async function GET(request: Request) {
 
     monthlyIncluded: snapshot.monthlyIncluded,
 
-    packCredits: snapshot.packCredits,
+    packCredits: 0,
 
     renewalDate: snapshot.renewalDate,
 

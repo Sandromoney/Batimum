@@ -25,7 +25,7 @@ export async function fetchMumIaQuota(): Promise<MumIaQuotaSnapshot | null> {
     return buildMumIaQuotaSnapshot({
       used: body.used,
       monthlyIncluded: body.monthlyIncluded ?? 100,
-      packCredits: body.packCredits ?? 0,
+      packCredits: 0,
       renewalDate: body.renewalDate ?? body.periodEnd ?? "",
       periodStart: body.periodStart ?? "",
       periodEnd: body.periodEnd ?? body.renewalDate ?? "",

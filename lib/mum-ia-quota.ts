@@ -20,7 +20,7 @@ export function formatMumIaQuotaUsageLabel(
   used: number,
   monthlyIncluded = AI_QUOTA_PRO_MONTHLY,
 ): string {
-  return `Devis MUM IA : ${used} / ${monthlyIncluded} utilisés`;
+  return `Devis MUM IA : ${used} / ${monthlyIncluded} utilisés ce mois-ci`;
 }
 
 export function formatMumIaRenewalLabel(renewalDateIso: string): string {
@@ -31,9 +31,9 @@ export function formatMumIaRenewalLabel(renewalDateIso: string): string {
 export function buildMumIaQuotaExceededMessage(renewalDateIso: string): string {
   const renewalLabel = formatParisDateLabel(renewalDateIso);
   const renewalSentence = renewalLabel
-    ? ` Vos crédits seront renouvelés le ${renewalLabel}.`
+    ? ` Vos crédits seront automatiquement renouvelés le ${renewalLabel}.`
     : "";
-  return `Désolé, vous n'avez plus de crédits IA disponibles pour ce mois-ci. Vos 100 devis MUM IA ont été utilisés.${renewalSentence}`;
+  return `Désolé, vous avez utilisé vos 100 demandes IA disponibles pour ce mois-ci.${renewalSentence}`;
 }
 
 export function getMumIaQuotaTone(
@@ -53,8 +53,8 @@ export function buildMumIaQuotaSnapshot(params: {
   periodStart: string;
   periodEnd: string;
 }): MumIaQuotaSnapshot {
-  const packCredits = Math.max(0, params.packCredits ?? 0);
-  const limit = params.monthlyIncluded + packCredits;
+  const packCredits = 0;
+  const limit = params.monthlyIncluded;
   return {
     used: params.used,
     limit,

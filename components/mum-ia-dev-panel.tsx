@@ -28,7 +28,6 @@ export function MumIaDevPanel({ technicalError }: MumIaDevPanelProps) {
   const [fullDiagnostic, setFullDiagnostic] = useState<{
     authSupabase: string;
     company: string;
-    quotaIa: string;
     openAiKey: string;
     openAiConnection: string;
     generationTest: string;
@@ -127,7 +126,6 @@ export function MumIaDevPanel({ technicalError }: MumIaDevPanelProps) {
         checks?: {
           authSupabase?: { ok?: boolean; error?: string | null };
           company?: { ok?: boolean; error?: string | null };
-          quotaIa?: { ok?: boolean; error?: string | null };
           openAiKey?: { ok?: boolean; error?: string | null };
           openAiConnection?: { ok?: boolean; error?: string | null };
           generationTest?: { ok?: boolean; error?: string | null };
@@ -143,7 +141,6 @@ export function MumIaDevPanel({ technicalError }: MumIaDevPanelProps) {
       setFullDiagnostic({
         authSupabase: toLabel(payload.checks?.authSupabase),
         company: toLabel(payload.checks?.company),
-        quotaIa: toLabel(payload.checks?.quotaIa),
         openAiKey: toLabel(payload.checks?.openAiKey),
         openAiConnection: toLabel(payload.checks?.openAiConnection),
         generationTest: toLabel(payload.checks?.generationTest),
@@ -155,7 +152,6 @@ export function MumIaDevPanel({ technicalError }: MumIaDevPanelProps) {
       setFullDiagnostic({
         authSupabase: "Erreur",
         company: "Erreur",
-        quotaIa: "Erreur",
         openAiKey: "Erreur",
         openAiConnection: "Erreur",
         generationTest: "Erreur",
@@ -246,7 +242,6 @@ export function MumIaDevPanel({ technicalError }: MumIaDevPanelProps) {
         <div className="space-y-1 rounded-lg border border-border/60 bg-card/30 px-3 py-2 text-xs">
           <p>Authentification Supabase : {fullDiagnostic.authSupabase}</p>
           <p>Entreprise : {fullDiagnostic.company}</p>
-          <p>Quota IA : {fullDiagnostic.quotaIa}</p>
           <p>Clé OpenAI : {fullDiagnostic.openAiKey}</p>
           <p>Connexion OpenAI : {fullDiagnostic.openAiConnection}</p>
           <p>Génération test : {fullDiagnostic.generationTest}</p>

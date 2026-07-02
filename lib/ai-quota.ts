@@ -2,7 +2,6 @@ import { hasActiveSubscription, type UserAccount } from "@/lib/account";
 import { hasUnrestrictedDevAccess } from "@/lib/dev-access";
 import type { Parametres } from "@/lib/types";
 
-export const AI_QUOTA_FREE_MONTHLY = 5;
 export const AI_QUOTA_PRO_MONTHLY = 100;
 
 export type AiQuotaState = {
@@ -20,7 +19,7 @@ function currentMonthKey(date = new Date()): string {
 export function getAiGenerationLimit(account: UserAccount | null): number {
   if (hasUnrestrictedDevAccess(account)) return AI_QUOTA_PRO_MONTHLY;
   if (hasActiveSubscription(account)) return AI_QUOTA_PRO_MONTHLY;
-  return AI_QUOTA_FREE_MONTHLY;
+  return AI_QUOTA_PRO_MONTHLY;
 }
 
 export function resolveAiQuota(

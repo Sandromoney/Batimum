@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-  checkUserAiQuota,
   classifyOpenAiError,
   createOpenAiClient,
   getOpenAiEnvDiagnostics,
@@ -31,7 +30,6 @@ type TestDiagnosticsPayload = {
   checks: {
     authSupabase: DiagnosticCheck;
     company: DiagnosticCheck;
-    quotaIa: DiagnosticCheck;
     openAiKey: DiagnosticCheck;
     openAiConnection: DiagnosticCheck;
     generationTest: DiagnosticCheck;
@@ -42,7 +40,6 @@ type TestDiagnosticsPayload = {
     bearerPrefix: string | null;
     userId: string | null;
     companyId: string | null;
-    quotaRemaining: number | null;
     keySource: string | null;
   };
   debugMessage?: string;
@@ -64,10 +61,6 @@ export async function POST(request: Request) {
     company: {
       ok: Boolean(authUser?.id),
       error: authUser?.id ? null : "company introuvable (user.id absent)",
-    },
-    quotaIa: {
-      ok: false,
-      error: "quota non vérifié (auth manquante)",
     },
     openAiKey: {
       ok: isOpenAiConfigured(),
@@ -91,7 +84,6 @@ export async function POST(request: Request) {
       bearerPrefix: bearerToken ? bearerToken.slice(0, 10) : null,
       userId: authUser?.id ?? null,
       companyId: authUser ? getCompanyIdForUser(authUser) : null,
-      quotaRemaining: null,
       keySource: getOpenAiEnvDiagnostics().keySource,
     },
   };
@@ -118,7 +110,6 @@ export async function POST(request: Request) {
         ...payloadBase,
         checks: {
           ...checks,
-          quotaIa: { ok: true, error: null },
           openAiConnection: {
             ok: false,
             error: "OPENAI_API_KEY absente",
@@ -132,36 +123,6 @@ export async function POST(request: Request) {
       },
       { status: 503 },
     );
-  }
-
-  const bypassQuotaInDev =
-    process.env.NODE_ENV === "development" &&
-    process.env.MUM_IA_SKIP_QUOTA === "true";
-
-  if (bypassQuotaInDev) {
-    checks.quotaIa = {
-      ok: true,
-      error: "Quota bypassé en développement (MUM_IA_SKIP_QUOTA=true)",
-    };
-    payloadBase.details.quotaRemaining = null;
-  } else {
-    const quota = await checkUserAiQuota(authUser.id);
-    checks.quotaIa = quota.allowed
-      ? { ok: true, error: null }
-      : { ok: false, error: quota.message ?? "quota bloqué" };
-    payloadBase.details.quotaRemaining = Math.max(0, quota.limit - quota.used);
-
-    if (!quota.allowed) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Quota IA bloqué.",
-          errorCode: "ai_quota_blocked",
-          ...payloadBase,
-        } satisfies TestDiagnosticsPayload,
-        { status: 429 },
-      );
-    }
   }
 
   let message = TEST_MESSAGE;
@@ -257,8 +218,6 @@ export async function POST(request: Request) {
       message,
       reply,
       model,
-      configured: true,
-      keySource: diagnostics.keySource,
       checks,
       details: payloadBase.details,
     } satisfies TestDiagnosticsPayload);

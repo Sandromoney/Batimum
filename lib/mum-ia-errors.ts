@@ -14,7 +14,7 @@ const USER_MESSAGES: Record<MumIaUserErrorCode, string> = {
   too_short:
     "Votre demande est trop courte, ajoutez quelques détails sur le chantier.",
   quota_exceeded:
-    "Désolé, vous n'avez plus de crédits IA disponibles pour ce mois-ci. Vos 100 devis MUM IA ont été utilisés.",
+    "Désolé, vous avez utilisé vos 100 demandes IA disponibles pour ce mois-ci.",
   quota_unavailable:
     "Le quota IA est temporairement indisponible. Réessayez dans quelques instants.",
   not_configured: "Le service IA n'est pas encore configuré.",
@@ -63,7 +63,10 @@ export function mapMumIaApiError(payload: {
       if (payload.message?.toLowerCase().includes("trop court")) {
         return getMumIaUserMessage("too_short");
       }
-      if (payload.message?.toLowerCase().includes("crédits")) {
+      if (
+        payload.message?.toLowerCase().includes("crédits") ||
+        payload.message?.toLowerCase().includes("demandes ia")
+      ) {
         return payload.message;
       }
       if (payload.message?.toLowerCase().includes("limite")) {

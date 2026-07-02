@@ -418,7 +418,6 @@ export function BatimumAiAssistant() {
           limit: number;
           remaining: number;
           monthlyIncluded: number;
-          packCredits: number;
           renewalDate: string;
           periodStart: string;
           periodEnd: string;
@@ -545,7 +544,7 @@ export function BatimumAiAssistant() {
           buildMumIaQuotaSnapshot({
             used: payload.quota.used,
             monthlyIncluded: payload.quota.monthlyIncluded,
-            packCredits: payload.quota.packCredits,
+            packCredits: 0,
             renewalDate: payload.quota.renewalDate,
             periodStart: payload.quota.periodStart,
             periodEnd: payload.quota.periodEnd,

@@ -14,7 +14,6 @@ export type ParametresSectionId =
   | "conditions-generales"
   | "signatures"
   | "relances-devis"
-  | "quota-ia"
   | "relances-clients"
   | "mum-ia"
   | "apparence";
@@ -41,7 +40,6 @@ export const PARAMETRES_SECTIONS: ParametresSectionMeta[] = [
   { id: "conditions-generales", label: "Conditions générales" },
   { id: "signatures", label: "Signatures" },
   { id: "relances-devis", label: "Relances devis" },
-  { id: "quota-ia", label: "Quota IA" },
   { id: "relances-clients", label: "Relances factures" },
   { id: "mum-ia", label: "MUM IA" },
   { id: "apparence", label: "Apparence" },
@@ -191,7 +189,6 @@ export function isParametresSectionDirty(
 ): boolean {
   if (
     sectionId === "connexion-email" ||
-    sectionId === "quota-ia" ||
     sectionId === "mum-ia"
   ) {
     return false;

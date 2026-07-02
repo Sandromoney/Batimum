@@ -11,7 +11,6 @@ type DiagnosticResponse = {
   checks?: {
     authSupabase?: Check;
     company?: Check;
-    quotaIa?: Check;
     openAiKey?: Check;
     openAiConnection?: Check;
     generationTest?: Check;
@@ -88,13 +87,9 @@ export default function IaDiagnosticPage() {
         {!loading && diagnostic ? (
           <div className="space-y-1">
             {renderStatus("AUTH", diagnostic.checks?.authSupabase)}
-            {renderStatus("TOKEN", {
-              ok: diagnostic.details?.hasBearerToken,
-              error: diagnostic.details?.hasBearerToken ? null : "token absent",
-            })}
             {renderStatus("COMPANY", diagnostic.checks?.company)}
+            {renderStatus("OPENAI_API_KEY", diagnostic.checks?.openAiKey)}
             {renderStatus("OPENAI", diagnostic.checks?.openAiConnection)}
-            {renderStatus("QUOTA", diagnostic.checks?.quotaIa)}
             {renderStatus("GENERATION", diagnostic.checks?.generationTest)}
           </div>
         ) : null}

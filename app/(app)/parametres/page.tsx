@@ -19,7 +19,6 @@ import {
 } from "@/lib/parametres";
 import { ParametresDevisColorPicker, type DevisColorDraft } from "@/components/parametres-devis-color-picker";
 import { ParametresDevisRelances } from "@/components/parametres-devis-relances";
-import { ParametresAiQuotaSection } from "@/components/parametres-ai-quota-section";
 import { ParametresSignatureDirigeant } from "@/components/parametres-signature-dirigeant";
 import { ParametresFacturationElectroniqueSection } from "@/components/parametres-facturation-electronique";
 import { ParametresConnexionEmailSection } from "@/components/parametres-connexion-email";
@@ -33,7 +32,6 @@ import {
   type ParametresSectionId,
 } from "@/lib/parametres-sections";
 import { saveParametresGlobally } from "@/lib/parametres-save";
-import { authenticatedFetch } from "@/lib/mum-ia-api-client";
 import { fetchUserSettings } from "@/lib/user-settings-client";
 import {
   hasValidationErrors,
@@ -87,14 +85,6 @@ export default function ParametresPage() {
   const [colorDraft, setColorDraft] = useState<DevisColorDraft>(() =>
     buildColorDraft(normalizeParametres(data.parametres)),
   );
-  const [serverAiQuota, setServerAiQuota] = useState<{
-    used: number;
-    limit: number;
-    remaining: number;
-    packCredits: number;
-    monthlyIncluded: number;
-    renewalDate: string;
-  } | null>(null);
   const [baseline, setBaseline] = useState<ParametresBaseline>(() =>
     buildBaseline(data.parametres, data.employes),
   );
@@ -158,29 +148,6 @@ export default function ParametresPage() {
     target.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [searchParams, activeSection]);
 
-  useEffect(() => {
-    void authenticatedFetch("/api/ai/usage", {}, "quota")
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body: {
-        used?: number;
-        limit?: number;
-        remaining?: number;
-        packCredits?: number;
-        monthlyIncluded?: number;
-        renewalDate?: string;
-      } | null) => {
-        if (!body || typeof body.used !== "number") return;
-        setServerAiQuota({
-          used: body.used,
-          limit: body.limit ?? 0,
-          remaining: body.remaining ?? 0,
-          packCredits: body.packCredits ?? 0,
-          monthlyIncluded: body.monthlyIncluded ?? 100,
-          renewalDate: body.renewalDate ?? "",
-        });
-      })
-      .catch(() => undefined);
-  }, []);
 
   function patch(partial: Partial<Parametres>) {
     setForm((previous) => ({ ...previous, ...partial }));
@@ -988,27 +955,6 @@ export default function ParametresPage() {
               patch({ relancesDevisAutomatiques })
             }
             onReglesChange={(relancesDevis) => patch({ relancesDevis })}
-          />
-        </ParametresSection>
-
-        <ParametresSection
-          title="Quota IA (MUM IA)"
-          description="Suivi des demandes de devis générées par intelligence artificielle"
-          className={sectionVisible("quota-ia") ? undefined : "hidden"}
-        >
-          <ParametresAiQuotaSection
-            used={serverAiQuota?.used ?? form.aiGenerationsUsed ?? 0}
-            limit={serverAiQuota?.limit ?? form.aiGenerationsLimit ?? 100}
-            remaining={
-              serverAiQuota?.remaining ??
-              Math.max(
-                0,
-                (form.aiGenerationsLimit ?? 100) - (form.aiGenerationsUsed ?? 0),
-              )
-            }
-            monthlyIncluded={serverAiQuota?.monthlyIncluded ?? 100}
-            packCredits={serverAiQuota?.packCredits ?? form.aiPackCredits}
-            renewalDate={serverAiQuota?.renewalDate}
           />
         </ParametresSection>
 
