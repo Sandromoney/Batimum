@@ -48,7 +48,7 @@ export function oauthFlowErrorQuery(
   message: string,
 ): string {
   if (flow === "connect") {
-    return `email_oauth=error&message=${encodeURIComponent(message)}`;
+    return `section=connexion-email&email_oauth=error&message=${encodeURIComponent(message)}`;
   }
   return `error=${encodeURIComponent(message)}`;
 }

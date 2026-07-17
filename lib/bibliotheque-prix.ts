@@ -8,6 +8,8 @@ import {
   normalizeBibliothequeKey,
   type BibliothequePrixResolution,
 } from "@/lib/bibliotheque-entreprise";
+import { resolveEntreprisePrice } from "@/lib/entreprise-price-library/resolve";
+import { migrateToEntreprisePriceLibrary } from "@/lib/entreprise-price-library/normalize";
 import {
   FIABILITE_BATIMUM_REGIONAL,
   FIABILITE_BATIMUM_STANDARD,
@@ -16,7 +18,7 @@ import {
   getFiabiliteEntrepriseEntry,
 } from "@/lib/prix-fiabilite";
 import type { BtpNiveauPrix } from "@/lib/btp-tarifs-reference";
-import type { BibliothequeEntrepriseEntry } from "@/lib/types";
+import type { BibliothequeEntrepriseEntry, EntreprisePriceLibrary, Parametres } from "@/lib/types";
 
 export type { BibliothequePrixResolution };
 
@@ -51,12 +53,67 @@ function findBibliothequeMatch(
 export function resolvePrixBibliothequePrioritaire(params: {
   designation: string;
   bibliothequeEntries?: BibliothequeEntrepriseEntry[];
+  entreprisePriceLibrary?: EntreprisePriceLibrary;
+  parametres?: Parametres;
+  companyId?: string;
   regionCode: string;
   departementCode: string;
   niveauPrix: BtpNiveauPrix;
   coefficientManuel?: number | null;
   ville?: string;
 }): BibliothequePrixResolution {
+  if (params.parametres && params.companyId) {
+    const library =
+      params.entreprisePriceLibrary ??
+      migrateToEntreprisePriceLibrary({
+        library: params.parametres.entreprisePriceLibrary,
+        bibliotheque: {
+          entries: params.bibliothequeEntries ?? [],
+          apprentissageAutomatique: true,
+          learnedDevis: {},
+        },
+        parametres: params.parametres,
+        companyId: params.companyId,
+      });
+
+    const unified = resolveEntreprisePrice({
+      designation: params.designation,
+      library,
+      parametres: params.parametres,
+      companyId: params.companyId,
+      regionCode: params.regionCode,
+      departementCode: params.departementCode,
+      niveauPrix: params.niveauPrix,
+      coefficientManuel: params.coefficientManuel,
+      ville: params.ville,
+    });
+
+    if (unified.salePriceHT > 0) {
+      const legacySource =
+        unified.source === "manual" || unified.source === "appris"
+          ? unified.source === "manual"
+            ? "manuel"
+            : "appris"
+          : unified.source === "batimum"
+            ? "batimum"
+            : unified.prixAVerifier
+              ? "a_verifier"
+              : "appris";
+
+      return {
+        prixHT: unified.salePriceHT,
+        source: legacySource,
+        prixAVerifier: unified.prixAVerifier,
+        fiabilite: unified.confidence,
+        designationRef: unified.designation,
+        tvaHabituelle: unified.vatRate,
+        purchasePriceHT: unified.purchasePriceHT,
+        marginRate: unified.marginRate,
+        sourceLabel: unified.sourceLabel,
+      };
+    }
+  }
+
   const entries = params.bibliothequeEntries ?? [];
   const match = findBibliothequeMatch(entries, params.designation);
 

@@ -23,7 +23,7 @@ export function DashboardMumIaQuotaCard() {
     <Card className="border-border/80 bg-card/60 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-card-elevated text-muted-foreground ring-1 ring-border/80">
             <Sparkles className="h-4 w-4" />
           </span>
           <div>
@@ -35,7 +35,7 @@ export function DashboardMumIaQuotaCard() {
         </div>
         <Link
           href="/ia"
-          className="shrink-0 text-xs font-medium text-primary hover:underline"
+          className="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
         >
           Ouvrir →
         </Link>

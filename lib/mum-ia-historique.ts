@@ -1,6 +1,7 @@
 import type { AiChantierAnalysis } from "@/lib/ai-devis-analysis";
 import type { AiDevisResult } from "@/lib/ai-devis";
 import type { BtpNiveauPrix } from "@/lib/btp-tarifs-reference";
+import { matchesSearchQuery } from "@/lib/search-text-match";
 import type { MumIaHistoriqueEntry, MumIaHistoriqueStatut, TypeChantier } from "@/lib/types";
 import { generateId } from "@/lib/utils";
 
@@ -218,9 +219,8 @@ export function filterMumIaHistorique(
         entry.departementLabel,
       ]
         .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      if (!haystack.includes(query)) return false;
+        .join(" ");
+      if (!matchesSearchQuery(haystack, query)) return false;
     }
 
     return true;

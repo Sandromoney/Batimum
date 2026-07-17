@@ -6,14 +6,14 @@ import { getAuthenticatedSupabaseUser } from "@/lib/supabase-auth-server";
 
 export const runtime = "nodejs";
 
-export async function POST() {
+export async function POST(request: Request) {
   const cookieStore = await cookies();
   cookieStore.delete(EMAIL_OAUTH_COOKIE);
 
-  const authUser = await getAuthenticatedSupabaseUser();
+  const authUser = await getAuthenticatedSupabaseUser(request);
   if (authUser) {
     try {
-      await disconnectEmailConnectionForUser(authUser.id, "google");
+      await disconnectEmailConnectionForUser(authUser.id, "google", request);
       console.log("[gmail-oauth] account saved success", {
         action: "disconnect",
         userId: authUser.id,

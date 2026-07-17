@@ -14,7 +14,38 @@ export function hasSupabaseEnv(): boolean {
   );
 }
 
+/** Pages publiques — pas de refresh session (évite timeouts sur /landing). */
+function isPublicMarketingPath(pathname: string): boolean {
+  if (pathname === "/") return true;
+  const publicPrefixes = [
+    "/landing",
+    "/login",
+    "/signup",
+    "/login-employe",
+    "/checkout",
+    "/abonnement",
+    "/configurer-entreprise",
+    "/verifier-email",
+    "/mot-de-passe-oublie",
+    "/reinitialiser-mot-de-passe",
+    "/mentions-legales",
+    "/cgu",
+    "/cgv",
+    "/confidentialite",
+    "/cookies",
+  ];
+  return publicPrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
 export async function createClient(request: NextRequest): Promise<NextResponse> {
+  if (isPublicMarketingPath(request.nextUrl.pathname)) {
+    return NextResponse.next({
+      request: { headers: request.headers },
+    });
+  }
+
   if (!hasSupabaseEnv()) {
     return NextResponse.next({
       request: { headers: request.headers },
@@ -47,7 +78,17 @@ export async function createClient(request: NextRequest): Promise<NextResponse> 
       },
     });
 
-    await supabase.auth.getUser();
+    await Promise.race([
+      supabase.auth.getUser(),
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("supabase middleware timeout")),
+          3000,
+        ),
+      ),
+    ]).catch((error) => {
+      console.warn("[supabase/middleware] session refresh skipped", error);
+    });
 
     return supabaseResponse;
   } catch (error) {

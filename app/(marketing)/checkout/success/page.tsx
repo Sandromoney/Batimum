@@ -110,7 +110,7 @@ function CheckoutSuccessContent() {
     <main className="flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center px-6 py-10">
         <Card className="w-full max-w-lg text-center">
-          <BrandLogo variant="landing" showSubtitle={false} />
+          <BrandLogo variant="marketing" showSubtitle={false} />
           <h1 className="mt-8 text-2xl font-semibold tracking-tight">
             {failed ? "Validation impossible" : "Paiement confirmé"}
           </h1>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/page-header";
+import { MumIaContextButton } from "@/components/mum-ia-context-button";
 import { DataTable, RowActions, Td, Tr } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Input, Label, PhoneInput, Select } from "@/components/ui/input";
@@ -231,10 +232,13 @@ export default function ClientsPage() {
         title="Clients"
         description="Gérez votre carnet d'adresses professionnel"
         action={
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4" />
-            Nouveau client
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <MumIaContextButton source="client" entityLabel="Carnet clients" />
+            <Button onClick={openCreate}>
+              <Plus className="h-4 w-4" />
+              Nouveau client
+            </Button>
+          </div>
         }
       />
 

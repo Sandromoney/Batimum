@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BrandLogo } from "@/components/brand-logo";
 import { DESKTOP_NAV_ITEMS, isAppNavItemActive } from "@/lib/app-nav";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +37,7 @@ export function Sidebar() {
                   "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ease-out",
                   active
                     ? "bg-primary-foreground/10"
-                    : "bg-transparent group-hover:scale-105 group-hover:bg-primary/10",
+                    : "bg-transparent group-hover:scale-105 group-hover:bg-card-hover/60",
                 )}
               >
                 <Icon
@@ -46,7 +45,7 @@ export function Sidebar() {
                     "h-[1.15rem] w-[1.15rem] transition-all duration-300 ease-out",
                     active
                       ? "text-primary-foreground"
-                      : "text-muted group-hover:text-primary",
+                      : "text-muted group-hover:text-foreground",
                   )}
                   strokeWidth={active ? 2.25 : 1.75}
                 />
@@ -60,16 +59,13 @@ export function Sidebar() {
       <footer className="shrink-0 border-t border-border/60 px-4 pb-8 pt-6">
         <div className="btp-sidebar-brand-block flex flex-col items-center text-center">
           <div className="btp-sidebar-brand-image" aria-hidden="true">
-            <BrandLogo
-              variant="sidebarFooter"
-              showSubtitle={false}
-              imageClassName="!w-[96px] !max-w-[96px]"
+            <img
+              src="/logo-batimum.png"
+              alt="Batimum"
+              className="btp-sidebar-brand-logo landing-header-logo"
             />
           </div>
-          <p className="btp-sidebar-brand-title mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-foreground/90">
-            BATIMUM
-          </p>
-          <p className="btp-sidebar-brand-subtitle mt-1.5 text-[10px] leading-snug text-muted-foreground/80">
+          <p className="btp-sidebar-brand-subtitle mt-3 text-[10px] leading-snug text-muted-foreground/80">
             Logiciel de gestion BTP
           </p>
           <p className="btp-sidebar-brand-version mt-1 text-[9px] tracking-wide text-muted-foreground/45">

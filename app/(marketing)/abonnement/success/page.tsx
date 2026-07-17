@@ -3,12 +3,10 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { getAccount, saveAccount, type SubscriptionStatus } from "@/lib/account";
 import {
-  getAccount,
-  saveAccount,
-  type SubscriptionStatus,
-  type UserAccount,
-} from "@/lib/account";
+  resetOnboardingChecklistDismissed,
+} from "@/lib/onboarding-flow";
 import { BrandLogo } from "@/components/brand-logo";
 import { MarketingFooter } from "@/components/marketing-footer";
 import { Card } from "@/components/ui/card";
@@ -43,20 +41,23 @@ function AbonnementSuccessContent() {
         }
 
         const existing = getAccount();
-        const account: UserAccount = {
+        saveAccount({
           entreprise: payload.entreprise ?? existing?.entreprise ?? "",
           utilisateur: payload.utilisateur ?? existing?.utilisateur ?? "",
           email: payload.email ?? existing?.email ?? "",
           telephone: payload.telephone ?? existing?.telephone ?? "",
+          prenom: existing?.prenom,
+          nom: existing?.nom,
           subscriptionStatus: payload.subscriptionStatus as SubscriptionStatus,
           stripeCustomerId: payload.stripeCustomerId,
           stripeSubscriptionId: payload.stripeSubscriptionId,
           trialEndsAt: payload.trialEndsAt,
           currentPeriodEnd: payload.currentPeriodEnd,
           createdAt: existing?.createdAt ?? new Date().toISOString(),
-          onboardingCompleted: existing?.onboardingCompleted,
-        };
-        saveAccount(account);
+          onboardingCompleted: true,
+          onboardingStep: 7,
+        });
+        resetOnboardingChecklistDismissed();
         setMessage("Votre essai gratuit est activé.");
       } catch {
         setFailed(true);
@@ -70,7 +71,7 @@ function AbonnementSuccessContent() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-6 py-16">
-        <BrandLogo variant="landing" imageClassName="mb-8" />
+        <BrandLogo variant="marketing" imageClassName="mb-8" />
         <Card className="space-y-4 p-8 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">
             {failed ? "Activation incomplète" : "Bienvenue sur Batimum"}

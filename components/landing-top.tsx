@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
+import { LandingNavMenus } from "@/components/landing/landing-nav-menus";
 import { LandingHeroAtmosphere } from "@/components/landing/landing-hero-atmosphere";
 import { LandingHeroDiffBadges } from "@/components/landing/landing-hero-diff-badges";
 import { LandingHeroScene } from "@/components/landing/landing-hero-scene";
-import { useInView } from "@/lib/hooks/use-in-view";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,9 @@ const btnHeaderPrimaryClass =
 
 const btnHeaderSecondaryClass =
   "landing-header-btn landing-header-btn--secondary landing-btn-interactive inline-flex items-center justify-center rounded-[0.625rem] border font-semibold text-foreground no-underline transition-all hover:bg-card-hover/60 active:scale-[0.98]";
+
+const headerEmployeeLinkClass =
+  "landing-header-employee-link inline-flex shrink-0 items-center whitespace-nowrap no-underline transition-colors";
 
 const btnHeroCtaClass =
   "landing-btn-primary landing-btn-interactive landing-hero-main-cta group inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground no-underline shadow-glow transition-all hover:bg-primary-hover active:scale-[0.98] sm:px-6 sm:py-3";
@@ -42,16 +45,9 @@ function HeroKeyword({ children }: { children: ReactNode }) {
 
 export function LandingTop() {
   const [scrolled, setScrolled] = useState(false);
-  const [ready, setReady] = useState(false);
-  const { ref: heroRef, inView: heroVisible } = useInView<HTMLElement>({
-    threshold: 0.08,
-    once: true,
-  });
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setReady(true));
-    return () => cancelAnimationFrame(frame);
-  }, []);
+  // Visible dès le SSR — évite écran blanc si l'hydratation JS échoue ou tarde.
+  const [ready] = useState(true);
+  const heroVisible = true;
 
   useEffect(() => {
     const onScroll = () => {
@@ -67,34 +63,31 @@ export function LandingTop() {
     <div className={cn("landing-top", ready && "landing-top--ready")}>
       <header
         className={cn(
-          "landing-header-bar fixed inset-x-0 top-0 z-50",
+          "landing-header-bar fixed top-0 left-0 right-0 z-50",
           scrolled && "landing-header-bar--scrolled",
         )}
       >
-        <div className="landing-header-bar__inner mx-auto flex h-[5.25rem] w-full max-w-7xl items-center justify-between gap-4 px-6 sm:px-8 lg:px-10">
-          <Link
-            href="/landing"
-            className="logo-topbar landing-logo landing-logo-enter flex shrink-0 items-center no-underline"
-            aria-label="BATIMUM"
-          >
-            <svg
-              className="logo-topbar__img"
-              height={36}
-              viewBox="361 392 826 222"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-              focusable="false"
+        <div className="landing-header-grid">
+          <div className="landing-header-logo-container">
+            <Link
+              href="/landing"
+              className="landing-logo-enter no-underline"
+              aria-label="BATIMUM"
             >
-              <image
-                href="/logo-batimum.png"
-                width={1536}
-                height={1024}
-                preserveAspectRatio="xMidYMid meet"
+              <img
+                src="/logo-batimum.png"
+                alt="Batimum"
+                className="landing-header-logo"
               />
-            </svg>
-          </Link>
+            </Link>
+          </div>
 
-          <div className="landing-header-actions flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <LandingNavMenus className="landing-header-nav flex min-w-0 items-center justify-center" />
+
+          <div className="landing-header-actions flex items-center gap-3">
+            <Link href="/login-employe" className={headerEmployeeLinkClass}>
+              Connexion employé
+            </Link>
             <Link href="/login" className={btnHeaderSecondaryClass}>
               Connexion
             </Link>
@@ -117,8 +110,8 @@ export function LandingTop() {
       <div className="landing-header-spacer" aria-hidden="true" />
 
       <section
-        ref={heroRef}
         className="landing-hero-section landing-hero-section--viewport relative overflow-hidden"
+        aria-label="Présentation Batimum"
       >
         <LandingHeroAtmosphere />
 

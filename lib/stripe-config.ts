@@ -12,6 +12,10 @@ export function getStripePriceIdFromEnv(): string | null {
   return process.env.STRIPE_PRICE_ID?.trim() || null;
 }
 
+export function getStripeYearlyPriceIdFromEnv(): string | null {
+  return process.env.STRIPE_PRICE_ID_YEARLY?.trim() || null;
+}
+
 export function isStripeClientConfigured(): boolean {
   return Boolean(getStripePublishableKey());
 }

@@ -1,7 +1,6 @@
 import {
   getAccount,
   saveAccount,
-  canAccessApp,
   type UserAccount,
 } from "@/lib/account";
 import {
@@ -13,8 +12,9 @@ import {
   mergeConnexionEmailMetadata,
 } from "@/lib/email-provider";
 import type { AppData } from "@/lib/types";
-import { needsCompanyOnboarding } from "@/lib/onboarding";
 import { buildGoogleSignupAccount } from "@/lib/google-signup";
+import { finalizeDirectorLogin, markDirectorOnboardingComplete } from "@/lib/supabase-auth";
+import { createClient } from "@/utils/supabase/client";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -119,12 +119,19 @@ export async function finalizeGoogleLoginFromOAuth(options?: {
 
   saveAccount(account);
 
-  let redirectTo = "/dashboard";
-  if (!canAccessApp(account)) {
-    redirectTo = "/abonnement";
-  } else if (needsCompanyOnboarding(account)) {
-    redirectTo = "/configurer-entreprise";
-  }
+  // Connexion Google d'un compte existant = accès logiciel, jamais inscription.
+  const supabase = createClient();
+  const session = supabase
+    ? (await supabase.auth.getSession()).data.session
+    : null;
+  const completed = session?.user
+    ? finalizeDirectorLogin(session.user)
+    : markDirectorOnboardingComplete(account);
 
-  return { ok: true, email, account, redirectTo };
+  return {
+    ok: true,
+    email,
+    account: completed,
+    redirectTo: "/dashboard",
+  };
 }

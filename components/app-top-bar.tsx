@@ -3,6 +3,7 @@
 import { AppGlobalSearch } from "@/components/app-global-search";
 import { AppNotifications } from "@/components/app-notifications";
 import { AppUserMenu } from "@/components/app-user-menu";
+import { AiUsageIndicator } from "@/components/ai-usage-indicator";
 import { MobileNavMenu } from "@/components/mobile-nav-menu";
 
 export function AppTopBar() {
@@ -25,8 +26,9 @@ export function AppTopBar() {
         </div>
       </div>
 
-      {/* Cloche + profil — fixés à droite */}
-      <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-4 md:right-6">
+      {/* Quota IA + cloche + profil */}
+      <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-3 md:right-6 md:gap-4">
+        <AiUsageIndicator />
         <AppNotifications />
         <AppUserMenu />
       </div>

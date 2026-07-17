@@ -71,10 +71,12 @@ export async function mumIaAuthorizedFetch(
     ? "verifier-config-serveur"
     : url.includes("/test")
       ? "test-connexion-ia"
-      : url.includes("/analyze")
-        ? "analyser"
-        : url.includes("/generate")
-          ? "generer"
-          : "quota";
+      : url.includes("/assistant/understand")
+        ? "comprendre"
+        : url.includes("/analyze")
+          ? "analyser"
+          : url.includes("/generate")
+            ? "generer"
+            : "quota";
   return authenticatedFetch(url, options, action);
 }

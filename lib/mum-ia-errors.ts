@@ -17,11 +17,12 @@ const USER_MESSAGES: Record<MumIaUserErrorCode, string> = {
   not_configured: "Le service IA n'est pas encore configuré.",
   transform_failed:
     "La réponse IA n'a pas pu être transformée en devis. Veuillez réessayer.",
-  generation_failed:
-    "Le service IA est momentanément indisponible.",
-  openai_unavailable: "Le service IA est momentanément indisponible.",
   invalid_response:
-    "La réponse de l'IA est incomplète. Veuillez reformuler votre demande.",
+    "MUM IA n'a pas pu finaliser le devis. Aucun crédit n'a été consommé. Réessayez dans quelques instants.",
+  openai_unavailable:
+    "MUM IA n'a pas pu finaliser le devis. Aucun crédit n'a été consommé. Réessayez dans quelques instants.",
+  generation_failed:
+    "MUM IA n'a pas pu finaliser le devis. Aucun crédit n'a été consommé. Réessayez dans quelques instants.",
 };
 
 export function getMumIaUserMessage(
@@ -37,6 +38,16 @@ export function mapMumIaApiError(payload: {
   success?: boolean;
   debugMessage?: string;
 }): string {
+  const raw = payload.message ?? "";
+  if (
+    /schema cache|pgrst|could not find the '|column of '/i.test(raw) ||
+    /schema cache|pgrst|could not find the '|column of '/i.test(
+      payload.debugMessage ?? "",
+    )
+  ) {
+    return getMumIaUserMessage("generation_failed");
+  }
+
   switch (payload.code) {
     case "missing_key":
     case "invalid_key":
@@ -51,7 +62,11 @@ export function mapMumIaApiError(payload: {
     case "insufficient_quota":
       return getMumIaUserMessage("openai_unavailable");
     case "invalid_response":
-      return getMumIaUserMessage("invalid_response");
+    case "generation_failed":
+      return (
+        payload.message?.trim() ||
+        getMumIaUserMessage("generation_failed")
+      );
     case "too_short":
       return getMumIaUserMessage("too_short");
     default:
@@ -83,6 +98,11 @@ export function extractMumIaTechnicalError(payload: {
   message?: string;
   debugMessage?: string;
 }): string {
+  const combined = `${payload.debugMessage ?? ""} ${payload.message ?? ""}`;
+  if (/schema cache|pgrst|could not find the '|column of '/i.test(combined)) {
+    return "Quota storage schema mismatch (ignored)";
+  }
+
   if (payload.debugMessage?.trim()) {
     return payload.debugMessage.trim();
   }
@@ -103,7 +123,11 @@ export function extractMumIaTechnicalError(payload: {
     case "ai_quota_exceeded":
       return payload.message ?? "Quota exceeded (100/100 MUM IA)";
     case "invalid_response":
-      return payload.message ?? "JSON parsing failed or invalid IA response shape";
+      return (
+        payload.debugMessage?.trim() ||
+        payload.message ||
+        "JSON parsing failed or invalid IA response shape"
+      );
     case "openai_error":
       return payload.message ?? "OpenAI API error";
     case "too_short":

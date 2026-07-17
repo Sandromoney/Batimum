@@ -1,0 +1,60 @@
+export const NLU_ABBREVIATIONS: Record<string, string> = {
+  sdb: "salle de bain",
+  wc: "toilettes",
+  pac: "pompe a chaleur",
+  clim: "climatisation",
+  elec: "electricite",
+  placo: "placoplatre",
+  faience: "faience",
+};
+
+export const NLU_VERB_SYNONYMS = {
+  create: [
+    "creer",
+    "cree",
+    "ajouter",
+    "ajoute",
+    "preparer",
+    "prepare",
+    "ouvrir",
+    "generer",
+    "faire",
+  ],
+  modify: [
+    "modifier",
+    "modifie",
+    "changer",
+    "corriger",
+    "deplacer",
+    "deplace",
+    "mettre",
+    "mets",
+  ],
+  assign: [
+    "affecter",
+    "affecte",
+    "assigner",
+    "assign",
+    "mettre",
+    "mets",
+    "placer",
+    "place",
+    "envoyer",
+    "envoie",
+    "positionner",
+    "mobiliser",
+    "designer",
+    "prevoir",
+  ],
+  delete: ["supprimer", "supprime", "retirer", "retire", "effacer", "enlever", "annuler"],
+  search: ["chercher", "cherche", "retrouver", "trouver", "voir", "afficher", "consulter", "ouvrir"],
+  analyze: ["analyser", "analyse", "comparer", "compare", "calculer", "calcule", "pourquoi"],
+  relance: ["relancer", "relance", "suivre", "suivi"],
+} as const;
+
+export const NLU_TONE_PATTERNS = {
+  urgency: /\b(?:urgent|vite|rapidement|au plus vite)\b/i,
+  correction: /\b(?:non|plutot|plutot|pas|au lieu)\b/i,
+  question: /\?|^(?:pourquoi|comment|combien|quel|quelle|quels|quelles)\b/i,
+  thanks: /\b(?:merci|super|parfait|nickel)\b/i,
+};

@@ -14,6 +14,7 @@ import {
   type RevenueEntry,
 } from "@/lib/saas-calculations";
 import { ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
+import { DashboardInfoBubble } from "@/components/dashboard-info-bubble";
 import { cn } from "@/lib/utils";
 
 const MONTH_FULL_LABELS = [
@@ -59,6 +60,7 @@ export function DashboardRevenueChart({
 }: DashboardRevenueChartProps) {
   const [hoveredMonth, setHoveredMonth] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [barsReady, setBarsReady] = useState(false);
   const [manualYear, setManualYear] = useState<number | null>(null);
 
   useEffect(() => {
@@ -69,6 +71,13 @@ export function DashboardRevenueChart({
   const currentYear = referenceDate.getFullYear();
   const selectedYear = manualYear ?? currentYear;
   const isCurrentYear = selectedYear === currentYear;
+
+  useEffect(() => {
+    if (!mounted) return;
+    setBarsReady(false);
+    const timeout = window.setTimeout(() => setBarsReady(true), 40);
+    return () => window.clearTimeout(timeout);
+  }, [mounted, selectedYear]);
 
   const { minYear, maxYear } = useMemo(
     () => getRevenueYearRange(revenueEntries, referenceDate),
@@ -164,7 +173,7 @@ export function DashboardRevenueChart({
       <header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <section className="flex flex-col gap-3">
           <div className="flex items-center gap-2.5">
-            <TrendingUp className="h-5 w-5 text-primary" strokeWidth={2} />
+            <TrendingUp className="h-5 w-5 text-muted-foreground" strokeWidth={2} />
             <div>
               <h2 className="text-base font-semibold tracking-tight">
                 CA mensuel — {selectedYear}
@@ -207,7 +216,7 @@ export function DashboardRevenueChart({
               ) : (
                 <span className="px-2 py-1 text-muted-foreground/40">—</span>
               )}
-              <span className="rounded-md border border-primary/25 bg-primary/10 px-2.5 py-1 text-primary">
+              <span className="rounded-md border border-border/80 bg-card-elevated px-2.5 py-1 font-semibold text-foreground">
                 {selectedYear}
               </span>
               {nextYear !== null ? (
@@ -286,22 +295,23 @@ export function DashboardRevenueChart({
               style={{ bottom: `${goalLinePercent}%` }}
             >
               <span
-                className="block border-t border-dashed border-primary/35"
+                className="block border-t border-dashed border-border/80"
                 aria-hidden
               />
-              <span className="absolute right-0 -top-2.5 rounded-full border border-primary/20 bg-card/90 px-2 py-0.5 text-[10px] font-medium text-primary">
+              <span className="absolute right-0 -top-2.5 rounded-full border border-border/70 bg-card/90 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                 Objectif {formatCurrency(objectifCaMensuel)}
               </span>
             </div>
           )}
 
           <section className="flex h-full items-end gap-1 sm:gap-1.5">
-            {monthlyData.map((item) => {
+            {monthlyData.map((item, index) => {
               const isCurrentMonth =
                 isCurrentYear && item.month === currentMonthKey;
               const isHovered = hoveredMonth === item.month;
               const isChartHovered = hoveredMonth !== null;
               const isDimmed = isChartHovered && !isHovered;
+              const hasRevenue = item.chiffreAffaires >= 1;
               const height =
                 item.chiffreAffaires > 0
                   ? Math.max((item.chiffreAffaires / chartMax) * 100, 6)
@@ -324,43 +334,40 @@ export function DashboardRevenueChart({
                   onMouseLeave={() => setHoveredMonth(null)}
                 >
                   {isHovered && (
-                    <div
-                      className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 w-max max-w-[14rem] -translate-x-1/2 rounded-2xl border border-primary/20 bg-card/98 px-3.5 py-3 text-left shadow-card shadow-primary/10 backdrop-blur-md transition-all duration-200 ease-out"
-                      role="tooltip"
-                    >
-                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-foreground">
+                    <DashboardInfoBubble className="absolute bottom-full left-1/2 mb-3 w-max max-w-[15rem] -translate-x-1/2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground">
                         {formatTooltipMonthTitle(item.month)}
                       </p>
-                      <div className="mt-2.5 space-y-1.5 text-[11px] leading-snug">
-                        <p>
-                          <span className="text-muted-foreground">CA : </span>
-                          <span className="text-sm font-semibold tabular-nums text-primary">
+                      <dl className="mt-2 space-y-1.5 text-xs">
+                        <div className="flex items-baseline justify-between gap-4">
+                          <dt className="text-muted-foreground">CA</dt>
+                          <dd className="font-semibold tabular-nums text-foreground">
                             {formatCurrency(item.chiffreAffaires)}
-                          </span>
-                        </p>
-                        {isCurrentYear && objectifCaMensuel > 0 && (
+                          </dd>
+                        </div>
+                        {isCurrentYear && objectifCaMensuel > 0 ? (
                           <>
-                            <p className="text-muted-foreground">
-                              Objectif :{" "}
-                              <span className="font-medium text-foreground/90">
+                            <div className="flex items-baseline justify-between gap-4">
+                              <dt className="text-muted-foreground">Objectif</dt>
+                              <dd className="font-medium tabular-nums text-foreground">
                                 {formatCurrency(objectifCaMensuel)}
-                              </span>
-                            </p>
-                            <p className="text-muted-foreground">
-                              Réalisation :{" "}
-                              <span className="font-semibold text-foreground">
+                              </dd>
+                            </div>
+                            <div className="flex items-baseline justify-between gap-4">
+                              <dt className="text-muted-foreground">Réalisé</dt>
+                              <dd className="font-semibold tabular-nums text-foreground">
                                 {realisationPercent}%
-                              </span>
-                            </p>
+                              </dd>
+                            </div>
                           </>
-                        )}
-                      </div>
-                    </div>
+                        ) : null}
+                      </dl>
+                    </DashboardInfoBubble>
                   )}
 
                   <div
                     className={cn(
-                      "flex h-full w-full items-end rounded-xl px-0.5 py-1 transition-all duration-200 ease-out",
+                      "flex h-full w-full items-end rounded-xl px-0.5 py-1 transition-colors duration-200 ease-out",
                       isHovered
                         ? "bg-card-elevated/80"
                         : isDimmed
@@ -370,15 +377,17 @@ export function DashboardRevenueChart({
                   >
                     <div
                       className={cn(
-                        "w-full origin-bottom rounded-lg transition-all duration-200 ease-out",
-                        isCurrentMonth ? "bg-primary" : "bg-primary/65",
-                        isCurrentMonth && !isDimmed && "shadow-glow",
-                        isHovered &&
-                          "scale-y-[1.12] bg-primary brightness-110 shadow-glow",
+                        "w-full origin-bottom rounded-lg",
+                        hasRevenue ? "bg-[#10B981]" : "bg-slate-200",
+                        hasRevenue && isHovered && "brightness-110",
                         isDimmed && "opacity-40",
-                        !isHovered && !isDimmed && "group-hover:bg-primary/80",
                       )}
-                      style={{ height: `${height}%` }}
+                      style={{
+                        height: `${height}%`,
+                        transform: barsReady ? "scaleY(1)" : "scaleY(0)",
+                        transformOrigin: "bottom",
+                        transition: `transform 500ms cubic-bezier(0.22, 1, 0.36, 1) ${index * 35}ms, background-color 200ms ease, filter 200ms ease, opacity 200ms ease`,
+                      }}
                     />
                   </div>
                 </section>
@@ -398,7 +407,7 @@ export function DashboardRevenueChart({
                 key={`${item.month}-label`}
                 className={cn(
                   "min-w-0 flex-1 text-center text-[9px] font-medium uppercase tracking-wide transition-opacity duration-200",
-                  isCurrentMonth ? "text-primary" : "text-muted-foreground",
+                  isCurrentMonth ? "font-semibold text-foreground" : "text-muted-foreground",
                   isLabelDimmed && "opacity-40",
                 )}
               >

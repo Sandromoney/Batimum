@@ -10,6 +10,7 @@ import {
   finalizeGoogleLoginFromOAuth,
   syncGoogleEmailToAppData,
 } from "@/lib/google-auth";
+import { clearEmployeeSessionForDirectorLogin } from "@/lib/employee-access";
 
 function GoogleLoginCompleteContent() {
   const searchParams = useSearchParams();
@@ -27,6 +28,8 @@ function GoogleLoginCompleteContent() {
     }
 
     async function complete() {
+      await clearEmployeeSessionForDirectorLogin();
+
       const displayName = searchParams.get("name") ?? undefined;
       const result = await finalizeGoogleLoginFromOAuth({ displayName });
 
@@ -55,7 +58,7 @@ function GoogleLoginCompleteContent() {
     <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-10">
         <Card className="w-full max-w-lg text-center">
-          <BrandLogo variant="landing" showSubtitle={false} />
+          <BrandLogo variant="marketing" showSubtitle={false} />
           <h1 className="mt-8 text-2xl font-semibold tracking-tight">
             {failed ? "Connexion Google interrompue" : "Connexion Google"}
           </h1>

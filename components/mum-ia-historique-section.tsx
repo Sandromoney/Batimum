@@ -10,6 +10,7 @@ import {
   MUM_IA_HISTORIQUE_STATUT_LABELS,
   type MumIaHistoriqueFilters,
 } from "@/lib/mum-ia-historique";
+import { isActiveSearchQuery } from "@/lib/search-text-match";
 import type { MumIaHistoriqueEntry, MumIaHistoriqueStatut, TypeChantier } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { ChevronDown, Eye, FileText, History, Loader2, Trash2 } from "lucide-react";
@@ -42,6 +43,7 @@ export function MumIaHistoriqueSection({
   entries,
   activeEntryId,
   transformingId,
+  descriptionSearch = "",
   onVoir,
   onTransformer,
   onSupprimer,
@@ -49,6 +51,7 @@ export function MumIaHistoriqueSection({
   entries: MumIaHistoriqueEntry[];
   activeEntryId?: string | null;
   transformingId?: string | null;
+  descriptionSearch?: string;
   onVoir: (entry: MumIaHistoriqueEntry) => void;
   onTransformer: (entry: MumIaHistoriqueEntry) => void;
   onSupprimer: (entryId: string) => void;
@@ -59,9 +62,11 @@ export function MumIaHistoriqueSection({
   const [derniersJours, setDerniersJours] = useState<string>("tous");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const effectiveQuery = query.trim() || descriptionSearch.trim();
+
   const filters: MumIaHistoriqueFilters = useMemo(
     () => ({
-      query,
+      query: effectiveQuery,
       statut,
       typeChantier,
       derniersJours:
@@ -73,7 +78,7 @@ export function MumIaHistoriqueSection({
               ? 90
               : undefined,
     }),
-    [query, statut, typeChantier, derniersJours],
+    [effectiveQuery, statut, typeChantier, derniersJours],
   );
 
   const visible = useMemo(
@@ -82,6 +87,10 @@ export function MumIaHistoriqueSection({
   );
 
   const activeCount = entries.filter((e) => e.statut !== "supprime").length;
+
+  if (isActiveSearchQuery(effectiveQuery) && visible.length === 0) {
+    return null;
+  }
 
   return (
     <Card className="border-border/80 bg-card/60 p-4">

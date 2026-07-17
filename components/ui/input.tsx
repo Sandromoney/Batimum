@@ -76,12 +76,15 @@ export function DateInput({
 export function Label({
   children,
   className,
+  htmlFor,
 }: {
   children: React.ReactNode;
   className?: string;
+  htmlFor?: string;
 }) {
   return (
     <label
+      htmlFor={htmlFor}
       className={cn(
         "mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground",
         className,

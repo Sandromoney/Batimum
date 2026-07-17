@@ -1,151 +1,213 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BrandLogo } from "@/components/brand-logo";
-import { ParametresLogoField } from "@/components/parametres-logo-field";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input, Label, PhoneInput, Textarea } from "@/components/ui/input";
-import { canAccessApp, getAccount, saveAccount, updateAccount } from "@/lib/account";
+import { AddressAutocomplete } from "@/components/address-autocomplete";
+import {
+  OnboardingNav,
+  OnboardingShell,
+} from "@/components/onboarding/onboarding-shell";
+import { Input, Label, PhoneInput } from "@/components/ui/input";
+import {
+  getAccount,
+  saveAccount,
+} from "@/lib/account";
 import { getCredentials } from "@/lib/auth-credentials";
-import { needsCompanyOnboarding } from "@/lib/onboarding";
+import { getLocationFromPostalCode } from "@/lib/french-regions";
+import {
+  canAccessCompanyOnboarding,
+  needsCompanyOnboarding,
+} from "@/lib/onboarding";
+import {
+  emptyCompanyDraft,
+  getOnboardingFlowState,
+  patchOnboardingFlowState,
+  type OnboardingCompanyDraft,
+} from "@/lib/onboarding-flow";
 import { getPublicSignupHref } from "@/lib/private-beta";
-import { normalizeParametres, syncParametresForSave } from "@/lib/parametres";
+import {
+  normalizeParametres,
+  syncParametresForSave,
+} from "@/lib/parametres";
 import { useStore } from "@/lib/store";
-import { validatePhone } from "@/lib/validations";
-import { cn } from "@/lib/utils";
-
-const STEPS = [
-  { title: "Identité", description: "Nom et téléphone de votre entreprise" },
-  { title: "Adresse", description: "Coordonnées postales" },
-  { title: "Légal", description: "SIRET et TVA intracommunautaire" },
-  { title: "Logo", description: "Logo affiché sur vos documents" },
-  { title: "Banque", description: "Coordonnées bancaires (facultatif)" },
-] as const;
+import {
+  validateEmail,
+  validateFrenchTva,
+  validatePhone,
+  validatePostalCode,
+  validateSiret,
+} from "@/lib/validations";
 
 export default function ConfigurerEntreprisePage() {
   const router = useRouter();
   const { data, setData } = useStore();
   const [ready, setReady] = useState(false);
-  const [step, setStep] = useState(0);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({
-    entreprise: "",
-    telephone: "",
-    adresse: "",
-    ville: "",
-    codePostal: "",
-    siret: "",
-    tvaIntracom: "",
-    logoPdf: "",
-    coordonneesBancaires: "",
-  });
+  const [addressError, setAddressError] = useState("");
+  const [addressSelected, setAddressSelected] = useState(false);
+  const [form, setForm] = useState<OnboardingCompanyDraft>(emptyCompanyDraft());
+  const [accountEmail, setAccountEmail] = useState("");
 
   useEffect(() => {
     const account = getAccount();
-    if (!account || !canAccessApp(account)) {
+    if (!account) {
       router.replace(getPublicSignupHref());
       return;
     }
+
     const credentials = getCredentials(account.email);
     if (credentials && !credentials.emailVerified) {
       router.replace("/verifier-email");
       return;
     }
-    if (!needsCompanyOnboarding(account)) {
+
+    if (account.onboardingCompleted === true) {
       router.replace("/dashboard");
       return;
     }
 
-    const parametres = normalizeParametres(data.parametres);
-    setForm({
-      entreprise: parametres.entreprise || account.entreprise || "",
-      telephone: parametres.telephone || account.telephone || "",
-      adresse: parametres.adresse || "",
-      ville: parametres.ville || "",
-      codePostal: parametres.codePostal || "",
-      siret: parametres.siret || "",
-      tvaIntracom: parametres.tvaIntracom || "",
-      logoPdf: parametres.logoPdf || parametres.logoApplication || "",
-      coordonneesBancaires: parametres.coordonneesBancaires || "",
-    });
-    setReady(true);
-  }, [data.parametres, router]);
+    if (!canAccessCompanyOnboarding(account)) {
+      if (needsCompanyOnboarding(account)) {
+        router.replace("/verifier-email");
+      } else if (account.onboardingStep === 3) {
+        router.replace("/inscription/documents");
+      } else if (account.onboardingStep === 4) {
+        router.replace("/inscription/bancaire");
+      } else {
+        router.replace("/abonnement");
+      }
+      return;
+    }
 
-  function patch(partial: Partial<typeof form>) {
-    setForm((current) => ({ ...current, ...partial }));
+    const saved = getOnboardingFlowState().company;
+    const email =
+      account.email?.trim() ||
+      getOnboardingFlowState().account?.email?.trim() ||
+      "";
+
+    const initial = {
+      ...emptyCompanyDraft(email),
+      ...saved,
+      email,
+      dirigeant:
+        saved?.dirigeant?.trim() ||
+        account.utilisateur?.trim() ||
+        [account.prenom, account.nom].filter(Boolean).join(" ").trim() ||
+        "",
+    };
+
+    setAccountEmail(email);
+    setForm(initial);
+    setAddressSelected(
+      Boolean(initial.adresse && initial.codePostal && initial.ville),
+    );
+    setReady(true);
+  }, [router]);
+
+  function patch(partial: Partial<OnboardingCompanyDraft>) {
+    setForm((current) => {
+      const next = { ...current, ...partial, email: accountEmail || current.email };
+      if (partial.codePostal !== undefined) {
+        const location = getLocationFromPostalCode(partial.codePostal);
+        next.departement = location.departement;
+        next.region = location.region;
+      }
+      patchOnboardingFlowState((state) => ({
+        ...state,
+        company: next,
+      }));
+      return next;
+    });
     setError("");
   }
 
-  function validateCurrentStep(): boolean {
-    if (step === 0) {
-      if (!form.entreprise.trim()) {
-        setError("Le nom de l'entreprise est obligatoire.");
-        return false;
-      }
-      if (!form.telephone.trim() || !validatePhone(form.telephone)) {
-        setError("Un numéro de téléphone valide est obligatoire.");
-        return false;
-      }
+  function validate(): boolean {
+    if (!form.entreprise.trim()) {
+      setError("Le nom de l'entreprise est obligatoire.");
+      return false;
     }
-    if (step === 1) {
-      if (!form.adresse.trim()) {
-        setError("L'adresse est obligatoire.");
-        return false;
-      }
-      if (!form.ville.trim()) {
-        setError("La ville est obligatoire.");
-        return false;
-      }
-      if (!form.codePostal.trim()) {
-        setError("Le code postal est obligatoire.");
-        return false;
-      }
+    if (!form.dirigeant.trim()) {
+      setError("Le nom du dirigeant est obligatoire.");
+      return false;
     }
-    if (step === 2) {
-      if (!form.siret.trim()) {
-        setError("Le SIRET est obligatoire.");
-        return false;
-      }
+    if (!addressSelected || !form.adresse.trim()) {
+      setAddressError("Sélectionnez une adresse dans les suggestions.");
+      setError("L'adresse doit être choisie dans la liste de suggestions.");
+      return false;
+    }
+    if (!validatePostalCode(form.codePostal)) {
+      setError("Le code postal doit contenir exactement 5 chiffres.");
+      return false;
+    }
+    if (!form.ville.trim()) {
+      setError("La ville est obligatoire.");
+      return false;
+    }
+    if (!form.departement.trim() || !form.region.trim()) {
+      setError("Département et région introuvables pour ce code postal.");
+      return false;
+    }
+    if (!form.telephone.trim() || !validatePhone(form.telephone)) {
+      setError(
+        "Indiquez un numéro de téléphone français valide (chiffres uniquement).",
+      );
+      return false;
+    }
+    if (!accountEmail || !validateEmail(accountEmail)) {
+      setError("L'email du compte est invalide. Reprenez l'inscription.");
+      return false;
+    }
+    if (!validateSiret(form.siret)) {
+      setError("Le SIRET doit contenir exactement 14 chiffres.");
+      return false;
+    }
+    if (!validateFrenchTva(form.tvaIntracom)) {
+      setError("La TVA doit être au format français (ex. FR12345678901).");
+      return false;
     }
     setError("");
+    setAddressError("");
     return true;
   }
 
-  function goNext() {
-    if (!validateCurrentStep()) return;
-    if (step < STEPS.length - 1) {
-      setStep((current) => current + 1);
-      return;
-    }
-    finishOnboarding();
-  }
+  function handleContinue() {
+    if (!validate()) return;
 
-  function finishOnboarding() {
     const account = getAccount();
     if (!account) return;
 
-    const emailLocalPart = account.email.split("@")[0] ?? "Administrateur";
-    const utilisateur =
-      emailLocalPart.charAt(0).toUpperCase() + emailLocalPart.slice(1);
+    const companyPayload = {
+      ...form,
+      email: accountEmail,
+      entreprise: form.entreprise.trim(),
+      dirigeant: form.dirigeant.trim(),
+      adresse: form.adresse.trim(),
+      ville: form.ville.trim(),
+      codePostal: form.codePostal.trim(),
+      telephone: form.telephone.trim(),
+      siret: form.siret.replace(/\s/g, ""),
+      tvaIntracom: form.tvaIntracom.replace(/\s/g, "").toUpperCase(),
+    };
+
+    patchOnboardingFlowState((state) => ({
+      ...state,
+      company: companyPayload,
+    }));
 
     const nextParametres = syncParametresForSave(
       normalizeParametres({
-        ...data.parametres,
-        entreprise: form.entreprise.trim(),
-        telephone: form.telephone.trim(),
-        adresse: form.adresse.trim(),
-        ville: form.ville.trim(),
-        codePostal: form.codePostal.trim(),
-        siret: form.siret.trim(),
-        tvaIntracom: form.tvaIntracom.trim() || undefined,
-        email: account.email,
-        utilisateur,
-        logoPdf: form.logoPdf || data.parametres.logoPdf,
-        logoApplication: form.logoPdf || data.parametres.logoApplication,
-        coordonneesBancaires: form.coordonneesBancaires.trim() || undefined,
+        entreprise: companyPayload.entreprise,
+        utilisateur: companyPayload.dirigeant,
+        adresse: companyPayload.adresse,
+        ville: companyPayload.ville,
+        codePostal: companyPayload.codePostal,
+        departement: companyPayload.departement.trim(),
+        region: companyPayload.region.trim(),
+        telephone: companyPayload.telephone,
+        email: accountEmail,
+        siteInternet: companyPayload.siteInternet.trim(),
+        siret: companyPayload.siret,
+        tvaIntracom: companyPayload.tvaIntracom,
       }),
     );
 
@@ -154,21 +216,17 @@ export default function ConfigurerEntreprisePage() {
       parametres: nextParametres,
     }));
 
-    updateAccount({
-      entreprise: form.entreprise.trim(),
-      telephone: form.telephone.trim(),
-      utilisateur,
-      onboardingCompleted: true,
-    });
     saveAccount({
       ...account,
-      entreprise: form.entreprise.trim(),
-      telephone: form.telephone.trim(),
-      utilisateur,
-      onboardingCompleted: true,
+      entreprise: companyPayload.entreprise,
+      utilisateur: companyPayload.dirigeant,
+      telephone: companyPayload.telephone,
+      email: accountEmail,
+      onboardingStep: 3,
+      onboardingCompleted: false,
     });
 
-    router.replace("/dashboard");
+    router.replace("/inscription/documents");
   }
 
   if (!ready) {
@@ -180,186 +238,158 @@ export default function ConfigurerEntreprisePage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground">
-      <section className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center px-6 py-10">
-        <Card className="w-full max-w-xl">
-          <Link href="/" className="mb-8 flex justify-center">
-            <BrandLogo variant="landing" showSubtitle={false} />
-          </Link>
+    <OnboardingShell
+      step={2}
+      title="Configurez votre entreprise"
+      description="Ces informations apparaîtront sur vos devis, factures et documents commerciaux."
+      maxWidthClassName="max-w-2xl"
+    >
+      <section className="space-y-5">
+        <section>
+          <Label>Nom de l&apos;entreprise</Label>
+          <Input
+            value={form.entreprise}
+            onChange={(event) => patch({ entreprise: event.target.value })}
+            required
+          />
+        </section>
 
-          <header className="mb-8">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
-              Configuration entreprise
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight">
-              {STEPS[step].title}
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              {STEPS[step].description}
-            </p>
-            <p className="mt-4 text-xs font-medium text-muted-foreground">
-              Étape {step + 1} sur {STEPS.length}
-            </p>
-            <div className="mt-3 flex gap-2">
-              {STEPS.map((item, index) => (
-                <span
-                  key={item.title}
-                  className={cn(
-                    "h-1.5 flex-1 rounded-full",
-                    index <= step ? "bg-primary" : "bg-border",
-                  )}
-                />
-              ))}
-            </div>
-          </header>
+        <section>
+          <Label>Nom du dirigeant</Label>
+          <Input
+            value={form.dirigeant}
+            onChange={(event) => patch({ dirigeant: event.target.value })}
+            required
+          />
+        </section>
 
-          <section className="space-y-5">
-            {step === 0 && (
-              <>
-                <section>
-                  <Label>Nom entreprise</Label>
-                  <Input
-                    value={form.entreprise}
-                    onChange={(event) =>
-                      patch({ entreprise: event.target.value })
-                    }
-                    placeholder="Ex : Martin Rénovation"
-                  />
-                </section>
-                <section>
-                  <Label>Téléphone</Label>
-                  <PhoneInput
-                    value={form.telephone}
-                    onChangeValue={(telephone) => patch({ telephone })}
-                    placeholder="06 12 34 56 78"
-                  />
-                </section>
-              </>
-            )}
+        <AddressAutocomplete
+          value={{
+            adresse: form.adresse,
+            codePostal: form.codePostal,
+            ville: form.ville,
+          }}
+          error={addressError}
+          onChange={(next) => {
+            setAddressSelected(next.selectedFromSuggestion);
+            setAddressError(
+              next.selectedFromSuggestion
+                ? ""
+                : "Sélectionnez une adresse dans les suggestions.",
+            );
+            const location = getLocationFromPostalCode(next.codePostal);
+            patch({
+              adresse: next.adresse,
+              codePostal: next.codePostal,
+              ville: next.ville,
+              departement: location.departement,
+              region: location.region,
+            });
+          }}
+        />
 
-            {step === 1 && (
-              <>
-                <section>
-                  <Label>Adresse</Label>
-                  <Input
-                    value={form.adresse}
-                    onChange={(event) => patch({ adresse: event.target.value })}
-                    placeholder="12 rue des Artisans"
-                  />
-                </section>
-                <section className="grid gap-4 sm:grid-cols-2">
-                  <section>
-                    <Label>Ville</Label>
-                    <Input
-                      value={form.ville}
-                      onChange={(event) => patch({ ville: event.target.value })}
-                      placeholder="Paris"
-                    />
-                  </section>
-                  <section>
-                    <Label>Code postal</Label>
-                    <Input
-                      value={form.codePostal}
-                      onChange={(event) =>
-                        patch({ codePostal: event.target.value })
-                      }
-                      placeholder="75011"
-                    />
-                  </section>
-                </section>
-              </>
-            )}
-
-            {step === 2 && (
-              <>
-                <section>
-                  <Label>SIRET</Label>
-                  <Input
-                    value={form.siret}
-                    onChange={(event) => patch({ siret: event.target.value })}
-                    placeholder="123 456 789 00012"
-                  />
-                </section>
-                <section>
-                  <Label>TVA intracommunautaire (facultatif)</Label>
-                  <Input
-                    value={form.tvaIntracom}
-                    onChange={(event) =>
-                      patch({ tvaIntracom: event.target.value })
-                    }
-                    placeholder="FR12345678901"
-                  />
-                </section>
-              </>
-            )}
-
-            {step === 3 && (
-              <ParametresLogoField
-                label="Logo entreprise"
-                hint="Utilisé sur vos devis et factures PDF."
-                value={form.logoPdf}
-                onChange={(logoPdf) => patch({ logoPdf })}
-              />
-            )}
-
-            {step === 4 && (
-              <section>
-                <Label>Coordonnées bancaires (facultatif)</Label>
-                <Textarea
-                  value={form.coordonneesBancaires}
-                  onChange={(event) =>
-                    patch({ coordonneesBancaires: event.target.value })
-                  }
-                  placeholder="IBAN, BIC, titulaire du compte…"
-                  rows={4}
-                />
-              </section>
-            )}
-
-            {error && (
-              <p className="rounded-xl border btp-alert-error px-3 py-2 text-sm">
-                {error}
-              </p>
-            )}
-
-            <section className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={step === 0}
-                onClick={() => {
-                  setError("");
-                  setStep((current) => Math.max(0, current - 1));
-                }}
-              >
-                Retour
-              </Button>
-              <section className="flex flex-col gap-2 sm:flex-row">
-                {(step === 3 || step === 4) && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => {
-                      if (step === 4) {
-                        finishOnboarding();
-                        return;
-                      }
-                      setStep((current) => current + 1);
-                    }}
-                  >
-                    {step === 4 ? "Terminer sans banque" : "Continuer sans logo"}
-                  </Button>
-                )}
-                <Button type="button" onClick={goNext}>
-                  {step === STEPS.length - 1
-                    ? "Terminer et accéder au tableau de bord"
-                    : "Continuer"}
-                </Button>
-              </section>
-            </section>
+        <section className="grid gap-4 sm:grid-cols-2">
+          <section>
+            <Label>Code postal</Label>
+            <Input
+              value={form.codePostal}
+              readOnly
+              className="bg-muted/40"
+              inputMode="numeric"
+            />
           </section>
-        </Card>
+          <section>
+            <Label>Ville</Label>
+            <Input value={form.ville} readOnly className="bg-muted/40" />
+          </section>
+        </section>
+
+        <section className="grid gap-4 sm:grid-cols-2">
+          <section>
+            <Label>Département</Label>
+            <Input value={form.departement} readOnly className="bg-muted/40" />
+          </section>
+          <section>
+            <Label>Région</Label>
+            <Input value={form.region} readOnly className="bg-muted/40" />
+          </section>
+        </section>
+
+        <section className="grid gap-4 sm:grid-cols-2">
+          <section>
+            <Label>Téléphone</Label>
+            <PhoneInput
+              value={form.telephone}
+              onChangeValue={(telephone) => patch({ telephone })}
+            />
+          </section>
+          <section>
+            <Label>Email du compte</Label>
+            <Input
+              type="email"
+              value={accountEmail}
+              readOnly
+              className="bg-muted/40"
+            />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Déjà renseigné à l&apos;inscription — non modifiable ici.
+            </p>
+          </section>
+        </section>
+
+        <section>
+          <Label>Site internet (optionnel)</Label>
+          <Input
+            value={form.siteInternet}
+            onChange={(event) => patch({ siteInternet: event.target.value })}
+            placeholder="https://"
+          />
+        </section>
+
+        <section className="grid gap-4 sm:grid-cols-2">
+          <section>
+            <Label>SIRET (optionnel pendant l&apos;essai)</Label>
+            <Input
+              value={form.siret}
+              inputMode="numeric"
+              maxLength={14}
+              onChange={(event) =>
+                patch({
+                  siret: event.target.value.replace(/\D/g, "").slice(0, 14),
+                })
+              }
+              placeholder="14 chiffres"
+            />
+          </section>
+          <section>
+            <Label>TVA intracommunautaire (optionnel)</Label>
+            <Input
+              value={form.tvaIntracom}
+              onChange={(event) =>
+                patch({
+                  tvaIntracom: event.target.value
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, "")
+                    .slice(0, 13),
+                })
+              }
+              placeholder="FRXX999999999"
+            />
+          </section>
+        </section>
+
+        {error ? (
+          <p className="rounded-xl border btp-alert-error px-3 py-2 text-sm">
+            {error}
+          </p>
+        ) : null}
+
+        <OnboardingNav
+          onBack={() => router.replace("/verifier-email")}
+          onNext={handleContinue}
+          nextLabel="Continuer"
+        />
       </section>
-    </main>
+    </OnboardingShell>
   );
 }

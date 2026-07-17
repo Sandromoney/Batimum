@@ -1,5 +1,6 @@
 import type { Session, User } from "@supabase/supabase-js";
 import { getAccount, saveAccount, type UserAccount } from "./account";
+import { clearOnboardingFlowState } from "./onboarding-flow";
 import { createClient } from "@/utils/supabase/client";
 
 function normalizeEmail(email: string): string {
@@ -37,6 +38,7 @@ export function ensureAppAccountFromSupabaseUser(user: User): UserAccount {
       utilisateur: existing.utilisateur?.trim() || displayNameFromUser(user),
       subscriptionStatus: existing.subscriptionStatus ?? "active",
       onboardingCompleted: existing.onboardingCompleted ?? true,
+      role: existing.role === "employe" ? "admin" : existing.role ?? "admin",
     };
     saveAccount(next);
     return next;
@@ -49,12 +51,42 @@ export function ensureAppAccountFromSupabaseUser(user: User): UserAccount {
     telephone: "",
     subscriptionStatus: "active",
     onboardingCompleted: true,
+    onboardingStep: 7,
     createdAt: now,
     role: "admin",
     supabaseUserId: userId,
   };
   saveAccount(account);
   return account;
+}
+
+/**
+ * Connexion dirigeant réussie (email/mot de passe ou Google login existant).
+ * Ouvre directement le logiciel — jamais le parcours d'inscription.
+ */
+export function finalizeDirectorLogin(user: User): UserAccount {
+  const base = ensureAppAccountFromSupabaseUser(user);
+  return markDirectorOnboardingComplete(base, user.id);
+}
+
+/** Marque un compte dirigeant comme hors parcours d'inscription. */
+export function markDirectorOnboardingComplete(
+  account: UserAccount,
+  supabaseUserId?: string,
+): UserAccount {
+  const next: UserAccount = {
+    ...account,
+    supabaseUserId: supabaseUserId ?? account.supabaseUserId,
+    role: "admin",
+    onboardingCompleted: true,
+    onboardingStep: 7,
+    subscriptionStatus: account.subscriptionStatus ?? "active",
+    employeId: undefined,
+    employeeLogin: undefined,
+  };
+  saveAccount(next);
+  clearOnboardingFlowState();
+  return next;
 }
 
 export async function getSupabaseSession(): Promise<Session | null> {
@@ -89,5 +121,11 @@ export async function signOutSupabase(): Promise<void> {
   const { error } = await supabase.auth.signOut();
   if (error) {
     console.log("[supabase-auth] signOut error:", error);
+  }
+
+  // Nettoie le compte local — les caches scoped par userId restent isolés.
+  if (typeof window !== "undefined") {
+    const { clearAccount } = await import("@/lib/account");
+    clearAccount();
   }
 }

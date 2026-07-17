@@ -22,12 +22,22 @@ export interface UserAccount {
   createdAt: string;
   /** false = assistant entreprise obligatoire après la première connexion. */
   onboardingCompleted?: boolean;
+  /** Étape du parcours d'inscription (1–7). */
+  onboardingStep?: number;
+  /** Prénom saisi à l'inscription. */
+  prenom?: string;
+  /** Nom saisi à l'inscription. */
+  nom?: string;
   /** Bypass abonnement — uniquement en développement local. */
   devBypass?: boolean;
   /** Rôle applicatif V1 locale — sécurité production via Supabase/RLS à venir. */
   role?: AppRole;
   /** Lien vers AppData.employes pour les comptes employé. */
   employeId?: string;
+  /** Entreprise Supabase (dirigeant) liée au compte employé. */
+  companyId?: string;
+  /** Identifiant de connexion employé. */
+  employeeLogin?: string;
   /** Acceptation CGU/CGV lors de la création de compte. */
   legalAcceptance?: LegalAcceptance;
   /** Identifiant Supabase Auth — source de vérité pour la connexion. */

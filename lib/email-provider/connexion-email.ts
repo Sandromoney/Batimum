@@ -1,3 +1,4 @@
+import { buildAuthenticatedFetchInit } from "@/lib/authenticated-api-fetch";
 import type {
   ConnexionEmailStatut,
   EmailOAuthProvider,
@@ -47,12 +48,63 @@ export function mergeConnexionEmailMetadata(
   };
 }
 
+export function buildConnexionEmailConnected(input: {
+  email: string;
+  provider: EmailOAuthProvider | null;
+  expiresAt?: string;
+  connecteLe?: string;
+}): ParametresConnexionEmail {
+  return {
+    statut: "connecte",
+    connectedEmail: input.email,
+    provider: input.provider,
+    connecteLe: input.connecteLe ?? new Date().toISOString(),
+    expireLe: input.expiresAt,
+  };
+}
+
+export function buildConnexionEmailDisconnected(): ParametresConnexionEmail {
+  return { ...DEFAULT_CONNEXION_EMAIL };
+}
+
+export function isConnexionEmailConnected(
+  connexion?: ParametresConnexionEmail | null,
+): boolean {
+  return (
+    connexion?.statut === "connecte" &&
+    Boolean(connexion.connectedEmail?.trim())
+  );
+}
+
+export function connexionEmailToDisplayStatus(
+  connexion?: ParametresConnexionEmail | null,
+): EmailConnectionStatus | null {
+  if (!connexion) return null;
+  if (connexion.statut === "expire") {
+    return {
+      connected: false,
+      expired: true,
+      provider: connexion.provider ?? null,
+      email: connexion.connectedEmail,
+      expiresAt: connexion.expireLe,
+    };
+  }
+  if (!isConnexionEmailConnected(connexion)) return null;
+  return {
+    connected: true,
+    expired: false,
+    provider: connexion.provider ?? null,
+    email: connexion.connectedEmail,
+    expiresAt: connexion.expireLe,
+  };
+}
+
 export async function fetchEmailConnectionStatus(): Promise<EmailConnectionStatus> {
   try {
-    const response = await fetch("/api/email/status", {
-      cache: "no-store",
-      credentials: "same-origin",
-    });
+    const response = await fetch(
+      "/api/email/status",
+      await buildAuthenticatedFetchInit({ cache: "no-store" }),
+    );
     if (!response.ok) {
       return {
         connected: false,

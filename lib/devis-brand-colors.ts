@@ -22,7 +22,7 @@ export type DevisBrandColor = {
 };
 
 export const DEVIS_BRAND_COLORS: DevisBrandColor[] = [
-  { id: "bleu_batimum", label: "Bleu Batimum", hex: "#2563EB", rgb: [37, 99, 235] },
+  { id: "bleu_batimum", label: "Vert Batimum", hex: "#10B981", rgb: [16, 185, 129] },
   { id: "bleu_nuit", label: "Bleu nuit", hex: "#0F172A", rgb: [15, 23, 42] },
   { id: "or", label: "Or", hex: "#B8860B", rgb: [184, 134, 11] },
   { id: "vert", label: "Vert", hex: "#15803D", rgb: [21, 128, 61] },

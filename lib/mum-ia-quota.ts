@@ -1,5 +1,8 @@
 import { AI_QUOTA_PRO_MONTHLY } from "@/lib/ai-quota";
-import { formatParisDateLabel } from "@/lib/mum-ia-credit-period";
+import {
+  formatParisDateLabel,
+  formatParisDateLongLabel,
+} from "@/lib/mum-ia-credit-period";
 
 export const MUM_IA_QUOTA_WARNING_THRESHOLD = 80;
 
@@ -14,26 +17,38 @@ export type MumIaQuotaSnapshot = {
   renewalDate: string;
   periodStart: string;
   periodEnd: string;
+  breakdown?: {
+    mumDevis: number;
+    assistant: number;
+    documentAnalysis: number;
+    ocr: number;
+    other: number;
+  };
+  percentageUsed?: number;
 };
 
 export function formatMumIaQuotaUsageLabel(
   used: number,
   monthlyIncluded = AI_QUOTA_PRO_MONTHLY,
 ): string {
-  return `Devis MUM IA : ${used} / ${monthlyIncluded} utilisés ce mois-ci`;
+  return `Utilisation MUM IA : ${used} / ${monthlyIncluded}`;
 }
 
 export function formatMumIaRenewalLabel(renewalDateIso: string): string {
-  const label = formatParisDateLabel(renewalDateIso);
-  return label ? `Renouvellement le : ${label}` : "";
+  const label = formatParisDateLongLabel(renewalDateIso) || formatParisDateLabel(renewalDateIso);
+  return label ? `Renouvellement : ${label}` : "";
 }
 
-export function buildMumIaQuotaExceededMessage(renewalDateIso: string): string {
-  const renewalLabel = formatParisDateLabel(renewalDateIso);
-  const renewalSentence = renewalLabel
-    ? ` Renouvellement le ${renewalLabel}.`
+export function buildMumIaQuotaExceededMessage(
+  renewalDateIso: string,
+  limit = AI_QUOTA_PRO_MONTHLY,
+): string {
+  const renewalLabel =
+    formatParisDateLongLabel(renewalDateIso) || formatParisDateLabel(renewalDateIso);
+  const renewalBlock = renewalLabel
+    ? `\n\nVotre quota sera automatiquement réinitialisé le :\n${renewalLabel}`
     : "";
-  return `Vous avez utilisé vos 100 demandes IA ce mois-ci.${renewalSentence}`;
+  return `Quota MUM IA atteint\n\nVous avez utilisé vos ${limit} demandes de devis IA pour cette période.${renewalBlock}`;
 }
 
 export function getMumIaQuotaTone(
@@ -69,4 +84,4 @@ export function buildMumIaQuotaSnapshot(params: {
 
 /** @deprecated Utiliser buildMumIaQuotaExceededMessage(renewalDate) */
 export const MUM_IA_QUOTA_EXCEEDED_MESSAGE =
-  "Désolé, vous n'avez plus de crédits IA disponibles pour ce mois-ci. Vos 100 devis MUM IA ont été utilisés.";
+  "Quota MUM IA atteint\n\nVous avez utilisé vos 100 demandes de devis IA pour cette période.";

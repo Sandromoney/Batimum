@@ -1,6 +1,6 @@
 "use client";
 
-import { ParametresThemePicker } from "@/components/parametres-theme-picker";
+import { ParametresChangePassword } from "@/components/parametres-change-password";
 import { ParametresEmployesSection } from "@/components/parametres-employes-section";
 import { PageHeader } from "@/components/page-header";
 import { ParametresLogoField } from "@/components/parametres-logo-field";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, PhoneInput, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { getAccount } from "@/lib/account";
 import { useStore } from "@/lib/store";
 import {
   formatNumeroExample,
@@ -32,15 +33,15 @@ import {
   type ParametresSectionId,
 } from "@/lib/parametres-sections";
 import { saveParametresGlobally } from "@/lib/parametres-save";
+import { applyTheme } from "@/lib/theme";
 import { fetchUserSettings } from "@/lib/user-settings-client";
 import {
   hasValidationErrors,
   validateParametresSave,
   type ValidationErrors,
 } from "@/lib/validations";
-import type { ModeTVA, Parametres } from "@/lib/types";
+import type { ModeTVA, Parametres, ParametresConnexionEmail } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { applyTheme, normalizeThemePreference } from "@/lib/theme";
 import { Check, Library, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -132,6 +133,10 @@ export default function ParametresPage() {
 
   useEffect(() => {
     const section = searchParams.get("section");
+    if (section === "fournisseurs") {
+      router.replace("/parametres/bibliotheque?tab=fournisseurs");
+      return;
+    }
     if (isValidParametresSectionId(section)) {
       setActiveSection(section);
       return;
@@ -139,7 +144,7 @@ export default function ParametresPage() {
     if (searchParams.get("section") === "connexion-email") {
       setActiveSection("connexion-email");
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   useEffect(() => {
     if (searchParams.get("section") !== "connexion-email") return;
@@ -152,6 +157,13 @@ export default function ParametresPage() {
   function patch(partial: Partial<Parametres>) {
     setForm((previous) => ({ ...previous, ...partial }));
   }
+
+  const handleConnexionEmailChange = useCallback(
+    (connexionEmail: ParametresConnexionEmail) => {
+      setForm((previous) => ({ ...previous, connexionEmail }));
+    },
+    [],
+  );
 
   function commitColorDraft() {
     patch({
@@ -217,9 +229,17 @@ export default function ParametresPage() {
   }, [baseline, setData]);
 
   async function saveParametres(): Promise<boolean> {
+    console.log("[SAVE SETTINGS] start");
+    console.log("[SAVE SETTINGS] section active", activeSection);
     const payload = formWithColorDraft();
+    console.log("[SAVE SETTINGS] payload envoyé", payload);
+    console.log("[SAVE SETTINGS] méthode utilisée", "saveParametresGlobally");
     const errors = validateParametresSave(payload);
     if (hasValidationErrors(errors)) {
+      console.error("[SAVE SETTINGS] erreur complète si échec", {
+        stage: "validation",
+        errors,
+      });
       setSaveErrors(errors);
       return false;
     }
@@ -232,10 +252,12 @@ export default function ParametresPage() {
       parametres: payload,
       employes: data.employes,
     });
+    console.log("[SAVE SETTINGS] réponse API/store", result);
 
     setSaving(false);
 
     if (!result.ok || !result.parametres) {
+      console.error("[SAVE SETTINGS] erreur complète si échec", result);
       setSaveError(true);
       setSaveMessage(result.error ?? "Impossible d'enregistrer les paramètres");
       setSaved(false);
@@ -437,7 +459,11 @@ export default function ParametresPage() {
         </ParametresSection>
 
         <div className={sectionVisible("connexion-email") ? undefined : "hidden"}>
-          <ParametresConnexionEmailSection />
+          <ParametresConnexionEmailSection
+            connexionEmail={form.connexionEmail}
+            modified={sectionModified("connexion-email")}
+            onConnexionEmailChange={handleConnexionEmailChange}
+          />
         </div>
 
         <ParametresSection
@@ -648,7 +674,13 @@ export default function ParametresPage() {
         </ParametresSection>
 
         <div className={sectionVisible("employes") ? undefined : "hidden"}>
-          <ParametresEmployesSection />
+          <ParametresEmployesSection
+            tauxHoraireInterneDefaut={form.tauxHoraireInterneDefaut}
+            onTauxHoraireInterneDefautChange={(value) =>
+              patch({ tauxHoraireInterneDefaut: value })
+            }
+            modified={sectionModified("employes")}
+          />
         </div>
 
         <ParametresSection
@@ -1003,7 +1035,7 @@ export default function ParametresPage() {
         </ParametresSection>
 
         <ParametresSection
-          title="MUM IA"
+          title="Assistant Batimum"
           description="Bibliothèque de prix et apprentissage automatique pour des devis plus précis"
           className={sectionVisible("mum-ia") ? undefined : "hidden"}
         >
@@ -1019,7 +1051,7 @@ export default function ParametresPage() {
                 </span>
                 <span>
                   <span className="block text-sm font-semibold text-foreground">
-                    Paramètres MUM IA
+                    Paramètres Assistant Batimum
                   </span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
                     Apprentissage, zone géographique, import / export
@@ -1051,19 +1083,7 @@ export default function ParametresPage() {
           </div>
         </ParametresSection>
 
-        <ParametresSection
-          title="Apparence"
-          modified={sectionModified("apparence")}
-          className={sectionVisible("apparence") ? undefined : "hidden"}
-        >
-          <ParametresThemePicker
-            value={normalizeThemePreference(form.theme)}
-            onChange={(theme) => {
-              patch({ theme });
-              applyTheme(theme);
-            }}
-          />
-        </ParametresSection>
+        <ParametresChangePassword />
 
         <ParametresStickySaveFooter
           isDirty={isDirty}

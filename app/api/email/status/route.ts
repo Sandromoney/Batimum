@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getEmailConnectionStatusFromSupabase } from "@/lib/email-connection-store";
+import {
+  getEmailConnectionStatusFromSupabase,
+} from "@/lib/email-connection-store";
 import { emailProviderService } from "@/lib/email-provider";
 import { EMAIL_OAUTH_COOKIE } from "@/lib/email-provider/token-cookie";
 import type { EmailConnectionStatus } from "@/lib/email-provider/types";
 import {
   formatGmailConfigMissingMessage,
-  formatGmailDbErrorForUser,
   logGmailConfigMissing,
   logGmailDbSupabaseError,
   logGmailEnvDiagnostics,
@@ -21,7 +22,7 @@ function logEmailStatusResponse(status: EmailConnectionStatus): void {
   console.log("[email-status] email:", status.email ?? null);
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   console.log("[email-status] start");
   logGmailEnvDiagnostics("[email-status]");
 
@@ -45,13 +46,13 @@ export async function GET() {
   }
 
   try {
-    const authUser = await getAuthenticatedSupabaseUser();
+    const authUser = await getAuthenticatedSupabaseUser(request);
 
     if (authUser) {
       console.log("[email-status] user session found", { userId: authUser.id });
 
       const { status: supabaseStatus, error: supabaseError } =
-        await getEmailConnectionStatusFromSupabase(authUser.id);
+        await getEmailConnectionStatusFromSupabase(authUser.id, request);
 
       if (supabaseError) {
         logGmailDbSupabaseError(supabaseError);
@@ -60,8 +61,7 @@ export async function GET() {
           connected: false,
           expired: false,
           provider: null,
-          configError: true,
-          message: formatGmailDbErrorForUser(supabaseError),
+          statusError: true,
         };
         logEmailStatusResponse(payload);
         return NextResponse.json(payload, { status: 200 });

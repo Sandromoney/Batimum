@@ -7,20 +7,27 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import { defaultData } from "./data";
+import { getAccount, isEmployeAccount } from "@/lib/account";
+import { emptyAppData } from "@/lib/app-data-empty";
 import { syncAppData } from "./app-sync";
-import { normalizeBibliothequeEntreprise } from "@/lib/bibliotheque-entreprise";
-import { normalizeClient } from "@/lib/clients";
-import { normalizeMumIaHistorique } from "@/lib/mum-ia-historique";
-import { normalizeParametres } from "./parametres";
+import {
+  markLocalImportDone,
+  readScopedCache,
+  tryBuildLocalImport,
+  writeScopedCache,
+  workspaceOrEmpty,
+} from "@/lib/local-data-import";
+import { syncAppDataPriceLibrary } from "./price-library-sync";
 import { applyTheme, normalizeThemePreference } from "./theme";
-import { fetchUserSettings } from "./user-settings-client";
+import { fetchUserSettings, saveUserSettings } from "./user-settings-client";
 import type { AppData } from "./types";
+import { appDataToWorkspace } from "@/lib/user-settings-types";
+import { createClient } from "@/utils/supabase/client";
 
-const STORAGE_KEY = "btp-gestion-data";
 const SIGNED_PDF_PREFIX = "btp-gestion-signed-pdf:";
 
 export function saveSignedDevisPdf(devisId: string, base64: string): void {
@@ -28,7 +35,7 @@ export function saveSignedDevisPdf(devisId: string, base64: string): void {
   try {
     localStorage.setItem(`${SIGNED_PDF_PREFIX}${devisId}`, base64);
   } catch {
-    /* quota dépassé — le PDF reste téléchargeable à la signature */
+    /* quota */
   }
 }
 
@@ -41,184 +48,166 @@ export function loadSignedDevisPdf(devisId: string): string | undefined {
   }
 }
 
-function stripHeavyDevisFields(data: AppData): AppData {
-  return {
-    ...data,
-    devis: data.devis.map((devis) => ({
-      ...devis,
-      signedPdfBase64: undefined,
-    })),
-  };
-}
-
-function persistData(data: AppData): void {
-  const payload: AppData = {
-    ...data,
-    avoirs: Array.isArray(data.avoirs) ? data.avoirs : [],
-    parametres: {
-      ...data.parametres,
-      theme: normalizeThemePreference(data.parametres.theme),
-    },
-  };
-
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    return;
-  } catch {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(stripHeavyDevisFields(payload)));
-    } catch {
-      /* dernier recours : ne pas bloquer l'app */
-    }
-  }
-}
-
 type StoreContextValue = {
   data: AppData;
   setData: React.Dispatch<React.SetStateAction<AppData>>;
   update: (patch: Partial<AppData>) => void;
   reset: () => void;
   hydrated: boolean;
+  cloudReady: boolean;
+  syncError: string | null;
 };
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
-function loadData(): AppData {
-  if (typeof window === "undefined") return defaultData;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultData;
-    const parsed = JSON.parse(raw) as Partial<AppData>;
-    return {
-      parametres: normalizeParametres({
-        ...defaultData.parametres,
-        ...parsed.parametres,
-        theme: normalizeThemePreference(parsed.parametres?.theme),
-      }),
-      clients: Array.isArray(parsed.clients)
-        ? parsed.clients.map((client) =>
-            normalizeClient({
-              ...client,
-              typeClient:
-                client.typeClient === "professionnel"
-                  ? "professionnel"
-                  : "particulier",
-              email: client.email ?? "",
-              adresse: client.adresse ?? "",
-              codePostal: client.codePostal ?? "",
-              ville: client.ville ?? "",
-            }),
-          )
-        : defaultData.clients,
-      devis: Array.isArray(parsed.devis) ? parsed.devis : defaultData.devis,
-      chantiers: Array.isArray(parsed.chantiers)
-        ? parsed.chantiers.map((chantier) => ({
-            ...chantier,
-            achats: Array.isArray(chantier.achats) ? chantier.achats : [],
-          }))
-        : defaultData.chantiers,
-      commandes: Array.isArray(parsed.commandes)
-        ? parsed.commandes
-        : defaultData.commandes,
-      factures: Array.isArray(parsed.factures)
-        ? parsed.factures.map((facture) => ({
-            ...facture,
-            typeFacture:
-              facture.typeFacture === "acompte" ||
-              facture.typeFacture === "situation" ||
-              facture.typeFacture === "solde"
-                ? facture.typeFacture
-                : "classique",
-            lignes: Array.isArray(facture.lignes) ? facture.lignes : undefined,
-            devisSourceId: facture.devisSourceId || undefined,
-            devisLieId: facture.devisLieId || facture.devisSourceId || undefined,
-            chantierLieId: facture.chantierLieId || facture.chantierId || undefined,
-          }))
-        : defaultData.factures,
-      avoirs: Array.isArray(parsed.avoirs) ? parsed.avoirs : defaultData.avoirs,
-      employes: Array.isArray(parsed.employes)
-        ? parsed.employes.map((employe) => ({
-            ...employe,
-            prenom: employe.prenom ?? "",
-            nom: employe.nom ?? "",
-            photo: employe.photo || undefined,
-            poste: employe.poste || undefined,
-            email: employe.email?.trim() || undefined,
-            identifiant: employe.identifiant?.trim() || undefined,
-            telephone: employe.telephone?.trim() || undefined,
-            statut:
-              employe.statut === "desactive" ? "desactive" : ("actif" as const),
-          }))
-        : defaultData.employes,
-      planning: Array.isArray(parsed.planning)
-        ? parsed.planning.map((event) => ({
-            ...event,
-            employeIds: Array.isArray(event.employeIds) ? event.employeIds : [],
-            employeTermineIds: Array.isArray(event.employeTermineIds)
-              ? event.employeTermineIds
-              : [],
-            employeProblemes: Array.isArray(event.employeProblemes)
-              ? event.employeProblemes
-              : [],
-            affectationId: event.affectationId || undefined,
-          }))
-        : defaultData.planning,
-      affectations: Array.isArray(parsed.affectations)
-        ? parsed.affectations.map((item) => ({
-            ...item,
-            employeIds: Array.isArray(item.employeIds) ? item.employeIds : [],
-            joursSemaine: Array.isArray(item.joursSemaine) ? item.joursSemaine : [1, 2, 3, 4, 5],
-            note: item.note?.trim() || undefined,
-          }))
-        : defaultData.affectations,
-      notifications: Array.isArray(parsed.notifications)
-        ? parsed.notifications
-        : defaultData.notifications,
-      deletedNotificationKeys: Array.isArray(parsed.deletedNotificationKeys)
-        ? parsed.deletedNotificationKeys
-        : defaultData.deletedNotificationKeys,
-      relances: Array.isArray(parsed.relances)
-        ? parsed.relances
-        : defaultData.relances,
-      bibliothequeEntreprise: normalizeBibliothequeEntreprise(
-        parsed.bibliothequeEntreprise ?? defaultData.bibliothequeEntreprise,
-      ),
-      mumIaHistorique: normalizeMumIaHistorique(
-        parsed.mumIaHistorique ?? defaultData.mumIaHistorique,
-      ),
-    };
-  } catch {
-    return defaultData;
-  }
+function prepareData(data: AppData, companyId: string): AppData {
+  return syncAppData(
+    syncAppDataPriceLibrary(
+      {
+        ...data,
+        parametres: {
+          ...data.parametres,
+          theme: normalizeThemePreference(data.parametres.theme),
+        },
+      },
+      companyId,
+    ),
+  );
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<AppData>(defaultData);
+  const [data, setData] = useState<AppData>(() => emptyAppData());
   const [hydrated, setHydrated] = useState(false);
+  const [cloudReady, setCloudReady] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const ownerIdRef = useRef<string | null>(null);
+  const skipNextPersist = useRef(false);
+  const importCompletedAtRef = useRef<string | null>(null);
 
   useLayoutEffect(() => {
-    const loaded = syncAppData(loadData());
-    applyTheme(loaded.parametres.theme);
-    setData(loaded);
-    setHydrated(true);
+    let cancelled = false;
 
-    void (async () => {
+    async function hydrateFromCloud() {
+      const account = getAccount();
+      const supabase = createClient();
+      let ownerId = account?.supabaseUserId ?? null;
+
+      if (supabase) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        ownerId = sessionData.session?.user.id ?? ownerId;
+      }
+
+      // Employé : bootstrap déjà écrit dans un cache scoped company — ne pas écraser.
+      if (account && isEmployeAccount(account)) {
+        const companyId = account.companyId ?? "employee-local";
+        ownerIdRef.current = companyId;
+        const cached = readScopedCache(companyId);
+        const loaded = prepareData(cached ?? emptyAppData(), companyId);
+        if (!cancelled) {
+          applyTheme(loaded.parametres.theme);
+          setData(loaded);
+          setHydrated(true);
+          setCloudReady(true);
+        }
+        return;
+      }
+
+      if (!ownerId) {
+        // Pas de session : workspace vide (jamais les données démo legacy).
+        ownerIdRef.current = null;
+        if (!cancelled) {
+          setData(emptyAppData());
+          setHydrated(true);
+          setCloudReady(false);
+        }
+        return;
+      }
+
+      ownerIdRef.current = ownerId;
+
+      // Ne pas afficher un cache d'un autre compte : attendre le cloud.
       const remote = await fetchUserSettings();
-      if (remote.unauthorized || !remote.parametres) return;
+      if (cancelled) return;
 
-      const parametres = normalizeParametres(remote.parametres);
-      setData((prev) =>
-        syncAppData({
-          ...prev,
-          parametres,
-          employes:
-            remote.employes && remote.employes.length > 0
-              ? remote.employes
-              : prev.employes,
-        }),
+      if (remote.unauthorized) {
+        setData(emptyAppData());
+        setHydrated(true);
+        setCloudReady(false);
+        setSyncError("Session expirée. Reconnectez-vous.");
+        return;
+      }
+
+      if (remote.error && !remote.workspace && !remote.parametres) {
+        // Cache scoped uniquement pour ce ownerId (jamais le blob global).
+        const cached = readScopedCache(ownerId);
+        const fallback = prepareData(
+          cached ??
+            emptyAppData({
+              email: account?.email,
+              utilisateur: account?.utilisateur,
+            }),
+          ownerId,
+        );
+        skipNextPersist.current = true;
+        applyTheme(fallback.parametres.theme);
+        setData(fallback);
+        setHydrated(true);
+        setCloudReady(false);
+        setSyncError(remote.error);
+        return;
+      }
+
+      const workspace = remote.workspace ?? null;
+      importCompletedAtRef.current = workspace?.localImportCompletedAt ?? null;
+
+      const importPlan = tryBuildLocalImport(ownerId, workspace);
+      let next = workspaceOrEmpty(
+        workspace,
+        account?.email,
+        account?.utilisateur,
       );
-      applyTheme(parametres.theme);
-    })();
+
+      if (importPlan.data && importPlan.shouldUpload) {
+        next = importPlan.data;
+        importCompletedAtRef.current = new Date().toISOString();
+        const upload = await saveUserSettings({
+          parametres: next.parametres,
+          employes: next.employes,
+          appData: next,
+          localImportCompletedAt: importCompletedAtRef.current,
+        });
+        if (upload.ok) {
+          markLocalImportDone(ownerId);
+        } else {
+          setSyncError(upload.error ?? "Import local vers Supabase échoué.");
+        }
+      } else if (importPlan.markImportDone) {
+        markLocalImportDone(ownerId);
+        if (workspace && !workspace.localImportCompletedAt) {
+          importCompletedAtRef.current = new Date().toISOString();
+          void saveUserSettings({
+            parametres: next.parametres,
+            employes: next.employes,
+            appData: next,
+            localImportCompletedAt: importCompletedAtRef.current,
+          });
+        }
+      }
+
+      const loaded = prepareData(next, ownerId);
+      skipNextPersist.current = true;
+      applyTheme(loaded.parametres.theme);
+      writeScopedCache(ownerId, loaded);
+      setData(loaded);
+      setHydrated(true);
+      setCloudReady(true);
+      setSyncError(null);
+    }
+
+    void hydrateFromCloud();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -226,24 +215,81 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     applyTheme(data.parametres.theme);
   }, [hydrated, data.parametres.theme]);
 
+  // Cache local scoped (pas source de vérité).
   useEffect(() => {
-    if (!hydrated) return;
-    persistData(data);
-  }, [data, hydrated]);
+    if (!hydrated || !cloudReady) return;
+    if (skipNextPersist.current) {
+      skipNextPersist.current = false;
+      return;
+    }
+    const ownerId = ownerIdRef.current;
+    if (!ownerId) return;
+    writeScopedCache(ownerId, data);
+  }, [data, hydrated, cloudReady]);
+
+  // Sync cloud complète (debounce).
+  useEffect(() => {
+    if (!hydrated || !cloudReady) return;
+    const account = getAccount();
+    if (!account?.supabaseUserId || isEmployeAccount(account)) return;
+    if (ownerIdRef.current !== account.supabaseUserId) return;
+
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        const result = await saveUserSettings({
+          parametres: data.parametres,
+          employes: data.employes,
+          appData: data,
+          localImportCompletedAt: importCompletedAtRef.current,
+          operational: {
+            planning: data.planning,
+            chantiers: data.chantiers,
+            affectations: data.affectations,
+            clients: data.clients,
+          },
+          workspace: appDataToWorkspace(
+            data,
+            importCompletedAtRef.current,
+          ),
+        });
+        if (!result.ok) {
+          setSyncError(result.error ?? "Échec synchronisation Supabase.");
+        } else if (result.missingColumns) {
+          setSyncError(
+            "Schéma Supabase incomplet. Exécutez scripts/APPLY_COMPANY_WORKSPACE.sql",
+          );
+        } else {
+          setSyncError(null);
+        }
+      })();
+    }, 1500);
+
+    return () => window.clearTimeout(timer);
+  }, [data, hydrated, cloudReady]);
 
   const update = useCallback((patch: Partial<AppData>) => {
     setData((prev) => ({ ...prev, ...patch }));
   }, []);
 
   const reset = useCallback(() => {
-    applyTheme(defaultData.parametres.theme);
-    setData(defaultData);
-    localStorage.removeItem(STORAGE_KEY);
+    const empty = emptyAppData();
+    applyTheme(empty.parametres.theme);
+    setData(empty);
+    const ownerId = ownerIdRef.current;
+    if (ownerId) writeScopedCache(ownerId, empty);
   }, []);
 
   const value = useMemo(
-    () => ({ data, setData, update, reset, hydrated }),
-    [data, update, reset, hydrated],
+    () => ({
+      data,
+      setData,
+      update,
+      reset,
+      hydrated,
+      cloudReady,
+      syncError,
+    }),
+    [data, update, reset, hydrated, cloudReady, syncError],
   );
 
   return (

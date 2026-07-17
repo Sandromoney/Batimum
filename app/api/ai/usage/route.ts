@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 
-import {
-  AI_REQUESTS_LIMIT_DEFAULT,
-  buildQuotaSnapshotFromUsage,
-  getOrCreateUserAiUsage,
-} from "@/lib/ai-usage-store";
+import { getAiUsage } from "@/lib/ai/ai-credits";
+import { AI_REQUESTS_LIMIT_DEFAULT } from "@/lib/ai-usage-store";
 import { isMumIaAuthContext, requireMumIaAuth } from "@/lib/supabase-auth-server";
 
 export const runtime = "nodejs";
@@ -15,39 +12,37 @@ export async function GET(request: Request) {
     return authResult;
   }
 
-  const { user: authUser, companyId } = authResult;
+  const usage = await getAiUsage(authResult.user.id);
 
-  console.log("[MUM IA] quota auth ok", {
-    userId: authUser.id,
-    companyId,
-    authSource: authResult.authSource,
-  });
-
-  const { usage, error } = await getOrCreateUserAiUsage(authUser.id);
-
-  if (!usage) {
-    console.warn("[MUM IA] quota usage unavailable", {
-      userId: authUser.id,
-      error: error ?? "unknown",
-    });
+  if (!usage.storageAvailable && !usage.available) {
     return NextResponse.json({
       available: false,
       monthlyIncluded: AI_REQUESTS_LIMIT_DEFAULT,
       limit: AI_REQUESTS_LIMIT_DEFAULT,
+      used: 0,
+      remaining: AI_REQUESTS_LIMIT_DEFAULT,
+      percentageUsed: 0,
+      breakdown: {
+        mumDevis: 0,
+        assistant: 0,
+        documentAnalysis: 0,
+        ocr: 0,
+        other: 0,
+      },
     });
   }
 
-  const snapshot = buildQuotaSnapshotFromUsage(usage);
-
   return NextResponse.json({
     available: true,
-    used: snapshot.used,
-    limit: snapshot.limit,
-    remaining: snapshot.remaining,
-    monthlyIncluded: snapshot.monthlyIncluded,
+    used: usage.creditsUsed,
+    limit: usage.quotaTotal,
+    remaining: usage.creditsRemaining,
+    monthlyIncluded: usage.quotaTotal,
     packCredits: 0,
-    renewalDate: snapshot.renewalDate,
-    periodStart: snapshot.periodStart,
-    periodEnd: snapshot.periodEnd,
+    percentageUsed: usage.percentageUsed,
+    renewalDate: usage.periodEnd,
+    periodStart: usage.periodStart,
+    periodEnd: usage.periodEnd,
+    breakdown: usage.breakdown,
   });
 }

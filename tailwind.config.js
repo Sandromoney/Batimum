@@ -2,6 +2,8 @@
 
 const config = {
 
+  darkMode: ["selector", '[data-theme-effective="dark"]'],
+
   content: [
 
     "./app/**/*.{js,ts,jsx,tsx,mdx}",

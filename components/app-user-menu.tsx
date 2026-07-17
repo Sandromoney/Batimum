@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { DEFAULT_PARAMETRES } from "@/lib/parametres";
 import { clearAccount, getAccount, getAppRole } from "@/lib/account";
+import { clearEmployeeSessionForDirectorLogin } from "@/lib/employee-access";
 import { signOutSupabase } from "@/lib/supabase-auth";
 import { APP_ROLE_LABELS } from "@/lib/auth-types";
 import { UserAvatar } from "@/components/user-avatar";
@@ -53,6 +54,7 @@ export function AppUserMenu() {
 
   async function handleLogout() {
     closeMenu();
+    await clearEmployeeSessionForDirectorLogin();
     await signOutSupabase();
     clearAccount();
     router.replace("/login");

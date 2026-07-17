@@ -76,6 +76,18 @@ export function formatParisDateLabel(iso: string | Date): string {
   }).format(date);
 }
 
+/** Ex. « 18 août 2026 » — affichage utilisateur (renouvellement quota). */
+export function formatParisDateLongLabel(iso: string | Date): string {
+  const date = typeof iso === "string" ? new Date(iso) : iso;
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("fr-FR", {
+    timeZone: PARIS_TZ,
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 export type MumIaCreditPeriod = {
   periodStart: Date;
   periodEnd: Date;

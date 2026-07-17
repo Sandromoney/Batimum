@@ -125,6 +125,79 @@ export interface LigneDevis {
   typeLigne?: TypeLigneDevis;
   designation?: string;
   descriptionCourte?: string;
+  /** Coût d'achat HT — usage interne, jamais sur PDF client. */
+  prixAchatHT?: number;
+  /** Fournisseur matériau — usage interne. */
+  fournisseur?: string;
+}
+
+/** Catégories pour l'analyse pilotage / rentabilité. */
+export type CategoriePilotageChantier =
+  | "depannage"
+  | "salle_de_bain"
+  | "carrelage"
+  | "placo"
+  | "renovation_complete"
+  | "long_chantier"
+  | "petit_chantier"
+  | "autre";
+
+export interface DevisPilotageMainOeuvre {
+  heuresPrevues?: number;
+  tauxHoraireInterne?: number;
+  employesPrevusIds?: string[];
+}
+
+export type ChantierTimeEntryTypeTache =
+  | "preparation"
+  | "pose"
+  | "finition"
+  | "deplacement"
+  | "autre";
+
+export interface ChantierTimeEntry {
+  id: string;
+  chantierId: string;
+  employeId: string;
+  date: string;
+  heureDebut: string;
+  heureFin: string;
+  pauseMinutes: number;
+  typeTache: ChantierTimeEntryTypeTache;
+  typeTachePersonnalise?: string;
+  commentaire?: string;
+  createdAt: string;
+}
+
+export type PilotageFiabiliteNiveau =
+  | "fiable"
+  | "partiel"
+  | "estimatif"
+  | "non_calculable";
+
+export interface ChantierRentabiliteResume {
+  prixVenteHT: number;
+  coutMateriauxPrevu: number;
+  coutMateriauxReel: number;
+  /** Tous achats chantier (toutes catégories). */
+  achatsReelsHT: number;
+  coutMainOeuvrePrevu: number;
+  coutMainOeuvreReel: number;
+  coutTotalPrevu: number;
+  coutTotalReel: number;
+  /** Achats réels + main-d'œuvre réelle pointée. */
+  debourseReel: number;
+  tempsPrevuHeures: number;
+  tempsReelHeures: number;
+  margePrevue: number;
+  margeReelle: number;
+  tauxMargeReelle: number;
+  ecartTempsHeures: number;
+  ecartCoutTotal: number;
+  beneficeReel: number;
+  fiabilite: PilotageFiabiliteNiveau;
+  fiabiliteLabel: string;
+  rentabiliteIncomplete: boolean;
 }
 
 export interface Devis {
@@ -176,6 +249,11 @@ export interface Devis {
   acompteDemandeMode?: "pourcentage" | "montant";
   /** Métadonnées internes MUM IA — jamais exposées au client. */
   mumIaMetadata?: MumIaDevisMetadata;
+  /** Catégorie pilotage pour analyses de rentabilité. */
+  categoriePilotage?: CategoriePilotageChantier;
+  categoriePilotagePersonnalise?: string;
+  /** Estimation main-d'œuvre (interne). */
+  pilotageMainOeuvre?: DevisPilotageMainOeuvre;
 }
 
 export type CategorieAchatChantier =
@@ -213,6 +291,12 @@ export interface Chantier {
   devisNumber?: string;
   sourceDevisTitle?: string;
   historique?: ChantierHistoriqueEntry[];
+  /** Catégorie pilotage (héritée du devis ou saisie manuelle). */
+  categoriePilotage?: CategoriePilotageChantier;
+  categoriePilotagePersonnalise?: string;
+  heuresPrevues?: number;
+  tauxHoraireInterne?: number;
+  employesPrevusIds?: string[];
 }
 
 export interface EtapeChantier {
@@ -457,6 +541,12 @@ export interface Employe {
   accessCodeExpiresAt?: string;
   /** Couleur d'affichage dans le planning (hex ou nom). */
   couleurPlanning?: string;
+  /** Coût horaire interne pour le calcul de rentabilité. */
+  coutHoraireInterne?: number;
+  /** Spécialité principale (usage interne pilotage). */
+  specialitePrincipale?: string;
+  /** Types de chantiers maîtrisés / préférés (usage interne). */
+  typesChantiersMaitrises?: CategoriePilotageChantier[];
 }
 
 export type EmployeStatut = "actif" | "desactive";
@@ -569,6 +659,163 @@ export interface ParametresFacturationElectronique {
   pdpDernierTestMessage?: string;
 }
 
+export type FournisseurFamilleProduit =
+  | "plomberie"
+  | "carrelage"
+  | "placo"
+  | "peinture"
+  | "electricite"
+  | "chauffage"
+  | "climatisation"
+  | "menuiserie"
+  | "autre";
+
+export interface FournisseurRemiseFamille {
+  famille: FournisseurFamilleProduit;
+  remisePourcent: number;
+}
+
+export interface FournisseurTarifLigne {
+  id: string;
+  fournisseurId: string;
+  reference?: string;
+  nomProduit: string;
+  categorie?: string;
+  unite?: string;
+  /** Conditionnement (ex. carton de 10, palette…). */
+  conditionnement?: string;
+  commentaire?: string;
+  prixPublic?: number;
+  prixRemise?: number;
+  prixEntrepriseSaisi?: number;
+  /** TVA applicable (%) */
+  tauxTVA?: number;
+  /** Prix achat TTC (calculé ou saisi) */
+  prixAchatTTC?: number;
+  /** Prix vente HT conseillé */
+  prixVenteHT?: number;
+  /** Prix vente TTC conseillé */
+  prixVenteTTC?: number;
+  dateImport: string;
+  sourceImport: "pdf" | "excel" | "csv" | "manuel" | "ia";
+  /** Nom du fichier d'import d'origine. */
+  fichierImport?: string;
+  aVerifier?: boolean;
+}
+
+export interface Fournisseur {
+  id: string;
+  /** Identifiant entreprise (isolation multi-comptes). */
+  companyId?: string;
+  nom: string;
+  /** Enseigne commerciale (ex. Point.P). */
+  enseigne?: string;
+  /** Nom exact du dépôt sélectionné. */
+  nomDepot?: string;
+  /** Identifiant OpenStreetMap (ex. node/123, way/456). */
+  osmId?: string;
+  osmType?: "node" | "way" | "relation";
+  /** Identifiant Google Places ou legacy OSM (placeId). */
+  placeId?: string;
+  adresseDepot: string;
+  ville: string;
+  codePostal: string;
+  latitude?: number;
+  longitude?: number;
+  /** Distance estimée depuis l'entreprise (km). */
+  distanceKm?: number;
+  telephone?: string;
+  email?: string;
+  siteWeb?: string;
+  /** Origine du téléphone (openstreetmap, données publiques, manuel…). */
+  phoneSource?: "openstreetmap" | "entreprise_public_data" | "manual" | "unavailable";
+  /** Origine du site web. */
+  websiteSource?: "openstreetmap" | "entreprise_public_data" | "manual" | "unavailable";
+  /** Téléphone confirmé / modifié par l'utilisateur. */
+  phoneVerified?: boolean;
+  /** Site web confirmé / modifié par l'utilisateur. */
+  websiteVerified?: boolean;
+  /** Date ISO d'ajout du fournisseur. */
+  dateAjout?: string;
+  /** Date ISO de création. */
+  createdAt?: string;
+  /** Date ISO de dernière modification. */
+  updatedAt?: string;
+  /** Origine de la fiche : OpenStreetMap, Annuaire des Entreprises ou saisie manuelle. */
+  source?: "places" | "manual" | "osm" | "openstreetmap" | "annuaire_entreprises";
+  /** @deprecated Plus utilisé — prix réels par ligne */
+  remiseGlobalePourcent?: number;
+  /** @deprecated Plus utilisé */
+  familles: FournisseurFamilleProduit[];
+  /** @deprecated Plus utilisé */
+  remisesParFamille?: FournisseurRemiseFamille[];
+  favori?: boolean;
+  commentaireInterne?: string;
+  /** Date ISO de dernière mise à jour tarifaire. */
+  dateDerniereMiseAJour?: string;
+  /** Actif = utilisable ; Archivé = conservé mais hors sélections / MUM IA. */
+  status?: "active" | "archived";
+}
+
+export type EntreprisePriceType = "material" | "labor" | "service" | "equipment";
+
+export type EntreprisePriceSource =
+  | "manual"
+  | "import_pdf"
+  | "import_excel"
+  | "import_csv"
+  | "public_price"
+  | "mum_ai"
+  | "history"
+  | "appris";
+
+export type EntreprisePriceReliability =
+  | "verified"
+  | "imported"
+  | "history"
+  | "public"
+  | "estimated"
+  | "to_verify";
+
+export type SalePriceMode = "coefficient" | "manual";
+
+export interface EntreprisePriceLibraryEntry {
+  id: string;
+  companyId: string;
+  type: EntreprisePriceType;
+  name: string;
+  /** Référence fournisseur / catalogue. */
+  reference?: string;
+  description?: string;
+  category?: string;
+  trade?: string;
+  unit: string;
+  supplierId?: string;
+  supplierName?: string;
+  purchasePriceHT?: number;
+  salePriceHT?: number;
+  marginRate?: number;
+  markupCoefficient?: number;
+  vatRate?: number;
+  source: EntreprisePriceSource;
+  confidence: number;
+  lastUpdatedAt: string;
+  isVerified: boolean;
+  isFavorite: boolean;
+  notes?: string;
+  normaliseKey?: string;
+  desactive?: boolean;
+  salePriceMode?: SalePriceMode;
+}
+
+export interface EntreprisePriceLibrary {
+  entries: EntreprisePriceLibraryEntry[];
+  defaultMarkupCoefficient?: number;
+  defaultSalePriceMode?: SalePriceMode;
+  /** MUM IA privilégie le meilleur prix achat vérifié entre fournisseurs. */
+  useBestPriceInMumIA?: boolean;
+}
+
 export interface Parametres {
   entreprise: string;
   siret: string;
@@ -580,6 +827,8 @@ export interface Parametres {
   adresse: string;
   ville?: string;
   codePostal?: string;
+  departement?: string;
+  region?: string;
   pays?: string;
   siteInternet?: string;
   email: string;
@@ -606,8 +855,10 @@ export interface Parametres {
   logoEntreprise?: string;
   logoApplication?: string;
   logoPdf?: string;
-  theme?: "dark" | "light" | "system";
+  theme?: "light";
   objectifCaMensuel?: number;
+  /** Taux horaire interne par défaut (€/h) pour la rentabilité si non renseigné par employé. */
+  tauxHoraireInterneDefaut?: number;
   assuranceDecennale?: boolean;
   nomAssurance?: string;
   numeroPoliceAssurance?: string;
@@ -653,6 +904,12 @@ export interface Parametres {
   couleurDevisCustom?: string;
   /** Métadonnées connexion email OAuth (tokens côté serveur uniquement). */
   connexionEmail?: ParametresConnexionEmail;
+  /** Fournisseurs configurés pour le copilote achats. */
+  fournisseurs?: Fournisseur[];
+  /** Bibliothèque tarifaire (import PDF/Excel/CSV ou saisie manuelle). */
+  tarifsFournisseurs?: FournisseurTarifLigne[];
+  /** Bibliothèque prix unifiée entreprise (achat + vente). */
+  entreprisePriceLibrary?: EntreprisePriceLibrary;
 }
 
 import type { DevisBrandColorId } from "@/lib/devis-brand-colors";
@@ -816,4 +1073,6 @@ export interface AppData {
   bibliothequeEntreprise: BibliothequeEntreprise;
   /** Historique des générations MUM IA */
   mumIaHistorique?: MumIaHistoriqueEntry[];
+  /** Pointages heures par chantier. */
+  chantierTimeEntries?: ChantierTimeEntry[];
 }

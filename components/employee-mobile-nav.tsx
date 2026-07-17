@@ -130,7 +130,7 @@ export function EmployeeMobileNav({
                         "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-200",
                         active
                           ? "bg-primary-foreground/10"
-                          : "bg-transparent group-hover:bg-primary/10",
+                          : "bg-transparent group-hover:bg-card-hover/60",
                       )}
                     >
                       <Icon
@@ -138,7 +138,7 @@ export function EmployeeMobileNav({
                           "h-[1.1rem] w-[1.1rem] transition-colors duration-200",
                           active
                             ? "text-primary-foreground"
-                            : "text-muted group-hover:text-primary",
+                            : "text-muted group-hover:text-foreground",
                         )}
                         strokeWidth={active ? 2.25 : 1.75}
                       />
@@ -165,7 +165,6 @@ export function EmployeeMobileNav({
                 <BrandLogo
                   variant="sidebarFooter"
                   showSubtitle={false}
-                  imageClassName="!w-[80px] !max-w-[80px]"
                 />
                 <p className="mt-2 text-[10px] text-muted-foreground/70">
                   Espace employé

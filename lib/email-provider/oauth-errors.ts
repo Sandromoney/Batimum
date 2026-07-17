@@ -34,6 +34,13 @@ export function toFriendlyGmailOAuthError(error: unknown): string {
     return GMAIL_CONFIG_INCOMPLETE_MESSAGE;
   }
 
+  if (
+    error.message.includes("SUPABASE_SERVICE_ROLE_KEY") ||
+    error.message.toLowerCase().includes("service role")
+  ) {
+    return "Impossible d'enregistrer la connexion email pour le moment.";
+  }
+
   if (error.message.toLowerCase().includes("manquante")) {
     return error.message;
   }

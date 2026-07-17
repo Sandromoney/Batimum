@@ -110,7 +110,7 @@ export function MobileNavMenu() {
                         "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-200",
                         active
                           ? "bg-primary-foreground/10"
-                          : "bg-transparent group-hover:bg-primary/10",
+                          : "bg-transparent group-hover:bg-card-hover/60",
                       )}
                     >
                       <Icon
@@ -118,7 +118,7 @@ export function MobileNavMenu() {
                           "h-[1.05rem] w-[1.05rem] transition-colors duration-200",
                           active
                             ? "text-primary-foreground"
-                            : "text-muted group-hover:text-primary",
+                            : "text-muted group-hover:text-foreground",
                         )}
                         strokeWidth={active ? 2.25 : 1.75}
                       />
@@ -132,16 +132,9 @@ export function MobileNavMenu() {
             <footer className="shrink-0 border-t border-border/60 px-4 pb-6 pt-5">
               <div className="btp-sidebar-brand-block flex flex-col items-center text-center">
                 <div className="btp-sidebar-brand-image" aria-hidden="true">
-                  <BrandLogo
-                    variant="sidebarFooter"
-                    showSubtitle={false}
-                    imageClassName="!w-[96px] !max-w-[96px]"
-                  />
+                  <BrandLogo variant="sidebarFooter" showSubtitle={false} />
                 </div>
-                <p className="btp-sidebar-brand-title mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-foreground/90">
-                  BATIMUM
-                </p>
-                <p className="btp-sidebar-brand-subtitle mt-1.5 text-[10px] leading-snug text-muted-foreground/80">
+                <p className="btp-sidebar-brand-subtitle mt-3 text-[10px] leading-snug text-muted-foreground/80">
                   Logiciel de gestion BTP
                 </p>
                 <p className="btp-sidebar-brand-version mt-1 text-[9px] tracking-wide text-muted-foreground/45">

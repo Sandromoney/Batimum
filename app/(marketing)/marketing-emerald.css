@@ -1,0 +1,298 @@
+/* Batimum — thème clair premium (auth, onboarding, légal)
+   Scope : .marketing-emerald — pages marketing hors app connectée. */
+
+.marketing-emerald {
+  --color-primary: 16 185 129;
+  --color-primary-hover: 5 150 105;
+  --color-primary-foreground: 255 255 255;
+  --color-foreground: 15 23 42;
+  --color-muted-foreground: 100 116 139;
+  --color-background: 248 250 248;
+  --color-card: 255 255 255;
+  --color-card-hover: 248 250 252;
+  --color-card-elevated: 255 255 255;
+  --color-border: 226 232 240;
+  --color-muted: 100 116 139;
+  --shadow-glow: 0 8px 18px rgba(16, 185, 129, 0.18);
+  --shadow-card: 0 12px 32px rgba(15, 23, 42, 0.05);
+  --shadow-card-hover: 0 14px 36px rgba(15, 23, 42, 0.07);
+  --shadow-input: none;
+  --body-gradient: none;
+  background-color: #f8faf8;
+  background-image: none;
+  color: #0f172a;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.marketing-emerald main {
+  background-color: transparent !important;
+  color: inherit;
+}
+
+/* ——— Cartes ——— */
+
+.marketing-emerald .btp-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05) !important;
+  border-radius: 20px !important;
+}
+
+/* ——— Typographie ——— */
+
+.marketing-emerald h1,
+.marketing-emerald h2,
+.marketing-emerald h3 {
+  color: #0f172a;
+}
+
+.marketing-emerald .text-foreground {
+  color: #0f172a !important;
+}
+
+.marketing-emerald .text-muted-foreground {
+  color: #64748b !important;
+}
+
+/* ——— Labels ——— */
+
+.marketing-emerald label {
+  letter-spacing: 0.08em;
+  color: #64748b !important;
+}
+
+/* ——— Inputs ——— */
+
+.marketing-emerald input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.marketing-emerald textarea,
+.marketing-emerald select {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  color: #0f172a !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+.marketing-emerald input::placeholder,
+.marketing-emerald textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.marketing-emerald input:not([type="checkbox"]):not([type="radio"]):focus,
+.marketing-emerald textarea:focus,
+.marketing-emerald select:focus {
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1) !important;
+}
+
+.marketing-emerald input[type="checkbox"] {
+  accent-color: #10b981;
+}
+
+/* ——— Boutons ——— */
+
+.marketing-emerald .btp-btn {
+  border-radius: 12px !important;
+}
+
+.marketing-emerald .btp-btn.bg-primary {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(16, 185, 129, 0.18) !important;
+}
+
+.marketing-emerald .btp-btn.bg-primary:hover:not(:disabled) {
+  background-color: #059669 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.24) !important;
+}
+
+.marketing-emerald .btp-btn.border-border\/80,
+.marketing-emerald .btp-btn[class*="border-border"] {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+}
+
+.marketing-emerald .btp-btn.border-border\/80:hover:not(:disabled),
+.marketing-emerald .btp-btn[class*="border-border"]:hover:not(:disabled) {
+  background: #f8faf8 !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+}
+
+/* ——— Liens ——— */
+
+.marketing-emerald a.text-primary,
+.marketing-emerald .text-primary {
+  color: #10b981 !important;
+}
+
+.marketing-emerald a.text-primary:hover,
+.marketing-emerald a.hover\:text-primary-hover:hover,
+.marketing-emerald a.font-medium.text-primary:hover {
+  color: #059669 !important;
+}
+
+/* ——— Header & footer marketing ——— */
+
+.marketing-emerald .marketing-header {
+  background: #f8faf8;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.marketing-emerald .marketing-header .landing-btn-secondary {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+  border-radius: 12px !important;
+}
+
+.marketing-emerald .marketing-header .landing-btn-secondary:hover {
+  background: #f8faf8 !important;
+}
+
+.marketing-emerald .marketing-footer {
+  background: #f8faf8;
+  border-top: 1px solid rgba(15, 23, 42, 0.06) !important;
+}
+
+.marketing-emerald .marketing-footer a {
+  color: #64748b !important;
+}
+
+.marketing-emerald .marketing-footer a:hover {
+  color: #10b981 !important;
+}
+
+/* ——— Pages légales ——— */
+
+.marketing-emerald .marketing-legal article {
+  color: #64748b;
+}
+
+.marketing-emerald .marketing-legal h1,
+.marketing-emerald .marketing-legal h2 {
+  color: #0f172a;
+}
+
+.marketing-emerald .marketing-legal a {
+  color: #10b981;
+}
+
+.marketing-emerald .marketing-legal a:hover {
+  color: #059669;
+}
+
+/* ——— Alertes & séparateurs ——— */
+
+.marketing-emerald .btp-alert-error {
+  border-color: rgba(220, 38, 38, 0.25) !important;
+  background-color: rgba(254, 242, 242, 0.9) !important;
+  color: #b91c1c !important;
+}
+
+.marketing-emerald .text-red-400 {
+  color: #dc2626 !important;
+}
+
+.marketing-emerald .border-border\/70,
+.marketing-emerald .border-t.border-border\/70 {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+.marketing-emerald .bg-card.px-3 {
+  background: #ffffff !important;
+}
+
+/* ——— Logo auth (même rendu que landing header) ——— */
+
+.marketing-emerald .logo-topbar__img {
+  width: 160px;
+  max-width: 160px;
+}
+
+@media (min-width: 640px) {
+  .marketing-emerald .logo-topbar__img {
+    width: 180px;
+    max-width: 180px;
+  }
+}
+
+/* ——— Onboarding : indicateur d'étapes ——— */
+
+.marketing-emerald .marketing-onboarding-progress {
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.marketing-emerald .marketing-onboarding-progress__fill {
+  background: #10b981;
+}
+
+/* ——— Messages de succès ——— */
+
+.marketing-emerald .border-emerald-500\/30.bg-emerald-500\/10 {
+  border-color: rgba(16, 185, 129, 0.25) !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+}
+
+.marketing-emerald .text-emerald-200 {
+  color: #047857 !important;
+}
+
+/* ——— CTA inline (pages OAuth) ——— */
+
+.marketing-emerald a.rounded-2xl.bg-primary {
+  border-radius: 12px !important;
+  background: #10b981 !important;
+  box-shadow: 0 8px 18px rgba(16, 185, 129, 0.18) !important;
+}
+
+.marketing-emerald a.rounded-2xl.bg-primary:hover {
+  background: #059669 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.24) !important;
+}
+
+/* ——— Auth split (connexion / inscription) ——— */
+
+.marketing-emerald .auth-split {
+  background: #f8faf8;
+}
+
+.marketing-emerald .auth-split__form {
+  background: #f8faf8;
+}
+
+@keyframes authMarketingCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.marketing-emerald .auth-marketing-card {
+  animation: authMarketingCardIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--card-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-emerald .auth-marketing-card {
+    animation: none;
+  }
+
+  .marketing-emerald .auth-marketing-panel__phrase {
+    transition: none !important;
+  }
+}

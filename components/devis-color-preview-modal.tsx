@@ -84,13 +84,13 @@ export function DevisColorStudioModal({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
-  if (!open) return null;
-
   const selectCustomHex = useCallback((hex: string) => {
     const normalized = normalizeHex(hex);
     if (!normalized) return;
     setSession({ couleurDevis: "personnalise", customHex: normalized });
   }, []);
+
+  if (!open) return null;
 
   function selectPreset(id: DevisBrandColorId) {
     const preset = getPresetById(id);

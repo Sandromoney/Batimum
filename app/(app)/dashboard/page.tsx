@@ -6,8 +6,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DashboardRevenueChart } from "@/components/dashboard-revenue-chart";
-import { DashboardTodayCard } from "@/components/dashboard-today-card";
+import { DashboardTodayDropdown } from "@/components/dashboard-today-dropdown";
 import { DashboardMumIaQuotaCard } from "@/components/dashboard-mum-ia-quota-card";
+import { DashboardOnboardingChecklist } from "@/components/dashboard-onboarding-checklist";
 import { DashboardWelcome } from "@/components/dashboard-welcome";
 import { useStore } from "@/lib/store";
 import { getClientDisplayName } from "@/lib/clients";
@@ -142,14 +143,17 @@ export default function DashboardPage() {
         subtitle={welcomeSubtitle}
       />
 
-      <DashboardTodayCard snapshot={todaySnapshot} data={data} />
+      <DashboardOnboardingChecklist data={data} />
+
+      <DashboardTodayDropdown data={data} />
 
       <DashboardMumIaQuotaCard />
 
-      <section className="btp-dashboard-stats grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <section className="btp-dashboard-stats grid gap-5 overflow-visible sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard
           label="Clients"
           value={String(metrics.totalClients)}
+          helpText="Nombre total de clients enregistrés."
           details={[
             clientsThisMonth > 0
               ? `+${clientsThisMonth} ce mois`
@@ -160,6 +164,7 @@ export default function DashboardPage() {
         <StatCard
           label="Devis"
           value={String(metrics.totalDevis)}
+          helpText="Suivi des devis créés, envoyés et signés."
           details={[
             `${metrics.devisSigne} signé${metrics.devisSigne > 1 ? "s" : ""}`,
             `${metrics.devisEnvoye} envoyé${metrics.devisEnvoye > 1 ? "s" : ""}`,
@@ -170,6 +175,7 @@ export default function DashboardPage() {
         <StatCard
           label="Chantiers"
           value={String(chantierStats.total)}
+          helpText="Vue rapide des chantiers en cours ou en retard."
           details={[
             chantierStats.enRetard > 0
               ? `${chantierStats.enRetard} en retard`
@@ -181,12 +187,14 @@ export default function DashboardPage() {
         <StatCard
           label="CA mensuel"
           value={formatCurrency(metrics.chiffreAffairesMensuel)}
+          helpText="Chiffre d'affaires encaissé ce mois-ci."
           sub={`${progressionObjectif}% de l'objectif`}
           icon={Euro}
         />
         <StatCard
           label="Factures"
           value={String(metrics.totalFactures)}
+          helpText="Suivi des factures payées et impayées."
           details={[
             `${metrics.facturesPayees} payée${metrics.facturesPayees > 1 ? "s" : ""}`,
             `${metrics.facturesImpayees} impayée${metrics.facturesImpayees > 1 ? "s" : ""}`,
@@ -211,7 +219,7 @@ export default function DashboardPage() {
             </h2>
             <Link
               href="/devis"
-              className="text-sm font-medium text-primary transition-colors hover:text-primary-hover hover:underline"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
             >
               Voir tout
             </Link>
@@ -224,10 +232,10 @@ export default function DashboardPage() {
                 <li key={d.id}>
                   <Link
                     href={`/devis/${d.id}`}
-                    className="group flex flex-col gap-3 rounded-2xl border border-border/60 bg-card-elevated/40 px-4 py-3.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-card-hover/55 hover:shadow-card sm:flex-row sm:items-center sm:justify-between"
+                    className="group flex flex-col gap-3 rounded-2xl border border-border/60 bg-card-elevated/40 px-4 py-3.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:bg-card-hover/55 hover:shadow-card sm:flex-row sm:items-center sm:justify-between"
                   >
                     <section className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+                      <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-foreground/85">
                         {d.titre}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
@@ -255,7 +263,7 @@ export default function DashboardPage() {
 
         <Card className="btp-dashboard-panel-wide btp-card-interactive lg:col-span-2">
           <header className="mb-5 flex items-center gap-2.5">
-            <TrendingUp className="h-5 w-5 text-primary" strokeWidth={2} />
+            <TrendingUp className="h-5 w-5 text-muted-foreground" strokeWidth={2} />
             <h2 className="text-base font-semibold tracking-tight">
               Prochaines interventions
             </h2>
@@ -269,7 +277,7 @@ export default function DashboardPage() {
               upcomingInterventions.map((e) => (
                 <li
                   key={e.id}
-                  className="flex items-center justify-between rounded-xl border border-border/60 bg-card-elevated/40 px-4 py-3 transition-all duration-300 hover:border-primary/15 hover:bg-card-hover/50"
+                  className="flex items-center justify-between rounded-xl border border-border/60 bg-card-elevated/40 px-4 py-3 transition-all duration-300 hover:border-border hover:bg-card-hover/50"
                 >
                   <section>
                     <p className="text-sm font-medium text-foreground">{e.titre}</p>
@@ -285,7 +293,7 @@ export default function DashboardPage() {
           </ul>
           <Link
             href="/planning"
-            className="mt-5 inline-block text-sm font-medium text-primary transition-colors hover:text-primary-hover hover:underline"
+            className="mt-5 inline-block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
           >
             Ouvrir le planning
           </Link>

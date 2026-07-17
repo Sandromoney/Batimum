@@ -19,6 +19,7 @@ import { DevisLignesEditor } from "@/components/devis-lignes-editor";
 import { DevisPreviewModal } from "@/components/devis-preview-modal";
 import { EntityHistoriqueSection } from "@/components/entity-historique-section";
 import { DevisQuickClientModal } from "@/components/devis-quick-client-modal";
+import { DevisCopiloteAchats } from "@/components/devis-copilote-achats";
 import { EntrepriseSendGateModal } from "@/components/entreprise-send-gate-modal";
 import {
   EmailConnectionBanner,
@@ -206,7 +207,7 @@ export default function DevisDetailPage() {
     applyDevisChange((current) => {
       let next = {
         ...current,
-        lignes: nextLignes,
+      lignes: nextLignes,
         ...montants,
       };
       if (current.statut !== "brouillon") {
@@ -502,7 +503,7 @@ export default function DevisDetailPage() {
         await navigator.clipboard?.writeText(
           `À: ${email.destinataire}\nObjet: ${email.objet}\n\n${email.message}`,
         );
-        setClientLinkCopied(true);
+    setClientLinkCopied(true);
       }
     } else {
       setSendClientMessage(
@@ -841,25 +842,25 @@ ${reminderEmail.message}`,
         />
         </>
       ) : (
-        <>
-          <Link
-            href="/devis"
-            className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Retour aux devis
-          </Link>
+    <>
+      <Link
+        href="/devis"
+        className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Retour aux devis
+      </Link>
 
-          <PageHeader
-            title={devisItem.titre}
+      <PageHeader
+        title={devisItem.titre}
             description={`${devisItem.numero} · ${getClientDisplayName(client)}`}
-            action={
-              <Badge
+        action={
+          <Badge
                 label={DEVIS_STATUT_LABELS[displayStatut]}
                 status={displayStatut}
-              />
-            }
           />
+        }
+      />
 
           <EmailConnectionBanner
             className="mb-6"
@@ -871,57 +872,57 @@ ${reminderEmail.message}`,
 
           <Card className="mb-6">
             <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
-              <div>
+            <div>
                 <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                   Total HT
-                </dt>
+              </dt>
                 <dd className="mt-1 font-semibold tabular-nums">
                   {formatCurrency(total)}
-                </dd>
-              </div>
-              <div>
+              </dd>
+            </div>
+            <div>
                 <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                   Total TTC
-                </dt>
+              </dt>
                 <dd className="mt-1 font-semibold tabular-nums text-primary">
                   {formatCurrency(totalTTC)}
-                </dd>
-              </div>
-              <div>
+              </dd>
+            </div>
+            <div>
                 <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                   Client
-                </dt>
-                <dd className="mt-1">
+              </dt>
+              <dd className="mt-1">
                   <ClientNameDisplay client={client} />
-                </dd>
-              </div>
+              </dd>
+            </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                   Statut
-                </dt>
+              </dt>
                 <dd className="mt-1">
-                  <Select
-                    value={devisItem.statut}
+            <Select
+              value={devisItem.statut}
                     className="mt-1 max-w-xs"
                     disabled={devisItem.statut === "archive"}
-                    onChange={(event) =>
+                        onChange={(event) =>
                       requestManualStatutChange(event.target.value as StatutDevis)
                     }
                   >
                     {allowedManualStatuts.map((statut) => (
                       <option key={statut} value={statut}>
                         {DEVIS_STATUT_LABELS[statut]}
-                      </option>
-                    ))}
-                  </Select>
+                          </option>
+                        ))}
+                      </Select>
                   <p className="mt-1 text-[10px] text-muted-foreground">
                     Auto / manuel
                   </p>
                   {displayStatut !== devisItem.statut && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       Affiché : {DEVIS_STATUT_LABELS[displayStatut]}
-                    </p>
-                  )}
+                        </p>
+                      )}
                 </dd>
               </div>
               <div>
@@ -951,15 +952,15 @@ ${reminderEmail.message}`,
                     Dupliquer
                   </Button>
                   {devisItem.statut === "signe" && (
-                    <Button
+                      <Button
                       variant="ghost"
-                      size="sm"
+                        size="sm"
                       onClick={() => setConfirmUnlockSignedOpen(true)}
-                    >
+                      >
                       Déverrouiller exceptionnellement
-                    </Button>
+                      </Button>
                   )}
-                </div>
+          </div>
               </div>
             </Card>
           )}
@@ -977,13 +978,18 @@ ${reminderEmail.message}`,
                 onUpdateLigne={() => undefined}
                 onRemoveLigne={() => undefined}
               />
-            </Card>
+        </Card>
           )}
         </>
       )}
 
       {!isDraft && (
         <>
+      <DevisCopiloteAchats
+        devis={devisItem}
+        client={client}
+        parametres={data.parametres}
+      />
       <Card className="mt-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <section>
@@ -1001,8 +1007,8 @@ ${reminderEmail.message}`,
                   Facture classique déjà créée — {factureFromDevis.numero}
                 </p>
                 <ButtonLink href="/factures" variant="secondary" size="sm">
-                  <Receipt className="h-4 w-4" />
-                  Voir les factures
+                    <Receipt className="h-4 w-4" />
+                    Voir les factures
                 </ButtonLink>
               </>
             ) : canTransformToFacture ? (
@@ -1132,13 +1138,13 @@ ${reminderEmail.message}`,
                   title={devisSendDisabledTitle}
                   onClick={() => requestSendToClient()}
                 >
-                  <Send className="h-4 w-4" />
+              <Send className="h-4 w-4" />
                   {sendingToClient ? "Envoi en cours…" : "Envoyer au client"}
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    if (hasValidationErrors(validateCurrentDevis())) return;
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                if (hasValidationErrors(validateCurrentDevis())) return;
                     const url = signatureUrl;
                     if (url) {
                       window.open(url, "_blank", "noopener,noreferrer");
@@ -1154,11 +1160,11 @@ ${reminderEmail.message}`,
                         window.open(published.signatureUrl, "_blank", "noopener,noreferrer");
                       }
                     });
-                  }}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Voir lien client
-                </Button>
+              }}
+            >
+              <ExternalLink className="h-4 w-4" />
+              Voir lien client
+            </Button>
               </>
             )}
             {isSigned ? (
@@ -1167,10 +1173,10 @@ ${reminderEmail.message}`,
                 Télécharger PDF signé
               </Button>
             ) : (
-              <Button variant="secondary" onClick={handleDownloadPdf}>
-                <Download className="h-4 w-4" />
-                Télécharger PDF
-              </Button>
+            <Button variant="secondary" onClick={handleDownloadPdf}>
+              <Download className="h-4 w-4" />
+              Télécharger PDF
+            </Button>
             )}
             {canCreateChantierFromDevis && (
               <Button
@@ -1312,7 +1318,7 @@ ${reminderEmail.message}`,
         <section className="space-y-5">
           <div className="rounded-2xl border border-border bg-card-elevated/70 p-4">
             <div className="mb-4 flex items-center justify-between gap-4">
-              <BrandLogo imageClassName="h-10" showSubtitle={false} />
+              <BrandLogo imageClassName="h-10 w-auto object-contain" showSubtitle={false} />
               <span
                 className={
                   canSendDevisEmail

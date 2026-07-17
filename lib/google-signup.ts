@@ -31,6 +31,7 @@ export function buildGoogleSignupAccount(
     telephone: "",
     subscriptionStatus: null,
     onboardingCompleted: false,
+    onboardingStep: 2,
     createdAt: new Date().toISOString(),
     legalAcceptance,
   };

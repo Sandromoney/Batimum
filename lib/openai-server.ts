@@ -8,7 +8,15 @@ if (process.env.NODE_ENV === "development") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
 
-export const OPENAI_DEFAULT_MODEL = "gpt-4o-mini";
+export const OPENAI_DEFAULT_MODEL = "gpt-5";
+export const AI_MODEL_FALLBACK = "gpt-5";
+
+export const AI_MODELS = {
+  mum_devis: "mum_devis",
+  assistant: "assistant",
+  document_analysis: "document_analysis",
+} as const;
+export type OpenAiMode = keyof typeof AI_MODELS;
 
 export type OpenAiEnvSource = "env.local" | "process.env" | "missing";
 
@@ -97,12 +105,36 @@ export function getOpenAiEnvDiagnostics(): {
   };
 }
 
-export function getOpenAiApiKey(): string | null {
-  const { value } = resolveEnvValue("OPENAI_API_KEY");
-  if (!value || PLACEHOLDER_KEYS.has(value)) {
-    return null;
-  }
+function normalizeApiKey(value: string | null | undefined): string | null {
+  if (!value || PLACEHOLDER_KEYS.has(value)) return null;
   return value;
+}
+
+/**
+ * Clé OpenAI unique pour tout Batimum (MUM IA, Assistant, analyses documents).
+ * OPENAI_ASSISTANT_API_KEY reste supportée en fallback legacy uniquement.
+ */
+export function getOpenAiApiKey(_mode: OpenAiMode = "mum_devis"): string | null {
+  const primary = normalizeApiKey(resolveEnvValue("OPENAI_API_KEY").value);
+  if (primary) return primary;
+  // Legacy : ancienne clé assistant si OPENAI_API_KEY absente
+  return normalizeApiKey(resolveEnvValue("OPENAI_ASSISTANT_API_KEY").value);
+}
+
+export function getOpenAiKeyEnvNameForMode(_mode: OpenAiMode): string {
+  if (normalizeApiKey(resolveEnvValue("OPENAI_API_KEY").value)) {
+    return "OPENAI_API_KEY";
+  }
+  if (normalizeApiKey(resolveEnvValue("OPENAI_ASSISTANT_API_KEY").value)) {
+    return "OPENAI_ASSISTANT_API_KEY";
+  }
+  return "OPENAI_API_KEY";
+}
+
+export function isAssistantOpenAiKeyFallback(): boolean {
+  const primary = normalizeApiKey(resolveEnvValue("OPENAI_API_KEY").value);
+  const legacy = normalizeApiKey(resolveEnvValue("OPENAI_ASSISTANT_API_KEY").value);
+  return !primary && Boolean(legacy);
 }
 
 export function getOpenAiModel(): string {
@@ -110,12 +142,33 @@ export function getOpenAiModel(): string {
   return value || OPENAI_DEFAULT_MODEL;
 }
 
-export function isOpenAiConfigured(): boolean {
-  return getOpenAiApiKey() !== null;
+/** Modèle GPT par mode — jamais hardcodé hors de ce mapping. */
+export function getOpenAiModelForMode(mode: OpenAiMode): string {
+  const envKey =
+    mode === "assistant"
+      ? "OPENAI_ASSISTANT_MODEL"
+      : mode === "document_analysis"
+        ? "OPENAI_DOCUMENT_MODEL"
+        : "OPENAI_MUM_MODEL";
+  const specific = resolveEnvValue(envKey).value;
+  if (specific) return specific;
+
+  const global = resolveEnvValue("OPENAI_MODEL").value;
+  if (global) return global;
+
+  return AI_MODEL_FALLBACK;
 }
 
-export function createOpenAiClient(): OpenAI | null {
-  const apiKey = getOpenAiApiKey();
+export function isOpenAiConfigured(): boolean {
+  return getOpenAiApiKey("mum_devis") !== null;
+}
+
+export function isOpenAiConfiguredForMode(mode: OpenAiMode): boolean {
+  return getOpenAiApiKey(mode) !== null;
+}
+
+export function createOpenAiClient(mode: OpenAiMode = "mum_devis"): OpenAI | null {
+  const apiKey = getOpenAiApiKey(mode);
   if (!apiKey) {
     return null;
   }

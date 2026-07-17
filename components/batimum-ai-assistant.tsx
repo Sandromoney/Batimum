@@ -45,6 +45,7 @@ import {
 import { TYPE_CHANTIER_LABELS } from "@/lib/chantiers";
 import { FRANCE_REGIONS } from "@/lib/france-regions";
 import { recordDevisCreatedForClient } from "@/lib/historique-events";
+import { getAccount } from "@/lib/account";
 import { useStore } from "@/lib/store";
 import type { MumIaHistoriqueEntry, TypeChantier } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
@@ -64,15 +65,25 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { mapMumIaApiError, getMumIaUserMessage, extractMumIaTechnicalError } from "@/lib/mum-ia-errors";
 import { mumIaClientDebug } from "@/lib/mum-ia-debug";
-import { MumIaDevPanel } from "@/components/mum-ia-dev-panel";
 import { fetchMumIaQuota } from "@/lib/mum-ia-quota-client";
+import {
+  broadcastMumIaQuotaRefresh,
+  broadcastMumIaQuotaUpdated,
+} from "@/lib/mum-ia-quota-events";
 import { authenticatedFetch, MumIaAuthError } from "@/lib/mum-ia-api-client";
 import { buildMumIaQuotaSnapshot, buildMumIaQuotaExceededMessage, type MumIaQuotaSnapshot } from "@/lib/mum-ia-quota";
+import {
+  isAnalysisClearlyUnexploitable,
+  MUM_IA_EMPTY_DESCRIPTION_MESSAGE,
+  MUM_IA_INSUFFICIENT_INFO_MESSAGE,
+  validateMumIaDevisRequest,
+} from "@/lib/mum-ia-devis-request";
+import { loadMumIaContext, type MumIaContextPayload } from "@/lib/mum-ia-context";
 
 const PRIX_SOURCE_LABELS: Record<string, string> = {
   manuel: "Saisie manuelle",
   appris: "Appris depuis devis signés",
-  regional: "Base régionale",
+  regional: "Tarif catalogue",
   batimum: "Bibliothèque Batimum",
   a_verifier: "À vérifier",
 };
@@ -139,6 +150,7 @@ export function BatimumAiAssistant() {
     useState<EntrepriseLocalisation | null>(null);
   const [serverQuota, setServerQuota] = useState<MumIaQuotaSnapshot | null>(null);
   const [quotaLoading, setQuotaLoading] = useState(true);
+  const [pageContext, setPageContext] = useState<MumIaContextPayload | null>(null);
   const geoPrefillDone = useRef(false);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const draftHydrated = useRef(false);
@@ -167,10 +179,18 @@ export function BatimumAiAssistant() {
       if (draft.result) setResult(draft.result);
       if (draft.analysis) {
         setAnalysis(draft.analysis);
-        setOptionalDetailsExpanded(true);
+        // Infos complémentaires restent repliées par défaut pour cette création
+        setOptionalDetailsExpanded(false);
       }
       if (draft.additionalPrecisions) {
         setAdditionalPrecisions(draft.additionalPrecisions);
+      }
+      const context = loadMumIaContext();
+      if (context) {
+        setPageContext(context);
+        if (context.typeChantier) {
+          setTypeChantier(context.typeChantier as TypeChantier);
+        }
       }
     } catch {
       /* brouillon illisible */
@@ -240,7 +260,11 @@ export function BatimumAiAssistant() {
     debugMessage?: string;
   }) => {
     setError(mapMumIaApiError(payload));
-    setTechnicalError(extractMumIaTechnicalError(payload));
+    if (process.env.NODE_ENV === "development") {
+      setTechnicalError(extractMumIaTechnicalError(payload));
+    } else {
+      setTechnicalError(null);
+    }
   };
 
   const clearMumIaErrors = () => {
@@ -316,10 +340,18 @@ export function BatimumAiAssistant() {
       );
       return null;
     }
-    if (description.trim().length < 10) {
-      setError("Décrivez votre chantier en au moins 10 caractères.");
+    const devisRequest = validateMumIaDevisRequest(description.trim());
+    if (!devisRequest.valid) {
+      if (devisRequest.tone === "error") {
+        setError(devisRequest.message ?? MUM_IA_INSUFFICIENT_INFO_MESSAGE);
+        setAnalysis(null);
+        setResult(null);
+      } else {
+        clearMumIaErrors();
+      }
       return null;
     }
+    clearMumIaErrors();
     const ctx = buildContext();
     if (!ctx) {
       setError("Sélectionnez une région et un département.");
@@ -362,6 +394,13 @@ export function BatimumAiAssistant() {
       hypothesesFromAnalysis: options.analysisData?.hypothesesSuggerees,
       lotsIdentifies: options.analysisData?.lotsIdentifies,
       bibliothequeEntries: serializeBibliothequeForApi(bibliothequeNormalized),
+      entreprisePriceLibrary: data.parametres.entreprisePriceLibrary,
+      parametresSnapshot: {
+        fournisseurs: data.parametres.fournisseurs,
+        tarifsFournisseurs: data.parametres.tarifsFournisseurs,
+        entreprisePriceLibrary: data.parametres.entreprisePriceLibrary,
+      },
+      companyId: getAccount()?.supabaseUserId ?? undefined,
       coefficientRegionalManuel:
         bibliothequeNormalized.coefficientRegionalManuel ?? null,
       departementPrincipal: bibliothequeNormalized.departementPrincipal,
@@ -529,18 +568,16 @@ export function BatimumAiAssistant() {
             periodEnd: payload.quota.periodEnd,
           }),
         );
+        broadcastMumIaQuotaUpdated({
+          used: payload.quota.used,
+          limit: payload.quota.monthlyIncluded || payload.quota.limit || 100,
+          remaining: payload.quota.remaining,
+          resetAt: payload.quota.renewalDate,
+        });
       } else {
-        setServerQuota((previous) =>
-          previous
-            ? {
-                ...previous,
-                used: previous.used + 1,
-                remaining: Math.max(0, previous.remaining - 1),
-              }
-            : previous,
-        );
+        await refreshServerQuota();
+        broadcastMumIaQuotaRefresh();
       }
-      await refreshServerQuota();
     } catch (networkError) {
       if (networkError instanceof MumIaAuthError) {
         applyMumIaFailure({
@@ -566,6 +603,9 @@ export function BatimumAiAssistant() {
     clearMumIaErrors();
     setAnalysis(null);
 
+    const requestId = crypto.randomUUID();
+    let reserved = false;
+
     const requestBody = {
       descriptionChantier: ctx.description,
       regionCode: ctx.regionCode,
@@ -578,9 +618,154 @@ export function BatimumAiAssistant() {
     };
 
     mumIaClientDebug("analyze_click", requestBody);
+    if (process.env.NODE_ENV === "development") {
+      console.log("[MUM FLOW] bouton cliqué", "Analyser et préparer le devis");
+      console.log("[MUM FLOW] payload envoyé", requestBody);
+      console.log("[MUM FLOW] route appelée", "/api/ia/analyze-chantier");
+    }
     const startedAt = Date.now();
 
+    const releaseReservation = async () => {
+      if (!reserved) return;
+      try {
+        const releaseResponse = await authenticatedFetch(
+          "/api/ai/usage/release",
+          {
+            method: "POST",
+            body: JSON.stringify({ requestId }),
+          },
+          "quota",
+        );
+        const releasePayload = (await releaseResponse.json()) as {
+          success?: boolean;
+          used?: number;
+          limit?: number;
+          remaining?: number;
+          resetAt?: string;
+        };
+        if (
+          releasePayload.success &&
+          typeof releasePayload.used === "number" &&
+          typeof releasePayload.limit === "number"
+        ) {
+          setServerQuota(
+            buildMumIaQuotaSnapshot({
+              used: releasePayload.used,
+              monthlyIncluded: releasePayload.limit,
+              packCredits: 0,
+              renewalDate: releasePayload.resetAt ?? "",
+              periodStart: "",
+              periodEnd: releasePayload.resetAt ?? "",
+            }),
+          );
+          broadcastMumIaQuotaUpdated({
+            used: releasePayload.used,
+            limit: releasePayload.limit,
+            remaining: releasePayload.remaining,
+            resetAt: releasePayload.resetAt,
+          });
+        } else {
+          await refreshServerQuota();
+          broadcastMumIaQuotaRefresh();
+        }
+      } catch {
+        await refreshServerQuota();
+        broadcastMumIaQuotaRefresh();
+      } finally {
+        reserved = false;
+      }
+    };
+
     try {
+      try {
+        const reserveResponse = await authenticatedFetch(
+          "/api/ai/usage/reserve",
+          {
+            method: "POST",
+            body: JSON.stringify({ requestId }),
+          },
+          "quota",
+        );
+        const reservePayload = (await reserveResponse.json()) as {
+          success?: boolean;
+          limitReached?: boolean;
+          message?: string;
+          used?: number;
+          limit?: number;
+          remaining?: number;
+          resetAt?: string;
+          technicalFailure?: boolean;
+        };
+
+        // Uniquement le vrai plafond 100/100 bloque MUM IA
+        if (reserveResponse.status === 429 || reservePayload.limitReached) {
+          setError(
+            reservePayload.message ??
+              (serverQuota?.renewalDate
+                ? buildMumIaQuotaExceededMessage(serverQuota.renewalDate)
+                : getMumIaUserMessage("quota_exceeded")),
+          );
+          await refreshServerQuota();
+          return null;
+        }
+
+        const limit = reservePayload.limit ?? 100;
+        let used = typeof reservePayload.used === "number" ? reservePayload.used : 0;
+
+        if (reservePayload.technicalFailure) {
+          console.warn("[MUM IA QUOTA] storage unavailable — continuing analysis");
+          used = Math.min(limit, (serverQuota?.used ?? used) + 1);
+        } else if (reservePayload.success !== false) {
+          reserved = true;
+        }
+
+        const remaining =
+          typeof reservePayload.remaining === "number" &&
+          !reservePayload.technicalFailure
+            ? reservePayload.remaining
+            : Math.max(0, limit - used);
+
+        setServerQuota(
+          buildMumIaQuotaSnapshot({
+            used,
+            monthlyIncluded: limit,
+            packCredits: 0,
+            renewalDate: reservePayload.resetAt ?? serverQuota?.renewalDate ?? "",
+            periodStart: serverQuota?.periodStart ?? "",
+            periodEnd: reservePayload.resetAt ?? serverQuota?.periodEnd ?? "",
+          }),
+        );
+        broadcastMumIaQuotaUpdated({
+          used,
+          limit,
+          remaining,
+          resetAt: reservePayload.resetAt ?? serverQuota?.renewalDate,
+        });
+      } catch (quotaError) {
+        console.warn("[MUM IA QUOTA] reserve call failed — continuing analysis", quotaError);
+        const limit = serverQuota?.limit ?? 100;
+        const used = Math.min(limit, (serverQuota?.used ?? 0) + 1);
+        setServerQuota((previous) =>
+          previous
+            ? {
+                ...previous,
+                used,
+                remaining: Math.max(0, limit - used),
+                limit,
+                monthlyIncluded: limit,
+              }
+            : buildMumIaQuotaSnapshot({
+                used,
+                monthlyIncluded: limit,
+                packCredits: 0,
+                renewalDate: "",
+                periodStart: "",
+                periodEnd: "",
+              }),
+        );
+        broadcastMumIaQuotaUpdated({ used, limit, remaining: Math.max(0, limit - used) });
+      }
+
       const response = await authenticatedFetch(
         "/api/ia/analyze-chantier",
         {
@@ -613,7 +798,24 @@ export function BatimumAiAssistant() {
         if (payload.debugMessage) {
           console.error("[MUM IA] analyze error detail:", payload.debugMessage);
         }
+        // Refus avant IA exploitable (auth / validation / config) → annuler la réservation
+        if (
+          response.status === 400 ||
+          response.status === 401 ||
+          response.status === 403 ||
+          response.status === 429 ||
+          response.status === 503
+        ) {
+          await releaseReservation();
+        }
         applyMumIaFailure(payload);
+        return null;
+      }
+
+      if (isAnalysisClearlyUnexploitable(payload.analysis)) {
+        setError(MUM_IA_INSUFFICIENT_INFO_MESSAGE);
+        setAnalysis(null);
+        setResult(null);
         return null;
       }
 
@@ -621,8 +823,9 @@ export function BatimumAiAssistant() {
       setQuestionAnswers({});
       setStandardDetails(EMPTY_MUM_IA_STANDARD_DETAILS);
       setAdditionalPrecisions("");
-      setOptionalDetailsExpanded(true);
+      setOptionalDetailsExpanded(false);
       setResult(null);
+      clearMumIaErrors();
 
       const historyEntry = createMumIaHistoriqueAnalyseEntry({
         context: {
@@ -649,6 +852,7 @@ export function BatimumAiAssistant() {
 
       return payload.analysis;
     } catch (networkError) {
+      await releaseReservation();
       if (networkError instanceof MumIaAuthError) {
         applyMumIaFailure({
           code: "unauthenticated",
@@ -670,8 +874,9 @@ export function BatimumAiAssistant() {
   };
 
   const handleGenerate = async () => {
-    const ctx = buildValidatedContext();
+    const ctx = buildValidatedContext({ checkQuota: true });
     if (!ctx) return;
+    if (analyzing) return;
 
     mumIaClientDebug("button_click", { action: "analyze_only" });
     await runAnalysis(ctx);
@@ -807,7 +1012,7 @@ export function BatimumAiAssistant() {
       setResult(null);
       setStandardDetails(EMPTY_MUM_IA_STANDARD_DETAILS);
       setQuestionAnswers({});
-      setOptionalDetailsExpanded(true);
+      setOptionalDetailsExpanded(false);
     } else if (entry.devisIa) {
       setResult(normalizeAiDevisResult(entry.devisIa) ?? entry.devisIa);
       setAnalysis(entry.analysisSnapshot ?? null);
@@ -860,6 +1065,18 @@ export function BatimumAiAssistant() {
     !activeHistoryEntry || activeHistoryEntry.statut === "genere";
   const showAnalysisPanel = analysis !== null && result === null;
 
+  const clientValidation = useMemo(
+    () => validateMumIaDevisRequest(description),
+    [description],
+  );
+
+  const showNeutralHint =
+    !analyzing &&
+    !loading &&
+    !error &&
+    !clientValidation.valid &&
+    clientValidation.tone === "neutral";
+
   const conseils = useMemo(
     () =>
       showInternal
@@ -907,6 +1124,19 @@ export function BatimumAiAssistant() {
         />
       </header>
 
+      {pageContext?.entityLabel ? (
+        <Card className="border-primary/15 bg-primary/5 px-4 py-3">
+          <p className="text-xs font-medium text-foreground">
+            Contexte : {pageContext.entityLabel}
+          </p>
+          {pageContext.description ? (
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+              {pageContext.description}
+            </p>
+          ) : null}
+        </Card>
+      ) : null}
+
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <Card className="space-y-3 p-4">
           <label className="block space-y-1.5">
@@ -916,7 +1146,8 @@ export function BatimumAiAssistant() {
             <textarea
               value={description}
               onChange={(event) => {
-                setDescription(event.target.value);
+                const next = event.target.value;
+                setDescription(next);
                 setAnalysis(null);
                 setStandardDetails(EMPTY_MUM_IA_STANDARD_DETAILS);
                 setOptionalDetailsExpanded(false);
@@ -924,6 +1155,15 @@ export function BatimumAiAssistant() {
                 setAdditionalPrecisions("");
                 setResult(null);
                 setActiveHistoryId(null);
+                const validation = validateMumIaDevisRequest(next);
+                if (validation.valid) {
+                  setError((prev) =>
+                    prev === MUM_IA_INSUFFICIENT_INFO_MESSAGE ||
+                    prev === MUM_IA_EMPTY_DESCRIPTION_MESSAGE
+                      ? null
+                      : prev,
+                  );
+                }
               }}
               rows={7}
               placeholder="Ex. : Rénovation complète salle de bain 6 m² — dépose carrelage et sanitaires, protection, nouvelle douche italienne, faïence murale, plomberie, 2 points lumineux, peinture plafond, nettoyage et évacuation gravats…"
@@ -1035,28 +1275,29 @@ export function BatimumAiAssistant() {
             />
           ) : null}
 
+          {showNeutralHint ? (
+            <p className="rounded-xl border border-border/70 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+              {clientValidation.message ?? MUM_IA_EMPTY_DESCRIPTION_MESSAGE}
+            </p>
+          ) : null}
+
           {error ? (
-            <div className="space-y-2">
-              <p className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                {error}
-              </p>
-              <MumIaDevPanel technicalError={technicalError} />
-            </div>
-          ) : (
-            <MumIaDevPanel technicalError={null} />
-          )}
+            <p className="whitespace-pre-line rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-700">
+              {error}
+            </p>
+          ) : null}
 
           {!showAnalysisPanel ? (
             <Button
               type="button"
               onClick={handleGenerate}
-              disabled={analyzing}
+              disabled={analyzing || quotaBlocked || quotaLoading}
               className="w-full sm:w-auto"
             >
               {analyzing ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Analyse de votre demande…
+                  Analyse en cours…
                 </>
               ) : (
                 <>
@@ -1065,6 +1306,12 @@ export function BatimumAiAssistant() {
                 </>
               )}
             </Button>
+          ) : null}
+
+          {quotaBlocked ? (
+            <p className="whitespace-pre-line rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-700">
+              {quotaExceededMessage}
+            </p>
           ) : null}
 
           {loading ? (
@@ -1118,7 +1365,7 @@ export function BatimumAiAssistant() {
                   <>
                     <Loader2 className="h-8 w-8 animate-spin text-primary/60" />
                     <p className="max-w-xs text-xs text-muted-foreground">
-                      Analyse de votre demande…
+                      Analyse du chantier en cours…
                     </p>
                   </>
                 ) : loading ? (
@@ -1510,6 +1757,7 @@ export function BatimumAiAssistant() {
         entries={data.mumIaHistorique ?? []}
         activeEntryId={activeHistoryId}
         transformingId={transformingHistoryId}
+        descriptionSearch={description}
         onVoir={handleVoirHistorique}
         onTransformer={handleTransformerHistorique}
         onSupprimer={handleSupprimerHistorique}

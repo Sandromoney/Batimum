@@ -1,5 +1,6 @@
 import { getLigneDesignation, isSectionLigne } from "@/lib/devis-lignes";
 import { getActiveBibliothequeEntries, normalizeBibliothequeEntreprise } from "@/lib/bibliotheque-entreprise";
+import { matchesSearchQuery } from "@/lib/search-text-match";
 import type { AppData, BibliothequeEntrepriseEntry } from "@/lib/types";
 
 export type DevisLigneSuggestion = {
@@ -10,22 +11,16 @@ export type DevisLigneSuggestion = {
   tauxTVA?: number;
   categorie?: string;
   source: "bibliotheque" | "historique";
+  nombreUtilisations?: number;
 };
 
-function normalizeQuery(value: string): string {
-  return value.trim().toLowerCase();
-}
-
 function matchesQuery(suggestion: DevisLigneSuggestion, query: string): boolean {
-  if (!query) return true;
   const haystack = [
     suggestion.designation,
     suggestion.categorie ?? "",
     suggestion.unite,
-  ]
-    .join(" ")
-    .toLowerCase();
-  return query.split(/\s+/).every((token) => haystack.includes(token));
+  ].join(" ");
+  return matchesSearchQuery(haystack, query);
 }
 
 export function buildDevisLigneSuggestions(
@@ -33,7 +28,7 @@ export function buildDevisLigneSuggestions(
   query: string,
   limit = 8,
 ): DevisLigneSuggestion[] {
-  const q = normalizeQuery(query);
+  const q = query.trim();
   if (q.length < 2) return [];
 
   const bibliotheque = normalizeBibliothequeEntreprise(data.bibliothequeEntreprise);
@@ -47,6 +42,7 @@ export function buildDevisLigneSuggestions(
     tauxTVA: entry.tauxTVA,
     categorie: entry.categorie,
     source: "bibliotheque" as const,
+    nombreUtilisations: entry.nombreUtilisations ?? 1,
   }));
 
   const historiqueMap = new Map<string, DevisLigneSuggestion>();
@@ -64,14 +60,22 @@ export function buildDevisLigneSuggestions(
           prixUnitaireHT: Number(ligne.prixUnitaire) || 0,
           tauxTVA: ligne.tauxTVA,
           source: "historique",
+          nombreUtilisations: 1,
         });
+      } else {
+        const existing = historiqueMap.get(key)!;
+        existing.nombreUtilisations = (existing.nombreUtilisations ?? 1) + 1;
       }
     }
   }
 
-  const merged = [...fromBibliotheque, ...historiqueMap.values()].filter((item) =>
-    matchesQuery(item, q),
-  );
+  const merged = [...fromBibliotheque, ...historiqueMap.values()]
+    .filter((item) => matchesQuery(item, q))
+    .sort(
+      (a, b) =>
+        (b.nombreUtilisations ?? 0) - (a.nombreUtilisations ?? 0) ||
+        (a.source === "bibliotheque" ? -1 : 1),
+    );
 
   const seen = new Set<string>();
   const unique: DevisLigneSuggestion[] = [];

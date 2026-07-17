@@ -309,10 +309,7 @@ export function formatGmailDbErrorForUser(error: GmailDbSupabaseError): string {
   const normalized = message.toLowerCase();
 
   if (code === "42501" || normalized.includes("permission denied")) {
-    if (!hasSupabaseServiceRoleKeyEnv()) {
-      return SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE;
-    }
-    return "Permission refusée sur email_connections (policy RLS ou droits insuffisants).";
+    return "Permission refusée. Vérifiez que vous êtes bien connecté.";
   }
 
   if (
@@ -329,9 +326,10 @@ export function formatGmailDbErrorForUser(error: GmailDbSupabaseError): string {
 
   if (
     normalized.includes("service role") ||
-    normalized.includes("service_role")
+    normalized.includes("service_role") ||
+    normalized.includes("supabase_service_role_key")
   ) {
-    return "Clé service role Supabase manquante ou invalide.";
+    return "Connexion email indisponible pour le moment.";
   }
 
   return message || "Erreur base de données lors de l'accès à email_connections.";

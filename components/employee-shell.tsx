@@ -1,55 +1,74 @@
 "use client";
 
-
-
 import Link from "next/link";
-
 import { useRouter } from "next/navigation";
-
+import { useEffect } from "react";
 import { BrandLogo } from "@/components/brand-logo";
-
 import { EmployeAvatar } from "@/components/employe-avatar";
-
 import { EmployeeDesktopNav } from "@/components/employee-desktop-nav";
-
 import { EmployeeMobileNav } from "@/components/employee-mobile-nav";
-
 import { Button } from "@/components/ui/button";
-
 import { clearAccount, getAccount } from "@/lib/account";
-
-import { employeDisplayLabel } from "@/lib/employee-access";
-
+import {
+  employeDisplayLabel,
+  fetchEmployeeSession,
+  logoutEmploye,
+} from "@/lib/employee-access";
 import { useStore } from "@/lib/store";
-
 import { formatDateFR } from "@/lib/utils";
 
-
-
 export function EmployeeShell({ children }: { children: React.ReactNode }) {
-
   const router = useRouter();
-
-  const { data } = useStore();
-
+  const { data, setData } = useStore();
   const account = getAccount();
-
   const employe = data.employes.find((item) => item.id === account?.employeId);
-
   const displayName =
-
     employe ? employeDisplayLabel(employe) : account?.utilisateur ?? "Employé";
-
   const today = formatDateFR(new Date().toISOString().slice(0, 10));
 
+  // Recharge planning/chantiers depuis Supabase (pas le localStorage dirigeant).
+  useEffect(() => {
+    let cancelled = false;
 
+    async function refreshFromServer() {
+      const session = await fetchEmployeeSession();
+      if (cancelled || !session.ok || !session.bootstrap) return;
+      const b = session.bootstrap;
+      setData((prev) => ({
+        ...prev,
+        employes: b.employes.length > 0 ? b.employes : prev.employes,
+        planning: Array.isArray(b.planning) ? b.planning : prev.planning,
+        chantiers: Array.isArray(b.chantiers) ? b.chantiers : prev.chantiers,
+        affectations: Array.isArray(b.affectations)
+          ? b.affectations
+          : prev.affectations,
+        clients: Array.isArray(b.clients) ? b.clients : prev.clients,
+      }));
+    }
 
-  function logout() {
+    void refreshFromServer();
+    const timer = window.setInterval(() => {
+      void refreshFromServer();
+    }, 20000);
 
+    function onVisible() {
+      if (document.visibilityState === "visible") {
+        void refreshFromServer();
+      }
+    }
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [setData]);
+
+  async function logout() {
+    await logoutEmploye();
     clearAccount();
-
     router.replace("/login-employe");
-
   }
 
 
@@ -168,7 +187,7 @@ export function EmployeeShell({ children }: { children: React.ReactNode }) {
 
 
 
-      <main className="min-h-0 flex-1 overflow-y-auto bg-background">
+      <main className="btp-app-main min-h-0 flex-1 overflow-y-auto bg-background">
 
         <div className="btp-page-container mx-auto box-border w-full max-w-3xl animate-[fadeIn_0.35s_ease-out]">
 

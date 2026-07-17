@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { buildAuthenticatedFetchInit } from "@/lib/authenticated-api-fetch";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ParametresSection } from "@/components/parametres-section";
 import { Button } from "@/components/ui/button";
@@ -8,12 +9,20 @@ import {
   EMAIL_EXPIRED_MESSAGE,
   EMAIL_STATUS_FETCH_ERROR_MESSAGE,
   GMAIL_CONFIG_INCOMPLETE_MESSAGE,
+  buildConnexionEmailConnected,
+  buildConnexionEmailDisconnected,
+  connexionEmailToDisplayStatus,
   fetchEmailConnectionStatus,
   getConnexionEmailStatutLabel,
+  isConnexionEmailConnected,
   toFriendlyFlashOAuthMessage,
 } from "@/lib/email-provider";
 import type { EmailConnectionStatus } from "@/lib/email-provider/types";
-import type { ConnexionEmailStatut } from "@/lib/types";
+import type {
+  ConnexionEmailStatut,
+  EmailOAuthProvider,
+  ParametresConnexionEmail,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Loader2, LogOut, Mail } from "lucide-react";
 
@@ -35,140 +44,251 @@ function statusToStatut(status: EmailConnectionStatus | null): ConnexionEmailSta
   return "non_connecte";
 }
 
-function logEmailStatusClient(status: EmailConnectionStatus): void {
-  console.log("[email-status] connected:", status.connected);
-  console.log("[email-status] email:", status.email ?? null);
+function providerFromParam(value: string | null): EmailOAuthProvider | null {
+  if (value === "google") return "google";
+  if (value === "microsoft") return "microsoft";
+  return null;
 }
 
-export function ParametresConnexionEmailSection() {
+type Props = {
+  connexionEmail?: ParametresConnexionEmail;
+  modified?: boolean;
+  onConnexionEmailChange: (connexionEmail: ParametresConnexionEmail) => void;
+};
+
+export function ParametresConnexionEmailSection({
+  connexionEmail,
+  modified = false,
+  onConnexionEmailChange,
+}: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
-  const [flashMessage, setFlashMessage] = useState<string | null>(null);
-  const [status, setStatus] = useState<EmailConnectionStatus | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [remoteStatus, setRemoteStatus] = useState<EmailConnectionStatus | null>(
+    null,
+  );
 
-  const refreshStatus = useCallback(async () => {
-    setLoading(true);
+  const savedDisplayStatus = useMemo(
+    () => connexionEmailToDisplayStatus(connexionEmail),
+    [connexionEmail],
+  );
+  const isConnected = isConnexionEmailConnected(connexionEmail);
+  const isExpired = connexionEmail?.statut === "expire";
+
+  const connexionEmailRef = useRef(connexionEmail);
+  connexionEmailRef.current = connexionEmail;
+
+  const refreshRemoteStatus = useCallback(async () => {
+    setVerifying(true);
     const next = await fetchEmailConnectionStatus();
-    logEmailStatusClient(next);
-    setStatus(next);
-    setLoading(false);
+    setRemoteStatus(next);
+    setVerifying(false);
     return next;
   }, []);
 
   useEffect(() => {
-    void refreshStatus();
-  }, [refreshStatus]);
+    const oauth = searchParams.get("email_oauth");
+    if (oauth) return;
+
+    void (async () => {
+      if (isConnexionEmailConnected(connexionEmailRef.current)) {
+        await refreshRemoteStatus();
+        return;
+      }
+
+      const next = await refreshRemoteStatus();
+      if (next.connected && next.email) {
+        onConnexionEmailChange(
+          buildConnexionEmailConnected({
+            email: next.email,
+            provider: next.provider ?? null,
+            expiresAt: next.expiresAt,
+          }),
+        );
+      }
+    })();
+  }, [onConnexionEmailChange, refreshRemoteStatus, searchParams]);
 
   useEffect(() => {
     const oauth = searchParams.get("email_oauth");
     if (!oauth) return;
 
     const message = searchParams.get("message");
+    const emailParam = searchParams.get("email");
+    const providerParam = searchParams.get("provider");
+    const decodedEmail = emailParam ? decodeURIComponent(emailParam) : null;
 
     async function handleOAuthRedirect() {
+      setErrorMessage(null);
+      setSuccessMessage(null);
+
       if (oauth === "success") {
-        router.refresh();
-        const next = await refreshStatus();
-        const email = next.email ?? searchParams.get("email");
-        setFlashMessage(
-          email
-            ? `Compte ${email} connecté avec succès.`
-            : "Connexion email réussie.",
-        );
-      } else if (oauth === "error") {
-        setFlashMessage(
+        if (decodedEmail) {
+          onConnexionEmailChange(
+            buildConnexionEmailConnected({
+              email: decodedEmail,
+              provider: providerFromParam(providerParam),
+            }),
+          );
+          setSuccessMessage(`Compte ${decodedEmail} connecté avec succès.`);
+        }
+
+        router.replace("/parametres?section=connexion-email", { scroll: false });
+
+        const next = await refreshRemoteStatus();
+        if (next.connected && next.email) {
+          onConnexionEmailChange(
+            buildConnexionEmailConnected({
+              email: next.email,
+              provider: next.provider ?? null,
+              expiresAt: next.expiresAt,
+            }),
+          );
+          setSuccessMessage(`Compte ${next.email} connecté avec succès.`);
+        }
+        return;
+      }
+
+      if (oauth === "error") {
+        setErrorMessage(
           message
             ? toFriendlyFlashOAuthMessage(decodeURIComponent(message))
             : "La connexion email a échoué.",
         );
+        router.replace("/parametres?section=connexion-email", { scroll: false });
+        await refreshRemoteStatus();
       }
-
-      const url = new URL(window.location.href);
-      url.searchParams.delete("email_oauth");
-      url.searchParams.delete("provider");
-      url.searchParams.delete("email");
-      url.searchParams.delete("message");
-      window.history.replaceState({}, "", url.pathname + url.search);
     }
 
     void handleOAuthRedirect();
-  }, [searchParams, refreshStatus, router]);
+  }, [
+    onConnexionEmailChange,
+    refreshRemoteStatus,
+    router,
+    searchParams,
+  ]);
 
   async function handleDisconnect() {
     setDisconnecting(true);
-    setFlashMessage(null);
+    setSuccessMessage(null);
+    setErrorMessage(null);
 
     try {
-      await fetch("/api/email/disconnect", { method: "POST" });
-      await refreshStatus();
-      setFlashMessage("Adresse email déconnectée.");
+      await fetch(
+        "/api/email/disconnect",
+        await buildAuthenticatedFetchInit({ method: "POST" }),
+      );
+      onConnexionEmailChange(buildConnexionEmailDisconnected());
+      await refreshRemoteStatus();
+      setSuccessMessage("Adresse email déconnectée.");
     } finally {
       setDisconnecting(false);
     }
   }
 
-  const statut = statusToStatut(status);
-  const isConnected = statut === "connecte";
-  const isExpired = statut === "expire";
-  const statusError = Boolean(status?.statusError);
-  const configError = Boolean(status?.configError);
-  const configErrorMessage = status?.message ?? null;
+  const displayStatus = savedDisplayStatus ?? remoteStatus;
+  const statut = isConnected
+    ? "connecte"
+    : isExpired
+      ? "expire"
+      : statusToStatut(displayStatus);
+
+  const configError =
+    !isConnected && !verifying && Boolean(remoteStatus?.configError);
+  const configErrorMessage = remoteStatus?.message ?? null;
+  const statusFetchError =
+    !isConnected &&
+    !verifying &&
+    Boolean(remoteStatus?.statusError) &&
+    !successMessage;
+
+  const badgeLabel = isConnected
+    ? "Connecté"
+    : verifying
+      ? "Vérification…"
+      : getConnexionEmailStatutLabel(statut);
+
+  const connectedEmail = connexionEmail?.connectedEmail;
 
   return (
     <ParametresSection
       id="connexion-email"
       title="Connexion email"
       description="Envoyez devis et factures depuis votre propre adresse professionnelle (Gmail ou Microsoft 365)"
+      modified={modified}
     >
       <div className="space-y-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <span
-            className={cn(
-              "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold",
-              statutBadgeClass(statut),
-            )}
-          >
-            <Mail className="h-3.5 w-3.5" />
-            {loading ? "Vérification…" : getConnexionEmailStatutLabel(statut)}
-          </span>
-          {status?.email ? (
-            <span className="text-sm text-muted-foreground">
-              Connecté :{" "}
-              <span className="font-medium text-foreground">{status.email}</span>
-              {status.provider === "google"
-                ? " · Gmail"
-                : status.provider === "microsoft"
-                  ? " · Microsoft 365"
-                  : null}
-            </span>
-          ) : null}
-        </div>
-
-        {configError ? (
-          <p className="rounded-lg border btp-alert-error px-3 py-2 text-sm">
-            {configErrorMessage ?? GMAIL_CONFIG_INCOMPLETE_MESSAGE}
+        {verifying && !isConnected ? (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Vérification de la connexion email...
           </p>
-        ) : null}
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-3">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold",
+                  statutBadgeClass(isConnected ? "connecte" : statut),
+                )}
+              >
+                <Mail className="h-3.5 w-3.5" />
+                {badgeLabel}
+              </span>
+              {isConnected && connectedEmail && !successMessage ? (
+                <span className="text-sm text-muted-foreground">
+                  Connecté :{" "}
+                  <span className="font-medium text-foreground">{connectedEmail}</span>
+                  {connexionEmail?.provider === "google"
+                    ? " · Gmail"
+                    : connexionEmail?.provider === "microsoft"
+                      ? " · Microsoft 365"
+                      : null}
+                </span>
+              ) : null}
+            </div>
 
-        {statusError ? (
-          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-            {EMAIL_STATUS_FETCH_ERROR_MESSAGE}
-          </p>
-        ) : null}
+            {isConnected && successMessage ? (
+              <p className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-primary">
+                {successMessage}
+              </p>
+            ) : null}
 
-        {isExpired ? (
-          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-            {EMAIL_EXPIRED_MESSAGE}
-          </p>
-        ) : null}
+            {isConnected && modified ? (
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                Modifications non enregistrées — cliquez sur « Enregistrer les
+                paramètres » pour conserver la connexion.
+              </p>
+            ) : null}
 
-        {flashMessage ? (
-          <p className="rounded-lg border border-border/80 bg-card-elevated/60 px-3 py-2 text-sm text-foreground">
-            {flashMessage}
-          </p>
-        ) : null}
+            {configError ? (
+              <p className="rounded-lg border btp-alert-error px-3 py-2 text-sm">
+                {configErrorMessage ?? GMAIL_CONFIG_INCOMPLETE_MESSAGE}
+              </p>
+            ) : null}
+
+            {statusFetchError ? (
+              <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                {EMAIL_STATUS_FETCH_ERROR_MESSAGE}
+              </p>
+            ) : null}
+
+            {errorMessage ? (
+              <p className="rounded-lg border btp-alert-error px-3 py-2 text-sm">
+                {errorMessage}
+              </p>
+            ) : null}
+
+            {isExpired ? (
+              <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                {EMAIL_EXPIRED_MESSAGE}
+              </p>
+            ) : null}
+          </>
+        )}
 
         <p className="text-sm text-muted-foreground">
           Connexion sécurisée par OAuth — aucun mot de passe n&apos;est demandé ni
@@ -180,7 +300,7 @@ export function ParametresConnexionEmailSection() {
           <Button
             type="button"
             variant="secondary"
-            disabled={loading || isConnected}
+            disabled={verifying || isConnected}
             onClick={() => {
               window.location.href = "/api/email/oauth/google";
             }}
@@ -190,7 +310,7 @@ export function ParametresConnexionEmailSection() {
           <Button
             type="button"
             variant="secondary"
-            disabled={loading || isConnected}
+            disabled={verifying || isConnected}
             onClick={() => {
               window.location.href = "/api/email/oauth/microsoft";
             }}

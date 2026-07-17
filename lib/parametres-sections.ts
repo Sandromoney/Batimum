@@ -15,8 +15,7 @@ export type ParametresSectionId =
   | "signatures"
   | "relances-devis"
   | "relances-clients"
-  | "mum-ia"
-  | "apparence";
+  | "mum-ia";
 
 export type ParametresSectionMeta = {
   id: ParametresSectionId;
@@ -41,8 +40,7 @@ export const PARAMETRES_SECTIONS: ParametresSectionMeta[] = [
   { id: "signatures", label: "Signatures" },
   { id: "relances-devis", label: "Relances devis" },
   { id: "relances-clients", label: "Relances factures" },
-  { id: "mum-ia", label: "MUM IA" },
-  { id: "apparence", label: "Apparence" },
+  { id: "mum-ia", label: "Assistant Batimum" },
 ];
 
 const SECTION_FIELD_KEYS: Partial<
@@ -61,6 +59,8 @@ const SECTION_FIELD_KEYS: Partial<
     "adresse",
     "codePostal",
     "ville",
+    "departement",
+    "region",
     "pays",
     "email",
     "emailFacturation",
@@ -114,7 +114,7 @@ const SECTION_FIELD_KEYS: Partial<
     "relanceJ15",
     "relanceJ30",
   ],
-  apparence: ["theme"],
+  "connexion-email": ["connexionEmail"],
 };
 
 export type ParametresBaseline = {
@@ -148,6 +148,9 @@ function stableEmployesSignature(employes: Employe[]): string {
         photo: employe.photo,
         identifiant: employe.identifiant,
         couleurPlanning: employe.couleurPlanning,
+        coutHoraireInterne: employe.coutHoraireInterne,
+        specialitePrincipale: employe.specialitePrincipale,
+        typesChantiersMaitrises: employe.typesChantiersMaitrises,
       }))
       .sort((a, b) => a.id.localeCompare(b.id)),
   );
@@ -187,15 +190,16 @@ export function isParametresSectionDirty(
     baselineEmployes: Employe[];
   },
 ): boolean {
-  if (
-    sectionId === "connexion-email" ||
-    sectionId === "mum-ia"
-  ) {
+  if (sectionId === "mum-ia") {
     return false;
   }
 
   if (sectionId === "employes") {
-    return stableEmployesSignature(employes) !== stableEmployesSignature(baselineEmployes);
+    const employesDirty =
+      stableEmployesSignature(employes) !== stableEmployesSignature(baselineEmployes);
+    const tauxDirty =
+      form.tauxHoraireInterneDefaut !== baseline.parametres.tauxHoraireInterneDefaut;
+    return employesDirty || tauxDirty;
   }
 
   if (sectionId === "documents") {

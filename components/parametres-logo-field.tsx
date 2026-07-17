@@ -1,8 +1,9 @@
 "use client";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { ImagePlus, Trash2 } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 export function ParametresLogoField({
   label,
@@ -13,9 +14,10 @@ export function ParametresLogoField({
   label: string;
   hint: string;
   value?: string;
-  onChange: (imageData: string) => void;
+  onChange: (imageData: string | undefined) => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -38,18 +40,33 @@ export function ParametresLogoField({
     reader.readAsDataURL(file);
   }
 
+  const isApplicationLogo = /application/i.test(label);
+  const previewBoxClass = isApplicationLogo
+    ? "rounded-full"
+    : "rounded-2xl";
+  const previewImageClass = isApplicationLogo
+    ? "h-full w-full rounded-full object-cover object-center"
+    : "h-full w-full object-contain object-center";
+
+  function confirmDelete() {
+    setConfirmDeleteOpen(false);
+    onChange(undefined);
+  }
+
   return (
     <section>
       <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </p>
       <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card-elevated/60 p-4 sm:flex-row sm:items-center">
-        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-card transition-opacity duration-200">
+        <div
+          className={`flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden border border-border bg-card transition-opacity duration-200 ${previewBoxClass}`}
+        >
           {value ? (
             <img
               src={value}
               alt={label}
-              className="h-full w-full object-contain p-2"
+              className={previewImageClass}
             />
           ) : (
             <ImagePlus className="h-8 w-8 text-muted-foreground" />
@@ -77,7 +94,7 @@ export function ParametresLogoField({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => onChange("")}
+              onClick={() => setConfirmDeleteOpen(true)}
               disabled={!value}
             >
               <Trash2 className="h-4 w-4" />
@@ -86,6 +103,17 @@ export function ParametresLogoField({
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Supprimer l'image"
+        message="Êtes-vous sûr de vouloir supprimer cette image ?"
+        cancelLabel="Annuler"
+        confirmLabel="Supprimer"
+        variant="danger"
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={confirmDelete}
+      />
     </section>
   );
 }

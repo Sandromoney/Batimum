@@ -1,29 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
-import { resetPasswordWithCode } from "@/lib/auth-credentials";
+import { createClient } from "@/utils/supabase/client";
 
 function ResetPasswordForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const preset = searchParams.get("email");
-    if (preset) setEmail(preset);
-  }, [searchParams]);
+    let cancelled = false;
+    async function ensureRecoverySession() {
+      const supabase = createClient();
+      if (!supabase) {
+        setError("Configuration Supabase manquante.");
+        return;
+      }
+      const { data } = await supabase.auth.getSession();
+      if (!cancelled) {
+        if (!data.session) {
+          setError(
+            "Lien de récupération invalide ou expiré. Demandez un nouveau lien.",
+          );
+          setReady(false);
+        } else {
+          setReady(true);
+        }
+      }
+    }
+    void ensureRecoverySession();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,16 +58,24 @@ function ResetPasswordForm() {
       return;
     }
 
-    setLoading(true);
-    const result = await resetPasswordWithCode(email, code, password);
-    setLoading(false);
-
-    if (!result.ok) {
-      setError(result.message);
+    const supabase = createClient();
+    if (!supabase) {
+      setError("Configuration Supabase manquante.");
       return;
     }
 
-    setMessage(result.message);
+    setLoading(true);
+    const { error: updateError } = await supabase.auth.updateUser({
+      password,
+    });
+    setLoading(false);
+
+    if (updateError) {
+      setError(updateError.message || "Impossible de mettre à jour le mot de passe.");
+      return;
+    }
+
+    setMessage("Mot de passe mis à jour. Vous pouvez vous reconnecter.");
     window.setTimeout(() => router.replace("/login"), 1200);
   }
 
@@ -57,76 +84,76 @@ function ResetPasswordForm() {
       <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-10">
         <Card className="w-full max-w-md">
           <Link href="/" className="mb-8 flex items-center gap-3">
-            <BrandLogo imageClassName="h-auto w-[180px] max-w-[180px] object-contain" />
+            <BrandLogo variant="marketing" showSubtitle={false} />
           </Link>
 
           <header className="mb-8">
             <h1 className="text-3xl font-semibold tracking-tight">
-              Réinitialiser le mot de passe
+              Nouveau mot de passe
             </h1>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Saisissez le code reçu et votre nouveau mot de passe.
+              Choisissez un nouveau mot de passe pour votre compte Batimum
+              (Supabase Auth).
             </p>
           </header>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <section>
-              <Label>Email</Label>
-              <Input
-                type="email"
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="vous@entreprise.fr"
-              />
-            </section>
-            <section>
-              <Label>Code</Label>
-              <Input
-                required
-                value={code}
-                onChange={(event) => setCode(event.target.value)}
-                placeholder="123456"
-                inputMode="numeric"
-                maxLength={6}
-              />
-            </section>
-            <section>
-              <Label>Nouveau mot de passe</Label>
-              <Input
-                type="password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••"
-              />
-            </section>
-            <section>
-              <Label>Confirmer le mot de passe</Label>
-              <Input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                placeholder="••••••••"
-              />
-            </section>
-
-            {error && (
-              <p className="rounded-xl border btp-alert-error px-3 py-2 text-sm">
+          {!ready && error ? (
+            <div className="space-y-4">
+              <p className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
                 {error}
               </p>
-            )}
-            {message && (
-              <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-                {message}
-              </p>
-            )}
+              <Link
+                href="/mot-de-passe-oublie"
+                className="inline-flex w-full items-center justify-center rounded-2xl border border-border/80 bg-card px-5 py-3 text-sm font-medium"
+              >
+                Demander un nouveau lien
+              </Link>
+            </div>
+          ) : (
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              <section>
+                <Label>Nouveau mot de passe</Label>
+                <Input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="••••••••"
+                />
+              </section>
+              <section>
+                <Label>Confirmation</Label>
+                <Input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="••••••••"
+                />
+              </section>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Mise à jour…" : "Mettre à jour le mot de passe"}
-            </Button>
-          </form>
+              {error && (
+                <p className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </p>
+              )}
+              {message && (
+                <p className="rounded-xl border border-border bg-card-elevated/50 px-3 py-2 text-sm text-muted-foreground">
+                  {message}
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || !ready}
+              >
+                {loading ? "Enregistrement…" : "Enregistrer"}
+              </Button>
+            </form>
+          )}
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             <Link

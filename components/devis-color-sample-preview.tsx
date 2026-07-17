@@ -1,6 +1,7 @@
 "use client";
 
 import { getLogoPdf } from "@/lib/parametres";
+import { getLogoPdfFitMode, logoFitClassName } from "@/lib/logo-display";
 import type { Parametres } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
@@ -56,6 +57,7 @@ export function DevisColorSamplePreview({
         ? parametres.signaturePdf
         : null;
   const logo = getLogoPdf(parametres);
+  const logoFitClass = logoFitClassName(getLogoPdfFitMode(parametres));
   const entreprise = parametres.entreprise?.trim() || "Votre entreprise";
   const adresse = [
     parametres.adresse,
@@ -79,12 +81,14 @@ export function DevisColorSamplePreview({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex min-w-0 items-start gap-3">
             {logo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={logo}
-                alt=""
-                className="h-12 w-12 shrink-0 rounded-lg border border-gray-200 object-contain p-1"
-              />
+              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-gray-200">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logo}
+                  alt=""
+                  className={`h-full w-full ${logoFitClass}`}
+                />
+              </div>
             ) : (
               <div
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-base font-bold text-white"

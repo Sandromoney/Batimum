@@ -44,7 +44,28 @@ function isBefore(dateA?: string, dateB?: string) {
 
 export function validateEmail(email?: string) {
   if (isEmpty(email)) return true;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
+  const value = String(email).trim();
+  // RFC 5322 simplifié : local@domaine.tld (pas seulement "@")
+  return /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(
+    value,
+  );
+}
+
+export function validatePostalCode(codePostal?: string) {
+  if (isEmpty(codePostal)) return false;
+  return /^\d{5}$/.test(String(codePostal).trim());
+}
+
+export function validateSiret(siret?: string) {
+  if (isEmpty(siret)) return true;
+  return /^\d{14}$/.test(String(siret).replace(/\s/g, ""));
+}
+
+/** Format FR TVA : FR + 2 caractères (chiffres ou lettres) + 9 chiffres SIREN */
+export function validateFrenchTva(tva?: string) {
+  if (isEmpty(tva)) return true;
+  const normalized = String(tva).replace(/\s/g, "").toUpperCase();
+  return /^FR[A-Z0-9]{2}\d{9}$/.test(normalized);
 }
 
 export function validatePhone(phone?: string, indicatif = "+33") {

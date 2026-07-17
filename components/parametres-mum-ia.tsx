@@ -5,17 +5,13 @@ import { ParametresSection } from "@/components/parametres-section";
 import { ParametresToggle } from "@/components/parametres-toggle";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { Input, Label, Select } from "@/components/ui/input";
+import { Label, Select } from "@/components/ui/input";
 import {
   exportBibliothequeEntrepriseJson,
   importBibliothequeEntrepriseJson,
   normalizeBibliothequeEntreprise,
   resetBibliothequeEntreprise,
 } from "@/lib/bibliotheque-entreprise";
-import {
-  getRegionalCoefficient,
-  REGIONAL_COEFFICIENT_LEGEND,
-} from "@/lib/batimum-coefficients-regionaux";
 import { FRANCE_REGIONS } from "@/lib/france-regions";
 import { useStore } from "@/lib/store";
 import { ArrowLeft, Download, Library, Upload } from "lucide-react";
@@ -46,18 +42,6 @@ export function ParametresMumIaPage() {
       ),
     [],
   );
-
-  const selectedDept = allDepartements.find(
-    (dept) => dept.code === bibliotheque.departementPrincipal,
-  );
-
-  const coefAuto = useMemo(() => {
-    if (!selectedDept) return null;
-    return getRegionalCoefficient({
-      regionCode: selectedDept.regionCode,
-      departementCode: selectedDept.code,
-    });
-  }, [selectedDept]);
 
   function patchBibliotheque(
     patch: Partial<ReturnType<typeof normalizeBibliothequeEntreprise>>,
@@ -105,7 +89,7 @@ export function ParametresMumIaPage() {
   return (
     <div className="btp-app-page mx-auto w-full max-w-3xl space-y-6">
       <PageHeader
-        title="MUM IA"
+        title="Assistant Batimum"
         description="Paramètres de la bibliothèque de prix et de l'apprentissage automatique."
         action={
           <Link
@@ -145,7 +129,7 @@ export function ParametresMumIaPage() {
 
       <ParametresSection
         title="Apprentissage automatique"
-        description="MUM IA enrichit discrètement la bibliothèque entreprise à partir de vos vrais devis."
+        description="L'Assistant Batimum enrichit discrètement la bibliothèque entreprise à partir de vos vrais devis."
       >
         <ParametresToggle
           label="Activer l'apprentissage automatique des prix"
@@ -179,7 +163,7 @@ export function ParametresMumIaPage() {
 
       <ParametresSection
         title="Zone géographique"
-        description="Département principal et coefficient régional pour les prix Batimum."
+        description="Département principal de l'entreprise."
       >
         <section>
           <Label>Département principal de l&apos;entreprise</Label>
@@ -201,38 +185,6 @@ export function ParametresMumIaPage() {
               </option>
             ))}
           </Select>
-        </section>
-
-        <section>
-          <Label>Coefficient régional manuel (optionnel)</Label>
-          <Input
-            type="number"
-            min={0.5}
-            max={2}
-            step="0.01"
-            placeholder={
-              coefAuto != null ? `Auto : ×${coefAuto}` : "Laisser vide pour automatique"
-            }
-            value={
-              bibliotheque.coefficientRegionalManuel != null
-                ? String(bibliotheque.coefficientRegionalManuel)
-                : ""
-            }
-            onChange={(event) => {
-              const raw = event.target.value.trim();
-              if (!raw) {
-                patchBibliotheque({ coefficientRegionalManuel: undefined });
-                return;
-              }
-              const value = Number(raw);
-              if (!Number.isNaN(value) && value > 0) {
-                patchBibliotheque({ coefficientRegionalManuel: value });
-              }
-            }}
-          />
-          <p className="mt-2 text-xs text-muted-foreground whitespace-pre-line">
-            {REGIONAL_COEFFICIENT_LEGEND}
-          </p>
         </section>
       </ParametresSection>
 

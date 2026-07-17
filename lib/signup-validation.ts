@@ -1,6 +1,11 @@
 import { validateEmail } from "@/lib/validations";
 
-export type SignupField = "email" | "password" | "confirmPassword";
+export type SignupField =
+  | "prenom"
+  | "nom"
+  | "email"
+  | "password"
+  | "confirmPassword";
 
 export type SignupFieldErrors = Partial<Record<SignupField, string>>;
 
@@ -9,6 +14,8 @@ export const SIGNUP_STRIPE_ERROR_MESSAGE =
 
 export function validateSignupFields(
   values: {
+    prenom: string;
+    nom: string;
     email: string;
     password: string;
     confirmPassword: string;
@@ -22,6 +29,12 @@ export function validateSignupFields(
   const show = (field: SignupField) =>
     Boolean(options?.showAll || options?.touched?.[field]);
 
+  if (show("prenom") && !values.prenom.trim()) {
+    errors.prenom = "Ce champ est obligatoire";
+  }
+  if (show("nom") && !values.nom.trim()) {
+    errors.nom = "Ce champ est obligatoire";
+  }
   if (show("email")) {
     if (!values.email.trim()) errors.email = "Ce champ est obligatoire";
     else if (!validateEmail(values.email)) errors.email = "Email invalide";

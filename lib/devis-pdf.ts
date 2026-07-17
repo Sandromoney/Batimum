@@ -30,6 +30,10 @@ import { getClientFacingDevis } from "@/lib/mum-ia-mode";
 import { resolveDevisBrandColor } from "@/lib/devis-brand-colors";
 import type { Client, Devis, Parametres } from "@/lib/types";
 import { loadSignedDevisPdf } from "@/lib/store";
+import {
+  addFittedImageToPdf,
+  getLogoPdfFitMode,
+} from "@/lib/logo-display";
 import { formatDate, formatDateTimeFR } from "@/lib/utils";
 import type { jsPDF } from "jspdf";
 
@@ -116,24 +120,18 @@ export async function buildDevisPdfDoc({
   const pdfLignes = getPdfLignes(devis);
 
   if (logoEntreprise) {
-    try {
-      const imageProperties = doc.getImageProperties(logoEntreprise);
-      const boxSize = 14;
-      const ratio = Math.min(
-        boxSize / imageProperties.width,
-        boxSize / imageProperties.height,
-      );
-      const logoWidth = imageProperties.width * ratio;
-      const logoHeight = imageProperties.height * ratio;
-      doc.addImage(
-        logoEntreprise,
-        imageProperties.fileType,
-        margin + (boxSize - logoWidth) / 2,
-        y - 5 + (boxSize - logoHeight) / 2,
-        logoWidth,
-        logoHeight,
-      );
-    } catch {
+    const logoBoxSize = 14;
+    const logoBoxY = y - 5;
+    const fitted = addFittedImageToPdf(
+      doc,
+      logoEntreprise,
+      margin,
+      logoBoxY,
+      logoBoxSize,
+      logoBoxSize,
+      getLogoPdfFitMode(parametres),
+    );
+    if (!fitted) {
       doc.setFillColor(...brandColor.rgb);
       doc.roundedRect(margin, y - 4, 12, 12, 3, 3, "F");
       y = addText("B", margin + 4.2, y + 3.7, {

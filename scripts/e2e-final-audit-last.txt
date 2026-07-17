@@ -1,0 +1,33 @@
+﻿node : (node:5880) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections 
+and HTTPS requests insecure by disabling certificate verification.
+Au caractère C:\Users\kyy\AppData\Local\Temp\ps-script-24cbd334-c556-4733-a8c9-ce03cf88a730.ps1:109 : 40
++ ... EJECT_UNAUTHORIZED='0'; node scripts/e2e-final-audit.mjs 2>&1 | Out-F ...
++                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:5880) War...e verification.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+Ô£à Auth dirigeant A ÔÇö 056bcb10-865d-41a3-87d6-07406a0d9259
+Ô£à Parcours1 PUT workspace A ÔÇö HTTP 200 540ms 
+Ô£à Parcours1 liaisons client/devis/facture/chantier/planning ÔÇö devis=1 fac=1 cha=1 plan=2
+Ô£à Parcours2 cr├®ation credentials employ├® ÔÇö HTTP 200 ok
+Ô£à Parcours2 login employ├® + bootstrap planning/chantier ÔÇö HTTP 200 plan=true cha=true plans=2 chas=1
+Ô£à Parcours2 sync planning apr├¿s modif dirigeant ÔÇö HTTP 200 newSlot=true
+Ô£à Auth dirigeant B ÔÇö eac9e6c8-be0d-4d3f-8bf7-2f3344200a69
+Ô£à Parcours3 isolation AÔëáB ÔÇö putB=200 leakAÔåÆB=false leakBÔåÆA=false
+Ô£à Nav /dashboard ÔÇö HTTP 200 232ms
+Ô£à Nav /clients ÔÇö HTTP 200 129ms
+Ô£à Nav /devis ÔÇö HTTP 200 151ms
+Ô£à Nav /factures ÔÇö HTTP 200 136ms
+Ô£à Nav /chantiers ÔÇö HTTP 200 124ms
+Ô£à Nav /planning ÔÇö HTTP 200 134ms
+Ô£à Nav /pilotage ÔÇö HTTP 200 141ms
+Ô£à Nav /parametres ÔÇö HTTP 200 145ms
+Ô£à Nav /ia ÔÇö HTTP 200 136ms
+Ô£à Nav /login ÔÇö HTTP 200 156ms
+Ô£à Nav /login-employe ÔÇö HTTP 200 110ms
+Ô£à Parcours4 updateUser password ÔÇö change+restore OK, ancien refus├®
+
+=== SUMMARY ===
+pass=20 warn=0 fail=0
+API_CLOUD_READY=YES

@@ -16,13 +16,14 @@ const YEARLY_TOTAL = 348;
 const YEARLY_SAVINGS = 120;
 
 const PREMIUM_FEATURES = [
-  "100 devis MUM IA inclus chaque mois",
-  "Clients, devis et chantiers illimités",
+  "IA devis intégrée (MUM IA)",
+  "Pilotage rentabilité",
+  "Gestion employés",
+  "Signature électronique",
+  "Relances automatiques",
   "Devis → facture automatiquement",
-  "Espace employé distinct",
-  "Signature électronique intégrée",
+  "Clients, devis et chantiers illimités",
   "Support français",
-  "Toutes les futures mises à jour incluses",
 ] as const;
 
 type BillingCycle = "monthly" | "yearly";
@@ -201,20 +202,20 @@ export function LandingPricingSection() {
       : getPublicSignupHref();
 
   return (
-    <section id="plans" className="mx-auto w-full max-w-7xl px-6 py-16 sm:px-8 lg:px-10">
+    <section id="plans" className="bg-[#050505] text-white">
+      <div className="mx-auto w-full max-w-7xl px-6 py-20 sm:px-8 lg:px-10">
       <LandingReveal variant="title">
         <header className="mx-auto mb-10 max-w-3xl text-center">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
             Tarifs
           </p>
-          <h2 className="text-3xl font-semibold tracking-tight">
+          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             Une seule offre.
             <br />
             Tout ce qu&apos;il faut pour gérer une TPE du bâtiment.
           </h2>
-          <p className="mt-4 text-sm leading-7 text-muted-foreground sm:text-base">
-            Pas de formule compliquée. Pas d&apos;option cachée. Un seul abonnement
-            pour vos devis, factures, chantiers, équipes et MUM IA.
+          <p className="mt-4 text-sm leading-7 text-[#9CA3AF] sm:text-base">
+            7 jours d&apos;essai · sans engagement · support français
           </p>
         </header>
       </LandingReveal>
@@ -316,6 +317,7 @@ export function LandingPricingSection() {
           </Card>
         </div>
       </LandingReveal>
+      </div>
     </section>
   );
 }

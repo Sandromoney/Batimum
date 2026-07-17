@@ -19,6 +19,7 @@ import { generateNextNumeroDevis } from "@/lib/parametres";
 import type { BibliothequeEntrepriseEntry, Client, Devis, LigneDevis, Parametres, TypeChantier } from "@/lib/types";
 import { generateId } from "@/lib/utils";
 import { TYPE_CHANTIER_LABELS } from "@/lib/chantiers";
+import { normalizeMumDevisResponse, type NormalizeMumDevisOutcome } from "@/lib/mum-ia-normalize-devis";
 import { getClientAddress, isClientAddressComplete } from "@/lib/clients";
 
 export const AI_PRIX_AVERTISSEMENT =
@@ -92,6 +93,12 @@ export type AiDevisGenerateRequest = {
   hypothesesFromAnalysis?: string[];
   lotsIdentifies?: string[];
   bibliothequeEntries?: BibliothequeEntrepriseEntry[];
+  entreprisePriceLibrary?: import("@/lib/types").EntreprisePriceLibrary;
+  parametresSnapshot?: Pick<
+    Parametres,
+    "fournisseurs" | "tarifsFournisseurs" | "entreprisePriceLibrary"
+  >;
+  companyId?: string;
   coefficientRegionalManuel?: number | null;
   departementPrincipal?: string;
   ratioEntries?: BibliothequeRatioEntry[];
@@ -101,90 +108,46 @@ const LIGNE_SCHEMA = {
   type: "object",
   properties: {
     designation: { type: "string" },
-    description: { type: "string" },
-    quantite: { type: "number" },
-    unite: { type: "string" },
-    prixUnitaireHT: { type: "number" },
-    tauxTVA: { type: "number" },
-    prixAVerifier: { type: "boolean" },
+    quantity: { type: "number" },
+    unit: { type: "string" },
+    unitPriceHT: { type: "number" },
+    totalHT: { type: "number" },
+    vatRate: { type: "number" },
   },
   required: [
     "designation",
-    "description",
-    "quantite",
-    "unite",
-    "prixUnitaireHT",
-    "tauxTVA",
-    "prixAVerifier",
+    "quantity",
+    "unit",
+    "unitPriceHT",
+    "totalHT",
+    "vatRate",
   ],
   additionalProperties: false,
 } as const;
 
+/** Schéma OpenAI — devis chiffré (sections + lines), pas une analyse. */
 export const AI_DEVIS_JSON_SCHEMA = {
   type: "object",
   properties: {
-    titre: { type: "string" },
-    descriptionGenerale: { type: "string" },
-    hypotheses: {
-      type: "array",
-      items: { type: "string" },
-    },
+    title: { type: "string" },
+    summary: { type: "string" },
     sections: {
       type: "array",
       items: {
         type: "object",
         properties: {
-          titre: { type: "string" },
-          lignes: {
+          name: { type: "string" },
+          lines: {
             type: "array",
             items: LIGNE_SCHEMA,
           },
-          sousTotalHT: { type: "number" },
         },
-        required: ["titre", "lignes", "sousTotalHT"],
+        required: ["name", "lines"],
         additionalProperties: false,
       },
     },
-    totalHT: { type: "number" },
-    pointsAVerifier: {
-      type: "array",
-      items: { type: "string" },
-    },
-    avertissementPrix: { type: "string" },
-    autoVerification: {
-      type: "object",
-      properties: {
-        travauxComplets: { type: "boolean" },
-        lotsManquants: {
-          type: "array",
-          items: { type: "string" },
-        },
-        quantitesCoherentes: { type: "boolean" },
-        prixCoherents: { type: "boolean" },
-        tvaCoherentes: { type: "boolean" },
-        pointsVerifies: { type: "boolean" },
-      },
-      required: [
-        "travauxComplets",
-        "lotsManquants",
-        "quantitesCoherentes",
-        "prixCoherents",
-        "tvaCoherentes",
-        "pointsVerifies",
-      ],
-      additionalProperties: false,
-    },
   },
-  required: [
-    "titre",
-    "descriptionGenerale",
-    "hypotheses",
-    "sections",
-    "totalHT",
-    "pointsAVerifier",
-    "avertissementPrix",
-    "autoVerification",
-  ],
+  required: ["title", "summary", "sections"],
   additionalProperties: false,
 } as const;
 
@@ -192,49 +155,45 @@ export function buildAiDevisSystemPrompt(): string {
   const sections = BTP_SECTION_TITLES.join("\n- ");
 
   return `Tu es MUM IA, expert chiffreur BTP en France.
-Tu génères des devis COMPLETS, RIGOUREUX et PROFESSIONNELS.
+Tu génères un DEVIS STRUCTURÉ CHIFFRÉ — jamais une simple analyse.
 
-MÉTHODE OBLIGATOIRE (dans cet ordre) :
-1. ANALYSER tous les travaux demandés — identifier TOUS les lots (dépose, protection, placo, isolation, électricité, plomberie, carrelage, sols, peinture, menuiseries, sanitaires, nettoyage, déplacement).
-2. Ne JAMAIS se limiter au premier métier détecté.
-3. PRIORITÉ PRIX (NE JAMAIS INVENTER) :
-   1) Prix manuel verrouillé entreprise
-   2) Prix appris entreprise forte fiabilité
-   3) Prix moyen appris entreprise
-   4) Bibliothèque métier Batimum V3 (batimum-price-library)
-   5) Prix régional Batimum (standard × coefficient régional)
-   6) Prix standard Batimum
-   7) Si aucun prix fiable → prixAVerifier=true + « Prix à vérifier »
-4. Utiliser UNIQUEMENT les prix de la bibliothèque métier Batimum et des bibliothèques entreprise.
+INTERDIT de répondre avec uniquement : analysis, questions, lotsIdentifies, assumptions.
+OBLIGATOIRE : au moins une entrée dans "sections", chaque section avec au moins une "lines".
+
+Exemple minimal attendu :
+{
+  "title": "Rénovation salle de bain",
+  "summary": "…",
+  "sections": [
+    {
+      "name": "Dépose et préparation",
+      "lines": [
+        {
+          "designation": "Protection du chantier",
+          "quantity": 1,
+          "unit": "forfait",
+          "unitPriceHT": 150,
+          "totalHT": 150,
+          "vatRate": 20
+        }
+      ]
+    }
+  ]
+}
+
+RÈGLES :
+- Toujours ≥ 1 section et ≥ 1 ligne chiffrée.
+- totalHT = quantity × unitPriceHT.
+- Si prix incertain : estimation prudente + description « À vérifier ».
+- Couvrir tous les lots du chantier (dépose, plomberie, carrelage, sanitaires, électricité, peinture, nettoyage…).
 ${formatPriceLibraryRulesForPrompt()}
-5. Si prix hors base → estimation prudente + prixAVerifier=true + mention « Prix à vérifier » dans description.
-6. POSTES GLOBAUX : ne jamais cumuler un forfait global et ses sous-postes inclus.
-${formatVerificationReportForPrompt()}
-7. AUTO-VÉRIFICATION avant réponse (champ autoVerification) :
-   - Tous les travaux demandés sont-ils présents ?
-   - Manque-t-il un lot évident ?
-   - Quantités cohérentes ?
-   - Prix cohérents avec région et niveau ?
-   - TVA cohérentes ?
-   - Points à vérifier listés ?
-   - Aucun doublon entre postes globaux et sous-postes inclus ?
-8. Corriger les incohérences avant de répondre.
-
 ${formatPostesGlobauxRulesForPrompt()}
+${formatVerificationReportForPrompt()}
 
-SECTIONS (créer UNIQUEMENT celles utiles, titres exacts) :
+SECTIONS possibles :
 - ${sections}
 
-RÈGLES PRIX :
-- Jamais de prix certains — estimations uniquement.
-- avertissementPrix = exactement : "${AI_PRIX_AVERTISSEMENT}"
-- sousTotalHT = somme des lignes de la section.
-- totalHT = somme de tous les sous-totaux.
-- hypothèses : lister clairement toute supposition (surface, matériaux, accès…). Champ JSON : hypotheses.
-- pointsAVerifier : 5 à 12 points concrets terrain.
-
-SÉCURITÉ : ne valide, n'envoie, ne signe jamais. Brouillon indicatif uniquement.
-Réponds UNIQUEMENT en JSON strict.`;
+Réponds UNIQUEMENT en JSON (pas de markdown, pas de texte hors JSON).`;
 }
 
 export function buildAiDevisUserPrompt(input: AiDevisGenerateRequest): string {
@@ -341,86 +300,18 @@ export function computeAiDevisTotalHT(result: Pick<AiDevisResult, "sections">): 
   );
 }
 
-function normalizeAutoVerification(
+export type NormalizeAiDevisOutcome = NormalizeMumDevisOutcome;
+
+/** Délègue au normaliseur unique (formes FR/EN, lots, lines…). */
+export function normalizeAiDevisResultDetailed(
   raw: unknown,
-): AiDevisAutoVerification {
-  const data = (raw && typeof raw === "object" ? raw : {}) as Partial<AiDevisAutoVerification>;
-  return {
-    travauxComplets: Boolean(data.travauxComplets),
-    lotsManquants: Array.isArray(data.lotsManquants)
-      ? data.lotsManquants.map((item) => String(item).trim()).filter(Boolean)
-      : [],
-    quantitesCoherentes: Boolean(data.quantitesCoherentes),
-    prixCoherents: Boolean(data.prixCoherents),
-    tvaCoherentes: Boolean(data.tvaCoherentes),
-    pointsVerifies: Boolean(data.pointsVerifies),
-  };
+  options?: { defaultVatRate?: number },
+): NormalizeAiDevisOutcome {
+  return normalizeMumDevisResponse(raw, options);
 }
 
 export function normalizeAiDevisResult(raw: unknown): AiDevisResult | null {
-  if (!raw || typeof raw !== "object") return null;
-  const data = raw as Partial<AiDevisResult>;
-  if (!data.titre?.trim() || !Array.isArray(data.sections)) return null;
-
-  const sections: AiDevisSection[] = data.sections
-    .map((section) => {
-      if (!section || typeof section !== "object") return null;
-      const titre = String(section.titre ?? "").trim();
-      if (!titre) return null;
-      const lignes = (Array.isArray(section.lignes) ? section.lignes : [])
-        .map((ligne) => {
-          if (!ligne || typeof ligne !== "object") return null;
-          const designation = String(ligne.designation ?? "").trim();
-          if (!designation) return null;
-          const prixAVerifier = Boolean(ligne.prixAVerifier);
-          let description = String(ligne.description ?? "").trim();
-          if (prixAVerifier && !description.toLowerCase().includes("prix à vérifier")) {
-            description = description
-              ? `${description} — Prix à vérifier`
-              : "Prix à vérifier";
-          }
-          return {
-            designation,
-            description,
-            quantite: Math.max(0, Number(ligne.quantite) || 0),
-            unite: String(ligne.unite ?? "u").trim() || "u",
-            prixUnitaireHT: Math.max(0, Number(ligne.prixUnitaireHT) || 0),
-            tauxTVA: Number(ligne.tauxTVA) || 0,
-            prixAVerifier,
-          } satisfies AiDevisLigne;
-        })
-        .filter((ligne): ligne is AiDevisLigne => ligne !== null);
-
-      if (lignes.length === 0) return null;
-      const sousTotalHT = computeAiSectionSubtotal({ lignes });
-      return { titre, lignes, sousTotalHT };
-    })
-    .filter((section): section is AiDevisSection => section !== null);
-
-  if (sections.length === 0) return null;
-
-  const computedTotal = computeAiDevisTotalHT({ sections });
-
-  const pointsAVerifier = Array.isArray(data.pointsAVerifier)
-    ? data.pointsAVerifier.map((item) => String(item).trim()).filter(Boolean)
-    : [];
-
-  return {
-    titre: data.titre.trim(),
-    descriptionGenerale: String(data.descriptionGenerale ?? "").trim(),
-    hypothèses: Array.isArray(data.hypothèses)
-      ? data.hypothèses.map((item) => String(item).trim()).filter(Boolean)
-      : Array.isArray((data as { hypotheses?: string[] }).hypotheses)
-        ? (data as { hypotheses: string[] }).hypotheses
-            .map((item) => String(item).trim())
-            .filter(Boolean)
-        : [],
-    sections,
-    totalHT: computedTotal,
-    pointsAVerifier,
-    avertissementPrix: AI_PRIX_AVERTISSEMENT,
-    autoVerification: normalizeAutoVerification(data.autoVerification),
-  };
+  return normalizeMumDevisResponse(raw).result;
 }
 
 export function aiDevisToLignes(

@@ -29,7 +29,7 @@ function DashboardAlertLine({
 }) {
   const content = (
     <>
-      <span className="font-semibold tabular-nums text-primary">{value}</span>{" "}
+      <span className="font-semibold tabular-nums text-foreground">{value}</span>{" "}
       {label}
     </>
   );
@@ -38,7 +38,7 @@ function DashboardAlertLine({
     return (
       <Link
         href={href}
-        className="block truncate text-sm text-foreground transition-colors duration-300 hover:text-primary"
+        className="block truncate text-sm text-foreground transition-colors duration-300 hover:text-foreground/80"
         onClick={(event) => event.stopPropagation()}
       >
         {content}

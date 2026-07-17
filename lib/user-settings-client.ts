@@ -1,13 +1,18 @@
-import { canAccessApp, getAccount, isLegacyAppUser } from "@/lib/account";
-import {
-  getSupabaseSession,
-  isSupabaseAuthenticatedAccount,
-} from "@/lib/supabase-auth";
-import type { Employe, Parametres } from "@/lib/types";
+import { getAccount } from "@/lib/account";
+import { buildAuthenticatedFetchInit } from "@/lib/authenticated-api-fetch";
+import { logSettingsClientAuthDebug } from "@/lib/settings-client-auth";
+import type { AppData, Employe, Parametres } from "@/lib/types";
+import type {
+  CompanyWorkspacePayload,
+  UserSettingsOperationalPayload,
+} from "@/lib/user-settings-types";
 
 export type UserSettingsResponse = {
   parametres: Parametres | null;
   employes: Employe[] | null;
+  operational?: UserSettingsOperationalPayload | null;
+  workspace?: CompanyWorkspacePayload | null;
+  missingColumns?: boolean;
   error?: string;
   unauthorized?: boolean;
 };
@@ -15,29 +20,23 @@ export type UserSettingsResponse = {
 export type UserSettingsSaveResult = {
   ok: boolean;
   error?: string;
-  localOnly?: boolean;
   sessionExpired?: boolean;
+  permissionDenied?: boolean;
+  networkError?: boolean;
+  missingColumns?: boolean;
 };
 
-function resolveUnauthorizedSaveError(): string {
-  const account = getAccount();
-  if (isLegacyAppUser() || canAccessApp(account)) {
-    return "";
-  }
-  if (isSupabaseAuthenticatedAccount(account)) {
-    return "Votre session a expiré. Reconnectez-vous pour synchroniser vos paramètres.";
-  }
-  return "Votre session a expiré. Reconnectez-vous.";
-}
+const SESSION_EXPIRED_MESSAGE =
+  "Impossible d'enregistrer les paramètres. Veuillez vous reconnecter.";
 
 export async function fetchUserSettings(): Promise<UserSettingsResponse> {
+  const url = "/api/settings";
   try {
-    await getSupabaseSession();
-
-    const response = await fetch("/api/settings", {
-      cache: "no-store",
-      credentials: "same-origin",
-    });
+    await logSettingsClientAuthDebug(url);
+    const response = await fetch(
+      url,
+      await buildAuthenticatedFetchInit({ cache: "no-store" }),
+    );
 
     if (response.status === 401) {
       return { parametres: null, employes: null, unauthorized: true };
@@ -67,57 +66,60 @@ export async function fetchUserSettings(): Promise<UserSettingsResponse> {
 export async function saveUserSettings(payload: {
   parametres: Parametres;
   employes: Employe[];
+  operational?: UserSettingsOperationalPayload;
+  workspace?: Partial<CompanyWorkspacePayload>;
+  appData?: AppData;
+  localImportCompletedAt?: string | null;
 }): Promise<UserSettingsSaveResult> {
+  const url = "/api/settings";
   try {
-    await getSupabaseSession();
-
-    const response = await fetch("/api/settings", {
-      method: "PUT",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    await logSettingsClientAuthDebug(url, payload);
+    const response = await fetch(
+      url,
+      await buildAuthenticatedFetchInit({
+        method: "PUT",
+        body: JSON.stringify(payload),
+      }),
+    );
 
     if (response.status === 401) {
-      const canUseLocalFallback =
-        typeof window !== "undefined" &&
-        (isLegacyAppUser() || canAccessApp(getAccount()));
-
-      if (canUseLocalFallback) {
-        return { ok: true, localOnly: true, sessionExpired: true };
-      }
-
-      const message = resolveUnauthorizedSaveError();
       return {
         ok: false,
         sessionExpired: true,
-        error: message || "Votre session a expiré. Reconnectez-vous.",
+        error: SESSION_EXPIRED_MESSAGE,
       };
     }
 
     if (!response.ok) {
       const body = (await response.json().catch(() => ({}))) as {
         error?: string;
+        code?: string;
+        missingColumns?: boolean;
       };
-      const apiError = body.error ?? "";
-      if (/non authentifi/i.test(apiError)) {
-        return {
-          ok: false,
-          sessionExpired: true,
-          error: resolveUnauthorizedSaveError() || "Votre session a expiré. Reconnectez-vous.",
-        };
-      }
+      console.error("[workspace-save] failed", {
+        status: response.status,
+        code: body.code,
+        error: body.error,
+        userId: getAccount()?.supabaseUserId,
+      });
       return {
         ok: false,
-        error: apiError || "Impossible d'enregistrer les paramètres",
+        permissionDenied: response.status === 403 || response.status === 500,
+        missingColumns: Boolean(body.missingColumns) || body.code === "PGRST204",
+        error: body.error || "Impossible d'enregistrer les données.",
       };
     }
 
-    return { ok: true };
-  } catch {
-    if (typeof window !== "undefined" && (isLegacyAppUser() || canAccessApp(getAccount()))) {
-      return { ok: true, localOnly: true };
-    }
-    return { ok: false, error: "Impossible d'enregistrer les paramètres" };
+    const body = (await response.json().catch(() => ({}))) as {
+      missingColumns?: boolean;
+    };
+    return { ok: true, missingColumns: Boolean(body.missingColumns) };
+  } catch (error) {
+    console.error("[workspace-save] network error", error);
+    return {
+      ok: false,
+      networkError: true,
+      error: "Impossible d'enregistrer les données (réseau).",
+    };
   }
 }

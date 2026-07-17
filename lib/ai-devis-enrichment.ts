@@ -17,6 +17,9 @@ export type AiDevisEnrichmentContext = {
   departementCode: string;
   niveauPrix: BtpNiveauPrix;
   bibliothequeEntries?: BibliothequeEntrepriseEntry[];
+  entreprisePriceLibrary?: import("@/lib/types").EntreprisePriceLibrary;
+  parametres?: import("@/lib/types").Parametres;
+  companyId?: string;
   coefficientRegionalManuel?: number | null;
   ratioEntries?: BibliothequeRatioEntry[];
 };
@@ -72,6 +75,9 @@ function enrichLigne(
   const resolved = resolvePrixBibliothequePrioritaire({
     designation: working.designation,
     bibliothequeEntries: context.bibliothequeEntries,
+    entreprisePriceLibrary: context.entreprisePriceLibrary,
+    parametres: context.parametres,
+    companyId: context.companyId,
     regionCode: context.regionCode,
     departementCode: context.departementCode,
     niveauPrix: context.niveauPrix,

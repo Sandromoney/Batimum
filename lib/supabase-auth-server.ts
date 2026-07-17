@@ -1,6 +1,9 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { createClient as createSupabaseJsClient } from "@supabase/supabase-js";
+import {
+  createClient as createSupabaseJsClient,
+  type SupabaseClient,
+} from "@supabase/supabase-js";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/gmail-oauth-config";
 import { attachMumIaDevDebug } from "@/lib/mum-ia-server-diagnostics";
 import { createClient as createServerSupabaseClient } from "@/utils/supabase/server";
@@ -102,6 +105,114 @@ export async function getAuthenticatedSupabaseUser(
   }
 
   return getUserFromCookies();
+}
+
+/**
+ * Client Supabase authentifié avec le JWT utilisateur (Bearer prioritaire, sinon cookies).
+ * À utiliser pour les opérations métier utilisateur (paramètres, etc.).
+ */
+export async function createAuthenticatedSupabaseClient(
+  request?: Request | null,
+): Promise<SupabaseClient | null> {
+  const supabaseUrl = getSupabaseUrl();
+  const supabaseKey = getSupabaseAnonKey();
+  if (!supabaseUrl || !supabaseKey) return null;
+
+  const bearerToken = extractBearerToken(request);
+  if (bearerToken) {
+    const client = createSupabaseJsClient(supabaseUrl, supabaseKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${bearerToken}`,
+        },
+      },
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+    const {
+      data: { user },
+      error,
+    } = await client.auth.getUser(bearerToken);
+
+    if (error || !user) {
+      console.log("[supabase-auth] bearer client rejected", {
+        error: error?.message ?? null,
+      });
+      return null;
+    }
+
+    return client;
+  }
+
+  const cookieStore = await cookies();
+  return createServerSupabaseClient(cookieStore);
+}
+
+export type SettingsAuthContext = {
+  user: AuthenticatedSupabaseUser;
+  companyId: string;
+  authSource: "bearer" | "cookie";
+};
+
+/**
+ * Auth pour /api/settings — Bearer prioritaire, cookies en secours.
+ * Logs temporaires pour diagnostic Paramètres.
+ */
+export async function resolveSettingsAuthContext(
+  request: Request,
+): Promise<SettingsAuthContext | null> {
+  const authHeader =
+    request.headers.get("authorization") ?? request.headers.get("Authorization");
+  const bearerToken = extractBearerToken(request);
+
+  console.log("[parametres-save] server auth check", {
+    authorizationHeaderReceived: Boolean(bearerToken),
+    hasAuthHeader: Boolean(authHeader),
+    bearerLength: bearerToken?.length ?? 0,
+  });
+
+  if (bearerToken) {
+    const fromBearer = await getUserFromAccessToken(bearerToken);
+    if (fromBearer) {
+      const companyId = getCompanyIdForUser(fromBearer);
+      console.log("[parametres-save] server auth ok (bearer)", {
+        userId: fromBearer.id,
+        companyId,
+        tokenValid: true,
+      });
+      return {
+        user: fromBearer,
+        companyId,
+        authSource: "bearer",
+      };
+    }
+    console.log("[parametres-save] server bearer token rejected");
+  }
+
+  const fromCookies = await getUserFromCookies();
+  if (fromCookies) {
+    const companyId = getCompanyIdForUser(fromCookies);
+    console.log("[parametres-save] server auth ok (cookie)", {
+      userId: fromCookies.id,
+      companyId,
+      tokenValid: true,
+    });
+    return {
+      user: fromCookies,
+      companyId,
+      authSource: "cookie",
+    };
+  }
+
+  console.log("[parametres-save] server auth failed", {
+    userId: null,
+    companyId: null,
+    tokenValid: false,
+  });
+  return null;
 }
 
 /** Compte entreprise = propriétaire du compte (user_id). */

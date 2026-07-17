@@ -1,0 +1,61 @@
+﻿node.exe : npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm 
+help npmrc` for supported config options.
+Au caractère Ligne:1 : 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...config options.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+app/api/ia/import-tarif-fournisseur/route.ts(89,22): error TS2551: Property 'userId' does not exist on type 'MumIaAuthContext'. Did you mean 'user'?
+components/devis-copilote-achats.tsx(217,60): error TS2339: Property 'fournisseurConseille' does not exist on type 'ComparatifAchatLigne'.
+components/devis-copilote-achats.tsx(288,24): error TS2339: Property 'fournisseurConseille' does not exist on type 'ComparatifAchatLigne'.
+components/devis-copilote-achats.tsx(289,24): error TS2339: Property 'prixPublic' does not exist on type 'ComparatifAchatLigne'.
+components/devis-copilote-achats.tsx(290,24): error TS2339: Property 'remisePourcent' does not exist on type 'ComparatifAchatLigne'.
+components/devis-copilote-achats.tsx(291,24): error TS2339: Property 'coutEstimeEntreprise' does not exist on type 'ComparatifAchatLigne'.
+components/entreprise-price-library-view.tsx(106,7): error TS2322: Type 'EntreprisePriceType' is not assignable to type '"material"'.
+  Type '"labor"' is not assignable to type '"material"'.
+components/parametres-fournisseurs-section.tsx(415,20): error TS2322: Type '{ children: string; htmlFor: string; }' is not assignable to type 'IntrinsicAttributes & { children: ReactNode; className?: string | undefined; }'.
+  Property 'htmlFor' does not exist on type 'IntrinsicAttributes & { children: ReactNode; className?: string | undefined; }'.
+components/parametres-fournisseurs-section.tsx(621,26): error TS2322: Type '{ children: string; htmlFor: string; }' is not assignable to type 'IntrinsicAttributes & { children: ReactNode; className?: string | undefined; }'.
+  Property 'htmlFor' does not exist on type 'IntrinsicAttributes & { children: ReactNode; className?: string | undefined; }'.
+lib/assistant-batimum/assistant-brain.ts(579,14): error TS2304: Cannot find name 'appendFollowUp'.
+lib/assistant-batimum/assistant-memory.ts(336,5): error TS2322: Type '{ status: string; updatedAt: number; id: string; intent: string; startedAt: number; context?: Record<string, unknown> | undefined; }[]' is not assignable to type 'AssistantOperationalTask[]'.
+  Type '{ status: string; updatedAt: number; id: string; intent: string; startedAt: number; context?: Record<string, unknown>; }' is not assignable to type 'AssistantOperationalTask'.
+    Types of property 'status' are incompatible.
+      Type 'string' is not assignable to type '"in_progress" | "completed" | "cancelled"'.
+lib/assistant-batimum/copilot-pipeline.ts(80,3): error TS2820: Type '"response"' is not assignable to type 'CopilotStep'. Did you mean '"respond"'?
+lib/comparatif-achats.ts(280,34): error TS2353: Object literal may only specify known properties, and 'unite' does not exist in type 'SupplierPriceQuery'.
+lib/copilote-achats.ts(65,5): error TS2322: Type 'CopiloteAchatLigne[]' is not assignable to type 'ComparatifAchatLigne[] & CopiloteAchatLigne[]'.
+  Type 'CopiloteAchatLigne[]' is not assignable to type 'ComparatifAchatLigne[]'.
+    Type 'CopiloteAchatLigne' is not assignable to type 'ComparatifAchatLigne'.
+      Types of property 'comparatifs' are incompatible.
+        Type 'ComparatifFournisseurLigne[] | undefined' is not assignable to type 'ComparatifFournisseurLigne[]'.
+          Type 'undefined' is not assignable to type 'ComparatifFournisseurLigne[]'.
+lib/entreprise-price-library/history.ts(54,40): error TS2551: Property 'prixUnitaireHT' does not exist on type 'LigneDevis'. Did you mean 'prixUnitaire'?
+lib/entreprise-price-library/history.ts(58,26): error TS2551: Property 'prixUnitaireHT' does not exist on type 'LigneDevis'. Did you mean 'prixUnitaire'?
+lib/entreprise-price-library/history.ts(94,36): error TS2551: Property 'prixUnitaireHT' does not exist on type 'LigneDevis'. Did you mean 'prixUnitaire'?
+lib/entreprise-price-library/history.ts(101,24): error TS2551: Property 'prixUnitaireHT' does not exist on type 'LigneDevis'. Did you mean 'prixUnitaire'?
+lib/entreprise-price-library/history.ts(103,54): error TS2551: Property 'prixUnitaireHT' does not exist on type 'LigneDevis'. Did you mean 'prixUnitaire'?
+lib/entreprise-price-library/history.ts(104,54): error TS2551: Property 'prixUnitaireHT' does not exist on type 'LigneDevis'. Did you mean 'prixUnitaire'?
+lib/store.tsx(88,45): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(91,22): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(95,12): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(113,11): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(114,59): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(120,11): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(123,11): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(138,11): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(139,62): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(161,11): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(174,11): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(182,11): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(185,11): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(188,11): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(191,11): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(193,42): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(196,35): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(205,11): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(208,12): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(213,45): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(262,16): error TS2304: Cannot find name 'defaultData'.
+lib/store.tsx(263,13): error TS2304: Cannot find name 'defaultData'.

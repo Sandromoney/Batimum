@@ -5,12 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { GoogleContinueButton } from "@/components/google-continue-button";
+import { AuthSplitLayout } from "@/components/marketing/auth-split-layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
-import { isEmployeLoginIdentifier } from "@/lib/employee-access";
+import { clearEmployeeSessionForDirectorLogin } from "@/lib/employee-access";
 import { isPrivateBetaEnabled } from "@/lib/private-beta";
-import { ensureAppAccountFromSupabaseUser } from "@/lib/supabase-auth";
+import { finalizeDirectorLogin } from "@/lib/supabase-auth";
 import { createClient } from "@/utils/supabase/client";
 
 function LoginPageContent() {
@@ -46,20 +47,17 @@ function LoginPageContent() {
 
   if (!mounted) {
     return (
-      <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
-        <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-10">
-          <p className="text-sm text-muted-foreground">Chargement…</p>
-        </section>
-      </main>
+      <AuthSplitLayout>
+        <p className="text-sm text-muted-foreground">Chargement…</p>
+      </AuthSplitLayout>
     );
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
-      <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-10">
-        <Card className="w-full max-w-md">
+    <AuthSplitLayout>
+        <Card className="w-full">
           <Link href="/" className="mb-8 flex items-center gap-3">
-            <BrandLogo imageClassName="h-auto w-[180px] max-w-[180px] object-contain" />
+            <BrandLogo variant="marketing" showSubtitle={false} />
           </Link>
 
           <header className="mb-8">
@@ -78,13 +76,8 @@ function LoginPageContent() {
               setError("");
               setLoading(true);
 
-              if (isEmployeLoginIdentifier(email)) {
-                setLoading(false);
-                setError(
-                  "Cette page est réservée aux dirigeants. Utilisez la connexion employés.",
-                );
-                return;
-              }
+              // Ferme toute session employé résiduelle avant la connexion dirigeant.
+              await clearEmployeeSessionForDirectorLogin();
 
               const supabase = createClient();
               if (!supabase) {
@@ -160,8 +153,11 @@ function LoginPageContent() {
                 }
               }
 
-              ensureAppAccountFromSupabaseUser(sessionUser);
-              router.push("/dashboard");
+              finalizeDirectorLogin(sessionUser);
+              // Double nettoyage au cas où un cookie employé aurait été posé entre-temps.
+              await clearEmployeeSessionForDirectorLogin();
+              setLoading(false);
+              router.replace("/dashboard");
             }}
           >
             <section>
@@ -216,7 +212,14 @@ function LoginPageContent() {
                 </p>
               </div>
 
-              <GoogleContinueButton flow="login" disabled={loading} />
+              <GoogleContinueButton
+                flow="login"
+                disabled={loading}
+                onBeforeRedirect={async () => {
+                  await clearEmployeeSessionForDirectorLogin();
+                  return true;
+                }}
+              />
 
               <p className="mt-6 text-center text-sm text-muted-foreground">
                 Pas encore de compte ?{" "}
@@ -230,8 +233,7 @@ function LoginPageContent() {
             </>
           ) : null}
         </Card>
-      </section>
-    </main>
+    </AuthSplitLayout>
   );
 }
 
@@ -239,11 +241,9 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
-          <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-10">
-            <p className="text-sm text-muted-foreground">Chargement…</p>
-          </section>
-        </main>
+        <AuthSplitLayout>
+          <p className="text-sm text-muted-foreground">Chargement…</p>
+        </AuthSplitLayout>
       }
     >
       <LoginPageContent />

@@ -26,6 +26,11 @@ export async function saveParametresGlobally(payload: {
   employes: Employe[];
 }): Promise<ParametresSaveResult> {
   const synced = syncParametresForSave(payload.parametres);
+  console.log("[SAVE SETTINGS] méthode utilisée", "saveParametresGlobally");
+  console.log("[SAVE SETTINGS] payload envoyé", {
+    parametresKeys: Object.keys(synced).length,
+    employesCount: payload.employes.length,
+  });
 
   await getSupabaseSession();
 
@@ -33,16 +38,46 @@ export async function saveParametresGlobally(payload: {
     parametres: synced,
     employes: payload.employes,
   });
+  console.log("[SAVE SETTINGS] réponse API/store", result);
 
   if (result.ok) {
     return {
       ok: true,
       parametres: synced,
-      localOnly: result.localOnly,
+      localOnly: false,
+    };
+  }
+
+  // Pas de fallback silencieux pour les comptes Supabase Auth.
+  const account = getAccount();
+  if (account?.supabaseUserId) {
+    return {
+      ok: false,
+      error: result.error ?? "Impossible d'enregistrer les paramètres sur Supabase.",
     };
   }
 
   if (result.sessionExpired && canSaveParametresLocally()) {
+    return {
+      ok: true,
+      parametres: synced,
+      localOnly: true,
+    };
+  }
+
+  if (
+    canSaveParametresLocally() &&
+    !account?.supabaseUserId &&
+    (result.permissionDenied ||
+      result.networkError ||
+      /permission denied|réessayez|impossible d'enregistrer/i.test(
+        result.error ?? "",
+      ))
+  ) {
+    console.warn(
+      "[SAVE SETTINGS] fallback local activé (compte legacy sans Supabase)",
+      result,
+    );
     return {
       ok: true,
       parametres: synced,

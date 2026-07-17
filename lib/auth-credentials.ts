@@ -126,18 +126,15 @@ export async function saveVerifiedPasswordCredentials(
 export async function savePendingSignupCredentials(
   email: string,
   password: string,
-): Promise<{ verificationCode: string }> {
+): Promise<void> {
   const normalized = normalizeEmail(email);
   const { hash, salt } = await hashPassword(password);
-  const verificationCode = generateCode();
   const pending: AuthCredentials = {
     email: normalized,
     passwordHash: hash,
     salt,
     emailVerified: false,
     authProvider: "password",
-    verificationCode,
-    verificationExpiresAt: codeExpiresInMinutes(60 * 24),
   };
 
   const store = readStore();
@@ -147,8 +144,6 @@ export async function savePendingSignupCredentials(
   if (typeof window !== "undefined") {
     sessionStorage.setItem(PENDING_SIGNUP_KEY, normalized);
   }
-
-  return { verificationCode };
 }
 
 export function finalizePendingSignupCredentials(email: string): void {
@@ -170,25 +165,11 @@ export function clearPendingSignupEmail(): void {
   sessionStorage.removeItem(PENDING_SIGNUP_KEY);
 }
 
-export async function verifyEmailCode(
-  email: string,
-  code: string,
-): Promise<{ ok: boolean; message: string }> {
+export function markEmailVerifiedLocally(email: string): void {
   const normalized = normalizeEmail(email);
   const store = readStore();
   const credentials = store[normalized];
-  if (!credentials) {
-    return { ok: false, message: "Aucun compte trouvé pour cet email." };
-  }
-  if (credentials.emailVerified) {
-    return { ok: true, message: "Email déjà vérifié." };
-  }
-  if (
-    credentials.verificationCode !== code.trim() ||
-    !isCodeValid(credentials.verificationExpiresAt)
-  ) {
-    return { ok: false, message: "Code invalide ou expiré." };
-  }
+  if (!credentials) return;
 
   store[normalized] = {
     ...credentials,
@@ -198,7 +179,31 @@ export async function verifyEmailCode(
   };
   writeStore(store);
   clearPendingSignupEmail();
-  return { ok: true, message: "Email vérifié avec succès." };
+}
+
+export async function verifyEmailCode(
+  email: string,
+  code: string,
+): Promise<{ ok: boolean; message: string }> {
+  const normalized = normalizeEmail(email);
+  const credentials = getCredentials(normalized);
+  if (!credentials) {
+    return { ok: false, message: "Aucun compte trouvé pour cet email." };
+  }
+  if (credentials.emailVerified) {
+    return { ok: true, message: "Email déjà vérifié." };
+  }
+
+  const { verifyEmailVerificationCode } = await import(
+    "@/lib/email-verification/client"
+  );
+  const result = await verifyEmailVerificationCode(normalized, code);
+  if (!result.ok) {
+    return result;
+  }
+
+  markEmailVerifiedLocally(normalized);
+  return result;
 }
 
 export async function authenticateCredentials(
@@ -290,9 +295,21 @@ export async function resetPasswordWithCode(
   return { ok: true, message: "Mot de passe mis à jour." };
 }
 
-export function getVerificationCodeForEmail(email: string): string | null {
-  const credentials = getCredentials(email);
-  if (!credentials?.verificationCode) return null;
-  if (!isCodeValid(credentials.verificationExpiresAt)) return null;
-  return credentials.verificationCode;
+export async function resendVerificationCode(email: string): Promise<{
+  ok: boolean;
+  message: string;
+}> {
+  const normalized = normalizeEmail(email);
+  const credentials = getCredentials(normalized);
+  if (!credentials) {
+    return { ok: false, message: "Aucun compte trouvé pour cet email." };
+  }
+  if (credentials.emailVerified) {
+    return { ok: false, message: "Cet email est déjà vérifié." };
+  }
+
+  const { resendEmailVerificationCode } = await import(
+    "@/lib/email-verification/client"
+  );
+  return resendEmailVerificationCode(normalized);
 }

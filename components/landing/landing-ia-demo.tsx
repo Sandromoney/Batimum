@@ -233,9 +233,9 @@ export function LandingIaDemoSection() {
                     className={cn(
                       "landing-ia-flow__progress-dot mx-1 h-1.5 rounded-full",
                       index === activeStep
-                        ? "landing-ia-flow__progress-dot--active w-6 bg-[#2563eb]"
+                        ? "landing-ia-flow__progress-dot--active w-6 bg-primary"
                         : index < activeStep
-                          ? "landing-ia-flow__progress-dot--done w-2 bg-[#2563eb]/50"
+                          ? "landing-ia-flow__progress-dot--done w-2 bg-primary/50"
                           : "w-1.5 bg-border",
                     )}
                   />

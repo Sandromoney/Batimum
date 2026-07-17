@@ -1,6 +1,7 @@
 import type { Chantier, Client, Devis, EtapeChantier, LigneDevis } from "./types";
 import { getClientAddress } from "./clients";
 import { markChantierCreated } from "./chantier-statut";
+import { inferCategoriePilotageFromTypeChantier } from "./pilotage/categories";
 import { formatCurrency, generateId } from "./utils";
 
 function ligneDevisMontant(ligne: LigneDevis): number {
@@ -50,6 +51,17 @@ export function applyDevisLinkOnChantierCreate(
     devisNumber: devis.numero,
     sourceDevisTitle: devis.titre,
     etapes: etapes.length > 0 ? etapes : chantier.etapes,
+    categoriePilotage:
+      devis.categoriePilotage ??
+      inferCategoriePilotageFromTypeChantier(devis.typeChantier) ??
+      chantier.categoriePilotage,
+    categoriePilotagePersonnalise:
+      devis.categoriePilotagePersonnalise ?? chantier.categoriePilotagePersonnalise,
+    heuresPrevues: devis.pilotageMainOeuvre?.heuresPrevues ?? chantier.heuresPrevues,
+    tauxHoraireInterne:
+      devis.pilotageMainOeuvre?.tauxHoraireInterne ?? chantier.tauxHoraireInterne,
+    employesPrevusIds:
+      devis.pilotageMainOeuvre?.employesPrevusIds ?? chantier.employesPrevusIds,
   };
 }
 

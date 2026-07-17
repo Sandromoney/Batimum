@@ -66,6 +66,9 @@ export type AiDevisVerificationContext = {
   niveauPrix: BtpNiveauPrix;
   tauxTVA: number;
   bibliothequeEntries?: BibliothequeEntrepriseEntry[];
+  entreprisePriceLibrary?: import("@/lib/types").EntreprisePriceLibrary;
+  parametres?: import("@/lib/types").Parametres;
+  companyId?: string;
   coefficientRegionalManuel?: number | null;
   ratioEntries?: BibliothequeRatioEntry[];
 };
@@ -569,6 +572,9 @@ function resolvePriceForElement(
   const resolved = resolvePrixBibliothequePrioritaire({
     designation: element.label,
     bibliothequeEntries: context.bibliothequeEntries,
+    entreprisePriceLibrary: context.entreprisePriceLibrary,
+    parametres: context.parametres,
+    companyId: context.companyId,
     regionCode: context.regionCode,
     departementCode: context.departementCode,
     niveauPrix: context.niveauPrix,

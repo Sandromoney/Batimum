@@ -4,43 +4,45 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { VerificationCodeInput } from "@/components/marketing/verification-code-input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input, Label } from "@/components/ui/input";
-import { getAccount } from "@/lib/account";
-import { needsCompanyOnboarding } from "@/lib/onboarding";
+import { getAccount, updateAccount } from "@/lib/account";
 import {
   getCredentials,
   getPendingSignupEmail,
-  getVerificationCodeForEmail,
+  resendVerificationCode,
   verifyEmailCode,
 } from "@/lib/auth-credentials";
+import { canAccessCompanyOnboarding } from "@/lib/onboarding";
 
 function VerifyEmailForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [devCode, setDevCode] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     const account = getAccount();
     const pending = getPendingSignupEmail();
     const resolved = pending ?? account?.email ?? "";
     setEmail(resolved);
-    if (resolved) {
-      setDevCode(getVerificationCodeForEmail(resolved));
-    }
   }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setMessage("");
-    setLoading(true);
 
+    if (code.trim().length !== 6) {
+      setError("Veuillez saisir le code à 6 chiffres.");
+      return;
+    }
+
+    setLoading(true);
     const result = await verifyEmailCode(email, code);
     setLoading(false);
 
@@ -49,15 +51,29 @@ function VerifyEmailForm() {
       return;
     }
 
+    const account = getAccount();
+    if (canAccessCompanyOnboarding(account)) {
+      updateAccount({ onboardingStep: 2 });
+      router.replace("/configurer-entreprise");
+      return;
+    }
+
+    router.replace("/abonnement");
+  }
+
+  async function handleResend() {
+    setError("");
+    setMessage("");
+    setResending(true);
+    const result = await resendVerificationCode(email);
+    setResending(false);
+
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+
     setMessage(result.message);
-    window.setTimeout(() => {
-      const account = getAccount();
-      if (needsCompanyOnboarding(account)) {
-        router.replace("/configurer-entreprise");
-        return;
-      }
-      router.replace("/dashboard");
-    }, 1200);
   }
 
   const alreadyVerified = email
@@ -69,16 +85,20 @@ function VerifyEmailForm() {
       <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-10">
         <Card className="w-full max-w-md">
           <Link href="/" className="mb-8 flex items-center gap-3">
-            <BrandLogo imageClassName="h-auto w-[180px] max-w-[180px] object-contain" />
+            <BrandLogo variant="marketing" showSubtitle={false} />
           </Link>
 
           <header className="mb-8">
             <h1 className="text-3xl font-semibold tracking-tight">
-              Vérification email
+              Vérifiez votre adresse email
             </h1>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Saisissez le code reçu par email pour activer votre compte.
+              Nous avons envoyé un code de sécurité à 6 chiffres à l&apos;adresse
+              renseignée.
             </p>
+            {email ? (
+              <p className="mt-2 text-sm font-medium text-foreground">{email}</p>
+            ) : null}
           </header>
 
           {alreadyVerified ? (
@@ -86,45 +106,20 @@ function VerifyEmailForm() {
               <p className="text-sm text-muted-foreground">
                 Votre email est déjà vérifié.
               </p>
-              <Button className="w-full" onClick={() => router.push("/dashboard")}>
-                Accéder à l&apos;espace
+              <Button
+                className="w-full"
+                onClick={() => router.push("/configurer-entreprise")}
+              >
+                Continuer l&apos;onboarding
               </Button>
             </section>
           ) : (
-            <form className="space-y-5" onSubmit={handleSubmit}>
-              <section>
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                    setDevCode(getVerificationCodeForEmail(event.target.value));
-                  }}
-                  placeholder="vous@entreprise.fr"
-                />
-              </section>
-              <section>
-                <Label>Code de vérification</Label>
-                <Input
-                  required
-                  value={code}
-                  onChange={(event) => setCode(event.target.value)}
-                  placeholder="123456"
-                  inputMode="numeric"
-                  maxLength={6}
-                />
-              </section>
-
-              {devCode && process.env.NODE_ENV === "development" && (
-                <p className="rounded-xl border border-border bg-card-elevated/50 px-3 py-2 text-xs text-muted-foreground">
-                  Code de vérification (simulation V1) :{" "}
-                  <span className="font-mono font-semibold text-foreground">
-                    {devCode}
-                  </span>
-                </p>
-              )}
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <VerificationCodeInput
+                value={code}
+                onChange={setCode}
+                disabled={loading}
+              />
 
               {error && (
                 <p className="rounded-xl border btp-alert-error px-3 py-2 text-sm">
@@ -132,13 +127,27 @@ function VerifyEmailForm() {
                 </p>
               )}
               {message && (
-                <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+                <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
                   {message}
                 </p>
               )}
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Vérification…" : "Vérifier mon email"}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || code.length !== 6}
+              >
+                {loading ? "Vérification…" : "Vérifier le code"}
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                disabled={resending || !email}
+                onClick={() => void handleResend()}
+              >
+                {resending ? "Envoi…" : "Renvoyer le code"}
               </Button>
             </form>
           )}

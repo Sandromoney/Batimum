@@ -10,9 +10,7 @@ import { useStore } from "@/lib/store";
 import {
   applyGoogleSignupToAppData,
   finalizeGoogleSignupFromOAuth,
-  startStripeCheckoutForEmail,
 } from "@/lib/google-signup";
-import { SIGNUP_STRIPE_ERROR_MESSAGE } from "@/lib/signup-validation";
 
 function GoogleSignupCompleteContent() {
   const searchParams = useSearchParams();
@@ -45,16 +43,9 @@ function GoogleSignupCompleteContent() {
         applyGoogleSignupToAppData(previous, result.email, displayName),
       );
 
-      setMessage("Compte créé. Activation de votre essai gratuit…");
+      setMessage("Compte créé. Poursuivez la configuration de votre entreprise…");
 
-      const checkout = await startStripeCheckoutForEmail(result.email);
-      if (!checkout.ok) {
-        setFailed(true);
-        setMessage(checkout.message ?? SIGNUP_STRIPE_ERROR_MESSAGE);
-        return;
-      }
-
-      window.location.href = checkout.url;
+      router.replace("/configurer-entreprise");
     }
 
     void complete();
@@ -64,7 +55,7 @@ function GoogleSignupCompleteContent() {
     <main className="flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center px-6 py-10">
         <Card className="w-full max-w-lg text-center">
-          <BrandLogo variant="landing" showSubtitle={false} />
+          <BrandLogo variant="marketing" showSubtitle={false} />
           <h1 className="mt-8 text-2xl font-semibold tracking-tight">
             {failed ? "Inscription Google interrompue" : "Connexion Google"}
           </h1>

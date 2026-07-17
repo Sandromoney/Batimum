@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,8 +16,8 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      data-theme="dark"
-      data-theme-effective="dark"
+      data-theme="light"
+      data-theme-effective="light"
       suppressHydrationWarning
       className={`h-full ${GeistSans.variable} ${GeistMono.variable}`}
     >

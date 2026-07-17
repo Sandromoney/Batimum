@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
+import { MumIaContextButton } from "@/components/mum-ia-context-button";
 import { DataTable, RowActions, Td, Tr } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { DateInput, Input, Label, Select } from "@/components/ui/input";
@@ -171,10 +172,13 @@ export default function ChantiersPage() {
         title="Chantiers"
         description="Suivez l'avancement de vos travaux"
         action={
-          <Button onClick={openCreate} disabled={!data.clients.length}>
-            <Plus className="h-4 w-4" />
-            Nouveau chantier
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <MumIaContextButton source="chantier" entityLabel="Liste des chantiers" />
+            <Button onClick={openCreate} disabled={!data.clients.length}>
+              <Plus className="h-4 w-4" />
+              Nouveau chantier
+            </Button>
+          </div>
         }
       />
 

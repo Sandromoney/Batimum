@@ -4,10 +4,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
-import { authenticateEmployeLogin } from "@/lib/employee-access";
+import {
+  authenticateEmployeLogin,
+  clearDirectorSessionForEmployeeLogin,
+  EMPLOYEE_LOGIN_ERROR,
+} from "@/lib/employee-access";
 
 export default function LoginEmployePage() {
   const router = useRouter();
@@ -36,12 +41,12 @@ export default function LoginEmployePage() {
       <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-10">
         <Card className="w-full max-w-md">
           <Link href="/landing" className="mb-8 flex items-center gap-3">
-            <BrandLogo imageClassName="h-auto w-[180px] max-w-[180px] object-contain" />
+            <BrandLogo variant="marketing" showSubtitle={false} />
           </Link>
 
           <header className="mb-8">
             <h1 className="text-3xl font-semibold tracking-tight">
-              Connexion employés
+              Connexion employé
             </h1>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
               Accédez à votre planning et à vos tâches.
@@ -55,43 +60,46 @@ export default function LoginEmployePage() {
               setError("");
               setLoading(true);
 
+              // Ferme toute session dirigeant avant de créer la session employé.
+              await clearDirectorSessionForEmployeeLogin();
+
               const result = await authenticateEmployeLogin(identifier, password);
+              setLoading(false);
+
               if (!result.ok) {
-                setLoading(false);
-                setError(result.message);
+                setError(result.message || EMPLOYEE_LOGIN_ERROR);
                 return;
               }
 
-              router.push("/planning-employe");
+              router.replace("/planning-employe");
             }}
           >
             <section>
-              <Label>Email ou identifiant</Label>
+              <Label>Identifiant</Label>
               <Input
                 type="text"
                 required
+                autoComplete="username"
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
-                placeholder="vous@entreprise.fr"
+                placeholder="Votre identifiant"
                 disabled={loading}
               />
             </section>
             <section>
               <Label>Mot de passe</Label>
-              <Input
-                type="password"
-                required
+              <PasswordInput
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••"
+                onChange={setPassword}
                 disabled={loading}
+                autoComplete="current-password"
               />
             </section>
-            {error && (
+            {error ? (
               <p className="rounded-xl border btp-alert-error px-3 py-2 text-sm">
                 {error}
               </p>
-            )}
+            ) : null}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Connexion…" : "Se connecter"}
             </Button>

@@ -2,10 +2,18 @@ import { CHANTIER_STATUT_LABELS } from "@/lib/chantiers";
 import { getClientDisplayName } from "@/lib/clients";
 import { COMMANDE_STATUT_LABELS } from "@/lib/commandes";
 import { DEVIS_STATUT_LABELS } from "@/lib/devis";
+import { getDevisDisplayStatut } from "@/lib/devis-statut";
+import { getFactureDisplayStatut } from "@/lib/facture-statut";
+import {
+  matchesMonthFilter,
+  parseSearchIntent,
+  scoreSearchMatch,
+} from "@/lib/intelligent-search";
 import {
   getPlanningEventDisplayTitle,
   getPlanningTypeLabel,
 } from "@/lib/planning-types";
+import { matchesSearchQuery } from "@/lib/search-text-match";
 import type {
   AppData,
   Chantier,
@@ -61,16 +69,21 @@ const FACTURE_STATUT_LABELS: Record<StatutFacture, string> = {
   avoir_total: "Soldée par avoir",
 };
 
-function includesQuery(query: string, ...parts: (string | undefined | null)[]): boolean {
-  const normalizedQuery = query.trim().toLowerCase();
-  if (normalizedQuery.length < 2) return false;
+function buildHaystack(...parts: (string | undefined | null)[]): string {
+  return parts.filter((part): part is string => Boolean(part?.trim())).join(" ");
+}
 
-  const haystack = parts
-    .filter((part): part is string => Boolean(part?.trim()))
-    .join(" ")
-    .toLowerCase();
-
-  return haystack.includes(normalizedQuery);
+function matchesGlobalQuery(
+  query: string,
+  intent: ReturnType<typeof parseSearchIntent>,
+  ...parts: (string | undefined | null)[]
+): boolean {
+  if (query.trim().length < 2) return false;
+  const haystack = buildHaystack(...parts);
+  return (
+    matchesSearchQuery(haystack, query) ||
+    scoreSearchMatch(haystack, query, intent) >= 12
+  );
 }
 
 function clientSearchParts(client: Client): (string | undefined)[] {
@@ -105,13 +118,30 @@ function getClientName(
 function searchClients(
   clients: Client[],
   query: string,
+  intent: ReturnType<typeof parseSearchIntent>,
 ): GlobalSearchResult[] {
   return clients
-    .filter((client) => includesQuery(query, ...clientSearchParts(client)))
-    .slice(0, MAX_RESULTS_PER_CATEGORY)
+    .filter((client) => {
+      if (intent.clientHint) {
+        const hint = intent.clientHint.toLowerCase();
+        const display = getClientDisplayName(client).toLowerCase();
+        if (!display.includes(hint)) return false;
+      }
+      return matchesGlobalQuery(query, intent, ...clientSearchParts(client));
+    })
     .map((client) => ({
+      client,
+      score: scoreSearchMatch(
+        buildHaystack(...clientSearchParts(client)),
+        query,
+        intent,
+      ),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_RESULTS_PER_CATEGORY)
+    .map(({ client }) => ({
       id: client.id,
-      category: "clients",
+      category: "clients" as const,
       title: getClientDisplayName(client),
       subtitle: clientSubtitle(client),
       href: "/clients",
@@ -122,24 +152,44 @@ function searchDevis(
   devis: Devis[],
   clientsById: Map<string, Client>,
   query: string,
+  intent: ReturnType<typeof parseSearchIntent>,
 ): GlobalSearchResult[] {
   return devis
     .filter((item) => {
+      if (intent.statutDevis?.length) {
+        const display = getDevisDisplayStatut(item);
+        if (!intent.statutDevis.includes(display)) return false;
+      }
+      if (!matchesMonthFilter(item.date, intent)) return false;
       const clientName = getClientName(item.clientId, clientsById);
-      return includesQuery(
+      return matchesGlobalQuery(
         query,
+        intent,
         item.numero,
         item.titre,
+        item.descriptionChantier,
         clientName,
         DEVIS_STATUT_LABELS[item.statut],
       );
     })
-    .slice(0, MAX_RESULTS_PER_CATEGORY)
     .map((item) => {
       const clientName = getClientName(item.clientId, clientsById);
       return {
+        item,
+        score: scoreSearchMatch(
+          buildHaystack(item.numero, item.titre, item.descriptionChantier, clientName),
+          query,
+          intent,
+        ),
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_RESULTS_PER_CATEGORY)
+    .map(({ item }) => {
+      const clientName = getClientName(item.clientId, clientsById);
+      return {
         id: item.id,
-        category: "devis",
+        category: "devis" as const,
         title: `Devis ${item.numero} — ${clientName}`,
         subtitle: `${item.titre} · ${DEVIS_STATUT_LABELS[item.statut]}`,
         href: `/devis/${item.id}`,
@@ -151,24 +201,43 @@ function searchFactures(
   factures: Facture[],
   clientsById: Map<string, Client>,
   query: string,
+  intent: ReturnType<typeof parseSearchIntent>,
 ): GlobalSearchResult[] {
   return factures
     .filter((item) => {
+      if (intent.statutFacture?.length) {
+        const display = getFactureDisplayStatut(item);
+        if (!intent.statutFacture.includes(display)) return false;
+      }
+      if (!matchesMonthFilter(item.dateEmission, intent)) return false;
       const clientName = getClientName(item.clientId, clientsById);
-      return includesQuery(
+      return matchesGlobalQuery(
         query,
+        intent,
         item.numero,
         item.descriptionChantier,
         clientName,
         FACTURE_STATUT_LABELS[item.statut],
       );
     })
-    .slice(0, MAX_RESULTS_PER_CATEGORY)
     .map((item) => {
       const clientName = getClientName(item.clientId, clientsById);
       return {
+        item,
+        score: scoreSearchMatch(
+          buildHaystack(item.numero, item.descriptionChantier, clientName),
+          query,
+          intent,
+        ),
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_RESULTS_PER_CATEGORY)
+    .map(({ item }) => {
+      const clientName = getClientName(item.clientId, clientsById);
+      return {
         id: item.id,
-        category: "factures",
+        category: "factures" as const,
         title: `Facture ${item.numero} — ${clientName}`,
         subtitle: FACTURE_STATUT_LABELS[item.statut],
         href: "/factures",
@@ -180,12 +249,20 @@ function searchChantiers(
   chantiers: Chantier[],
   clientsById: Map<string, Client>,
   query: string,
+  intent: ReturnType<typeof parseSearchIntent>,
 ): GlobalSearchResult[] {
   return chantiers
     .filter((item) => {
       const clientName = getClientName(item.clientId, clientsById);
-      return includesQuery(
+      if (intent.chantierHint) {
+        const hint = intent.chantierHint.toLowerCase();
+        if (!item.nom.toLowerCase().includes(hint) && !clientName.toLowerCase().includes(hint)) {
+          return false;
+        }
+      }
+      return matchesGlobalQuery(
         query,
+        intent,
         item.nom,
         item.adresse,
         clientName,
@@ -194,12 +271,24 @@ function searchChantiers(
         item.typePersonnalise,
       );
     })
-    .slice(0, MAX_RESULTS_PER_CATEGORY)
     .map((item) => {
       const clientName = getClientName(item.clientId, clientsById);
       return {
+        item,
+        score: scoreSearchMatch(
+          buildHaystack(item.nom, item.adresse, clientName, item.type),
+          query,
+          intent,
+        ),
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_RESULTS_PER_CATEGORY)
+    .map(({ item }) => {
+      const clientName = getClientName(item.clientId, clientsById);
+      return {
         id: item.id,
-        category: "chantiers",
+        category: "chantiers" as const,
         title: `Chantier ${item.nom} — ${clientName}`,
         subtitle: CHANTIER_STATUT_LABELS[item.statut],
         href: `/chantiers/${item.id}`,
@@ -211,12 +300,14 @@ function searchCommandes(
   commandes: Commande[],
   clientsById: Map<string, Client>,
   query: string,
+  intent: ReturnType<typeof parseSearchIntent>,
 ): GlobalSearchResult[] {
   return commandes
     .filter((item) => {
       const clientName = getClientName(item.clientId, clientsById);
-      return includesQuery(
+      return matchesGlobalQuery(
         query,
+        intent,
         item.numero,
         item.devisNumero,
         item.devisTitre,
@@ -253,9 +344,11 @@ function searchPlanning(
   chantiersById: Map<string, Chantier>,
   clientsById: Map<string, Client>,
   query: string,
+  intent: ReturnType<typeof parseSearchIntent>,
 ): GlobalSearchResult[] {
   return planning
     .filter((event) => {
+      if (!matchesMonthFilter(event.date, intent)) return false;
       const chantier = event.chantierId
         ? chantiersById.get(event.chantierId)
         : undefined;
@@ -265,8 +358,9 @@ function searchPlanning(
       const displayTitle = getPlanningEventDisplayTitle(event, chantier);
       const typeLabel = getPlanningTypeLabel(event);
 
-      return includesQuery(
+      return matchesGlobalQuery(
         query,
+        intent,
         typeLabel,
         displayTitle,
         event.titre,
@@ -307,6 +401,7 @@ export function buildGlobalSearchGroups(
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
 
+  const intent = parseSearchIntent(trimmed);
   const clientsById = new Map(data.clients.map((client) => [client.id, client]));
   const chantiersById = new Map(
     data.chantiers.map((chantier) => [chantier.id, chantier]),
@@ -316,27 +411,27 @@ export function buildGlobalSearchGroups(
     {
       category: "clients",
       label: CATEGORY_LABELS.clients,
-      results: searchClients(data.clients, trimmed),
+      results: searchClients(data.clients, trimmed, intent),
     },
     {
       category: "devis",
       label: CATEGORY_LABELS.devis,
-      results: searchDevis(data.devis, clientsById, trimmed),
+      results: searchDevis(data.devis, clientsById, trimmed, intent),
     },
     {
       category: "factures",
       label: CATEGORY_LABELS.factures,
-      results: searchFactures(data.factures, clientsById, trimmed),
+      results: searchFactures(data.factures, clientsById, trimmed, intent),
     },
     {
       category: "chantiers",
       label: CATEGORY_LABELS.chantiers,
-      results: searchChantiers(data.chantiers, clientsById, trimmed),
+      results: searchChantiers(data.chantiers, clientsById, trimmed, intent),
     },
     {
       category: "commandes",
       label: CATEGORY_LABELS.commandes,
-      results: searchCommandes(data.commandes, clientsById, trimmed),
+      results: searchCommandes(data.commandes, clientsById, trimmed, intent),
     },
     {
       category: "planning",
@@ -346,6 +441,7 @@ export function buildGlobalSearchGroups(
         chantiersById,
         clientsById,
         trimmed,
+        intent,
       ),
     },
   ];

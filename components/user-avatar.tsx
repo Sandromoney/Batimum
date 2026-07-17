@@ -33,7 +33,7 @@ export function UserAvatar({
         <img
           src={logo}
           alt={name}
-          className="h-full w-full object-contain p-0.5"
+          className="h-full w-full rounded-full object-cover object-center"
         />
       ) : (
         initials

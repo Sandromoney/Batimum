@@ -1,11 +1,12 @@
-import { SupabaseProvider } from "@/components/supabase-provider";
+import "./marketing-emerald.css";
+import { MarketingProviders } from "@/components/marketing-providers";
 
 export default function MarketingLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <SupabaseProvider>
-      <div className="min-h-screen bg-background text-foreground">{children}</div>
-    </SupabaseProvider>
+    <MarketingProviders>
+      <div className="marketing-emerald">{children}</div>
+    </MarketingProviders>
   );
 }

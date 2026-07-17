@@ -135,7 +135,7 @@ export async function GET(
 
   if (provider !== "google" && provider !== "microsoft") {
     return NextResponse.redirect(
-      `${appUrl}/parametres?email_oauth=error&message=${encodeURIComponent("Fournisseur inconnu.")}`,
+      `${appUrl}/parametres?section=connexion-email&email_oauth=error&message=${encodeURIComponent("Fournisseur inconnu.")}`,
     );
   }
 
@@ -155,10 +155,10 @@ export async function GET(
     const tokens = await emailProviderService.exchangeOAuthCode(provider, code);
     const sealed = emailProviderService.sealTokens(tokens);
 
-    const authUser = await getAuthenticatedSupabaseUser();
+    const authUser = await getAuthenticatedSupabaseUser(request);
     if (authUser && flow === "connect") {
       try {
-        await saveEmailConnectionForUser(authUser.id, tokens);
+        await saveEmailConnectionForUser(authUser.id, tokens, request);
         console.log("[gmail-oauth-callback] token saved", {
           userId: authUser.id,
           email: tokens.email,
@@ -177,7 +177,7 @@ export async function GET(
       });
     }
 
-    let successUrl = `${appUrl}/parametres?email_oauth=success&provider=${provider}&email=${encodeURIComponent(tokens.email)}`;
+    let successUrl = `${appUrl}/parametres?section=connexion-email&email_oauth=success&provider=${provider}&email=${encodeURIComponent(tokens.email)}`;
 
     if (isSignup && provider === "google") {
       const params = new URLSearchParams();

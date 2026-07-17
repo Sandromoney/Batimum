@@ -5,11 +5,21 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
 import { EmployeeShell } from "@/components/employee-shell";
 import { SubscriptionGuard } from "@/components/subscription-guard";
-import { getAccount, isEmployeAccount } from "@/lib/account";
+import {
+  clearAccount,
+  getAccount,
+  isEmployeAccount,
+  saveAccount,
+} from "@/lib/account";
+import {
+  fetchEmployeeSession,
+  logoutEmploye,
+} from "@/lib/employee-access";
 import { syncAppData } from "@/lib/app-sync";
 import { useStore } from "@/lib/store";
+import { createClient } from "@/utils/supabase/client";
 
-const EMPLOYE_HOME = "/planning-employe";
+const EMPLOYEE_HOME = "/planning-employe";
 
 export function AppLayoutRouter({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -18,6 +28,7 @@ export function AppLayoutRouter({ children }: { children: ReactNode }) {
   const [layoutState, setLayoutState] = useState<
     "loading" | "ready" | "redirecting"
   >("loading");
+  const [isEmploye, setIsEmploye] = useState(false);
 
   useEffect(() => {
     setData((previous) => {
@@ -27,22 +38,85 @@ export function AppLayoutRouter({ children }: { children: ReactNode }) {
   }, [pathname, setData]);
 
   useEffect(() => {
-    const account = getAccount();
-    const isEmploye = isEmployeAccount(account);
+    let cancelled = false;
 
-    if (isEmploye && !pathname.startsWith(EMPLOYE_HOME)) {
-      setLayoutState("redirecting");
-      router.replace(EMPLOYE_HOME);
-      return;
+    async function resolveLayout() {
+      // Espace employé : uniquement cookie employé.
+      if (pathname.startsWith(EMPLOYEE_HOME)) {
+        const session = await fetchEmployeeSession();
+        if (cancelled) return;
+        if (!session.ok || !session.account) {
+          // Dirigeant connecté qui atterrit ici → dashboard, pas login employé.
+          const supabase = createClient();
+          if (supabase) {
+            const { data } = await supabase.auth.getSession();
+            if (data.session?.user && data.session.access_token) {
+              clearAccount();
+              setLayoutState("redirecting");
+              router.replace("/dashboard");
+              return;
+            }
+          }
+          clearAccount();
+          setLayoutState("redirecting");
+          router.replace("/login-employe");
+          return;
+        }
+        saveAccount(session.account);
+        setIsEmploye(true);
+        setLayoutState("ready");
+        return;
+      }
+
+      // Pages dirigeant : session Supabase prioritaire sur l'ancien cookie employé.
+      const supabase = createClient();
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        const hasDirectorSession = Boolean(
+          data.session?.user && data.session.access_token,
+        );
+        if (cancelled) return;
+
+        if (hasDirectorSession) {
+          // Un dirigeant connecté ne doit jamais être renvoyé vers l'espace employé.
+          await logoutEmploye();
+          if (cancelled) return;
+          const account = getAccount();
+          if (isEmployeAccount(account)) {
+            clearAccount();
+          }
+          setIsEmploye(false);
+          setLayoutState("ready");
+          return;
+        }
+      }
+
+      // Pas de session dirigeant : si cookie employé valide → espace employé.
+      const employeeSession = await fetchEmployeeSession();
+      if (cancelled) return;
+      if (employeeSession.ok && employeeSession.account) {
+        saveAccount(employeeSession.account);
+        setLayoutState("redirecting");
+        router.replace(EMPLOYEE_HOME);
+        return;
+      }
+
+      const account = getAccount();
+      if (isEmployeAccount(account)) {
+        clearAccount();
+      }
+
+      if (cancelled) return;
+      setIsEmploye(false);
+      setLayoutState("ready");
     }
 
-    if (!isEmploye && pathname.startsWith(EMPLOYE_HOME)) {
-      setLayoutState("redirecting");
-      router.replace("/dashboard");
-      return;
-    }
+    setLayoutState("loading");
+    void resolveLayout();
 
-    setLayoutState("ready");
+    return () => {
+      cancelled = true;
+    };
   }, [pathname, router]);
 
   if (layoutState !== "ready") {
@@ -56,9 +130,6 @@ export function AppLayoutRouter({ children }: { children: ReactNode }) {
   if (pathname.startsWith("/signature/")) {
     return <>{children}</>;
   }
-
-  const account = getAccount();
-  const isEmploye = isEmployeAccount(account);
 
   return (
     <SubscriptionGuard>

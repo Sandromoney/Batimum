@@ -7,13 +7,13 @@ const btnSecondaryClass =
 
 export function MarketingHeader() {
   return (
-    <header className="border-b border-border">
+    <header className="marketing-header border-b border-border">
       <section className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-6 sm:px-8 lg:px-10">
         <Link
-          href="/"
-          className="landing-logo flex shrink-0 items-center justify-center no-underline"
+          href="/landing"
+          className="landing-logo flex shrink-0 items-center no-underline"
         >
-          <BrandLogo variant="landing" showSubtitle={false} />
+          <BrandLogo variant="marketing" showSubtitle={false} />
         </Link>
         <Link href="/login" className={cn(btnSecondaryClass, "px-4 py-2")}>
           Se connecter

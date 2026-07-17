@@ -8,6 +8,7 @@ import {
   logStripeCheckoutEnvStatus,
   stripeConfigIncompleteMessage,
 } from "@/lib/stripe-checkout-diagnostic";
+import { getStripePriceIdFromEnv, getStripeYearlyPriceIdFromEnv } from "@/lib/stripe-config";
 import { getStripe } from "@/lib/stripe-server";
 
 export async function POST(request: Request) {
@@ -33,7 +34,8 @@ export async function POST(request: Request) {
   }
 
   const stripe = getStripe();
-  const priceId = process.env.STRIPE_PRICE_ID!.trim();
+  const monthlyPriceId = getStripePriceIdFromEnv();
+  const yearlyPriceId = getStripeYearlyPriceIdFromEnv();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!.trim().replace(/\/$/, "");
 
   if (!stripe) {
@@ -51,6 +53,7 @@ export async function POST(request: Request) {
     entreprise?: string;
     utilisateur?: string;
     telephone?: string;
+    billingCycle?: "monthly" | "yearly";
   };
 
   try {
@@ -59,6 +62,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Corps de requête invalide." }, { status: 400 });
   }
 
+  const billingCycle = body.billingCycle === "yearly" ? "yearly" : "monthly";
+  const priceId =
+    billingCycle === "yearly" && yearlyPriceId
+      ? yearlyPriceId
+      : monthlyPriceId;
+
+  if (!priceId) {
+    return NextResponse.json(
+      {
+        error: stripeConfigIncompleteMessage(
+          billingCycle === "yearly" && !yearlyPriceId
+            ? ["STRIPE_PRICE_ID_YEARLY"]
+            : ["STRIPE_PRICE_ID"],
+        ),
+      },
+      { status: 503 },
+    );
+  }
   const email = body.email?.trim().toLowerCase();
   const entreprise = body.entreprise?.trim() ?? "";
   const utilisateur = body.utilisateur?.trim() ?? "";
@@ -77,6 +98,7 @@ export async function POST(request: Request) {
     payment_method_collection: "always",
     customer_email: email,
     priceId,
+    billingCycle,
     trial_period_days: 7,
     success_url: `${appUrl}/dashboard?checkout=success`,
     cancel_url: `${appUrl}/signup?checkout=cancel`,

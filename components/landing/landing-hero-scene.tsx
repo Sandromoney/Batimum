@@ -150,7 +150,7 @@ export function LandingHeroScene({
         <div className="landing-hero-scene__hub">
           <div className="landing-hero-scene__hub-card">
             <img
-              src="/logo-batimum.png"
+              src="/logocomplet-batimum.png"
               alt=""
               className="landing-hero-scene__logo"
             />

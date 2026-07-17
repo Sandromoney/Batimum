@@ -6,6 +6,7 @@ import { ParametresToggle } from "@/components/parametres-toggle";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 import { validateParametresEFacturation } from "@/lib/facture-electronique";
+import { deriveSirenFromSiret } from "@/lib/parametres";
 import {
   electronicInvoiceService,
   getPdpConnexionStatutLabel,
@@ -91,6 +92,29 @@ export function ParametresFacturationElectroniqueSection({
       description="Préparation réforme 2026/2027 — architecture PDP prête, sans transmission active tant qu'un connecteur n'est pas branché"
       modified={modified}
     >
+      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl border border-border/70 bg-card-elevated/40 px-3 py-2.5">
+          <p className="text-[11px] text-muted-foreground">SIREN</p>
+          <p className="mt-0.5 text-sm font-semibold tabular-nums">
+            {form.siren || deriveSirenFromSiret(form.siret) || form.siret?.slice(0, 9) || "—"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border/70 bg-card-elevated/40 px-3 py-2.5">
+          <p className="text-[11px] text-muted-foreground">TVA</p>
+          <p className="mt-0.5 text-sm font-semibold">
+            {form.tvaIntracom || `${form.tva ?? 20} %`}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border/70 bg-card-elevated/40 px-3 py-2.5">
+          <p className="text-[11px] text-muted-foreground">Synchronisation</p>
+          <p className="mt-0.5 text-sm font-semibold">
+            {fe.pdpDernierTestLe
+              ? new Date(fe.pdpDernierTestLe).toLocaleDateString("fr-FR")
+              : "Pas encore"}
+          </p>
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <section className="sm:col-span-2">
           <Label>PDP utilisée</Label>
@@ -206,6 +230,23 @@ export function ParametresFacturationElectroniqueSection({
           {testMessage ?? fe.pdpDernierTestMessage}
         </p>
       ) : null}
+
+      <div className="mt-4 rounded-xl border border-border/70 bg-card-elevated/30 p-4">
+        <p className="text-xs font-semibold text-foreground">Historique</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          L&apos;historique des transmissions PDP/PPF s&apos;affichera ici dès
+          l&apos;activation officielle. Configuration et tests sont déjà
+          sauvegardés.
+        </p>
+        {fe.pdpDernierTestLe ? (
+          <p className="mt-2 text-xs text-foreground">
+            Dernier test : {new Date(fe.pdpDernierTestLe).toLocaleString("fr-FR")} —{" "}
+            {getPdpConnexionStatutLabel(fe.pdpConnexionStatut ?? "non_configure")}
+          </p>
+        ) : (
+          <p className="mt-2 text-xs text-muted-foreground">Aucun événement pour l&apos;instant.</p>
+        )}
+      </div>
 
       <ParametresToggle
         label="Entreprise prête facturation électronique"

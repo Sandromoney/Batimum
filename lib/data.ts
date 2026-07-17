@@ -203,18 +203,27 @@ export const defaultData: AppData = {
       prenom: "Lucas",
       nom: "Bernard",
       poste: "Chef d'équipe",
+      coutHoraireInterne: 38,
+      specialitePrincipale: "Rénovation complète",
+      typesChantiersMaitrises: ["renovation_complete", "salle_de_bain"],
     },
     {
       id: "emp2",
       prenom: "Sophie",
       nom: "Martin",
       poste: "Maçonne",
+      coutHoraireInterne: 32,
+      specialitePrincipale: "Carrelage",
+      typesChantiersMaitrises: ["carrelage", "salle_de_bain"],
     },
     {
       id: "emp3",
       prenom: "Karim",
       nom: "Dubois",
       poste: "Électricien",
+      coutHoraireInterne: 35,
+      specialitePrincipale: "Dépannage",
+      typesChantiersMaitrises: ["depannage", "renovation_complete"],
     },
   ],
   planning: [
@@ -253,6 +262,7 @@ export const defaultData: AppData = {
   deletedNotificationKeys: [],
   relances: [],
   avoirs: [],
+  chantierTimeEntries: [],
 };
 
 import { isSectionLigne } from "@/lib/devis-lignes";

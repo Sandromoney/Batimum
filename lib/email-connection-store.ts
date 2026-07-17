@@ -1,10 +1,7 @@
-import { cookies } from "next/headers";
 import {
-  GmailDbError,
-  logGmailDbClientMode,
   logGmailDbSupabaseError,
   logGmailDbTableCheck,
-  SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE,
+  type GmailDbSupabaseError,
 } from "@/lib/gmail-oauth-config";
 import {
   decryptEmailToken,
@@ -12,8 +9,8 @@ import {
 } from "@/lib/email-connection-crypto";
 import type { StoredEmailOAuthTokens } from "@/lib/email-provider/types";
 import type { EmailOAuthProvider } from "@/lib/types";
+import { createAuthenticatedSupabaseClient } from "@/lib/supabase-auth-server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { createClient } from "@/utils/supabase/server";
 
 export type EmailConnectionProvider = "gmail" | "microsoft";
 
@@ -52,24 +49,46 @@ function rowToTokens(row: EmailConnectionRow): StoredEmailOAuthTokens {
   };
 }
 
-async function getSupabaseForRequest() {
-  const cookieStore = await cookies();
-  return createClient(cookieStore);
+function mapEmailConnectionDbError(error: GmailDbSupabaseError): {
+  message: string;
+  code?: string;
+} {
+  logGmailDbSupabaseError(error, "email-connection");
+  return {
+    message: error.message ?? "Erreur base de données",
+    code: error.code,
+  };
+}
+
+export function formatEmailConnectionErrorForUser(error: {
+  message: string;
+  code?: string;
+}): string {
+  console.error("[email-connection] formatted error", error);
+
+  if (error.code === "42P01") {
+    return "Connexion email indisponible pour le moment.";
+  }
+  if (
+    error.code === "42501" ||
+    /permission denied|row-level security/i.test(error.message)
+  ) {
+    return "Impossible d'accéder à la connexion email. Vérifiez que vous êtes bien connecté.";
+  }
+  if (/session|jwt|expir|unauthorized/i.test(error.message)) {
+    return "Votre session a expiré. Reconnectez-vous.";
+  }
+  return "Connexion email indisponible pour le moment.";
 }
 
 export async function saveEmailConnectionForUser(
   userId: string,
   tokens: StoredEmailOAuthTokens,
+  request?: Request | null,
 ): Promise<void> {
-  logGmailDbClientMode();
-
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
-    throw new Error(SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE);
-  }
-
-  const supabase = createAdminClient();
+  const supabase = await createAuthenticatedSupabaseClient(request);
   if (!supabase) {
-    throw new Error(SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE);
+    throw new Error("Client Supabase indisponible.");
   }
 
   const provider = oauthProviderToStorage(tokens.provider);
@@ -93,25 +112,24 @@ export async function saveEmailConnectionForUser(
     .upsert(payload, { onConflict: "user_id,provider" });
 
   if (error) {
-    console.error("[gmail-db] upsert error", {
+    console.error("[email-connection] upsert error", {
+      userId,
       code: error.code ?? null,
       message: error.message ?? null,
-      details: error.details ?? null,
-      hint: error.hint ?? null,
     });
-    logGmailDbSupabaseError(error);
-    throw new GmailDbError(error);
+    throw new Error(formatEmailConnectionErrorForUser(mapEmailConnectionDbError(error)));
   }
 }
 
 export async function loadEmailConnectionForUser(
   userId: string,
   provider?: EmailOAuthProvider,
+  request?: Request | null,
 ): Promise<{
   tokens: StoredEmailOAuthTokens | null;
   error: { message: string; code?: string } | null;
 }> {
-  const supabase = await getSupabaseForRequest();
+  const supabase = await createAuthenticatedSupabaseClient(request);
   if (!supabase) {
     return {
       tokens: null,
@@ -137,13 +155,9 @@ export async function loadEmailConnectionForUser(
     .maybeSingle();
 
   if (error) {
-    logGmailDbSupabaseError(error);
     return {
       tokens: null,
-      error: {
-        message: new GmailDbError(error).message,
-        code: error.code,
-      },
+      error: mapEmailConnectionDbError(error),
     };
   }
 
@@ -172,16 +186,11 @@ export async function loadEmailConnectionForUser(
 export async function disconnectEmailConnectionForUser(
   userId: string,
   provider?: EmailOAuthProvider,
+  request?: Request | null,
 ): Promise<void> {
-  logGmailDbClientMode();
-
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
-    throw new Error(SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE);
-  }
-
-  const supabase = createAdminClient();
+  const supabase = await createAuthenticatedSupabaseClient(request);
   if (!supabase) {
-    throw new Error(SUPABASE_SERVICE_ROLE_KEY_MISSING_MESSAGE);
+    throw new Error("Client Supabase indisponible.");
   }
 
   let query = supabase.from("email_connections").delete().eq("user_id", userId);
@@ -194,8 +203,7 @@ export async function disconnectEmailConnectionForUser(
 
   const { error } = await query;
   if (error) {
-    logGmailDbSupabaseError(error);
-    throw new GmailDbError(error);
+    throw new Error(formatEmailConnectionErrorForUser(mapEmailConnectionDbError(error)));
   }
 }
 
@@ -204,22 +212,16 @@ type EmailConnectionStatusRow = Pick<
   "email" | "provider" | "connected" | "expires_at" | "refresh_token"
 >;
 
-async function getSupabaseForEmailConnectionRead() {
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
-    return createAdminClient();
-  }
-  return getSupabaseForRequest();
-}
-
 /** Lecture statut sans déchiffrer les tokens (affichage UI / API status). */
 export async function loadEmailConnectionStatusForUser(
   userId: string,
   provider?: EmailOAuthProvider,
+  request?: Request | null,
 ): Promise<{
   row: EmailConnectionStatusRow | null;
   error: { message: string; code?: string } | null;
 }> {
-  const supabase = await getSupabaseForEmailConnectionRead();
+  const supabase = await createAuthenticatedSupabaseClient(request);
   if (!supabase) {
     return {
       row: null,
@@ -245,13 +247,9 @@ export async function loadEmailConnectionStatusForUser(
     .maybeSingle();
 
   if (error) {
-    logGmailDbSupabaseError(error);
     return {
       row: null,
-      error: {
-        message: new GmailDbError(error).message,
-        code: error.code,
-      },
+      error: mapEmailConnectionDbError(error),
     };
   }
 
@@ -264,6 +262,7 @@ export async function loadEmailConnectionStatusForUser(
 
 export async function getEmailConnectionStatusFromSupabase(
   userId: string,
+  request?: Request | null,
 ): Promise<{
   status: {
     connected: boolean;
@@ -274,7 +273,11 @@ export async function getEmailConnectionStatusFromSupabase(
   } | null;
   error: { message: string; code?: string } | null;
 }> {
-  const { row, error } = await loadEmailConnectionStatusForUser(userId);
+  const { row, error } = await loadEmailConnectionStatusForUser(
+    userId,
+    undefined,
+    request,
+  );
 
   if (error) {
     return { status: null, error };
@@ -303,15 +306,20 @@ export async function getEmailConnectionStatusFromSupabase(
 export async function updateEmailConnectionTokens(
   userId: string,
   tokens: StoredEmailOAuthTokens,
+  request?: Request | null,
 ): Promise<void> {
-  await saveEmailConnectionForUser(userId, tokens);
+  await saveEmailConnectionForUser(userId, tokens, request);
 }
 
-/** Lecture tokens OAuth via service role (envoi email côté serveur, ex. signature publique). */
+/** Lecture tokens OAuth via service role (envoi email côté serveur, cron, signature publique). */
 export async function loadEmailConnectionTokensForUserId(
   userId: string,
 ): Promise<StoredEmailOAuthTokens | null> {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    console.warn(
+      "[email-connection] service role absent — lecture admin ignorée",
+      { userId },
+    );
     return null;
   }
 

@@ -3,6 +3,7 @@ import {
   getBoundSupabaseSession,
   getSupabaseBrowserClient,
 } from "@/lib/supabase-browser";
+import { getRefreshedSupabaseAccessToken } from "@/lib/settings-client-auth";
 import { MumIaAuthError } from "@/lib/mum-ia-auth-error";
 
 export type MumIaFetchAction =
@@ -10,6 +11,8 @@ export type MumIaFetchAction =
   | "verifier-config-serveur"
   | "analyser"
   | "generer"
+  | "comprendre"
+  | "assistant-chat"
   | "quota";
 
 export type AuthenticatedSupabaseSession = {
@@ -86,13 +89,25 @@ export async function getAuthenticatedSessionOrThrow(
     }
   }
 
-  logSessionDiagnostic(action, session, "getSession");
-
   if (!session?.access_token) {
+    const refreshedToken = await getRefreshedSupabaseAccessToken();
+    if (refreshedToken) {
+      logSessionDiagnostic(action, session, "settings-refresh-token");
+      return {
+        session: session ?? ({ access_token: refreshedToken } as Session),
+        accessToken: refreshedToken,
+        clientId: "singleton-browser",
+      };
+    }
+
+    logSessionDiagnostic(action, session, "getSession");
+
     throw new MumIaAuthError(
-      "Aucune session Supabase active — reconnectez-vous via la page Connexion (compte legacy sans Supabase insuffisant pour MUM IA).",
+      "Votre session doit être reconnectée pour utiliser l'assistant.",
     );
   }
+
+  logSessionDiagnostic(action, session, "getSession");
 
   return {
     session,

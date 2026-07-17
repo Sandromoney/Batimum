@@ -3,6 +3,8 @@ import { hasUnrestrictedDevAccess } from "@/lib/dev-access";
 import type { Parametres } from "@/lib/types";
 
 export const AI_QUOTA_PRO_MONTHLY = 100;
+/** Alias produit : 100 demandes MUM IA / période. */
+export const MUM_IA_MONTHLY_LIMIT = AI_QUOTA_PRO_MONTHLY;
 
 export type AiQuotaState = {
   used: number;

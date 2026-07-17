@@ -3,7 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { getGoogleOAuthAuthorizePath } from "@/lib/email-provider/oauth-flow";
 import type { GoogleOAuthFlow } from "@/lib/email-provider/oauth-flow";
+import { startSupabaseGoogleAuth } from "@/lib/supabase-google-auth";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 type GoogleContinueButtonProps = {
   flow?: GoogleOAuthFlow;
@@ -11,6 +13,8 @@ type GoogleContinueButtonProps = {
   className?: string;
   label?: string;
   onBeforeRedirect?: () => boolean | Promise<boolean>;
+  /** Mode d'auth : identity = Supabase Google (login/signup), email = Gmail OAuth (paramètres). */
+  authMode?: "identity" | "email";
 };
 
 function GoogleLogo({ className }: { className?: string }) {
@@ -46,26 +50,52 @@ export function GoogleContinueButton({
   className,
   label = "Continuer avec Google",
   onBeforeRedirect,
+  authMode,
 }: GoogleContinueButtonProps) {
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const resolvedMode =
+    authMode ?? (flow === "connect" ? "email" : "identity");
+
   async function handleClick() {
-    if (disabled) return;
+    if (disabled || loading) return;
+    setError("");
     if (onBeforeRedirect) {
       const allowed = await onBeforeRedirect();
       if (!allowed) return;
     }
-    window.location.href = getGoogleOAuthAuthorizePath(flow);
+
+    if (resolvedMode === "email") {
+      window.location.href = getGoogleOAuthAuthorizePath(flow);
+      return;
+    }
+
+    setLoading(true);
+    const result = await startSupabaseGoogleAuth(
+      flow === "signup" ? "signup" : "login",
+    );
+    if (!result.ok) {
+      setLoading(false);
+      setError(result.error);
+    }
+    // Si ok, le navigateur quitte la page vers Google.
   }
 
   return (
-    <Button
-      type="button"
-      variant="secondary"
-      className={cn("w-full gap-3 bg-card-elevated/80", className)}
-      disabled={disabled}
-      onClick={() => void handleClick()}
-    >
-      <GoogleLogo />
-      {label}
-    </Button>
+    <div className="space-y-2">
+      <Button
+        type="button"
+        variant="secondary"
+        className={cn("w-full gap-3 bg-card-elevated/80", className)}
+        disabled={disabled || loading}
+        onClick={() => void handleClick()}
+      >
+        <GoogleLogo />
+        {loading ? "Redirection Google…" : label}
+      </Button>
+      {error ? (
+        <p className="text-center text-xs font-medium text-red-400">{error}</p>
+      ) : null}
+    </div>
   );
 }

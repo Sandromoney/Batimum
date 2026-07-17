@@ -1,19 +1,25 @@
 import { NextResponse } from "next/server";
 import {
   formatUserSettingsError,
-  loadUserSettingsFromSupabase,
-  saveUserSettingsToSupabase,
-  type UserSettingsPayload,
+  loadCompanyWorkspace,
+  saveCompanyWorkspace,
 } from "@/lib/user-settings-store";
-import { normalizeParametres } from "@/lib/parametres";
-import { getAuthenticatedSupabaseUser } from "@/lib/supabase-auth-server";
 import {
-  hasValidationErrors,
-  validateParametresSave,
-} from "@/lib/validations";
-import type { Employe, Parametres } from "@/lib/types";
+  appDataToWorkspace,
+  emptyWorkspacePayload,
+  normalizeOperationalPayload,
+  normalizeWorkspacePayload,
+  type CompanyWorkspacePayload,
+  type UserSettingsOperationalPayload,
+} from "@/lib/user-settings-types";
+import { normalizeParametres } from "@/lib/parametres";
+import { resolveSettingsAuthContext } from "@/lib/supabase-auth-server";
+import type { AppData, Employe, Parametres } from "@/lib/types";
 
 export const runtime = "nodejs";
+
+const SESSION_EXPIRED_MESSAGE =
+  "Impossible d'enregistrer les paramètres. Veuillez vous reconnecter.";
 
 function normalizeEmployes(value: unknown): Employe[] {
   if (!Array.isArray(value)) return [];
@@ -25,65 +31,81 @@ function normalizeEmployes(value: unknown): Employe[] {
   }));
 }
 
-export async function GET() {
-  console.log("[user-settings] load start");
-
-  const authUser = await getAuthenticatedSupabaseUser();
-  if (!authUser) {
+export async function GET(request: Request) {
+  const auth = await resolveSettingsAuthContext(request);
+  if (!auth) {
     return NextResponse.json(
       {
-        error: "Session expirée ou introuvable. Reconnectez-vous.",
+        error: SESSION_EXPIRED_MESSAGE,
         code: "session_expired",
       },
       { status: 401 },
     );
   }
 
-  const { settings, error } = await loadUserSettingsFromSupabase(authUser.id);
+  const { workspace, error, missingColumns } = await loadCompanyWorkspace(
+    auth.user.id,
+  );
 
   if (error) {
-    console.error("[user-settings] load error", error);
     return NextResponse.json(
       {
-        error: formatUserSettingsError(error),
+        error: formatUserSettingsError(error, { hasSession: true }),
+        code: error.code,
         parametres: null,
         employes: null,
+        workspace: null,
       },
       { status: 500 },
     );
   }
 
-  console.log("[user-settings] load success", {
-    userId: authUser.id,
-    hasSettings: Boolean(settings),
-  });
+  if (!workspace) {
+    return NextResponse.json({
+      parametres: null,
+      employes: null,
+      operational: null,
+      workspace: null,
+      missingColumns: Boolean(missingColumns),
+    });
+  }
 
   return NextResponse.json({
-    parametres: settings?.parametres ?? null,
-    employes: settings?.employes ?? null,
+    parametres: workspace.parametres,
+    employes: workspace.employes,
+    operational: {
+      planning: workspace.planning,
+      chantiers: workspace.chantiers,
+      affectations: workspace.affectations,
+      clients: workspace.clients,
+    },
+    workspace,
+    missingColumns: Boolean(missingColumns),
   });
 }
 
 export async function PUT(request: Request) {
-  console.log("[user-settings] save start");
-
-  const authUser = await getAuthenticatedSupabaseUser();
-  if (!authUser) {
+  const auth = await resolveSettingsAuthContext(request);
+  if (!auth) {
     return NextResponse.json(
       {
-        error: "Session expirée ou introuvable. Reconnectez-vous.",
+        error: SESSION_EXPIRED_MESSAGE,
         code: "session_expired",
       },
       { status: 401 },
     );
   }
 
-  let body: { parametres?: Parametres; employes?: Employe[] };
+  let body: {
+    parametres?: Parametres;
+    employes?: Employe[];
+    operational?: Partial<UserSettingsOperationalPayload>;
+    workspace?: Partial<CompanyWorkspacePayload>;
+    appData?: AppData;
+    localImportCompletedAt?: string | null;
+  };
   try {
-    body = (await request.json()) as {
-      parametres?: Parametres;
-      employes?: Employe[];
-    };
+    body = (await request.json()) as typeof body;
   } catch {
     return NextResponse.json(
       { error: "Corps de requête invalide." },
@@ -91,39 +113,86 @@ export async function PUT(request: Request) {
     );
   }
 
-  if (!body.parametres) {
+  const existing = await loadCompanyWorkspace(auth.user.id);
+  const base = existing.workspace ?? emptyWorkspacePayload();
+
+  let next: CompanyWorkspacePayload;
+
+  if (body.appData) {
+    next = appDataToWorkspace(
+      body.appData,
+      body.localImportCompletedAt ??
+        body.workspace?.localImportCompletedAt ??
+        base.localImportCompletedAt,
+    );
+  } else if (body.workspace || body.parametres) {
+    const operational = normalizeOperationalPayload(
+      body.operational ?? {
+        planning: base.planning,
+        chantiers: base.chantiers,
+        affectations: base.affectations,
+        clients: base.clients,
+      },
+    );
+    next = normalizeWorkspacePayload({
+      ...base,
+      ...body.workspace,
+      parametres: normalizeParametres(
+        body.parametres ?? body.workspace?.parametres ?? base.parametres,
+      ),
+      employes: normalizeEmployes(
+        body.employes ?? body.workspace?.employes ?? base.employes,
+      ),
+      planning: body.workspace?.planning ?? operational.planning,
+      chantiers: body.workspace?.chantiers ?? operational.chantiers,
+      affectations: body.workspace?.affectations ?? operational.affectations,
+      clients: body.workspace?.clients ?? operational.clients,
+      localImportCompletedAt:
+        body.localImportCompletedAt ??
+        body.workspace?.localImportCompletedAt ??
+        base.localImportCompletedAt,
+    });
+  } else {
     return NextResponse.json(
-      { error: "Paramètres manquants." },
+      { error: "Paramètres ou workspace manquants." },
       { status: 400 },
     );
   }
 
-  const parametres = normalizeParametres(body.parametres);
-  const validationErrors = validateParametresSave(parametres);
-  if (hasValidationErrors(validationErrors)) {
-    const firstError = Object.values(validationErrors).find(Boolean);
+  // Validation légère : entreprise + email pour éviter les payloads vides accidentels.
+  if (!next.parametres.entreprise?.trim() && !next.parametres.email?.trim()) {
     return NextResponse.json(
-      { error: firstError ?? "Validation échouée." },
+      { error: "Paramètres entreprise incomplets." },
       { status: 400 },
     );
   }
 
-  const payload: UserSettingsPayload = {
-    parametres,
-    employes: normalizeEmployes(body.employes),
-  };
-
-  const { error } = await saveUserSettingsToSupabase(authUser.id, payload);
+  const { error, missingColumns } = await saveCompanyWorkspace(
+    auth.user.id,
+    next,
+  );
 
   if (error) {
-    console.error("[user-settings] save error", error);
+    const status =
+      error.code === "session_expired"
+        ? 401
+        : error.code === "PGRST204"
+          ? 503
+          : 500;
     return NextResponse.json(
-      { error: formatUserSettingsError(error) },
-      { status: 500 },
+      {
+        error: formatUserSettingsError(error, {
+          hasSession: status !== 401,
+        }),
+        code: error.code,
+        missingColumns: Boolean(missingColumns),
+      },
+      { status },
     );
   }
 
-  console.log("[user-settings] save success", { userId: authUser.id });
-
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    missingColumns: Boolean(missingColumns),
+  });
 }

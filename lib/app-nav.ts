@@ -6,6 +6,8 @@ import {
   FileText,
   HardHat,
   LayoutDashboard,
+  LineChart,
+  Package,
   Receipt,
   Settings,
   Users,
@@ -23,9 +25,11 @@ export const DESKTOP_NAV_ITEMS: AppNavItem[] = [
   { href: "/commandes", label: "Commandes", icon: ClipboardList },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/chantiers", label: "Chantiers", icon: HardHat },
+  { href: "/pilotage", label: "Pilotage", icon: LineChart },
   { href: "/factures", label: "Factures", icon: Receipt },
   { href: "/planning", label: "Planning", icon: Calendar },
   { href: "/ia", label: "MUM IA", icon: Bot },
+  { href: "/parametres/bibliotheque", label: "Fourniture", icon: Package },
   { href: "/parametres", label: "Paramètres", icon: Settings },
 ];
 
@@ -35,12 +39,19 @@ export const MOBILE_NAV_ITEMS: AppNavItem[] = [
   { href: "/commandes", label: "Commandes", icon: ClipboardList },
   { href: "/factures", label: "Factures", icon: Receipt },
   { href: "/chantiers", label: "Chantiers", icon: HardHat },
+  { href: "/pilotage", label: "Pilotage", icon: LineChart },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/planning", label: "Planning", icon: Calendar },
   { href: "/parametres", label: "Paramètres", icon: Settings },
+  { href: "/parametres/bibliotheque", label: "Fourniture", icon: Package },
   { href: "/ia", label: "MUM IA", icon: Bot },
 ];
 
 export function isAppNavItemActive(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
+  if (pathname === href) return true;
+  if (!pathname.startsWith(`${href}/`)) return false;
+  if (href === "/parametres" && pathname.startsWith("/parametres/bibliotheque")) {
+    return false;
+  }
+  return true;
 }

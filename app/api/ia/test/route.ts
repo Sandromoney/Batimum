@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
+import { aiService } from "@/lib/ai/ai-service";
 import {
-  classifyOpenAiError,
-  createOpenAiClient,
   getOpenAiEnvDiagnostics,
   getOpenAiModel,
   isOpenAiConfigured,
@@ -136,8 +135,7 @@ export async function POST(request: Request) {
     /* corps vide → message par défaut */
   }
 
-  const client = createOpenAiClient();
-  if (!client) {
+  if (!isOpenAiConfigured()) {
     return NextResponse.json(openAiNotConfiguredResponse(), { status: 503 });
   }
 
@@ -151,15 +149,16 @@ export async function POST(request: Request) {
       keySource: diagnostics.keySource,
     });
 
-    const response = await client.responses.create({
-      model,
-      instructions:
+    const result = await aiService.call({
+      mode: "assistant",
+      messages: [{ role: "user", content: message }],
+      systemPrompt:
         "Tu es l'assistant Batimum. Réponds brièvement en français, de manière professionnelle et amicale.",
-      input: message,
+      context: { route: "ia-test" },
     });
 
-    const reply = response.output_text?.trim();
-    if (!reply) {
+    const reply = result.content?.trim();
+    if (!result.success || !reply) {
       return NextResponse.json(
         {
           success: false,
@@ -185,14 +184,16 @@ export async function POST(request: Request) {
 
     checks.openAiConnection = { ok: true, error: null };
 
-    const generationProbe = await client.responses.create({
-      model,
-      instructions:
+    const generationProbe = await aiService.call({
+      mode: "assistant",
+      messages: [{ role: "user", content: "Génération test devis MUM IA" }],
+      systemPrompt:
         "Retourne STRICTEMENT un JSON valide avec les clés ok (boolean) et titre (string).",
-      input: "Génération test devis MUM IA",
+      jsonObject: true,
+      context: { route: "ia-test-generation-probe" },
     });
 
-    const generationProbeText = generationProbe.output_text?.trim() ?? "";
+    const generationProbeText = generationProbe.content?.trim() ?? "";
     let generationProbeJson: unknown = null;
     try {
       generationProbeJson = generationProbeText ? JSON.parse(generationProbeText) : null;
@@ -222,10 +223,11 @@ export async function POST(request: Request) {
       details: payloadBase.details,
     } satisfies TestDiagnosticsPayload);
   } catch (error) {
-    const classified = classifyOpenAiError(error, model);
+    const message =
+      error instanceof Error ? error.message : "erreur route 500";
     checks.openAiConnection = {
       ok: false,
-      error: classified.message || "erreur route 500",
+      error: message,
     };
     checks.generationTest = {
       ok: false,
@@ -235,17 +237,15 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        errorCode: classified.code,
-        code: classified.code,
+        errorCode: "openai_error",
+        code: "openai_error",
         message: "Connexion OpenAI échouée.",
         model,
         checks,
         details: payloadBase.details,
-        ...(process.env.NODE_ENV === "development"
-          ? { debugMessage: classified.message }
-          : {}),
+        ...(process.env.NODE_ENV === "development" ? { debugMessage: message } : {}),
       } satisfies TestDiagnosticsPayload,
-      { status: classified.httpStatus },
+      { status: 502 },
     );
   }
 }

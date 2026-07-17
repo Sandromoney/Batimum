@@ -2,170 +2,254 @@
 
 import { useCallback, useState, type CSSProperties } from "react";
 import { Check } from "lucide-react";
-import {
-  LandingCtaLink,
-} from "@/components/landing/landing-cta-link";
+import { LandingCtaLink } from "@/components/landing/landing-cta-link";
 import { LandingReveal } from "@/components/landing/landing-reveal";
 import { Card } from "@/components/ui/card";
 import { getPublicSignupHref } from "@/lib/private-beta";
 import { cn } from "@/lib/utils";
 
-const QUESTIONS = [
+type DifficultyId =
+  | "employee-calls"
+  | "re-entry"
+  | "chantier-profitability"
+  | "employee-profitability"
+  | "planning"
+  | "devis-facturation"
+  | "excel"
+  | "chantier-visibility"
+  | "employee-space"
+  | "other";
+
+type SingleQuestion = {
+  type: "single";
+  question: string;
+  options: readonly string[];
+};
+
+type MultiQuestion = {
+  type: "multi";
+  question: string;
+  options: readonly { id: DifficultyId; label: string }[];
+};
+
+type Question = SingleQuestion | MultiQuestion;
+
+const DIFFICULTY_BENEFITS: Record<
+  DifficultyId,
+  { title: string; description: string }
+> = {
+  "employee-calls": {
+    title: "Planning terrain connecté au bureau",
+    description:
+      "Vos équipes consultent leurs chantiers et consignes sans vous appeler chaque matin.",
+  },
+  "re-entry": {
+    title: "Devis → chantier → facture automatisé",
+    description:
+      "Une information saisie une fois se propage dans tout le flux, sans ressaisie.",
+  },
+  "chantier-profitability": {
+    title: "Déboursés et rentabilité par chantier",
+    description:
+      "Suivez vos marges chantier par chantier en temps réel, sans calculs Excel.",
+  },
+  "employee-profitability": {
+    title: "Rentabilité par employé",
+    description:
+      "Identifiez quels collaborateurs sont réellement rentables pour votre entreprise.",
+  },
+  planning: {
+    title: "Planning terrain synchronisé",
+    description:
+      "Le bureau et le terrain partagent le même planning, mis à jour en temps réel.",
+  },
+  "devis-facturation": {
+    title: "IA devis et facturation intégrées",
+    description:
+      "Générez vos devis plus vite et passez à la facture avec signature électronique incluse.",
+  },
+  excel: {
+    title: "Pilotage sans tableurs",
+    description:
+      "Centralisez devis, chantiers, équipes et marges dans une seule plateforme.",
+  },
+  "chantier-visibility": {
+    title: "Suivi d'avancement chantier",
+    description:
+      "Visualisez l'état de chaque chantier sans fouiller vos messages ou vos papiers.",
+  },
+  "employee-space": {
+    title: "Espace employé totalement séparé",
+    description:
+      "Chaque salarié accède à son planning et ses consignes, sans voir vos chiffres.",
+  },
+  other: {
+    title: "Une plateforme 100 % BTP",
+    description:
+      "Batimum est conçu pour les dirigeants de TPE du bâtiment, pas pour un usage généraliste.",
+  },
+};
+
+const GENERIC_BENEFITS = [
+  DIFFICULTY_BENEFITS["re-entry"],
+  DIFFICULTY_BENEFITS.planning,
+  DIFFICULTY_BENEFITS["employee-space"],
+];
+
+const QUESTIONS: Question[] = [
   {
-    question:
-      "Vos employés vous appellent encore le matin pour demander où ils doivent aller ?",
-    options: ["Tous les jours", "De temps en temps", "Jamais"],
+    type: "single",
+    question: "Combien de personnes travaillent dans votre entreprise ?",
+    options: [
+      "Je travaille seul",
+      "2 à 5 employés",
+      "6 à 10 employés",
+      "Plus de 10 employés",
+    ],
   },
   {
+    type: "single",
     question:
       "Vous ressaisissez les mêmes informations entre le devis, le planning et la facture ?",
-    options: ["Tout le temps", "Parfois", "Non"],
+    options: ["Tous les jours", "Régulièrement", "Rarement", "Jamais"],
   },
   {
-    question:
-      "Combien de temps passez-vous chaque semaine sur l'administratif ?",
+    type: "single",
+    question: "Savez-vous réellement combien vous rapporte chaque chantier ?",
     options: [
-      "Plus de 10 heures",
-      "Entre 5 et 10 heures",
+      "Oui, précisément",
+      "À peu près",
+      "Je fais mes calculs sur Excel",
+      "Non, je ne le sais pas vraiment",
+    ],
+  },
+  {
+    type: "single",
+    question:
+      "Vos employés savent-ils toujours où aller et quoi faire sans vous appeler ?",
+    options: ["Oui, toujours", "Souvent", "Parfois", "Non, jamais"],
+  },
+  {
+    type: "single",
+    question: "Combien de temps passez-vous chaque semaine sur l'administratif ?",
+    options: [
       "Moins de 5 heures",
+      "Entre 5 et 10 heures",
+      "Entre 10 et 20 heures",
+      "Plus de 20 heures",
     ],
   },
   {
+    type: "single",
     question:
-      "Vos employés ont-ils accès à des informations qu'ils ne devraient pas voir ?",
-    options: ["Oui", "Ça m'est déjà arrivé", "Non"],
-  },
-  {
-    question:
-      "Quand un chantier change, combien de personnes devez-vous prévenir manuellement ?",
+      "Comment suivez-vous aujourd'hui la rentabilité de votre entreprise ?",
     options: [
-      "Toute l'équipe",
-      "Quelques personnes",
-      "Personne, tout est déjà organisé",
+      "Directement dans mon logiciel",
+      "Avec Excel",
+      "De tête ou sur papier",
+      "Je ne la suis pas réellement",
     ],
   },
   {
-    question:
-      "Avez-vous déjà oublié de facturer un travail réalisé ou perdu du temps à retrouver une information ?",
-    options: ["Oui, plusieurs fois", "Une ou deux fois", "Jamais"],
-  },
-  {
-    question: "Quel est aujourd'hui votre plus gros problème ?",
+    type: "multi",
+    question: "Quelles sont aujourd'hui vos plus grandes difficultés ?",
     options: [
-      "Le temps perdu au bureau",
-      "L'organisation des équipes",
-      "Les devis et la facturation",
-      "Le manque de visibilité sur les chantiers",
+      {
+        id: "employee-calls",
+        label: "Mes employés m'appellent constamment pour savoir où aller",
+      },
+      {
+        id: "re-entry",
+        label: "Je ressaisis plusieurs fois les mêmes informations",
+      },
+      {
+        id: "chantier-profitability",
+        label: "Je ne connais pas précisément ma rentabilité chantier par chantier",
+      },
+      {
+        id: "employee-profitability",
+        label: "Je ne sais pas quel employé est réellement rentable",
+      },
+      {
+        id: "planning",
+        label: "Mon planning est difficile à gérer",
+      },
+      {
+        id: "devis-facturation",
+        label: "Je perds du temps sur les devis et la facturation",
+      },
+      {
+        id: "excel",
+        label: "Je travaille encore beaucoup avec Excel",
+      },
+      {
+        id: "chantier-visibility",
+        label: "Je manque de visibilité sur l'avancement des chantiers",
+      },
+      {
+        id: "employee-space",
+        label: "Je n'ai pas d'espace dédié pour mes employés",
+      },
+      {
+        id: "other",
+        label: "Autre",
+      },
     ],
   },
-] as const;
+];
 
-type ResultProfile = "admin" | "teams" | "billing" | "visibility" | "mixed";
+type DiagnosticResult = {
+  title: string;
+  text: string;
+  benefits: { title: string; description: string }[];
+};
 
-function buildPersonalizedResult(answers: number[]) {
-  const profile = computeResultProfile(answers);
-  const mainProblem = answers[6] ?? 0;
+function buildPersonalizedResult(
+  selectedDifficulties: DifficultyId[],
+): DiagnosticResult {
+  const specificIds = selectedDifficulties.filter((id) => id !== "other");
+  const ids =
+    specificIds.length > 0
+      ? specificIds
+      : selectedDifficulties.includes("other")
+        ? (["other"] as DifficultyId[])
+        : [];
 
-  if (mainProblem === 0) {
+  const benefits =
+    ids.length > 0
+      ? ids.map((id) => DIFFICULTY_BENEFITS[id])
+      : GENERIC_BENEFITS;
+
+  const uniqueBenefits = benefits.filter(
+    (benefit, index, list) =>
+      list.findIndex((item) => item.title === benefit.title) === index,
+  );
+
+  if (uniqueBenefits.length === 1) {
+    const benefit = uniqueBenefits[0];
     return {
-      title: "Vous pourriez récupérer plusieurs heures chaque semaine.",
-      text: "L'IA Batimum vous fera gagner du temps en générant vos bases de devis et en limitant la double saisie entre devis, planning et facturation.",
-      points: ["100 devis IA / mois", "Zéro ressaisie", "Devis structurés en minutes"],
+      title: "Batimum répond à votre priorité du quotidien.",
+      text: benefit.description,
+      benefits: uniqueBenefits,
     };
   }
 
-  if (mainProblem === 1) {
+  if (uniqueBenefits.length > 1) {
     return {
-      title: "Vos équipes gagneraient en autonomie.",
-      text: "L'espace employé Batimum permettra à vos équipes de connaître leurs chantiers, consignes et documents sans vous appeler chaque matin.",
-      points: ["Planning terrain", "Espace employé séparé", "Moins d'appels le matin"],
-    };
-  }
-
-  if (mainProblem === 2) {
-    return {
-      title: "Batimum accélère votre passage devis → facture.",
-      text: "Batimum vous aidera à passer plus rapidement du devis à la facture, avec signature client intégrée et moins de ressaisie.",
-      points: ["Signature électronique", "Devis → facture", "Suivi des statuts"],
-    };
-  }
-
-  if (mainProblem === 3) {
-    return {
-      title: "Retrouvez une vision claire de vos chantiers.",
-      text: "Batimum centralise devis, planning et suivi chantier pour que vous sachiez où en est chaque dossier sans fouiller vos messages.",
-      points: ["Vue chantiers", "Historique centralisé", "Moins de pertes d'info"],
-    };
-  }
-
-  if (profile === "mixed") {
-    return {
-      title: "Batimum répond à plusieurs de vos irritants.",
-      text: "Entre l'administratif, l'organisation des équipes et la facturation, Batimum réunit l'essentiel dans un seul outil pensé pour le BTP.",
-      points: [
-        "IA devis + moins de double saisie",
-        "Espace employé et planning",
-        "Devis → facture plus rapide",
-      ],
-    };
-  }
-
-  if (profile === "teams") {
-    return {
-      title: "Vos équipes seraient mieux informées, sans accès sensible.",
-      text: "L'espace employé Batimum partage chantiers et consignes tout en protégeant vos devis et votre facturation.",
-      points: ["Espace employé", "Planning partagé", "Accès sécurisé"],
+      title: `Batimum cible ${uniqueBenefits.length} de vos difficultés concrètes.`,
+      text: "Voici les réponses que Batimum apporte aux problèmes que vous venez d'identifier — pas un logiciel générique, mais un outil pensé pour les dirigeants du bâtiment.",
+      benefits: uniqueBenefits,
     };
   }
 
   return {
-    title: "Vous pourriez récupérer du temps au bureau.",
-    text: "Batimum automatise vos devis, votre suivi et votre facturation pour réduire le temps passé sur l'administratif.",
-    points: ["MUM IA", "Zéro ressaisie", "Facturation simplifiée"],
+    title: "Batimum simplifie le quotidien des dirigeants du bâtiment.",
+    text: "Devis, planning, équipes, rentabilité et facturation réunis dans une seule plateforme pensée pour les TPE du BTP.",
+    benefits: GENERIC_BENEFITS,
   };
 }
 
-function computeResultProfile(answers: number[]): ResultProfile {
-  let admin = 0;
-  let teams = 0;
-
-  answers.forEach((answerIndex, questionIndex) => {
-    const scores = scoreAnswer(questionIndex, answerIndex);
-    admin += scores.admin;
-    teams += scores.teams;
-  });
-
-  const mainProblem = answers[6] ?? 0;
-  const adminHigh = admin >= 5;
-  const teamsHigh = teams >= 5;
-
-  if (adminHigh && teamsHigh) return "mixed";
-  if (adminHigh) return "admin";
-  if (teamsHigh) return "teams";
-
-  if (mainProblem === 0 || mainProblem === 2) return "admin";
-  if (mainProblem === 1 || mainProblem === 3) return "teams";
-
-  if (admin + teams >= 4) return "mixed";
-  return teams > admin ? "teams" : "admin";
-}
-
 const ADVANCE_DELAY_MS = 420;
-
-function scoreAnswer(questionIndex: number, answerIndex: number) {
-  const pain = Math.max(0, 2 - answerIndex);
-
-  if (questionIndex === 0) return { admin: 0, teams: pain };
-  if (questionIndex === 1) return { admin: pain, teams: 0 };
-  if (questionIndex === 2) return { admin: pain * 1.5, teams: 0 };
-  if (questionIndex === 3) return { admin: 0, teams: pain };
-  if (questionIndex === 4) return { admin: 0, teams: pain };
-  if (questionIndex === 5) return { admin: pain, teams: 0 };
-
-  if (answerIndex === 0 || answerIndex === 2) return { admin: 4, teams: 0 };
-  if (answerIndex === 1 || answerIndex === 3) return { admin: 0, teams: 4 };
-  return { admin: 0, teams: 0 };
-}
 
 export function LandingDiagnosticSection({
   afterHero = false,
@@ -174,56 +258,77 @@ export function LandingDiagnosticSection({
 }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
+  const [selectedDifficulties, setSelectedDifficulties] = useState<
+    DifficultyId[]
+  >([]);
+  const [multiDraft, setMultiDraft] = useState<DifficultyId[]>([]);
   const [phase, setPhase] = useState<"question" | "result">("question");
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [panelKey, setPanelKey] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
 
   const totalSteps = QUESTIONS.length;
+  const current = QUESTIONS[step];
+  const isMultiStep = current.type === "multi";
+
   const progress =
     phase === "result"
       ? 100
-      : ((step + (selectedOption !== null ? 0.65 : 0.25)) / totalSteps) * 100;
+      : isMultiStep
+        ? ((step + (multiDraft.length > 0 ? 0.85 : 0.35)) / totalSteps) * 100
+        : ((step + (selectedOption !== null ? 0.65 : 0.25)) / totalSteps) *
+          100;
 
   const result =
-    phase === "result" ? buildPersonalizedResult(answers) : null;
+    phase === "result"
+      ? buildPersonalizedResult(selectedDifficulties)
+      : null;
 
-  const advance = useCallback(
+  const finishDiagnostic = useCallback((difficulties: DifficultyId[]) => {
+    setSelectedDifficulties(difficulties);
+    setIsExiting(true);
+    window.setTimeout(() => {
+      setPhase("result");
+      setSelectedOption(null);
+      setIsExiting(false);
+      setPanelKey((key) => key + 1);
+    }, ADVANCE_DELAY_MS);
+  }, []);
+
+  const advanceSingle = useCallback(
     (answerIndex: number) => {
       const nextAnswers = [...answers, answerIndex];
-
-      if (step >= totalSteps - 1) {
-        setAnswers(nextAnswers);
-        setIsExiting(true);
-        window.setTimeout(() => {
-          setPhase("result");
-          setSelectedOption(null);
-          setIsExiting(false);
-          setPanelKey((key) => key + 1);
-        }, ADVANCE_DELAY_MS);
-        return;
-      }
-
       setAnswers(nextAnswers);
       setIsExiting(true);
 
       window.setTimeout(() => {
-        setStep((current) => current + 1);
+        setStep((currentStep) => currentStep + 1);
         setSelectedOption(null);
         setIsExiting(false);
         setPanelKey((key) => key + 1);
       }, ADVANCE_DELAY_MS);
     },
-    [answers, step, totalSteps],
+    [answers],
   );
 
-  function handleAnswer(answerIndex: number) {
+  function handleSingleAnswer(answerIndex: number) {
     if (selectedOption !== null) return;
     setSelectedOption(answerIndex);
-    window.setTimeout(() => advance(answerIndex), ADVANCE_DELAY_MS);
+    window.setTimeout(() => advanceSingle(answerIndex), ADVANCE_DELAY_MS);
   }
 
-  const current = QUESTIONS[step];
+  function handleMultiToggle(id: DifficultyId) {
+    setMultiDraft((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
+  }
+
+  function handleMultiSubmit() {
+    if (multiDraft.length === 0 || isExiting) return;
+    finishDiagnostic(multiDraft);
+  }
 
   return (
     <section
@@ -284,21 +389,26 @@ export function LandingDiagnosticSection({
                 <p className="landing-diagnostic__result-text mt-4 text-sm leading-7 text-muted-foreground sm:text-base">
                   {result.text}
                 </p>
-                <ul className="mt-6 space-y-2.5">
-                  {result.points.map((point, index) => (
+                <ul className="mt-6 space-y-3">
+                  {result.benefits.map((benefit, index) => (
                     <li
-                      key={point}
-                      className="landing-diagnostic__result-point flex items-center gap-2.5 text-sm text-foreground/90"
-                      style={
-                        {
-                          "--point-delay": index,
-                        } as CSSProperties
-                      }
+                      key={benefit.title}
+                      className="landing-diagnostic__result-point"
+                      style={{ "--point-delay": index } as CSSProperties}
                     >
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-                        <Check className="h-3 w-3" aria-hidden="true" />
-                      </span>
-                      {point}
+                      <div className="flex items-start gap-2.5">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                          <Check className="h-3 w-3" aria-hidden="true" />
+                        </span>
+                        <div>
+                          <p className="text-sm font-medium text-foreground/90">
+                            {benefit.title}
+                          </p>
+                          <p className="mt-0.5 text-sm leading-6 text-muted-foreground">
+                            {benefit.description}
+                          </p>
+                        </div>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -320,43 +430,115 @@ export function LandingDiagnosticSection({
                 <p className="landing-diagnostic__question text-lg font-medium leading-8 text-foreground">
                   {current.question}
                 </p>
-                <ul className="mt-6 space-y-3" role="listbox" aria-label={current.question}>
-                  {current.options.map((option, index) => {
-                    const isSelected = selectedOption === index;
 
-                    return (
-                      <li key={option}>
-                        <button
-                          type="button"
-                          role="option"
-                          aria-selected={isSelected}
-                          disabled={selectedOption !== null && !isSelected}
-                          className={cn(
-                            "landing-diagnostic__option w-full rounded-xl border border-border/70 bg-card/80 px-4 py-3.5 text-left text-sm font-medium text-foreground transition-all duration-300",
-                            isSelected &&
-                              "landing-diagnostic__option--selected border-primary/55 bg-primary/10",
-                            selectedOption !== null &&
-                              !isSelected &&
-                              "opacity-45",
-                          )}
-                          onClick={() => handleAnswer(index)}
-                        >
-                          <span className="flex items-center justify-between gap-3">
-                            {option}
-                            {isSelected ? (
-                              <span
-                                className="landing-diagnostic__option-check flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
-                                aria-hidden="true"
-                              >
-                                <Check className="h-3 w-3" strokeWidth={3} />
+                {current.type === "multi" ? (
+                  <>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Sélectionnez une ou plusieurs réponses.
+                    </p>
+                    <ul
+                      className="mt-5 space-y-2.5"
+                      role="group"
+                      aria-label={current.question}
+                    >
+                      {current.options.map((option) => {
+                        const isSelected = multiDraft.includes(option.id);
+
+                        return (
+                          <li key={option.id}>
+                            <button
+                              type="button"
+                              role="checkbox"
+                              aria-checked={isSelected}
+                              disabled={isExiting}
+                              className={cn(
+                                "landing-diagnostic__option w-full rounded-xl border border-border/70 bg-card/80 px-4 py-3.5 text-left text-sm font-medium text-foreground transition-all duration-300",
+                                isSelected &&
+                                  "landing-diagnostic__option--selected border-primary/55 bg-primary/10",
+                              )}
+                              onClick={() => handleMultiToggle(option.id)}
+                            >
+                              <span className="flex items-start gap-3">
+                                <span
+                                  className={cn(
+                                    "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
+                                    isSelected
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border/80 bg-background",
+                                  )}
+                                  aria-hidden="true"
+                                >
+                                  {isSelected ? (
+                                    <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                                  ) : null}
+                                </span>
+                                <span className="leading-6">{option.label}</span>
                               </span>
-                            ) : null}
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <div className="mt-6 flex flex-col items-stretch gap-2 sm:items-end">
+                      {multiDraft.length === 0 ? (
+                        <p className="text-xs text-muted-foreground sm:text-right">
+                          Choisissez au moins une difficulté pour voir vos
+                          résultats.
+                        </p>
+                      ) : null}
+                      <button
+                        type="button"
+                        disabled={multiDraft.length === 0 || isExiting}
+                        className="landing-btn-primary landing-btn-interactive inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-45"
+                        onClick={handleMultiSubmit}
+                      >
+                        Voir mes résultats
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <ul
+                    className="mt-6 space-y-3"
+                    role="listbox"
+                    aria-label={current.question}
+                  >
+                    {current.options.map((option, index) => {
+                      const isSelected = selectedOption === index;
+
+                      return (
+                        <li key={option}>
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            disabled={selectedOption !== null && !isSelected}
+                            className={cn(
+                              "landing-diagnostic__option w-full rounded-xl border border-border/70 bg-card/80 px-4 py-3.5 text-left text-sm font-medium text-foreground transition-all duration-300",
+                              isSelected &&
+                                "landing-diagnostic__option--selected border-primary/55 bg-primary/10",
+                              selectedOption !== null &&
+                                !isSelected &&
+                                "opacity-45",
+                            )}
+                            onClick={() => handleSingleAnswer(index)}
+                          >
+                            <span className="flex items-center justify-between gap-3">
+                              {option}
+                              {isSelected ? (
+                                <span
+                                  className="landing-diagnostic__option-check flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                                  aria-hidden="true"
+                                >
+                                  <Check className="h-3 w-3" strokeWidth={3} />
+                                </span>
+                              ) : null}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </div>
             )}
           </div>

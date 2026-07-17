@@ -1,0 +1,435 @@
+/* Batimum landing — test thème clair : blanc cassé + vert émeraude
+   Scope : .landing-light uniquement — n'affecte pas la landing sombre. */
+
+.landing-light {
+  --color-primary: 16 185 129;
+  --color-primary-hover: 5 150 105;
+  --color-primary-foreground: 255 255 255;
+  --color-background: 250 250 250;
+  --color-foreground: 17 24 39;
+  --color-muted-foreground: 75 85 99;
+  --color-card: 255 255 255;
+  --color-card-hover: 249 250 251;
+  --color-card-elevated: 255 255 255;
+  --color-border: 229 231 235;
+  --color-muted: 243 244 246;
+  --shadow-glow: 0 0 28px rgba(16, 185, 129, 0.12);
+  --shadow-card: 0 1px 3px rgba(17, 24, 39, 0.06), 0 1px 2px rgba(17, 24, 39, 0.04);
+  --shadow-card-hover: 0 8px 24px rgba(17, 24, 39, 0.06), 0 2px 8px rgba(16, 185, 129, 0.06);
+  --landing-bg: #fafafa;
+  --landing-card: #ffffff;
+  --landing-bg-secondary: #f3f4f6;
+  --landing-border: #e5e7eb;
+  --landing-text: #111827;
+  --landing-text-muted: #4b5563;
+  --landing-badge-bg: rgba(16, 185, 129, 0.08);
+  background-color: #fafafa;
+  color: #111827;
+  background-image:
+    radial-gradient(
+      ellipse 90% 60% at 50% -12%,
+      rgba(16, 185, 129, 0.06) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 70% 50% at 50% 38%,
+      rgba(17, 24, 39, 0.02) 0%,
+      transparent 68%
+    );
+}
+
+/* ——— Utilitaires Tailwind codés en dur ——— */
+
+.landing-light .bg-\[\#050505\] {
+  background-color: #fafafa !important;
+}
+
+.landing-light .bg-\[\#0D0D0D\] {
+  background-color: #ffffff !important;
+}
+
+.landing-light .bg-\[\#111111\] {
+  background-color: #f3f4f6 !important;
+}
+
+.landing-light .text-white {
+  color: #111827 !important;
+}
+
+.landing-light .text-white\/95 {
+  color: rgb(17 24 39 / 0.95) !important;
+}
+
+.landing-light .text-\[\#9CA3AF\] {
+  color: #4b5563 !important;
+}
+
+.landing-light .text-\[\#9CA3AF\]\/80 {
+  color: rgb(75 85 99 / 0.8) !important;
+}
+
+.landing-light .text-\[\#555555\] {
+  color: #4b5563 !important;
+}
+
+.landing-light .border-white\/\[0\.08\] {
+  border-color: #e5e7eb !important;
+}
+
+.landing-light .hover\:border-white\/\[0\.12\]:hover {
+  border-color: #d1d5db !important;
+}
+
+.landing-light .text-primary {
+  color: #10b981 !important;
+}
+
+.landing-light a.hover\:text-primary-hover:hover {
+  color: #059669 !important;
+}
+
+/* ——— Footer ——— */
+
+.landing-light > footer {
+  border-color: #e5e7eb !important;
+  background-color: #fafafa !important;
+  color: #4b5563 !important;
+}
+
+.landing-light > footer a {
+  color: #4b5563 !important;
+}
+
+.landing-light > footer a:hover {
+  color: #059669 !important;
+}
+
+/* ——— Hero & header ——— */
+
+.landing-light .landing-hero-section {
+  background: transparent;
+  border: none;
+}
+
+.landing-light .landing-top {
+  background: transparent;
+}
+
+.landing-light .landing-header-bar--scrolled .landing-header-bar__inner {
+  background: rgb(255 255 255 / 0.88);
+  border-color: #e5e7eb;
+  box-shadow: 0 1px 3px rgb(17 24 39 / 0.06);
+}
+
+.landing-light .landing-header-btn--secondary {
+  border-color: #e5e7eb;
+  background: #ffffff;
+}
+
+.landing-light .landing-hero-atmosphere__grid {
+  opacity: 0.35;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 79px,
+    rgba(17, 24, 39, 0.04) 79px,
+    rgba(17, 24, 39, 0.04) 80px
+  );
+  mask-image: radial-gradient(
+    ellipse 72% 68% at 50% 42%,
+    rgb(0 0 0 / 0.12) 0%,
+    rgb(0 0 0 / 0.05) 55%,
+    transparent 100%
+  );
+}
+
+.landing-light .landing-hero-atmosphere__glow {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(16, 185, 129, 0.08) 0%,
+    rgba(16, 185, 129, 0.03) 38%,
+    transparent 72%
+  );
+}
+
+.landing-light .landing-page-atmosphere__veil {
+  background:
+    radial-gradient(
+      ellipse 80% 55% at 50% 20%,
+      rgba(16, 185, 129, 0.05) 0%,
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 55% 40% at 50% 72%,
+      rgba(17, 24, 39, 0.02) 0%,
+      transparent 70%
+    );
+}
+
+.landing-light .landing-page-atmosphere__star--white {
+  background: rgba(17, 24, 39, 0.12);
+  box-shadow: 0 0 4px rgba(17, 24, 39, 0.06);
+}
+
+.landing-light .landing-page-atmosphere__star--emerald,
+.landing-light .landing-hero-atmosphere__particle--emerald {
+  background: rgba(16, 185, 129, 0.55);
+  box-shadow: 0 0 5px rgba(16, 185, 129, 0.12);
+}
+
+/* Hero scene — cartes claires */
+.landing-light .landing-hero-scene__card,
+.landing-light .landing-hero-scene__hub-card {
+  background: rgb(255 255 255 / 0.96) !important;
+  border-color: rgb(16 185 129 / 0.18) !important;
+  box-shadow:
+    0 1px 3px rgb(17 24 39 / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.9) !important;
+}
+
+.landing-light .landing-hero-scene__mini-ui,
+.landing-light .landing-hero-scene__icon-wrap {
+  background: rgb(250 250 250 / 0.9);
+  border-color: #e5e7eb;
+}
+
+.landing-light .landing-hero-scene__line-track,
+.landing-light .landing-hero-scene__line {
+  stroke: #10b981;
+}
+
+.landing-light .landing-hero-scene__node {
+  fill: #10b981;
+}
+
+.landing-light .landing-hero-pill__trigger {
+  background: rgb(255 255 255 / 0.9);
+  border-color: #e5e7eb;
+}
+
+.landing-light .landing-top .landing-btn-primary,
+.landing-light .landing-btn-primary.landing-btn-interactive:hover {
+  box-shadow: 0 0 28px rgba(16, 185, 129, 0.15);
+}
+
+/* ——— Badges & cartes interactives ——— */
+
+.landing-light .landing-badge {
+  color: #047857;
+  background: rgba(16, 185, 129, 0.08);
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.12),
+    0 2px 8px rgba(16, 185, 129, 0.08);
+}
+
+.landing-light .landing-badge--accent {
+  color: #059669;
+}
+
+.landing-light .landing-card-interactive:hover {
+  border-color: rgba(16, 185, 129, 0.28) !important;
+}
+
+/* ——— IA flow ——— */
+
+.landing-light .landing-ia-flow__badge--done,
+.landing-light .landing-ia-flow__badge--active {
+  background: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+.landing-light .landing-ia-flow__step--active {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.12);
+}
+
+.landing-light .landing-ia-flow__arrow-fill {
+  background: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.35) 0%,
+    rgba(16, 185, 129, 0.95) 55%,
+    rgba(16, 185, 129, 0.55) 100%
+  );
+}
+
+.landing-light .landing-ia-flow__arrow--lit .landing-ia-flow__arrow-icon {
+  color: #10b981;
+  filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.2));
+}
+
+@keyframes landingIaArrowIconFlowLight {
+  0% {
+    color: #9ca3af;
+    transform: translateY(-4px);
+    filter: none;
+  }
+  70% {
+    color: #9ca3af;
+  }
+  100% {
+    color: #10b981;
+    transform: translateY(0);
+    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.2));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing-light .landing-ia-flow__arrow--filling .landing-ia-flow__arrow-icon {
+    animation: landingIaArrowIconFlowLight var(--landing-ia-duration) var(--landing-ia-ease) forwards;
+  }
+}
+
+/* ——— Diagnostic ——— */
+
+.landing-light .landing-diagnostic__option:not(:disabled):hover {
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08);
+}
+
+.landing-light .landing-diagnostic__option--selected {
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.22),
+    0 4px 16px rgba(16, 185, 129, 0.1);
+}
+
+.landing-light .landing-diagnostic__progress {
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+}
+
+/* ——— Comparatif ——— */
+
+.landing-light .landing-comparison {
+  background: #ffffff;
+  border-color: #e5e7eb !important;
+  box-shadow: 0 1px 3px rgba(17, 24, 39, 0.06);
+}
+
+.landing-light .landing-comparison__head {
+  background: #f9fafb;
+}
+
+.landing-light .landing-comparison__th-classic,
+.landing-light .landing-comparison__cell-classic {
+  background: #f3f4f6;
+  border-left-color: #e5e7eb !important;
+  opacity: 1;
+}
+
+.landing-light .landing-comparison__row {
+  border-bottom-color: #e5e7eb;
+}
+
+.landing-light .landing-comparison__th-batimum {
+  background: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.1) 0%,
+    rgba(16, 185, 129, 0.05) 100%
+  );
+  border-left: 1px solid rgba(16, 185, 129, 0.2);
+  box-shadow: inset 0 0 24px rgba(16, 185, 129, 0.04);
+  text-shadow: none;
+  color: #059669 !important;
+}
+
+.landing-light .landing-comparison__cell-batimum {
+  background: linear-gradient(
+    90deg,
+    rgba(16, 185, 129, 0.05) 0%,
+    rgba(16, 185, 129, 0.08) 100%
+  );
+  border-left: 1px solid rgba(16, 185, 129, 0.15);
+  box-shadow: inset 0 0 16px rgba(16, 185, 129, 0.03);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .landing-light .landing-comparison__row:hover .landing-comparison__feature {
+    background: rgba(16, 185, 129, 0.04);
+  }
+
+  .landing-light .landing-comparison__row:hover .landing-comparison__cell-classic {
+    background: #eceff1;
+  }
+
+  .landing-light .landing-comparison__row:hover .landing-comparison__cell-batimum {
+    background: linear-gradient(
+      90deg,
+      rgba(16, 185, 129, 0.08) 0%,
+      rgba(16, 185, 129, 0.12) 100%
+    );
+    border-left-color: rgba(16, 185, 129, 0.25);
+    box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.06);
+  }
+}
+
+.landing-light .landing-comparison__icon--yes {
+  color: #10b981;
+}
+
+/* ——— Tarifs ——— */
+
+.landing-light .landing-pricing-card {
+  border: 1px solid rgba(16, 185, 129, 0.18) !important;
+  background: #ffffff !important;
+  box-shadow:
+    0 1px 3px rgba(17, 24, 39, 0.06),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8) !important;
+}
+
+.landing-light .landing-billing-switch {
+  background: #f3f4f6;
+}
+
+.landing-light .landing-billing-switch__thumb {
+  background: #10b981;
+}
+
+.landing-light .landing-billing-switch__btn--active {
+  color: #ffffff;
+}
+
+.landing-light .landing-pricing-trial-label,
+.landing-light .landing-pricing-savings-badge {
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  background: rgba(16, 185, 129, 0.08);
+  color: #059669;
+}
+
+.landing-light .landing-pricing-card--yearly {
+  border-color: rgba(16, 185, 129, 0.22) !important;
+  box-shadow:
+    0 1px 3px rgba(17, 24, 39, 0.06),
+    0 4px 20px rgba(16, 185, 129, 0.06) !important;
+}
+
+.landing-light .landing-pricing-feature__check {
+  background: rgba(16, 185, 129, 0.08) !important;
+  color: #10b981 !important;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.18);
+}
+
+@keyframes landingPricingCardGlowLight {
+  0% {
+    box-shadow: 0 1px 3px rgba(17, 24, 39, 0.06) !important;
+  }
+  45% {
+    box-shadow:
+      0 1px 3px rgba(17, 24, 39, 0.06),
+      0 0 12px rgba(16, 185, 129, 0.1) !important;
+  }
+  100% {
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.08) !important;
+  }
+}
+
+.landing-light .landing-pricing-card--glow {
+  animation: landingPricingCardGlowLight 500ms ease-out;
+}
+
+/* ——— FAQ (variant light déjà partiellement géré) ——— */
+
+.landing-light #faq .rounded-full.border {
+  border-color: #e5e7eb !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+}
+
+.landing-light .landing-faq-trigger:hover {
+  background: rgba(16, 185, 129, 0.04);
+}

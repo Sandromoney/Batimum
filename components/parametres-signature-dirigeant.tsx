@@ -11,7 +11,7 @@ import { Lock, Pencil, Trash2 } from "lucide-react";
 
 type ParametresSignatureDirigeantProps = {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string | undefined) => void;
   parametres: Parametres;
 };
 
@@ -69,7 +69,7 @@ export function ParametresSignatureDirigeant({
 
   function confirmDelete() {
     setConfirmDeleteOpen(false);
-    onChange("");
+    onChange(undefined);
     setDraft(null);
     setCanvasSession((session) => session + 1);
     setIsEditing(true);

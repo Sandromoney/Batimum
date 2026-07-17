@@ -525,6 +525,9 @@ export type BibliothequePrixResolution = {
   fiabilite?: number;
   designationRef?: string;
   tvaHabituelle?: number;
+  purchasePriceHT?: number;
+  marginRate?: number;
+  sourceLabel?: string;
 };
 
 export function formatBibliothequeForPrompt(

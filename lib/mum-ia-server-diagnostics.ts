@@ -1,4 +1,5 @@
 import { getOpenAiEnvDiagnostics } from "@/lib/openai-server";
+import { logMumIaOpenAiRawBeforeValidation } from "@/lib/mum-ia-openai-diagnostics";
 
 export function isMumIaDevEnvironment(): boolean {
   return process.env.NODE_ENV === "development";
@@ -61,13 +62,12 @@ function sanitizeRequestBodyForLogs(body: unknown): unknown {
 export function logMumIaOpenAiResponse(params: {
   route: string;
   response: unknown;
+  content?: string | null;
 }): void {
-  if (!isMumIaDevEnvironment()) return;
-  try {
-    const preview = JSON.stringify(params.response).slice(0, 2000);
-    console.error("OPENAI RESPONSE:", preview);
-  } catch {
-    console.error("OPENAI RESPONSE:", params.response);
-  }
-  console.error("ROUTE:", params.route);
+  // Toujours logger (prod + dev) — indispensable pour diagnostiquer invalid_response
+  logMumIaOpenAiRawBeforeValidation({
+    route: params.route,
+    raw: params.response,
+    content: params.content,
+  });
 }

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
+import { MumIaContextButton } from "@/components/mum-ia-context-button";
 import { BrandLogo } from "@/components/brand-logo";
 import { DataTable, RowActions, Td, Tr } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
@@ -462,10 +463,13 @@ ${email.message}`,
         title="Factures"
         description="Facturation et suivi des paiements"
         action={
-          <Button onClick={openCreate} disabled={!data.clients.length}>
-            <Plus className="h-4 w-4" />
-            Nouvelle facture
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <MumIaContextButton source="facture" entityLabel="Factures" />
+            <Button onClick={openCreate} disabled={!data.clients.length}>
+              <Plus className="h-4 w-4" />
+              Nouvelle facture
+            </Button>
+          </div>
         }
       />
 
@@ -893,7 +897,7 @@ ${email.message}`,
           <section className="space-y-5">
             <div className="rounded-2xl border border-border bg-card-elevated/70 p-4">
               <div className="mb-4 flex items-center justify-between gap-4">
-                <BrandLogo imageClassName="h-10" showSubtitle={false} />
+                <BrandLogo imageClassName="h-10 w-auto object-contain" showSubtitle={false} />
                 <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
                   Email simulé
                 </span>

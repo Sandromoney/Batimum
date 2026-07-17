@@ -1,4 +1,6 @@
 import type { Avoir, Commande, Devis, Facture, Parametres } from "./types";
+import { normalizeEntreprisePriceLibrary } from "@/lib/entreprise-price-library/normalize";
+import { normalizeFournisseur } from "@/lib/fourniture/fournisseur-storage";
 import { normalizeDevisRelanceRegles } from "@/lib/devis-relance-config";
 import { normalizeHex } from "./color-picker-utils";
 import { normalizeDevisBrandColorId } from "./devis-brand-colors";
@@ -41,8 +43,9 @@ export const DEFAULT_PARAMETRES: Parametres = {
   logoEntreprise: "",
   logoApplication: "",
   logoPdf: "",
-  theme: "dark",
+  theme: "light",
   objectifCaMensuel: 15000,
+  tauxHoraireInterneDefaut: 32,
   assuranceDecennale: false,
   nomAssurance: "",
   numeroPoliceAssurance: "",
@@ -75,15 +78,36 @@ export const DEFAULT_PARAMETRES: Parametres = {
   relanceJ30: true,
   connexionEmail: DEFAULT_CONNEXION_EMAIL,
   couleurDevis: "bleu_batimum",
+  fournisseurs: [],
+  tarifsFournisseurs: [],
+  entreprisePriceLibrary: {
+    entries: [],
+    defaultMarkupCoefficient: 1.65,
+    defaultSalePriceMode: "coefficient",
+  },
 };
+
+function normalizeLogoField(
+  partial: Partial<Parametres>,
+  key: "logoApplication" | "logoPdf",
+  legacyFallback: string,
+): string {
+  if (Object.prototype.hasOwnProperty.call(partial, key)) {
+    return partial[key]?.trim() ?? "";
+  }
+  return legacyFallback;
+}
 
 export function normalizeParametres(
   partial?: Partial<Parametres> | null,
 ): Parametres {
   const p = partial ?? {};
   const legacyLogo = p.logoEntreprise?.trim() ?? "";
-  const logoApplication = p.logoApplication?.trim() || legacyLogo;
-  const logoPdf = p.logoPdf?.trim() || legacyLogo;
+  const logoApplication = normalizeLogoField(p, "logoApplication", legacyLogo);
+  const logoPdf = normalizeLogoField(p, "logoPdf", legacyLogo);
+  const signaturePdf = Object.prototype.hasOwnProperty.call(p, "signaturePdf")
+    ? (p.signaturePdf?.trim() ?? "")
+    : (DEFAULT_PARAMETRES.signaturePdf ?? "");
 
   return {
     ...DEFAULT_PARAMETRES,
@@ -93,7 +117,8 @@ export function normalizeParametres(
       p.modeTVA === "non_applicable_293B" ? "non_applicable_293B" : "classique",
     logoApplication,
     logoPdf,
-    logoEntreprise: logoPdf || logoApplication || legacyLogo,
+    logoEntreprise: legacyLogo || logoPdf || logoApplication,
+    signaturePdf,
     prefixeDevis: (p.prefixeDevis?.trim() || DEFAULT_PREFIXE_DEVIS).toUpperCase(),
     prefixeFacture: (p.prefixeFacture?.trim() || DEFAULT_PREFIXE_FACTURE).toUpperCase(),
     prefixeAvoir: (p.prefixeAvoir?.trim() || DEFAULT_PREFIXE_AVOIR).toUpperCase(),
@@ -141,9 +166,22 @@ export function normalizeParametres(
       statut: p.connexionEmail?.statut ?? "non_connecte",
       provider: p.connexionEmail?.provider ?? null,
     },
+    fournisseurs: Array.isArray(p.fournisseurs)
+      ? p.fournisseurs.map((item) => normalizeFournisseur(item))
+      : [],
+    tarifsFournisseurs: Array.isArray(p.tarifsFournisseurs)
+      ? p.tarifsFournisseurs
+      : [],
+    entreprisePriceLibrary: normalizeEntreprisePriceLibrary(
+      p.entreprisePriceLibrary ?? DEFAULT_PARAMETRES.entreprisePriceLibrary,
+    ),
     couleurDevis: normalizeDevisBrandColorId(p.couleurDevis),
     couleurDevisCustom:
       normalizeHex(p.couleurDevisCustom?.trim() ?? "") ?? undefined,
+    tauxHoraireInterneDefaut:
+      typeof p.tauxHoraireInterneDefaut === "number" && p.tauxHoraireInterneDefaut > 0
+        ? p.tauxHoraireInterneDefaut
+        : DEFAULT_PARAMETRES.tauxHoraireInterneDefaut,
   };
 }
 
@@ -157,12 +195,12 @@ export function getEmailFacturation(parametres: Parametres): string {
 }
 
 export function getLogoApplication(parametres: Parametres): string | undefined {
-  const logo = parametres.logoApplication?.trim() || parametres.logoEntreprise?.trim();
+  const logo = parametres.logoApplication?.trim();
   return logo || undefined;
 }
 
 export function getLogoPdf(parametres: Parametres): string | undefined {
-  const logo = parametres.logoPdf?.trim() || parametres.logoEntreprise?.trim();
+  const logo = parametres.logoPdf?.trim();
   return logo || undefined;
 }
 

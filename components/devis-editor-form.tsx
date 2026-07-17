@@ -5,7 +5,13 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DateInput, Input, Select, Textarea } from "@/components/ui/input";
 import { DevisLignesEditor } from "@/components/devis-lignes-editor";
+import { DevisPilotageSection } from "@/components/devis-pilotage-section";
 import { DevisRecapSidebar } from "@/components/devis-recap-sidebar";
+import { EntrepriseSuggestionsStrip } from "@/components/entreprise-suggestions-strip";
+import { MumIaContextButton } from "@/components/mum-ia-context-button";
+import { createEmptyLigneDevis } from "@/lib/devis-lignes";
+import { useStore } from "@/lib/store";
+import { generateId } from "@/lib/utils";
 import {
   TYPE_CHANTIER_LABELS,
   TYPES_CHANTIER,
@@ -25,6 +31,7 @@ import {
   ChevronDown,
   Eye,
   Layers,
+  Lock,
   PanelRight,
   Plus,
   Save,
@@ -130,8 +137,12 @@ export function DevisEditorForm({
   canSendToClient?: boolean;
   sendToClientDisabledTitle?: string;
 }) {
+  const { data } = useStore();
   const [draftSaved, setDraftSaved] = useState(false);
   const [recapOpen, setRecapOpen] = useState(false);
+  const [showInternalCosts, setShowInternalCosts] = useState(
+    devis.lignes.some((ligne) => (ligne.prixAchatHT ?? 0) > 0),
+  );
   const [descriptionOpen, setDescriptionOpen] = useState(
     Boolean(devis.descriptionChantier?.trim() || devis.titre?.trim()),
   );
@@ -147,6 +158,21 @@ export function DevisEditorForm({
     ? addDaysIso(dateDevis, validiteJours)
     : "";
   const manualStatutOptions = allowedManualStatuts ?? MANUAL_DEVIS_STATUT_OPTIONS;
+
+  function handleSuggestionSelect(item: {
+    designation: string;
+    unite: string;
+    prixUnitaireHT: number;
+  }) {
+    const ligne = {
+      ...createEmptyLigneDevis(defaultTva),
+      id: generateId(),
+      designation: item.designation,
+      unite: item.unite,
+      prixUnitaire: item.prixUnitaireHT,
+    };
+    onUpdateDevis({ lignes: [...devis.lignes, ligne] });
+  }
 
   function handleSaveDraft() {
     onSaveDraft();
@@ -398,6 +424,8 @@ export function DevisEditorForm({
         </div>
       )}
 
+      <DevisPilotageSection devis={devis} onUpdateDevis={onUpdateDevis} />
+
       {showValidationToast && (
         <p className="rounded-xl border btp-alert-error px-3.5 py-2.5 text-xs">
           Veuillez corriger les champs en rouge.
@@ -425,6 +453,25 @@ export function DevisEditorForm({
             >
               <Layers className="h-3.5 w-3.5" />
               Ajouter section
+            </Button>
+            <MumIaContextButton
+              source="devis"
+              entityId={devis.id}
+              entityLabel={`Devis ${devis.numero}`}
+              description={devis.descriptionChantier ?? devis.titre}
+              typeChantier={devis.typeChantier}
+              returnHref={`/devis/${devis.id}`}
+              extra={{ lignesCount: devis.lignes.length }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant={showInternalCosts ? "secondary" : "ghost"}
+              className={showInternalCosts ? actionBtnSecondary : actionBtnGhost}
+              onClick={() => setShowInternalCosts((value) => !value)}
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Coûts internes
             </Button>
             <span className="mx-0.5 hidden h-5 w-px bg-border/60 sm:block" />
             <Button
@@ -494,11 +541,17 @@ export function DevisEditorForm({
           )}
 
           <div className="min-h-0 flex-1 overflow-auto p-2 sm:p-3">
+            <EntrepriseSuggestionsStrip
+              data={data}
+              typeChantier={devis.typeChantier}
+              onSelect={handleSuggestionSelect}
+            />
             <DevisLignesEditor
               lignes={devis.lignes}
               defaultTva={defaultTva}
               errors={errors}
               invalidClass={invalidClass}
+              showInternalCosts={showInternalCosts}
               onReorder={onReorderLignes}
               onUpdateLigne={onUpdateLigne}
               onRemoveLigne={onRemoveLigne}

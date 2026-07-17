@@ -36,6 +36,7 @@ import {
   UNITE_DEVIS_TEXTE_PERSONNALISE_LABEL,
   UNITES_DEVIS,
 } from "@/lib/devis-unites";
+import { computeLigneMargeHT, computeLigneTauxMarge } from "@/lib/pilotage";
 
 const cellInputClass =
   "h-10 min-h-10 w-full rounded-lg border border-transparent bg-transparent px-2.5 text-xs shadow-none transition-all duration-200 hover:border-border/50 hover:bg-white/[0.03] focus:border-primary/55 focus:bg-white/[0.04] focus:ring-2 focus:ring-primary/15";
@@ -99,6 +100,7 @@ export function DevisLignesEditor({
   errors,
   invalidClass,
   readOnly = false,
+  showInternalCosts = false,
   onReorder,
   onUpdateLigne,
   onRemoveLigne,
@@ -108,6 +110,8 @@ export function DevisLignesEditor({
   errors: ValidationErrors;
   invalidClass: string;
   readOnly?: boolean;
+  /** Affiche prix d'achat et fournisseur (jamais sur PDF client). */
+  showInternalCosts?: boolean;
   onReorder: (fromIndex: number, toIndex: number) => void;
   onUpdateLigne: (id: string, patch: Partial<LigneDevis>) => void;
   onRemoveLigne: (id: string) => void;
@@ -169,16 +173,23 @@ export function DevisLignesEditor({
 
   return (
     <div className="h-full min-h-[min(72vh,680px)] w-full overflow-x-auto rounded-xl border border-border/50 bg-card/90 shadow-inner">
-      <table className="w-full min-w-[960px] table-fixed border-collapse text-sm md:min-w-full">
+      <table className={`w-full table-fixed border-collapse text-sm ${showInternalCosts ? "min-w-[1200px]" : "min-w-[960px] md:min-w-full"}`}>
         <colgroup>
           <col className="w-9" />
-          <col className="w-[22%]" />
-          <col className="w-[22%]" />
-          <col className="w-[8%]" />
+          <col className="w-[20%]" />
+          <col className="w-[18%]" />
+          <col className="w-[7%]" />
+          <col className="w-[9%]" />
           <col className="w-[10%]" />
-          <col className="w-[11%]" />
+          {showInternalCosts ? (
+            <>
+              <col className="w-[9%]" />
+              <col className="w-[10%]" />
+              <col className="w-[8%]" />
+            </>
+          ) : null}
+          <col className="w-[9%]" />
           <col className="w-[10%]" />
-          <col className="w-[11%]" />
           <col className="w-11" />
         </colgroup>
         <thead className="sticky top-0 z-10">
@@ -195,8 +206,21 @@ export function DevisLignesEditor({
             </th>
             <th className="border-r border-border/30 px-3 py-3 font-semibold">Unité</th>
             <th className="border-r border-border/30 px-3 py-3 font-semibold text-right">
-              Prix unitaire HT
+              Prix vente HT
             </th>
+            {showInternalCosts ? (
+              <>
+                <th className="border-r border-border/30 px-3 py-3 font-semibold text-right">
+                  Prix achat HT
+                </th>
+                <th className="border-r border-border/30 px-3 py-3 font-semibold">
+                  Fournisseur
+                </th>
+                <th className="border-r border-border/30 px-3 py-3 font-semibold text-right">
+                  Marge ligne
+                </th>
+              </>
+            ) : null}
             <th className="border-r border-border/30 px-3 py-3 font-semibold">TVA</th>
             <th className="border-r border-border/30 px-3 py-3 font-semibold text-right">
               Total HT
@@ -240,7 +264,7 @@ export function DevisLignesEditor({
                     </button>
                   )}
                 </td>
-                <td colSpan={7} className="border-r border-border/20 px-1.5 py-2 align-top">
+                <td colSpan={showInternalCosts ? 10 : 7} className="border-r border-border/20 px-1.5 py-2 align-top">
                   {readOnly ? (
                     <p className="px-2.5 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-primary">
                       {getLigneDesignation(ligne)}
@@ -466,6 +490,71 @@ export function DevisLignesEditor({
                     />
                   )}
                 </td>
+                {showInternalCosts && !isSection ? (
+                  <>
+                    <td className="border-r border-border/20 px-1.5 py-1.5 align-middle">
+                      {readOnly ? (
+                        <p className="px-2.5 py-2 text-right text-xs tabular-nums text-muted-foreground">
+                          {ligne.prixAchatHT
+                            ? formatPrixUnitaireInputValue(ligne.prixAchatHT)
+                            : "—"}
+                        </p>
+                      ) : (
+                        <Input
+                          min={0}
+                          step="0.01"
+                          type="number"
+                          value={
+                            ligne.prixAchatHT
+                              ? formatPrixUnitaireInputValue(ligne.prixAchatHT)
+                              : ""
+                          }
+                          placeholder="Achat"
+                          className={`${cellInputClass} text-right tabular-nums`}
+                          onChange={(event) =>
+                            onUpdateLigne(ligne.id, {
+                              prixAchatHT: parsePrixUnitaireInput(event.target.value) || undefined,
+                            })
+                          }
+                        />
+                      )}
+                    </td>
+                    <td className="border-r border-border/20 px-1.5 py-1.5 align-middle">
+                      {readOnly ? (
+                        <p className="px-2.5 py-2 text-xs text-muted-foreground">
+                          {ligne.fournisseur || "—"}
+                        </p>
+                      ) : (
+                        <Input
+                          value={ligne.fournisseur ?? ""}
+                          placeholder="Fournisseur"
+                          className={cellInputClass}
+                          onChange={(event) =>
+                            onUpdateLigne(ligne.id, {
+                              fournisseur: event.target.value || undefined,
+                            })
+                          }
+                        />
+                      )}
+                    </td>
+                    <td className="border-r border-border/20 px-2 py-1.5 align-middle text-right text-[10px] tabular-nums text-muted-foreground">
+                      {ligne.prixAchatHT && ligne.prixAchatHT > 0 ? (
+                        <>
+                          <span className="block font-medium text-foreground/90">
+                            {formatCurrency(computeLigneMargeHT(ligne))}
+                          </span>
+                          <span>{computeLigneTauxMarge(ligne).toFixed(1)} %</span>
+                        </>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                  </>
+                ) : showInternalCosts ? (
+                  <>
+                    <td className="border-r border-border/20" colSpan={3} />
+                  </>
+                ) : null}
                 <td className="border-r border-border/20 px-1.5 py-1.5 align-middle">
                   {readOnly ? (
                     <p className="px-2.5 py-2 text-xs">
@@ -516,7 +605,7 @@ export function DevisLignesEditor({
                   <tr className="border-b border-border/30 bg-primary/[0.04]">
                     <td className="border-r border-border/20" />
                     <td
-                      colSpan={7}
+                      colSpan={showInternalCosts ? 10 : 7}
                       className="border-r border-border/20 px-3 py-2 text-right text-xs text-muted-foreground"
                     >
                       <span className="font-medium text-foreground/90">

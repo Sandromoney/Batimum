@@ -1,23 +1,22 @@
-import { NextResponse } from "next/server";
 import {
   AI_DEVIS_JSON_SCHEMA,
   buildAiDevisSystemPrompt,
   buildAiDevisUserPrompt,
-  normalizeAiDevisResult,
   type AiDevisGenerateRequest,
 } from "@/lib/ai-devis";
 import { verifyAndCompleteAiDevis } from "@/lib/ai-devis-verification";
 import type { BtpNiveauPrix } from "@/lib/btp-tarifs-reference";
 import type { BibliothequeEntrepriseEntry, TypeChantier } from "@/lib/types";
+import { normalizeParametres } from "@/lib/parametres";
 import {
   classifyOpenAiError,
-  createOpenAiClient,
-  getOpenAiModel,
+  getOpenAiKeyEnvNameForMode,
+  getOpenAiModelForMode,
   isOpenAiConfigured,
   logMumIa,
   openAiNotConfiguredResponse,
 } from "@/lib/openai-server";
-import { checkUserAiQuota, incrementUserAiUsage, buildQuotaSnapshotFromUsage } from "@/lib/ai-usage-store";
+import { checkUserAiQuota } from "@/lib/ai-usage-store";
 import { getMumIaUserMessage } from "@/lib/mum-ia-errors";
 import { mumIaServerDebug } from "@/lib/mum-ia-debug";
 import {
@@ -25,8 +24,15 @@ import {
   logMumIaOpenAiResponse,
   logMumIaRouteError,
 } from "@/lib/mum-ia-server-diagnostics";
+import {
+  buildExploitableMumDevis,
+  TECHNICAL_FAIL_MESSAGE,
+} from "@/lib/mum-ia-generate-devis-pipeline";
+import { logMumGenerate } from "@/lib/mum-ia-json-extract";
 import { isPrivateBetaTestEmail } from "@/lib/private-beta";
 import { isMumIaAuthContext, requireMumIaAuth } from "@/lib/supabase-auth-server";
+import { aiService } from "@/lib/ai/ai-service";
+import { NextResponse } from "next/server";
 
 const VALID_TYPES_CHANTIER = new Set<TypeChantier>([
   "renovation",
@@ -109,6 +115,19 @@ function parseRequestBody(body: unknown): AiDevisGenerateRequest | null {
     ? (data.ratioEntries as import("@/lib/types").BibliothequeRatioEntry[])
     : undefined;
 
+  const entreprisePriceLibrary =
+    data.entreprisePriceLibrary &&
+    typeof data.entreprisePriceLibrary === "object"
+      ? (data.entreprisePriceLibrary as import("@/lib/types").EntreprisePriceLibrary)
+      : undefined;
+
+  const parametresSnapshot =
+    data.parametresSnapshot && typeof data.parametresSnapshot === "object"
+      ? (data.parametresSnapshot as AiDevisGenerateRequest["parametresSnapshot"])
+      : undefined;
+
+  const companyId = data.companyId ? String(data.companyId).trim() : undefined;
+
   return {
     descriptionChantier,
     regionCode,
@@ -132,6 +151,9 @@ function parseRequestBody(body: unknown): AiDevisGenerateRequest | null {
           : undefined,
     departementPrincipal,
     ratioEntries,
+    entreprisePriceLibrary,
+    parametresSnapshot,
+    companyId,
   };
 }
 
@@ -222,18 +244,25 @@ export async function POST(request: Request) {
     }
   }
 
-  const client = createOpenAiClient();
-  if (!client) {
+  if (!isOpenAiConfigured()) {
     return NextResponse.json(openAiNotConfiguredResponse(), { status: 503 });
   }
 
-  const model = getOpenAiModel();
+  const model = getOpenAiModelForMode("mum_devis");
+  const keyEnv = getOpenAiKeyEnvNameForMode("mum_devis");
   const startedAt = Date.now();
   const userPrompt = buildAiDevisUserPrompt(input);
 
   try {
+    logMumGenerate("route appelée", "/api/ia/generate-devis");
+    logMumGenerate("modèle", model);
+    logMumGenerate("clé env utilisée", keyEnv);
+    logMumGenerate("mode", "mum_devis");
+
     logMumIa("info", "Génération devis IA", {
       model,
+      keyEnv,
+      mode: "mum_devis",
       region: input.regionLabel,
       typeChantier: input.typeChantier,
       niveauPrix: input.niveauPrix,
@@ -241,6 +270,7 @@ export async function POST(request: Request) {
     });
     mumIaServerDebug("generate_request", {
       model,
+      keyEnv,
       regionCode: input.regionCode,
       departementCode: input.departementCode,
       typeChantier: input.typeChantier,
@@ -249,57 +279,122 @@ export async function POST(request: Request) {
       promptPreview: userPrompt.slice(0, 500),
     });
 
-    const response = await client.responses.create({
-      model,
-      instructions: buildAiDevisSystemPrompt(),
-      input: userPrompt,
-      text: {
-        format: {
-          type: "json_schema",
-          name: "batimum_devis_ia",
-          schema: AI_DEVIS_JSON_SCHEMA,
-          strict: true,
-        },
+    const aiResult = await aiService.call({
+      mode: "mum_devis",
+      messages: [{ role: "user", content: userPrompt }],
+      systemPrompt: buildAiDevisSystemPrompt(),
+      maxTokens: 12000,
+      jsonSchema: {
+        name: "batimum_devis_ia",
+        schema: AI_DEVIS_JSON_SCHEMA,
+        strict: true,
       },
+      context: {
+        route: "generate-devis",
+        region: input.regionLabel,
+        typeChantier: input.typeChantier,
+      },
+      credits: bypassQuota
+        ? undefined
+        : {
+            userId: authUser.id,
+            operationId: generationId,
+            category: "mum_devis",
+            checkBefore: true,
+            // Crédit uniquement après devis exploitable (ci-dessous)
+            trackAfterSuccess: false,
+          },
     });
 
-    logMumIaOpenAiResponse({ route: "generate-devis", response });
+    const rawText = aiResult.content?.trim() ?? null;
+    const rawStatus =
+      aiResult.raw &&
+      typeof aiResult.raw === "object" &&
+      "status" in (aiResult.raw as object)
+        ? String((aiResult.raw as { status?: unknown }).status ?? "")
+        : "";
 
-    const rawText = response.output_text?.trim();
+    logMumGenerate("statut OpenAI", {
+      success: aiResult.success,
+      code: aiResult.code,
+      httpStatus: aiResult.httpStatus,
+      status: rawStatus || null,
+      error: aiResult.error,
+      contentLength: rawText?.length ?? 0,
+    });
+
+    if (aiResult.raw) {
+      logMumIaOpenAiResponse({
+        route: "generate-devis",
+        response: aiResult.raw,
+        content: rawText,
+      });
+    }
+
     mumIaServerDebug("generate_response", {
-      durationMs: Date.now() - startedAt,
+      durationMs: aiResult.durationMs,
       rawLength: rawText?.length ?? 0,
       rawPreview: rawText?.slice(0, 400),
     });
 
-    if (!rawText) {
+    if (!aiResult.success || !rawText) {
+      logMumGenerate("erreur exacte", {
+        stage: "empty_or_failed_openai",
+        error: aiResult.error,
+        code: aiResult.code,
+        stack: new Error().stack,
+      });
       return NextResponse.json(
-        { success: false, code: "invalid_response", message: getMumIaUserMessage("invalid_response") },
+        attachMumIaDevDebug(
+          {
+            success: false,
+            code: aiResult.code ?? "generation_failed",
+            message: TECHNICAL_FAIL_MESSAGE,
+          },
+          aiResult.error ?? "empty OpenAI response",
+        ),
+        { status: aiResult.httpStatus ?? 502 },
+      );
+    }
+
+    const built = await buildExploitableMumDevis({
+      rawText,
+      defaultVatRate: input.tauxTVA,
+      chantierDescription: input.descriptionChantier,
+    });
+
+    if (!built.result) {
+      logMumGenerate("erreur exacte", {
+        stage: "no_exploitable_devis",
+        missingFields: built.missingFields,
+        stats: built.stats,
+        repaired: built.repaired,
+        stack: new Error().stack,
+      });
+      return NextResponse.json(
+        attachMumIaDevDebug(
+          {
+            success: false,
+            code: "generation_failed",
+            message: TECHNICAL_FAIL_MESSAGE,
+            missingFields: built.missingFields,
+            stats: built.stats,
+          },
+          `Validation: ${built.missingFields.join(", ") || "devis vide"} | sections raw=${built.stats.rawSectionsCount} lines raw=${built.stats.rawLinesCount} → norm ${built.stats.normalizedSectionsCount}/${built.stats.normalizedLinesCount}`,
+        ),
         { status: 502 },
       );
     }
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(rawText);
-    } catch (parseError) {
-      console.error("[MUM IA] generate JSON parse error", parseError, rawText);
-      return NextResponse.json(
-        { success: false, code: "invalid_response", message: getMumIaUserMessage("invalid_response") },
-        { status: 502 },
-      );
-    }
+    logMumGenerate("devis OK", {
+      sections: built.stats.normalizedSectionsCount,
+      lines: built.stats.normalizedLinesCount,
+      repaired: built.repaired,
+    });
 
-    const normalized = normalizeAiDevisResult(parsed);
-    if (!normalized) {
-      console.error("[MUM IA] generate normalize failed", parsed);
-      return NextResponse.json(
-        { success: false, code: "invalid_response", message: getMumIaUserMessage("invalid_response") },
-        { status: 502 },
-      );
-    }
+    // Quota déjà réservé au clic « Analyser et préparer le devis » (pas de 2e débit ici).
 
-    const { devis: result, rapport } = verifyAndCompleteAiDevis(normalized, {
+    const { devis: result, rapport } = verifyAndCompleteAiDevis(built.result, {
       descriptionChantier: input.descriptionChantier,
       lotsIdentifies: input.lotsIdentifies,
       reponsesQuestions: input.reponsesQuestions,
@@ -309,6 +404,16 @@ export async function POST(request: Request) {
       niveauPrix: input.niveauPrix,
       tauxTVA: input.tauxTVA,
       bibliothequeEntries: input.bibliothequeEntries,
+      entreprisePriceLibrary: input.entreprisePriceLibrary,
+      parametres: input.parametresSnapshot
+        ? {
+            ...normalizeParametres({}),
+            fournisseurs: input.parametresSnapshot.fournisseurs,
+            tarifsFournisseurs: input.parametresSnapshot.tarifsFournisseurs,
+            entreprisePriceLibrary: input.parametresSnapshot.entreprisePriceLibrary,
+          }
+        : undefined,
+      companyId: input.companyId ?? companyId,
       coefficientRegionalManuel: input.coefficientRegionalManuel,
       ratioEntries: input.ratioEntries,
     });
@@ -327,28 +432,17 @@ export async function POST(request: Request) {
       | undefined;
 
     if (!bypassQuota) {
-      const increment = await incrementUserAiUsage(
-        authUser.id,
-        generationId || undefined,
-      );
-      if (increment.error && !increment.error.includes("100 demandes")) {
-        logMumIa("warn", "Compteur IA non incrémenté", {
-          error: increment.error,
-        });
-      }
-      if (increment.usage) {
-        const snapshot = buildQuotaSnapshotFromUsage(increment.usage);
-        quotaPayload = {
-          used: snapshot.used,
-          limit: snapshot.limit,
-          remaining: snapshot.remaining,
-          monthlyIncluded: snapshot.monthlyIncluded,
-          packCredits: snapshot.packCredits,
-          renewalDate: snapshot.renewalDate,
-          periodStart: snapshot.periodStart,
-          periodEnd: snapshot.periodEnd,
-        };
-      }
+      const current = await checkUserAiQuota(authUser.id);
+      quotaPayload = {
+        used: current.used,
+        limit: current.limit,
+        remaining: Math.max(0, current.limit - current.used),
+        monthlyIncluded: current.monthlyIncluded,
+        packCredits: current.packCredits,
+        renewalDate: current.renewalDate,
+        periodStart: current.periodStart,
+        periodEnd: current.periodEnd,
+      };
     }
 
     return NextResponse.json({
@@ -379,7 +473,7 @@ export async function POST(request: Request) {
         {
           success: false,
           code: classified.code,
-          message: getMumIaUserMessage("openai_unavailable"),
+          message: TECHNICAL_FAIL_MESSAGE,
         },
         classified.message || detail,
       ),

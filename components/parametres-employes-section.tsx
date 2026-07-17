@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { EmployeTypesChantiersPicker } from "@/components/employe-types-chantiers-picker";
 import { ParametresSection } from "@/components/parametres-section";
 import { EmployeAvatar } from "@/components/employe-avatar";
+import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -10,7 +12,10 @@ import { Modal } from "@/components/ui/modal";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useStore } from "@/lib/store";
-import type { Employe } from "@/lib/types";
+import type { CategoriePilotageChantier, Employe } from "@/lib/types";
+import {
+  CATEGORIE_PILOTAGE_LABELS,
+} from "@/lib/pilotage";
 import {
   employeDisplayLabel,
   getEmployeLoginKey,
@@ -18,7 +23,7 @@ import {
   removeEmployeCredentials,
   saveEmployeCredentials,
 } from "@/lib/employee-access";
-import { generateId, formatDateTimeFR } from "@/lib/utils";
+import { generateId, formatCurrency, formatDateTimeFR } from "@/lib/utils";
 import {
   getEmployeChantiersAssignes,
   getEmployeUpcomingEvents,
@@ -26,7 +31,8 @@ import {
 import { getPlanningEventDisplayTitle } from "@/lib/planning-types";
 import { EMPLOYEE_PLANNING_COLORS } from "@/lib/planning-colors";
 import { normalizePhoneForTel } from "@/lib/employee-chantier-actions";
-import { ImagePlus, Pencil, Phone, UserPlus } from "lucide-react";
+import { buildAuthenticatedFetchInit } from "@/lib/authenticated-api-fetch";
+import { ImagePlus, Lock, Pencil, Phone, UserPlus } from "lucide-react";
 
 function emptyEmploye(): Employe {
   return {
@@ -37,11 +43,21 @@ function emptyEmploye(): Employe {
   };
 }
 
-export function ParametresEmployesSection() {
+export function ParametresEmployesSection({
+  tauxHoraireInterneDefaut,
+  onTauxHoraireInterneDefautChange,
+  modified = false,
+}: {
+  tauxHoraireInterneDefaut?: number;
+  onTauxHoraireInterneDefautChange: (value: number | undefined) => void;
+  modified?: boolean;
+}) {
   const { data, setData } = useStore();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Employe>(emptyEmploye);
-  const [password, setPassword] = useState("");
+  const [accessLogin, setAccessLogin] = useState("");
+  const [accessPassword, setAccessPassword] = useState("");
+  const [accessConfirmOpen, setAccessConfirmOpen] = useState(false);
   const [error, setError] = useState("");
   const [disableTarget, setDisableTarget] = useState<Employe | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,14 +83,16 @@ export function ParametresEmployesSection() {
 
   function openCreate() {
     setForm(emptyEmploye());
-    setPassword("");
+    setAccessLogin("");
+    setAccessPassword("");
     setError("");
     setOpen(true);
   }
 
   function openEdit(employe: Employe) {
     setForm({ ...employe });
-    setPassword("");
+    setAccessLogin(employe.identifiant ?? "");
+    setAccessPassword("");
     setError("");
     setOpen(true);
   }
@@ -100,47 +118,35 @@ export function ParametresEmployesSection() {
     reader.readAsDataURL(file);
   }
 
-  async function saveEmploye() {
-    const normalized = normalizeEmployeRecord(form);
-    if (!normalized.prenom.trim() || !normalized.nom.trim()) {
-      setError("Le prénom et le nom sont obligatoires.");
-      return;
-    }
-    if (!normalized.email?.trim() && !normalized.identifiant?.trim()) {
-      setError("Un email ou un identifiant de connexion est obligatoire.");
-      return;
-    }
-
-    const loginKey = getEmployeLoginKey(normalized);
-    const exists = data.employes.some(
-      (item) =>
-        item.id !== normalized.id &&
-        getEmployeLoginKey(item) === loginKey &&
-        loginKey.length > 0,
-    );
-    if (exists) {
-      setError("Cet email ou identifiant est déjà utilisé.");
-      return;
+  async function persistEmployeRecord(
+    normalized: Employe,
+    options?: { accessPasswordValue?: string },
+  ) {
+    const identifiant = accessLogin.trim();
+    if (!identifiant) {
+      setError("L'identifiant de connexion est obligatoire.");
+      return false;
     }
 
     const isNew = !data.employes.some((item) => item.id === normalized.id);
+    const pwd = (options?.accessPasswordValue ?? accessPassword).trim();
 
-    if (isNew && password.trim().length < 6) {
+    if (isNew && pwd.length < 6) {
       setError("Le mot de passe doit contenir au moins 6 caractères.");
-      return;
+      return false;
     }
 
-    if (!isNew && password.trim() && password.trim().length < 6) {
-      setError("Le nouveau mot de passe doit contenir au moins 6 caractères.");
-      return;
-    }
+    normalized = { ...normalized, identifiant: identifiant.trim() };
 
-    if (isNew || password.trim()) {
-      await saveEmployeCredentials(
-        loginKey,
-        password.trim(),
-        normalized.id,
-      );
+    const credResult = await saveEmployeCredentials(
+      identifiant,
+      pwd.length >= 6 ? pwd : undefined,
+      normalized.id,
+      { active: (normalized.statut ?? "actif") === "actif" },
+    );
+    if (!credResult.ok) {
+      setError(credResult.error ?? "Impossible d'enregistrer les accès.");
+      return false;
     }
 
     setData((previous) => ({
@@ -152,8 +158,50 @@ export function ParametresEmployesSection() {
           ),
     }));
 
+    return true;
+  }
+
+  async function saveEmploye() {
+    const normalized = normalizeEmployeRecord(form);
+    if (!normalized.prenom.trim() || !normalized.nom.trim()) {
+      setError("Le prénom et le nom sont obligatoires.");
+      return;
+    }
+
+    const isNew = !data.employes.some((item) => item.id === normalized.id);
+
+    if (isNew) {
+      if (!accessLogin.trim() || accessPassword.trim().length < 6) {
+        setError(
+          "Renseignez un identifiant et un mot de passe dans la section Accès à l'espace employé.",
+        );
+        return;
+      }
+    }
+
+    const ok = await persistEmployeRecord(normalized);
+    if (!ok) return;
+
     setOpen(false);
-    setPassword("");
+    setAccessPassword("");
+  }
+
+  async function saveEmployeAccessOnly() {
+    const normalized = normalizeEmployeRecord(form);
+    const isEdit = data.employes.some((item) => item.id === normalized.id);
+    if (!isEdit) {
+      setError("Enregistrez d'abord la fiche employé.");
+      return;
+    }
+
+    const ok = await persistEmployeRecord(normalized, {
+      accessPasswordValue: accessPassword,
+    });
+    if (!ok) return;
+
+    setAccessPassword("");
+    setAccessConfirmOpen(false);
+    setOpen(false);
   }
 
   function toggleStatut(employe: Employe) {
@@ -164,13 +212,29 @@ export function ParametresEmployesSection() {
         item.id === employe.id ? { ...item, statut: nextStatut } : item,
       ),
     }));
+    void (async () => {
+      try {
+        await fetch(
+          "/api/employee-credentials",
+          await buildAuthenticatedFetchInit({
+            method: "PATCH",
+            body: JSON.stringify({
+              employeId: employe.id,
+              active: nextStatut === "actif",
+            }),
+          }),
+        );
+      } catch {
+        /* best-effort */
+      }
+    })();
     setDisableTarget(null);
   }
 
   async function removeEmploye(employe: Employe) {
     const loginKey = getEmployeLoginKey(employe);
     if (loginKey) {
-      await removeEmployeCredentials(loginKey);
+      await removeEmployeCredentials(loginKey, employe.id);
     }
 
     setData((previous) => ({
@@ -192,8 +256,35 @@ export function ParametresEmployesSection() {
   return (
     <ParametresSection
       title="Employés"
-      description="Créez des accès limités au planning pour votre équipe (V1 locale — sécurité production via Supabase à venir)"
+      description="Accès planning et données internes de pilotage (visibles uniquement par le dirigeant)"
+      modified={modified}
     >
+      <section className="rounded-2xl border border-border/60 bg-card-elevated/30 p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Lock className="h-4 w-4 text-muted-foreground" />
+          <p className="text-sm font-semibold">Pilotage — taux horaire entreprise</p>
+        </div>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Utilisé pour le calcul de rentabilité lorsqu&apos;un employé n&apos;a pas de coût
+          horaire personnel renseigné.
+        </p>
+        <Label>Taux horaire interne par défaut (€/h HT)</Label>
+        <Input
+          type="number"
+          min={0}
+          step="0.5"
+          className="mt-1.5 max-w-xs"
+          value={tauxHoraireInterneDefaut ?? ""}
+          onChange={(event) => {
+            const raw = event.target.value;
+            onTauxHoraireInterneDefautChange(
+              raw === "" ? undefined : Math.max(0, Number(raw) || 0),
+            );
+          }}
+          placeholder="Ex : 32"
+        />
+      </section>
+
       <div className="flex justify-end">
         <Button type="button" onClick={openCreate}>
           <UserPlus className="h-4 w-4" />
@@ -235,9 +326,31 @@ export function ParametresEmployesSection() {
                 {employe.poste && (
                   <p className="text-xs text-muted-foreground">{employe.poste}</p>
                 )}
+                {employe.specialitePrincipale && (
+                  <p className="text-xs text-primary/90">
+                    {employe.specialitePrincipale}
+                  </p>
+                )}
+                {employe.coutHoraireInterne && employe.coutHoraireInterne > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Coût horaire : {formatCurrency(employe.coutHoraireInterne)}/h
+                  </p>
+                )}
+                {(employe.typesChantiersMaitrises?.length ?? 0) > 0 && (
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    {employe.typesChantiersMaitrises
+                      ?.map((type) => CATEGORIE_PILOTAGE_LABELS[type])
+                      .join(" · ")}
+                  </p>
+                )}
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {employe.email || employe.identifiant || "—"}
+                  Identifiant : {employe.identifiant || "—"}
                 </p>
+                {employe.identifiant ? (
+                  <p className="text-sm text-muted-foreground">
+                    Mot de passe : ••••••••
+                  </p>
+                ) : null}
                 {employe.telephone?.trim() && (
                   <p className="mt-1 text-sm text-muted-foreground">
                     {employe.telephone}
@@ -412,44 +525,95 @@ export function ParametresEmployesSection() {
             </Select>
           </section>
 
-          <section>
-            <Label>Email</Label>
-            <Input
-              type="email"
-              value={form.email ?? ""}
-              onChange={(event) =>
-                setForm((previous) => ({ ...previous, email: event.target.value }))
-              }
-              placeholder="employe@entreprise.fr"
-            />
-          </section>
-
-          <section>
-            <Label>Identifiant (si pas d&apos;email)</Label>
-            <Input
-              value={form.identifiant ?? ""}
-              onChange={(event) =>
-                setForm((previous) => ({
-                  ...previous,
-                  identifiant: event.target.value,
-                }))
-              }
-              placeholder="lucas.b"
-            />
-          </section>
-
-          <section>
-            <Label>Mot de passe</Label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder={
-                data.employes.some((item) => item.id === form.id)
-                  ? "Laisser vide pour conserver le mot de passe actuel"
-                  : "Minimum 6 caractères"
-              }
-            />
+          <section className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Lock className="h-4 w-4 text-primary" />
+              <p className="text-sm font-semibold text-foreground">
+                Accès à l&apos;espace employé
+              </p>
+            </div>
+            <p className="mb-4 text-xs text-muted-foreground">
+              L&apos;employé se connecte avec son identifiant et son mot de passe
+              (sans adresse e-mail).
+            </p>
+            <div className="space-y-4">
+              <div>
+                <Label>Identifiant</Label>
+                <Input
+                  value={accessLogin}
+                  onChange={(event) => {
+                    setAccessLogin(event.target.value);
+                    setForm((previous) => ({
+                      ...previous,
+                      identifiant: event.target.value,
+                    }));
+                  }}
+                  placeholder="ex : lucas.martin"
+                  autoComplete="off"
+                />
+                {data.employes.some((item) => item.id === form.id) &&
+                form.identifiant ? (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Identifiant actuel : <span className="font-medium">{form.identifiant}</span>
+                  </p>
+                ) : null}
+              </div>
+              <div>
+                <Label>Mot de passe</Label>
+                <PasswordInput
+                  value={accessPassword}
+                  onChange={setAccessPassword}
+                  placeholder={
+                    data.employes.some((item) => item.id === form.id)
+                      ? "Nouveau mot de passe"
+                      : "Minimum 6 caractères"
+                  }
+                  autoComplete="new-password"
+                />
+                {data.employes.some((item) => item.id === form.id) ? (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Mot de passe : ••••••••
+                  </p>
+                ) : null}
+              </div>
+              <div>
+                <Label>Compte espace employé</Label>
+                <Select
+                  value={form.statut ?? "actif"}
+                  onChange={(event) =>
+                    setForm((previous) => ({
+                      ...previous,
+                      statut:
+                        event.target.value === "desactive" ? "desactive" : "actif",
+                    }))
+                  }
+                >
+                  <option value="actif">Actif</option>
+                  <option value="desactive">Désactivé</option>
+                </Select>
+              </div>
+              {data.employes.some((item) => item.id === form.id) ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    if (!accessLogin.trim()) {
+                      setError("L'identifiant est obligatoire.");
+                      return;
+                    }
+                    if (accessPassword.trim().length < 6) {
+                      setError("Le mot de passe doit contenir au moins 6 caractères.");
+                      return;
+                    }
+                    setError("");
+                    setAccessConfirmOpen(true);
+                  }}
+                >
+                  Enregistrer les accès
+                </Button>
+              ) : null}
+            </div>
           </section>
 
           <section>
@@ -466,6 +630,68 @@ export function ParametresEmployesSection() {
               <option value="actif">Actif</option>
               <option value="desactive">Désactivé</option>
             </Select>
+          </section>
+
+          <section className="rounded-xl border border-border/60 bg-card-elevated/30 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Lock className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm font-semibold">Données pilotage (internes)</p>
+            </div>
+            <p className="mb-4 text-xs text-muted-foreground">
+              Jamais visibles par l&apos;employé sur son espace planning.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label>Coût horaire interne (€/h HT)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.5"
+                  value={form.coutHoraireInterne ?? ""}
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    setForm((previous) => ({
+                      ...previous,
+                      coutHoraireInterne:
+                        raw === "" ? undefined : Math.max(0, Number(raw) || 0),
+                    }));
+                  }}
+                  placeholder={
+                    tauxHoraireInterneDefaut
+                      ? `Défaut entreprise : ${tauxHoraireInterneDefaut} €/h`
+                      : "Ex : 32"
+                  }
+                />
+              </div>
+              <div>
+                <Label>Spécialité principale</Label>
+                <Input
+                  value={form.specialitePrincipale ?? ""}
+                  onChange={(event) =>
+                    setForm((previous) => ({
+                      ...previous,
+                      specialitePrincipale: event.target.value || undefined,
+                    }))
+                  }
+                  placeholder="Ex : carreleur, plombier…"
+                />
+              </div>
+            </div>
+            <div className="mt-4">
+              <Label className="mb-2 block">Types de chantiers maîtrisés</Label>
+              <EmployeTypesChantiersPicker
+                value={form.typesChantiersMaitrises ?? []}
+                onChange={(typesChantiersMaitrises: CategoriePilotageChantier[]) =>
+                  setForm((previous) => ({
+                    ...previous,
+                    typesChantiersMaitrises:
+                      typesChantiersMaitrises.length > 0
+                        ? typesChantiersMaitrises
+                        : undefined,
+                  }))
+                }
+              />
+            </div>
           </section>
 
           {editingEmployePreview && (
@@ -530,6 +756,15 @@ export function ParametresEmployesSection() {
           </footer>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={accessConfirmOpen}
+        title="Modifier les accès"
+        message="Êtes-vous sûr de vouloir modifier les accès de cet employé ? Son ancien mot de passe ne fonctionnera plus."
+        confirmLabel="Enregistrer les accès"
+        onCancel={() => setAccessConfirmOpen(false)}
+        onConfirm={() => void saveEmployeAccessOnly()}
+      />
 
       <ConfirmDialog
         open={Boolean(disableTarget)}

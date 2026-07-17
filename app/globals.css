@@ -3,96 +3,40 @@
 @tailwind utilities;
 
 @layer base {
-  /* Thème sombre (défaut + fallback avant hydratation) */
-  html,
-  html[data-theme-effective="dark"] {
-    --color-background: 15 15 15;
-    --color-foreground: 245 245 245;
-    --color-sidebar: 17 17 17;
-    --color-card: 31 31 31;
-    --color-card-hover: 36 36 36;
-    --color-card-elevated: 36 36 36;
-    --color-border: 42 42 42;
-    --color-border-subtle: 255 255 255;
-    --color-muted: 163 163 163;
-    --color-muted-foreground: 115 115 115;
-    --color-primary: 37 99 235;
-    --color-primary-hover: 29 78 216;
-    --color-primary-foreground: 245 245 245;
-    --color-success: 52 211 153;
-    --color-success-text: 110 231 183;
-    --color-warning: 37 99 235;
-    --color-warning-text: 252 211 77;
-    --color-danger: 248 113 113;
-    --color-danger-text: 252 165 165;
-    --color-info-text: 147 197 253;
-    --color-orange-text: 253 186 116;
-    --color-neutral-text: 212 212 216;
-    --color-progress-track: 55 55 55;
-    --shadow-input: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-card: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
-      0 16px 40px -24px rgba(0, 0, 0, 0.9);
-    --shadow-card-hover: 0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
-      0 20px 52px -28px rgba(0, 0, 0, 0.95);
-    --shadow-glow: 0 0 28px rgba(37, 99, 235, 0.22);
-    --shadow-sidebar: 8px 0 32px rgba(0, 0, 0, 0.35);
-    --body-gradient: radial-gradient(
-        ellipse 90% 60% at 60% -20%,
-        rgba(37, 99, 235, 0.08),
-        transparent 55%
-      ),
-      radial-gradient(
-        ellipse 45% 35% at 100% 10%,
-        rgba(37, 99, 235, 0.05),
-        transparent 50%
-      );
-    --surface-inset: rgba(255, 255, 255, 0.04);
-    color-scheme: dark;
-  }
-
-  /* Thème clair premium */
-  html[data-theme-effective="light"] {
-    --color-background: 246 247 249;
-    --color-foreground: 23 23 23;
+  /* Thème unique Batimum — clair (landing) */
+  html {
+    --color-background: 255 255 255;
+    --color-foreground: 15 23 42;
     --color-sidebar: 255 255 255;
     --color-card: 255 255 255;
-    --color-card-hover: 248 249 251;
+    --color-card-hover: 248 250 252;
     --color-card-elevated: 248 250 252;
-    --color-border: 226 232 240;
+    --color-border: 229 231 235;
     --color-border-subtle: 15 23 42;
     --color-muted: 100 116 139;
     --color-muted-foreground: 100 116 139;
-    --color-primary: 37 99 235;
-    --color-primary-hover: 29 78 216;
+    --color-primary: 16 185 129;
+    --color-primary-hover: 5 150 105;
     --color-primary-foreground: 255 255 255;
-    --color-success: 22 163 74;
-    --color-success-text: 21 128 61;
+    --color-success: 16 185 129;
+    --color-success-text: 5 150 105;
     --color-warning: 217 119 6;
     --color-warning-text: 161 98 7;
     --color-danger: 220 38 38;
     --color-danger-text: 185 28 28;
-    --color-info-text: 29 78 216;
+    --color-info-text: 37 99 235;
     --color-orange-text: 194 65 12;
-    --color-neutral-text: 82 82 91;
-    --color-progress-track: 226 232 240;
-    --shadow-input: 0 1px 2px rgba(15, 23, 42, 0.06);
-    --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05),
-      0 8px 24px -12px rgba(15, 23, 42, 0.12);
-    --shadow-card-hover: 0 2px 4px rgba(15, 23, 42, 0.06),
-      0 12px 32px -14px rgba(15, 23, 42, 0.14);
-    --shadow-glow: 0 0 24px rgba(37, 99, 235, 0.14);
-    --shadow-sidebar: 4px 0 24px rgba(15, 23, 42, 0.06);
-    --body-gradient: radial-gradient(
-        ellipse 90% 60% at 60% -20%,
-        rgba(37, 99, 235, 0.06),
-        transparent 55%
-      ),
-      radial-gradient(
-        ellipse 45% 35% at 100% 10%,
-        rgba(37, 99, 235, 0.04),
-        transparent 50%
-      );
-    --surface-inset: rgba(15, 23, 42, 0.03);
+    --color-neutral-text: 100 116 139;
+    --color-progress-track: 229 231 235;
+    --shadow-input: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.03),
+      0 2px 8px -4px rgba(15, 23, 42, 0.05);
+    --shadow-card-hover: 0 2px 4px rgba(15, 23, 42, 0.04),
+      0 6px 16px -6px rgba(15, 23, 42, 0.06);
+    --shadow-glow: 0 0 16px rgba(16, 185, 129, 0.12);
+    --shadow-sidebar: 1px 0 0 rgba(229, 231, 235, 0.95);
+    --body-gradient: none;
+    --surface-inset: rgba(15, 23, 42, 0.02);
     color-scheme: light;
   }
 
@@ -130,7 +74,7 @@
   }
 
   ::selection {
-    background-color: rgb(var(--color-primary) / 0.3);
+    background-color: rgb(15 23 42 / 0.12);
     color: rgb(var(--color-foreground));
   }
 
@@ -204,13 +148,11 @@
   --landing-duration: 0.7s;
 }
 
-/* Logo top bar — le PNG source (1536×1024) contient ~88 % de padding transparent.
-   Sans recadrage, height:36px n’affiche que ~8px de logo visible. */
+/* Logo top bar — hauteur auto par défaut ; landing-emerald fixe 36px. */
 .landing-top a.logo-topbar {
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  min-height: 36px;
   margin: 0;
   padding: 0;
   overflow: visible;
@@ -219,12 +161,25 @@
 .landing-top a.logo-topbar .logo-topbar__img {
   display: block;
   flex-shrink: 0;
-  height: 36px;
-  width: auto;
-  max-width: none;
-  max-height: none;
-  min-height: 36px;
+  width: 140px;
+  height: auto;
+  max-width: 140px;
+  object-fit: contain;
   overflow: visible;
+}
+
+@media (min-width: 640px) {
+  .landing-top a.logo-topbar .logo-topbar__img {
+    width: 160px;
+    max-width: 160px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-top a.logo-topbar .logo-topbar__img {
+    width: 180px;
+    max-width: 180px;
+  }
 }
 
 .landing-top .landing-logo {
@@ -294,9 +249,76 @@
 
 .btp-app-topbar {
   background-color: rgb(var(--color-sidebar));
+  border-bottom-color: rgb(229 231 235 / 0.9);
 }
 
-footer img[src="/logo-batimum.png"][alt="Batimum"] {
+/* Sidebar navigation — identité Batimum (logo footer inchangé) */
+.btp-sidebar {
+  border-right-color: rgb(229 231 235 / 0.95);
+  box-shadow: var(--shadow-sidebar);
+}
+
+.btp-sidebar nav a.bg-primary {
+  background-color: #d1fae5 !important;
+  color: #10b981 !important;
+  box-shadow: none !important;
+}
+
+.btp-sidebar nav a.bg-primary svg {
+  color: #10b981 !important;
+}
+
+.btp-sidebar nav a.bg-primary span.flex.h-9 {
+  background-color: rgb(16 185 129 / 0.1) !important;
+}
+
+.btp-sidebar nav a:not(.bg-primary):hover {
+  background-color: rgb(248 250 252 / 1) !important;
+}
+
+/* Vert réservé aux actions — contenu principal en noir/gris */
+.btp-app-main .text-primary:not(.btp-btn):not(.btp-btn *) {
+  color: rgb(var(--color-foreground)) !important;
+}
+
+.btp-app-main [class*="bg-primary/"]:not(.btp-btn):not(.btp-btn *) {
+  background-color: rgb(var(--color-card-elevated) / 1) !important;
+}
+
+.btp-app-main [class*="border-primary/"]:not(.btp-btn):not(.btp-btn *) {
+  border-color: rgb(var(--color-border) / 0.9) !important;
+}
+
+.btp-app-main [class*="shadow-primary"] {
+  --tw-shadow-color: rgb(15 23 42 / 0.06) !important;
+}
+
+.btp-app-main .btp-progress-fill {
+  background-color: rgb(var(--color-foreground) / 0.75);
+}
+
+.btp-app-main .hover\:text-primary:hover,
+.btp-app-main .group:hover .group-hover\:text-primary {
+  color: rgb(var(--color-foreground) / 0.88) !important;
+}
+
+.btp-app-main .hover\:text-primary-hover:hover {
+  color: rgb(var(--color-foreground) / 0.72) !important;
+}
+
+.btp-app-main [class*="hover:border-primary"]:hover {
+  border-color: rgb(var(--color-border) / 1) !important;
+}
+
+/* Focus formulaires */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 4px rgb(16 185 129 / 0.1) !important;
+}
+
+footer img[src="/logocomplet-batimum.png"][alt="Batimum"] {
   width: 120px !important;
   min-width: 120px !important;
   max-width: 120px !important;
@@ -304,11 +326,14 @@ footer img[src="/logo-batimum.png"][alt="Batimum"] {
   object-fit: contain;
 }
 
-.btp-sidebar > footer img[src="/logo-batimum.png"] {
-  width: 96px !important;
-  max-width: 96px !important;
-  height: auto !important;
+.btp-sidebar > footer .btp-sidebar-brand-logo {
+  display: block;
+  width: 88px;
+  max-width: 100px;
+  height: auto;
   object-fit: contain;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Sidebar footer — bloc logo + texte légèrement agrandi (~+12 %) */
@@ -322,23 +347,19 @@ footer img[src="/logo-batimum.png"][alt="Batimum"] {
   gap: 0;
 }
 
-/* Sidebar — mode clair : masquer le PNG (texte blanc fantôme), texte seul en dessous */
-html[data-theme-effective="light"] .btp-sidebar-brand-block .btp-sidebar-brand-image {
-  display: none;
-}
-
-html[data-theme-effective="light"] .btp-sidebar-brand-block .btp-sidebar-brand-title {
+.btp-sidebar-brand-block .btp-sidebar-brand-title {
   margin-top: 0;
   color: rgb(var(--color-foreground));
   opacity: 1;
 }
 
-html[data-theme-effective="light"] .btp-sidebar-brand-block .btp-sidebar-brand-subtitle {
+.btp-sidebar-brand-block .btp-sidebar-brand-subtitle {
+  margin-top: 12px;
   color: rgb(var(--color-neutral-text));
   opacity: 1;
 }
 
-html[data-theme-effective="light"] .btp-sidebar-brand-block .btp-sidebar-brand-version {
+.btp-sidebar-brand-block .btp-sidebar-brand-version {
   color: rgb(var(--color-muted-foreground));
   opacity: 1;
 }
@@ -397,11 +418,7 @@ html[data-theme-effective="light"] .btp-sidebar-brand-block .btp-sidebar-brand-v
 }
 
 .btp-modal-backdrop {
-  background-color: rgba(0, 0, 0, 0.75);
-}
-
-html[data-theme-effective="light"] .btp-modal-backdrop {
-  background-color: rgba(15, 23, 42, 0.42);
+  background-color: rgba(15, 23, 42, 0.35);
 }
 
 .landing-top > section {
@@ -4007,3 +4024,151 @@ html[data-theme-effective="light"] .btp-modal-backdrop {
 .btp-dashboard-today-details a {
   cursor: pointer;
 }
+
+/* Fourniture — animation ajout fournisseur */
+@keyframes fournisseur-check-draw {
+  from {
+    stroke-dashoffset: 48;
+    opacity: 0.4;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes fournisseur-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    box-shadow: inset 0 0 0 0 rgb(16 185 129 / 0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(0);
+    box-shadow: inset 3px 0 0 0 rgb(16 185 129 / 0.55);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    box-shadow: inset 0 0 0 0 rgb(16 185 129 / 0);
+  }
+}
+
+.fournisseur-add-check {
+  display: inline-flex;
+  height: 1.75rem;
+  width: 1.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 2px solid rgb(16 185 129 / 0.35);
+  color: rgb(5 150 105);
+  background: white;
+}
+
+.fournisseur-add-check.is-animated {
+  animation: fournisseur-check-draw 0.55s ease-out;
+  border-color: rgb(16 185 129);
+}
+
+.fournisseur-row-added {
+  animation: fournisseur-row-in 1s ease-out;
+  background: rgb(236 253 245 / 0.55) !important;
+}
+
+.produit-row-added {
+  animation: fournisseur-row-in 1s ease-out;
+  background: rgb(236 253 245 / 0.55) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fournisseur-add-check.is-animated,
+  .fournisseur-row-added,
+  .produit-row-added {
+    animation: none;
+  }
+}
+
+/* Pilotage premium */
+@keyframes pilotage-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pilotage-bar-grow {
+  from {
+    transform: scaleY(0.2);
+    opacity: 0.5;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.pilotage-ready .pilotage-reveal {
+  animation: pilotage-reveal 0.45s ease-out both;
+}
+
+.pilotage-bar {
+  transform-origin: bottom;
+  animation: pilotage-bar-grow 0.55s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pilotage-ready .pilotage-reveal,
+  .pilotage-bar {
+    animation: none;
+  }
+}
+
+/* Assistant Batimum — respiration discrète */
+@keyframes assistant-fab-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.025);
+  }
+}
+
+.assistant-fab-breathe {
+  animation: assistant-fab-breathe 3.6s ease-in-out infinite;
+}
+
+@keyframes assistant-fab-badge-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1.65);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.assistant-fab-badge-pulse {
+  animation: assistant-fab-badge-pulse 0.9s ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-fab-breathe,
+  .assistant-fab-badge-pulse {
+    animation: none;
+  }
+}
+
+

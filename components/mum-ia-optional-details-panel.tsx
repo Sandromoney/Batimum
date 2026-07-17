@@ -159,11 +159,7 @@ export function MumIaOptionalDetailsPanel({
           onClick={() => onExpandedChange(!expanded)}
           aria-expanded={expanded}
         >
-          <span>
-            {expanded
-              ? "Masquer les précisions utiles au devis"
-              : "Voir les précisions utiles au devis"}
-          </span>
+          <span>Informations complémentaires (optionnel)</span>
           <ChevronDown
             className={cn(
               "mum-ia-optional-details__chevron h-4 w-4 shrink-0",
@@ -182,12 +178,10 @@ export function MumIaOptionalDetailsPanel({
       >
         <div className="mum-ia-optional-details__collapse-inner">
           <div className="mum-ia-optional-details__fields">
-            <p className="mum-ia-optional-details__section-title">
-              Détails complémentaires (facultatifs)
-            </p>
             <p className="mum-ia-optional-details__hint">
-              Uniquement des informations qui peuvent figurer sur le devis final.
-              Laissez vide ce que vous ne connaissez pas encore.
+              Dimensions, hauteurs, pièces, état des supports, contraintes,
+              matériaux, commentaires… Laissez vide ce que vous ne connaissez
+              pas encore.
             </p>
 
             <label className="mum-ia-optional-details__field">
@@ -361,30 +355,30 @@ export function MumIaOptionalDetailsPanel({
                 </ul>
               </div>
             ) : null}
+
+            <label className="block space-y-1.5">
+              <span className="mum-ia-optional-details__label">
+                Commentaires / précisions libres
+              </span>
+              <textarea
+                value={additionalPrecisions}
+                onChange={(event) => onAdditionalPrecisionsChange(event.target.value)}
+                rows={3}
+                placeholder="Ex. gamme matériaux, étage, stationnement, délais, niveau de finition…"
+                className="mum-ia-optional-details__textarea w-full"
+                disabled={generating || quotaBlocked}
+              />
+            </label>
           </div>
         </div>
       </div>
 
       <div className="mum-ia-optional-details__actions space-y-3">
         {quotaBlocked ? (
-          <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          <p className="whitespace-pre-line rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">
             {quotaExceededMessage ?? buildMumIaQuotaExceededMessage("")}
           </p>
         ) : null}
-
-        <label className="block space-y-1.5">
-          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            Ajouter des précisions
-          </span>
-          <textarea
-            value={additionalPrecisions}
-            onChange={(event) => onAdditionalPrecisionsChange(event.target.value)}
-            rows={3}
-            placeholder="Ex. gamme matériaux, étage, stationnement, délais, niveau de finition…"
-            className="mum-ia-optional-details__textarea w-full"
-            disabled={generating || quotaBlocked}
-          />
-        </label>
 
         <div className="grid gap-2 sm:grid-cols-2">
           <Button

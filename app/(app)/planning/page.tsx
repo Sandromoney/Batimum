@@ -7,6 +7,7 @@ import { PlanningEmployesModal } from "@/components/planning-employes-modal";
 import { PlanningEquipeModal } from "@/components/planning-equipe-modal";
 import { PlanningWeekView } from "@/components/planning-week-view";
 import { PageHeader } from "@/components/page-header";
+import { MumIaContextButton } from "@/components/mum-ia-context-button";
 import { Button } from "@/components/ui/button";
 import { DateInput, Input, Label, Select } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
@@ -188,6 +189,7 @@ export default function PlanningPage() {
         description="Vue hebdomadaire, équipe et assignations chantier"
         action={
           <div className="flex flex-wrap gap-2">
+            <MumIaContextButton source="planning" entityLabel="Planning" />
             <Button variant="secondary" onClick={() => setOpenEmployes(true)}>
               <Users className="h-4 w-4" />
               Équipe ({data.employes.length})

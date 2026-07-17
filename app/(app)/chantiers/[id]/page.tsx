@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/page-header";
+import { MumIaContextButton } from "@/components/mum-ia-context-button";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { EntityHistoriqueSection } from "@/components/entity-historique-section";
 import { ChantierAffectationsSummary } from "@/components/chantier-affectations-summary";
+import { ChantierBeneficeSummary } from "@/components/chantier-benefice-summary";
+import {
+  ChantierRentabilitePanel,
+  computeRentabiliteForChantier,
+} from "@/components/chantier-rentabilite-panel";
+import { ChantierTimeEntriesPanel } from "@/components/chantier-time-entries-panel";
 import { syncChantierStatut } from "@/lib/chantier-statut";
+import { resolveChantierHeuresPrevues } from "@/lib/pilotage";
 import { useStore } from "@/lib/store";
 import { getClientDisplayName } from "@/lib/clients";
 import {
@@ -180,12 +188,27 @@ export default function ChantierDetailPage() {
       : undefined);
   const achats = getChantierAchats(chantier);
   const marge = computeChantierMarge(chantier, data.factures, data.avoirs);
+  const devisLie = chantier.devisId
+    ? data.devis.find((item) => item.id === chantier.devisId)
+    : undefined;
+  const rentabilite = computeRentabiliteForChantier(chantier, data);
+  const heuresPrevues = resolveChantierHeuresPrevues(chantier, devisLie);
 
   return (
     <>
       <PageHeader
         title={chantier.nom}
         description="Suivi automatique de l'avancement et des statuts"
+        action={
+          <MumIaContextButton
+            source="chantier"
+            entityId={chantier.id}
+            entityLabel={chantier.nom}
+            description={devisLie?.descriptionChantier ?? chantier.nom}
+            typeChantier={chantier.type}
+            returnHref={`/chantiers/${chantier.id}`}
+          />
+        }
       />
 
       <section className="mb-6">
@@ -195,6 +218,10 @@ export default function ChantierDetailPage() {
         >
           Retour aux chantiers
         </Link>
+      </section>
+
+      <section className="mb-6">
+        <ChantierBeneficeSummary rentabilite={rentabilite} />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-8">
@@ -561,6 +588,11 @@ export default function ChantierDetailPage() {
             </section>
           </dl>
         </Card>
+      </section>
+
+      <section className="mb-6 grid gap-6 lg:grid-cols-2">
+        <ChantierTimeEntriesPanel chantier={chantier} heuresPrevues={heuresPrevues} />
+        <ChantierRentabilitePanel rentabilite={rentabilite} />
       </section>
 
       <ChantierAffectationsSummary chantier={chantier} data={data} />

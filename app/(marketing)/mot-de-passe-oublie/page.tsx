@@ -1,31 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
-import { requestPasswordReset } from "@/lib/auth-credentials";
+import { createClient } from "@/utils/supabase/client";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const [resetCode, setResetCode] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setMessage("");
-    setResetCode(null);
+    setError("");
 
-    const result = requestPasswordReset(email);
-    setMessage(result.message);
-    setResetCode(result.resetCode ?? null);
+    const supabase = createClient();
+    if (!supabase) {
+      setError("Configuration Supabase manquante.");
+      setLoading(false);
+      return;
+    }
+
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/reinitialiser-mot-de-passe")}`;
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+      email.trim().toLowerCase(),
+      { redirectTo },
+    );
+
     setLoading(false);
+
+    if (resetError) {
+      setError(
+        resetError.message ||
+          "Impossible d'envoyer l'email de réinitialisation.",
+      );
+      return;
+    }
+
+    setMessage(
+      "Si un compte existe pour cet email, un lien de réinitialisation vient d'être envoyé. Vérifiez votre boîte de réception.",
+    );
   }
 
   return (
@@ -33,7 +53,7 @@ export default function ForgotPasswordPage() {
       <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-10">
         <Card className="w-full max-w-md">
           <Link href="/" className="mb-8 flex items-center gap-3">
-            <BrandLogo imageClassName="h-auto w-[180px] max-w-[180px] object-contain" />
+            <BrandLogo variant="marketing" showSubtitle={false} />
           </Link>
 
           <header className="mb-8">
@@ -41,7 +61,8 @@ export default function ForgotPasswordPage() {
               Mot de passe oublié
             </h1>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Indiquez votre email pour recevoir un code de réinitialisation.
+              Indiquez votre email. Vous recevrez un lien officiel Supabase pour
+              choisir un nouveau mot de passe.
             </p>
           </header>
 
@@ -57,39 +78,22 @@ export default function ForgotPasswordPage() {
               />
             </section>
 
+            {error && (
+              <p className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            )}
+
             {message && (
               <p className="rounded-xl border border-border bg-card-elevated/50 px-3 py-2 text-sm text-muted-foreground">
                 {message}
               </p>
             )}
 
-            {resetCode && (
-              <p className="rounded-xl border border-border bg-card-elevated/50 px-3 py-2 text-xs text-muted-foreground">
-                Code de réinitialisation (simulation V1) :{" "}
-                <span className="font-mono font-semibold text-foreground">
-                  {resetCode}
-                </span>
-              </p>
-            )}
-
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Génération…" : "Obtenir un code"}
+              {loading ? "Envoi…" : "Envoyer le lien"}
             </Button>
           </form>
-
-          {resetCode && (
-            <Button
-              className="mt-4 w-full"
-              variant="secondary"
-              onClick={() =>
-                router.push(
-                  `/reinitialiser-mot-de-passe?email=${encodeURIComponent(email.trim().toLowerCase())}`,
-                )
-              }
-            >
-              Saisir le code et nouveau mot de passe
-            </Button>
-          )}
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             <Link
