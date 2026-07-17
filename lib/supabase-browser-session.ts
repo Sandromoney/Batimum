@@ -61,13 +61,13 @@ export async function getAuthenticatedSessionOrThrow(
     };
   }
 
-  let {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-
-  if (error) {
-    console.warn(`[MUM IA] getSession error (${action}):`, error.message);
+  const firstSession = await supabase.auth.getSession();
+  let session = firstSession.data.session;
+  if (firstSession.error) {
+    console.warn(
+      `[MUM IA] getSession error (${action}):`,
+      firstSession.error.message,
+    );
   }
 
   if (!session?.access_token) {

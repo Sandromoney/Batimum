@@ -40,7 +40,7 @@ export function recordCommandeCreation({
 } {
   const commandeWithHistory = markCommandeCreated(commande);
 
-  let nextDevis = appendDevisHistorique(devis, {
+  const nextDevis = appendDevisHistorique(devis, {
     type: "commande_liee",
     label: "Commande créée.",
     meta: {
@@ -49,7 +49,7 @@ export function recordCommandeCreation({
     },
   });
 
-  let nextClient = client
+  const nextClient = client
     ? logClientLinkedEvent(
         client,
         "commande_liee",
@@ -62,7 +62,7 @@ export function recordCommandeCreation({
       )
     : undefined;
 
-  let nextChantier = chantier
+  const nextChantier = chantier
     ? appendChantierHistorique(chantier, {
         type: "commande_liee",
         label: `Commande ${commande.numero} créée.`,
@@ -94,7 +94,7 @@ export function recordChantierCreation({
   chantier: Chantier;
   client?: Client;
 } {
-  let nextDevis = devis
+  const nextDevis = devis
     ? appendDevisHistorique(devis, {
         type: "chantier_lie",
         label: "Chantier créé.",
@@ -105,14 +105,14 @@ export function recordChantierCreation({
       })
     : undefined;
 
-  let nextClient = client
+  const nextClient = client
     ? logClientLinkedEvent(client, "chantier_lie", `Chantier « ${chantier.nom} » créé.`, {
         chantierId: chantier.id,
         devisId: chantier.devisId ?? "",
       })
     : undefined;
 
-  let nextChantier = chantier.devisId
+  const nextChantier = chantier.devisId
     ? appendChantierHistorique(chantier, {
         type: "devis_lie",
         label: `Lié au devis ${chantier.devisNumber ?? chantier.devisId}.`,
@@ -169,7 +169,7 @@ export function recordFactureCreation({
   const label = getFactureCreatedLabel(facture.typeFacture);
   const meta = factureMeta(facture);
 
-  let nextDevis = devis
+  const nextDevis = devis
     ? appendDevisHistorique(devis, {
         type: "facture_liee",
         label,
@@ -177,15 +177,15 @@ export function recordFactureCreation({
       })
     : undefined;
 
-  let nextCommande = commande
+  const nextCommande = commande
     ? logCommandeFactureCreated(commande, label, meta)
     : undefined;
 
-  let nextClient = client
+  const nextClient = client
     ? logClientLinkedEvent(client, "facture_liee", `${facture.numero} — ${label}`, meta)
     : undefined;
 
-  let nextChantier = chantier
+  const nextChantier = chantier
     ? appendChantierHistorique(chantier, {
         type: "facture_liee",
         label: `${facture.numero} — ${label}`,

@@ -63,7 +63,7 @@ export function upsertPriceEntry(
     normalized.defaultSalePriceMode ??
     "coefficient";
 
-  let purchasePriceHT = input.purchasePriceHT ?? existing?.purchasePriceHT;
+  const purchasePriceHT = input.purchasePriceHT ?? existing?.purchasePriceHT;
   let salePriceHT = input.salePriceHT ?? existing?.salePriceHT;
   let marginRate = input.marginRate ?? existing?.marginRate;
   let markupCoefficient =

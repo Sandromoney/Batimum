@@ -323,7 +323,7 @@ export function parseAssistantLlmJson(raw: string): AssistantLlmUnderstanding | 
     const parsed = JSON.parse(stripJsonFence(raw)) as Record<string, unknown>;
     const intent = String(parsed.intent ?? "unknown").trim() || "unknown";
     const confidence = Math.max(0, Math.min(1, Number(parsed.confidence ?? 0)));
-    const module = String(parsed.module ?? "core").trim() || "core";
+    const domainModule = String(parsed.module ?? "core").trim() || "core";
     const actionTypeRaw = String(parsed.actionType ?? "ask_question").trim();
     const actionType = (
       ["prepare_action", "ask_question", "answer", "confirm", "cancel"].includes(actionTypeRaw)
@@ -364,7 +364,7 @@ export function parseAssistantLlmJson(raw: string): AssistantLlmUnderstanding | 
     return {
       intent,
       confidence,
-      module,
+      module: domainModule,
       actionType,
       entities,
       missingFields,
@@ -416,7 +416,7 @@ export function mapLlmToBrainAnalysis(
   const data = entitiesToAssistantData(llm.intent, llm.entities);
   const actionType = mapLlmActionType(llm);
   const entry = getKnowledgeEntry(brainIntent);
-  const module = llm.module || entry?.domain || "core";
+  const domainModule = llm.module || entry?.domain || "core";
   const missingFields = [...llm.missingFields];
 
   if (llm.intent === "assign_employee") {
@@ -460,8 +460,8 @@ export function mapLlmToBrainAnalysis(
 
   return {
     intent: brainIntent,
-    role: inferRole(brainIntent, module),
-    module,
+    role: inferRole(brainIntent, domainModule),
+    module: domainModule,
     actionType,
     confidence: llm.confidence,
     data,

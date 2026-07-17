@@ -132,7 +132,7 @@ export function syncChantierStatut(
   const nextStatut = resolveAutoChantierStatut(chantier, today);
   if (nextStatut === chantier.statut) return chantier;
 
-  let next = logChantierStatutTransition(
+  const next = logChantierStatutTransition(
     { ...chantier, statut: nextStatut },
     chantier.statut,
     nextStatut,

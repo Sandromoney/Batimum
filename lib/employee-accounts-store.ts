@@ -64,7 +64,8 @@ export async function findEmployeeAccountsByLogin(
   });
 
   if (!error) {
-    return (data ?? [])
+    const rows: unknown[] = Array.isArray(data) ? data : [];
+    return rows
       .map((row) => mapRow(row))
       .filter((row): row is EmployeeAccountRow => Boolean(row));
   }

@@ -239,7 +239,7 @@ export function learnFromDevisLignes(
   const date = devis.sentAt ?? devis.signedAt ?? devis.dateDevis ?? devis.date;
   let currentSection = "Autre";
   const inactive = bibliotheque.entries.filter((entry) => entry.desactive);
-  let working = [...bibliotheque.entries.filter((entry) => !entry.desactive)];
+  const working = [...bibliotheque.entries.filter((entry) => !entry.desactive)];
 
   for (const ligne of devis.lignes) {
     if (isSectionLigne(ligne)) {

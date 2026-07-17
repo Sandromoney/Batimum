@@ -113,7 +113,7 @@ export async function completeDevisClientSignature({
   const resolvedTotalHT = totalHT ?? devis.montantHT ?? devisTotal(devis);
   const trimmedSignedBy = signedBy.trim();
 
-  let prepared = prepareDevisForClientSignature(devis, trimmedSignedBy);
+  const prepared = prepareDevisForClientSignature(devis, trimmedSignedBy);
 
   const signInput: MarkDevisSignedInput = {
     signature,

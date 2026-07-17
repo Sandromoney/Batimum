@@ -114,7 +114,7 @@ export function runCoherenceEngine(
     const lignes = [];
 
     for (const ligne of section.lignes) {
-      let working = { ...ligne };
+      const working = { ...ligne };
       const designationKey = normalizeBibliothequeKey(working.designation);
 
       if (isSuggestionOnlyLibraryEntry(working.designation)) {

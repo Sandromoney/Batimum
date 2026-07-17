@@ -213,7 +213,7 @@ function buildSlotAnalysis(
   confidence: number,
 ): AssistantAnalysis {
   const enriched = enrichActionAnalysis(intent, message, data);
-  const module =
+  const domainModule =
     intent === "create_client"
       ? "clients"
       : intent === "create_devis"
@@ -224,8 +224,8 @@ function buildSlotAnalysis(
 
   return {
     intent,
-    role: inferRole(intent, module),
-    module,
+    role: inferRole(intent, domainModule),
+    module: domainModule,
     actionType: enriched.actionType,
     confidence,
     data: enriched.data,

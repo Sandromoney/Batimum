@@ -12,9 +12,34 @@ import {
   signEmployeeSession,
   verifyEmployeeSessionToken,
 } from "@/lib/employee-session";
+import type { Employe } from "@/lib/types";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 export const runtime = "nodejs";
+
+function parseEmployes(value: unknown): Employe[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(
+      (item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === "object" && !Array.isArray(item),
+    )
+    .map((item) => {
+      const id = typeof item.id === "string" ? item.id : "";
+      return {
+        id,
+        prenom: typeof item.prenom === "string" ? item.prenom : "",
+        nom: typeof item.nom === "string" ? item.nom : "",
+        ...(typeof item.identifiant === "string"
+          ? { identifiant: item.identifiant }
+          : {}),
+        ...(item.statut === "actif" || item.statut === "desactive"
+          ? { statut: item.statut }
+          : {}),
+      } satisfies Employe;
+    })
+    .filter((item) => item.id.length > 0);
+}
 
 export async function GET(request: Request) {
   if (process.env.NODE_ENV === "production") {
@@ -40,9 +65,7 @@ export async function GET(request: Request) {
     .limit(1);
 
   let companyId = settingsRows?.[0]?.user_id as string | undefined;
-  let employes = Array.isArray(settingsRows?.[0]?.employes)
-    ? [...(settingsRows![0].employes as { id: string }[])]
-    : [];
+  const employes = parseEmployes(settingsRows?.[0]?.employes);
 
   if (!companyId) {
     const { data: usersData } = await supabase.auth.admin.listUsers({
@@ -56,6 +79,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: "Aucun compte dirigeant." });
   }
 
+  const resolvedCompanyId: string = companyId;
   const suffix = Date.now().toString(36);
   const loginBase = `testemp_${suffix}`;
   const password = "secret123";
@@ -74,7 +98,7 @@ export async function GET(request: Request) {
     .from("user_settings")
     .upsert(
       {
-        user_id: companyId,
+        user_id: resolvedCompanyId,
         parametres: {},
         employes,
         updated_at: new Date().toISOString(),
@@ -90,23 +114,23 @@ export async function GET(request: Request) {
   }
 
   async function cleanup() {
-    await deleteEmployeeAccount(companyId, employeId);
+    await deleteEmployeeAccount(resolvedCompanyId, employeId);
     const { data: row } = await supabase!
       .from("user_settings")
       .select("employes")
-      .eq("user_id", companyId)
+      .eq("user_id", resolvedCompanyId)
       .maybeSingle();
     if (row?.employes) {
-      const filtered = (row.employes as { id: string }[]).filter(
+      const filtered = parseEmployes(row.employes).filter(
         (e) => e.id !== employeId,
       );
       await supabase!
         .from("user_settings")
         .update({ employes: filtered, updated_at: new Date().toISOString() })
-        .eq("user_id", companyId);
+        .eq("user_id", resolvedCompanyId);
     }
     for (const id of [`emp_lucas_${suffix}`, `emp_lucas2_${suffix}`]) {
-      await deleteEmployeeAccount(companyId, id);
+      await deleteEmployeeAccount(resolvedCompanyId, id);
     }
     await supabase!
       .from("employee_accounts")
@@ -117,7 +141,7 @@ export async function GET(request: Request) {
   await cleanup();
 
   const createResult = await upsertEmployeeAccount({
-    companyId,
+    companyId: resolvedCompanyId,
     employeId,
     login: loginBase,
     password,
@@ -129,7 +153,10 @@ export async function GET(request: Request) {
     createResult.error ?? loginBase,
   );
 
-  const stored = await getEmployeeAccountForEmploye(companyId, employeId);
+  const stored = await getEmployeeAccountForEmploye(
+    resolvedCompanyId,
+    employeId,
+  );
   log(
     "2. Mot de passe hashé (scrypt:)",
     Boolean(stored?.employee_password_hash?.startsWith("scrypt:")),
@@ -161,7 +188,7 @@ export async function GET(request: Request) {
   );
 
   await upsertEmployeeAccount({
-    companyId,
+    companyId: resolvedCompanyId,
     employeId: `emp_lucas_${suffix}`,
     login: "lucas",
     password: "lucaspass1",
@@ -169,7 +196,7 @@ export async function GET(request: Request) {
   });
 
   const dupLucas = await upsertEmployeeAccount({
-    companyId,
+    companyId: resolvedCompanyId,
     employeId: `emp_lucas2_${suffix}`,
     login: "Lucas",
     password: "lucaspass2",
@@ -177,7 +204,7 @@ export async function GET(request: Request) {
   });
   log(
     "6. Doublon Lucas bloqué",
-    !dupLucas.ok && dupLucas.error?.includes("déjà utilisé"),
+    !dupLucas.ok && Boolean(dupLucas.error?.includes("déjà utilisé")),
     dupLucas.error ?? "aucune erreur",
   );
 
@@ -185,7 +212,7 @@ export async function GET(request: Request) {
   log("7. Doublon \" lucas \" détecté", dupSpaces, String(dupSpaces));
 
   await upsertEmployeeAccount({
-    companyId,
+    companyId: resolvedCompanyId,
     employeId,
     login: loginBase,
     password: newPassword,
@@ -197,7 +224,7 @@ export async function GET(request: Request) {
   log("8. Ancien MDP refusé après changement", oldPwd.status === "invalid", oldPwd.status);
   log("9. Nouveau MDP accepté", newPwd.status === "ok", newPwd.status);
 
-  await setEmployeeAccountActive(companyId, employeId, false);
+  await setEmployeeAccountActive(resolvedCompanyId, employeId, false);
 
   const disabled = await authenticateEmployeeAccount(loginBase, newPassword);
   log(
@@ -206,10 +233,10 @@ export async function GET(request: Request) {
     disabled.status,
   );
 
-  await setEmployeeAccountActive(companyId, employeId, true);
+  await setEmployeeAccountActive(resolvedCompanyId, employeId, true);
 
   const token = signEmployeeSession({
-    companyId,
+    companyId: resolvedCompanyId,
     employeId,
     login: loginBase,
   });
@@ -236,7 +263,7 @@ export async function GET(request: Request) {
     passwordUsed: password,
     newPasswordUsed: newPassword,
     employeId,
-    companyId,
+    companyId: resolvedCompanyId,
     kept: keep,
     results,
     ...(keep

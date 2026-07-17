@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { distanceKmBetween } from "@/lib/maps/geo";
 import type { OsmDepotResult } from "@/lib/maps/depot-types";
 import { logSupplierSearch } from "@/lib/maps/supplier-search-logger";
 import {
   SupplierOverpassError,
   searchSuppliersOverpass,
-  type SupplierOverpassResult,
+  type SupplierSearchResult,
 } from "@/lib/maps/search-suppliers-overpass";
 import {
   isMumIaAuthContext,
@@ -15,11 +14,7 @@ import {
 const OVERPASS_UNAVAILABLE_MESSAGE =
   "La recherche automatique est temporairement indisponible. Vous pouvez ajouter le fournisseur manuellement.";
 
-function toOsmDepotResult(
-  depot: SupplierOverpassResult,
-  companyLat: number,
-  companyLon: number,
-): OsmDepotResult {
+function toOsmDepotResult(depot: SupplierSearchResult): OsmDepotResult {
   return {
     osmId: depot.osmId,
     osmType: depot.osmType,
@@ -30,12 +25,7 @@ function toOsmDepotResult(
     codePostal: depot.postcode,
     latitude: depot.latitude,
     longitude: depot.longitude,
-    distanceKm: distanceKmBetween(
-      companyLat,
-      companyLon,
-      depot.latitude,
-      depot.longitude,
-    ),
+    distanceKm: depot.distanceKm,
     telephone: depot.phone,
     siteWeb: depot.website,
   };
@@ -101,7 +91,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const depots = await searchSuppliersOverpass({
+    const outcome = await searchSuppliersOverpass({
       query,
       latitude,
       longitude,
@@ -110,7 +100,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      depots: depots.map((depot) => toOsmDepotResult(depot, latitude, longitude)),
+      depots: outcome.results.map((depot) => toOsmDepotResult(depot)),
       radiusKm,
     });
   } catch (error) {

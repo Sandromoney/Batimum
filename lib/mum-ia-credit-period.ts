@@ -55,7 +55,7 @@ export function addParisMonths(
   anchorDay: number,
   monthsToAdd: number,
 ): ParisYmd {
-  let totalMonths = year * 12 + (month - 1) + monthsToAdd;
+  const totalMonths = year * 12 + (month - 1) + monthsToAdd;
   const nextYear = Math.floor(totalMonths / 12);
   const nextMonth = (totalMonths % 12) + 1;
   return {

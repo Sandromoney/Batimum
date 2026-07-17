@@ -30,7 +30,8 @@ function buildChecklistItems(data: AppData): ChecklistItem[] {
   const hasImportedTarif =
     (parametres.entreprisePriceLibrary?.entries?.length ?? 0) > 0 ||
     (parametres.tarifsFournisseurs?.length ?? 0) > 0;
-  const hasIaDevis = data.mumIaHistorique.length > 0 || data.devis.length > 0;
+  const hasIaDevis =
+    (data.mumIaHistorique?.length ?? 0) > 0 || data.devis.length > 0;
   const hasEmployee = (data.employes?.length ?? 0) > 0;
 
   return [

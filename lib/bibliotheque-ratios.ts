@@ -298,7 +298,7 @@ export function learnRatiosFromDevis(
     .filter(Boolean)
     .join("\n");
   const metrics = extractChantierMetrics(corpus, devis.typeChantier);
-  let working = normalizeBibliothequeRatios(ratios);
+  const working = normalizeBibliothequeRatios(ratios);
 
   const observe = (ratioType: RatioType, value: number) => {
     if (!Number.isFinite(value) || value <= 0) return;
