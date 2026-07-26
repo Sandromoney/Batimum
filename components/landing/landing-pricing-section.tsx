@@ -202,17 +202,19 @@ export function LandingPricingSection() {
       : getPublicSignupHref();
 
   return (
-    <section id="plans" className="landing-section bg-white text-[#111827]">
-      <div className="landing-container">
+    <section id="plans" className="bg-[#050505] text-white">
+      <div className="mx-auto w-full max-w-7xl px-6 py-20 sm:px-8 lg:px-10">
       <LandingReveal variant="title">
-        <header className="landing-section-header">
-          <p className="landing-eyebrow">Tarifs</p>
-          <h2 className="landing-h2">
+        <header className="mx-auto mb-10 max-w-3xl text-center">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+            Tarifs
+          </p>
+          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             Une seule offre.
             <br />
-            Tout pour piloter votre TPE.
+            Tout ce qu&apos;il faut pour gérer une TPE du bâtiment.
           </h2>
-          <p className="landing-lead">
+          <p className="mt-4 text-sm leading-7 text-[#9CA3AF] sm:text-base">
             7 jours d&apos;essai · sans engagement · support français
           </p>
         </header>

@@ -1,88 +1,160 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { Check } from "lucide-react";
+import { LandingReveal } from "@/components/landing/landing-reveal";
 import {
-  LandingReveal,
   LandingRevealItem,
   LandingRevealStagger,
 } from "@/components/landing/landing-reveal";
 
-const rows = [
+type ComparisonRow = {
+  feature: string;
+  classicLabel: string;
+  batimumLabel: string;
+};
+
+const COMPARISON_ROWS: ComparisonRow[] = [
   {
-    label: "Devis + facture liés",
-    classic: false,
-    batimum: true,
+    feature: "Espace employé totalement séparé",
+    classicLabel: "Accès limités ou inexistants",
+    batimumLabel: "Accès sécurisé par employé",
   },
   {
-    label: "Planning employé dédié",
-    classic: false,
-    batimum: true,
+    feature: "Planning terrain connecté au bureau",
+    classicLabel: "Double saisie fréquente",
+    batimumLabel: "Synchronisation en temps réel",
   },
   {
-    label: "Pilotage de marge chantier",
-    classic: false,
-    batimum: true,
+    feature: "Devis → chantier → facture",
+    classicLabel: "Ressaisie manuelle",
+    batimumLabel: "Flux automatisé",
   },
   {
-    label: "Tout accessible sur téléphone",
-    classic: false,
-    batimum: true,
+    feature: "Déboursés chantier et rentabilité",
+    classicLabel: "Calculs sur Excel",
+    batimumLabel: "Suivi en temps réel",
   },
   {
-    label: "Fichiers Excel / WhatsApp",
-    classic: true,
-    batimum: false,
+    feature: "Rentabilité par employé",
+    classicLabel: "Rarement disponible",
+    batimumLabel: "Analyse par collaborateur",
   },
-] as const;
+  {
+    feature: "IA devis intégrée",
+    classicLabel: "Modules externes payants",
+    batimumLabel: "Incluse nativement",
+  },
+  {
+    feature: "Suivi d'avancement chantier",
+    classicLabel: "Outils généralistes",
+    batimumLabel: "Pensé pour le BTP",
+  },
+  {
+    feature: "Signature électronique",
+    classicLabel: "Souvent en option",
+    batimumLabel: "Intégrée",
+  },
+  {
+    feature: "Pilotage complet de l'entreprise",
+    classicLabel: "Outils dispersés",
+    batimumLabel: "Une seule plateforme",
+  },
+  {
+    feature: "Basé et développé en France",
+    classicLabel: "Hébergement international",
+    batimumLabel: "🇫🇷 100 % français",
+  },
+];
+
+function ClassicCell({ label }: { label: string }) {
+  return (
+    <div className="landing-comparison__classic flex items-center justify-center gap-2">
+      <span
+        className="landing-comparison__icon landing-comparison__icon--neutral inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+        aria-hidden="true"
+      />
+      <span className="landing-comparison__classic-label text-center">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function BatimumCell({ label }: { label: string }) {
+  return (
+    <div className="landing-comparison__batimum flex items-center justify-center gap-2">
+      <Check
+        className="landing-comparison__icon landing-comparison__icon--yes h-3.5 w-3.5 shrink-0"
+        aria-hidden="true"
+        strokeWidth={2.25}
+      />
+      <span className="landing-comparison__batimum-label text-center">
+        {label}
+      </span>
+    </div>
+  );
+}
 
 export function LandingComparisonSection() {
   return (
-    <section id="comparatif" className="landing-section">
-      <div className="landing-container">
-        <LandingReveal variant="title">
-          <header className="landing-section-header">
-            <p className="landing-eyebrow">Comparatif</p>
-            <h2 className="landing-h2">
-              Arrêtez de bricoler
-              <br />
-              avec <span className="landing-mark">cinq outils</span>.
-            </h2>
-            <p className="landing-lead">
-              Excel, WhatsApp, boîte mail… Batimum remplace le patchwork.
-            </p>
-          </header>
-        </LandingReveal>
+    <section
+      id="comparatif"
+      className="mx-auto w-full max-w-7xl px-6 py-14 sm:px-8 lg:px-10"
+    >
+      <LandingReveal variant="title">
+        <header className="mx-auto mb-8 max-w-2xl text-center">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-primary">
+            Comparatif
+          </p>
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            Un logiciel pensé pour piloter une entreprise du bâtiment
+          </h2>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            Devis, chantiers, équipes, factures et pilotage : Batimum centralise
+            l&apos;essentiel sans complexité.
+          </p>
+        </header>
+      </LandingReveal>
 
-        <LandingReveal delay={80}>
-          <div className="landing-compare">
-            <div className="landing-compare__head">
-              <span />
-              <span>Avant</span>
-              <span className="landing-compare__batimum">Batimum</span>
-            </div>
-            <LandingRevealStagger className="landing-compare__body">
-              {rows.map((row) => (
-                <LandingRevealItem key={row.label} className="landing-compare__row">
-                  <span>{row.label}</span>
-                  <span className="landing-compare__cell">
-                    {row.classic ? (
-                      <Check className="h-4 w-4 text-neutral-400" aria-label="Oui" />
-                    ) : (
-                      <X className="h-4 w-4 text-neutral-300" aria-label="Non" />
-                    )}
-                  </span>
-                  <span className="landing-compare__cell landing-compare__cell--ok">
-                    {row.batimum ? (
-                      <Check className="h-4 w-4 text-primary" aria-label="Oui" />
-                    ) : (
-                      <X className="h-4 w-4 text-neutral-300" aria-label="Non" />
-                    )}
-                  </span>
+      <div className="landing-comparison mx-auto max-w-[1000px]">
+        <div className="landing-comparison__scroll overflow-x-auto">
+          <table className="landing-comparison__table w-full min-w-[640px] border-collapse text-left">
+            <thead>
+              <tr className="landing-comparison__head">
+                <th className="landing-comparison__th-feature px-5 py-[1.125rem] text-left">
+                  Fonctionnalité
+                </th>
+                <th className="landing-comparison__th-classic px-5 py-[1.125rem] text-center">
+                  Logiciels classiques
+                </th>
+                <th className="landing-comparison__th-batimum px-5 py-[1.125rem] text-center">
+                  Batimum
+                </th>
+              </tr>
+            </thead>
+            <LandingRevealStagger as="tbody">
+              {COMPARISON_ROWS.map((row) => (
+                <LandingRevealItem
+                  key={row.feature}
+                  as="tr"
+                  className="landing-comparison__row group"
+                >
+                  <td className="landing-comparison__feature px-5 py-[1.125rem]">
+                    <span className="landing-comparison__feature-label">
+                      {row.feature}
+                    </span>
+                  </td>
+                  <td className="landing-comparison__cell-classic px-5 py-[1.125rem]">
+                    <ClassicCell label={row.classicLabel} />
+                  </td>
+                  <td className="landing-comparison__cell-batimum px-5 py-[1.125rem]">
+                    <BatimumCell label={row.batimumLabel} />
+                  </td>
                 </LandingRevealItem>
               ))}
             </LandingRevealStagger>
-          </div>
-        </LandingReveal>
+          </table>
+        </div>
       </div>
     </section>
   );

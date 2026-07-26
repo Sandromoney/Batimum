@@ -1,277 +1,97 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import {
-  AlertTriangle,
-  Clock3,
+  AlertCircle,
+  BarChart3,
+  Clock,
+  PieChart,
   TrendingUp,
-  Trophy,
-  Wallet,
 } from "lucide-react";
-import { LandingLaptop } from "@/components/landing/landing-device-frames";
-import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
-import { cn } from "@/lib/utils";
+import {
+  LandingReveal,
+  LandingRevealStagger,
+  LandingRevealItem,
+} from "@/components/landing/landing-reveal";
 
-type Phase = 0 | 1 | 2 | 3 | 4 | 5;
-
-const STEPS_MS = [0, 500, 1400, 2400, 3400, 4400] as const;
-const LOOP_MS = 7200;
-
-const BENEFITS = [
+const highlights = [
   {
-    id: "rentables",
-    title: "Repérez les chantiers rentables",
-    from: 4 as Phase,
+    icon: TrendingUp,
+    title: "Rentabilité réelle",
+    badge: "+18 % de marge moyenne constatée",
+    description:
+      "Connaissez votre bénéfice réel chantier par chantier, matériaux et main-d'œuvre inclus.",
   },
   {
-    id: "depassements",
-    title: "Anticipez les dépassements",
-    from: 5 as Phase,
+    icon: Clock,
+    title: "Temps prévu vs réel",
+    badge: "0 heure non expliquée",
+    description:
+      "Comparez instantanément vos estimations avec les heures réellement passées sur le terrain.",
   },
   {
-    id: "decisions",
-    title: "Prenez vos décisions avec des chiffres clairs",
-    from: 5 as Phase,
+    icon: PieChart,
+    title: "Marges sous contrôle",
+    badge: "Vision en temps réel",
+    description:
+      "Suivez vos marges prévues et réelles avant qu'un chantier ne devienne non rentable.",
+  },
+  {
+    icon: AlertCircle,
+    title: "Alertes intelligentes",
+    badge: "Agir avant les pertes",
+    description:
+      "Batimum vous signale automatiquement les dépassements de temps, coûts ou matériaux.",
+  },
+  {
+    icon: BarChart3,
+    title: "Analyse métier",
+    badge: "Les chantiers qui rapportent vraiment",
+    description:
+      "Identifiez les activités les plus rentables : dépannage, salle de bain, placo, carrelage ou rénovation complète.",
   },
 ] as const;
 
 export function LandingPilotageSection() {
-  const reducedMotion = usePrefersReducedMotion();
-  const ref = useRef<HTMLElement | null>(null);
-  const [inView, setInView] = useState(false);
-  const [phase, setPhase] = useState<Phase>(0);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) setInView(true);
-      },
-      { threshold: 0.28 },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (reducedMotion) {
-      setPhase(5);
-      return;
-    }
-    if (!inView) return;
-
-    const timers: number[] = [];
-    const run = () => {
-      setPhase(0);
-      STEPS_MS.forEach((ms, index) => {
-        timers.push(window.setTimeout(() => setPhase(index as Phase), ms));
-      });
-    };
-
-    run();
-    const interval = window.setInterval(run, LOOP_MS);
-    return () => {
-      timers.forEach((id) => window.clearTimeout(id));
-      window.clearInterval(interval);
-    };
-  }, [inView, reducedMotion]);
-
   return (
-    <section
-      id="pilotage"
-      ref={ref}
-      className="landing-pilotage-pro"
-      aria-label="Pilotage et rentabilité Batimum"
-    >
-      <div className="landing-container">
-        <header className="landing-pilotage-pro__header">
-          <p className="landing-pilotage-pro__badge">
-            Enfin savoir ce que vous gagnez vraiment
-          </p>
-          <h2 className="landing-pilotage-pro__title">
-            Votre chiffre d’affaires ne suffit pas. Suivez votre{" "}
-            <span className="landing-pilotage-pro__mark">rentabilité</span>.
-          </h2>
-          <p className="landing-pilotage-pro__lead">
-            Comparez le prévu et le réel, suivez les coûts, les heures et les
-            marges de chaque chantier.
-          </p>
-        </header>
-
-        <div className="landing-pilotage-pro__layout">
-          <LandingLaptop
-            className="landing-pilotage-pro__laptop"
-            alive={inView && !reducedMotion}
-            size="lg"
-          >
-            <div
-              className={cn(
-                "landing-pilotage-dash",
-                `landing-pilotage-dash--phase-${phase}`,
-              )}
-              aria-hidden={false}
-            >
-            <div className="landing-pilotage-dash__top">
-              <div>
-                <p className="landing-pilotage-dash__eyebrow">Pilotage</p>
-                <p className="landing-pilotage-dash__period">
-                  Mars 2026 · données de démonstration
-                </p>
-              </div>
-              <span className="landing-pilotage-dash__demo-tag">Exemple fictif</span>
-            </div>
-
-            <div className="landing-pilotage-dash__grid">
-              <article
-                className={cn(
-                  "pilot-kpi pilot-kpi--hero",
-                  phase >= 1 && "pilot-kpi--visible",
-                )}
-              >
-                <div className="pilot-kpi__icon" aria-hidden>
-                  <Wallet className="h-4 w-4" />
-                </div>
-                <p className="pilot-kpi__label">Chiffre d’affaires du mois</p>
-                <p className="pilot-kpi__value">48 200 €</p>
-                <p className="pilot-kpi__hint">CA facturé (démo)</p>
-              </article>
-
-              <article
-                className={cn(
-                  "pilot-kpi",
-                  phase >= 2 && "pilot-kpi--visible",
-                )}
-              >
-                <p className="pilot-kpi__label">Montant encaissé</p>
-                <p className="pilot-kpi__value pilot-kpi__value--sm">31 450 €</p>
-              </article>
-
-              <article
-                className={cn(
-                  "pilot-kpi",
-                  phase >= 2 && "pilot-kpi--visible",
-                )}
-                style={{ transitionDelay: "80ms" }}
-              >
-                <p className="pilot-kpi__label">Factures en attente</p>
-                <p className="pilot-kpi__value pilot-kpi__value--sm">12 800 €</p>
-              </article>
-
-              <article
-                className={cn(
-                  "pilot-compare",
-                  phase >= 3 && "pilot-compare--visible",
-                )}
-              >
-                <div className="pilot-compare__head">
-                  <Clock3 className="h-4 w-4" aria-hidden />
-                  <span>Heures chantier · SDB Dupont</span>
-                </div>
-                <div className="pilot-compare__cols">
-                  <div
-                    className={cn(
-                      "pilot-compare__col",
-                      phase >= 3 && "pilot-compare__col--prevu",
-                    )}
-                  >
-                    <p className="pilot-compare__tag">Prévu</p>
-                    <p className="pilot-compare__num">120 h</p>
-                  </div>
-                  <div className="pilot-compare__bridge" aria-hidden>
-                    <span />
-                  </div>
-                  <div
-                    className={cn(
-                      "pilot-compare__col",
-                      phase >= 3 && "pilot-compare__col--reel",
-                    )}
-                  >
-                    <p className="pilot-compare__tag">Réel</p>
-                    <p className="pilot-compare__num">138 h</p>
-                  </div>
-                </div>
-                <div className="pilot-compare__bars" aria-hidden>
-                  <div className="pilot-compare__bar pilot-compare__bar--prevu">
-                    <span style={{ width: phase >= 3 ? "72%" : "0%" }} />
-                  </div>
-                  <div className="pilot-compare__bar pilot-compare__bar--reel">
-                    <span style={{ width: phase >= 3 ? "86%" : "0%" }} />
-                  </div>
-                </div>
-              </article>
-
-              <article
-                className={cn(
-                  "pilot-kpi pilot-kpi--marge",
-                  phase >= 4 && "pilot-kpi--visible",
-                )}
-              >
-                <div className="pilot-kpi__icon" aria-hidden>
-                  <TrendingUp className="h-4 w-4" />
-                </div>
-                <p className="pilot-kpi__label">Marge chantier</p>
-                <p className="pilot-kpi__value">24 %</p>
-                <p className="pilot-kpi__hint">Estimation indicative · démo</p>
-              </article>
-
-              <article
-                className={cn(
-                  "pilot-kpi pilot-kpi--top",
-                  phase >= 4 && "pilot-kpi--visible",
-                )}
-                style={{ transitionDelay: "90ms" }}
-              >
-                <div className="pilot-kpi__icon" aria-hidden>
-                  <Trophy className="h-4 w-4" />
-                </div>
-                <p className="pilot-kpi__label">Chantier le plus rentable</p>
-                <p className="pilot-kpi__title">SDB Dupont</p>
-                <p className="pilot-kpi__hint">Marge indicative 29 %</p>
-              </article>
-
-              <article
-                className={cn(
-                  "pilot-alert",
-                  phase >= 5 && "pilot-alert--visible",
-                )}
-              >
-                <div className="pilot-alert__icon" aria-hidden>
-                  <AlertTriangle className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="pilot-alert__label">Alerte dépassement</p>
-                  <p className="pilot-alert__text">
-                    Heures réelles +15 % vs prévu sur SDB Dupont — à vérifier
-                    avant de conclure.
-                  </p>
-                </div>
-              </article>
-            </div>
-          </div>
-          </LandingLaptop>
-
-          <aside className="landing-pilotage-pro__side">
-            <ul className="landing-pilotage-pro__benefits" role="list">
-              {BENEFITS.map((benefit) => (
-                <li
-                  key={benefit.id}
-                  className={cn(
-                    "landing-pilotage-pro__benefit",
-                    phase >= benefit.from &&
-                      "landing-pilotage-pro__benefit--visible",
-                  )}
-                >
-                  {benefit.title}
-                </li>
-              ))}
-            </ul>
-            <p className="landing-pilotage-pro__disclaimer">
-              Batimum est un outil d’aide au pilotage : les indicateurs vous
-              éclairent, les décisions restent les vôtres.
+    <section id="pilotage" className="bg-[#050505] text-white">
+      <div className="mx-auto w-full max-w-7xl px-6 py-20 sm:px-8 lg:px-10">
+        <LandingReveal variant="title">
+          <header className="mx-auto mb-14 max-w-2xl text-center">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+              Pilotage
             </p>
-          </aside>
-        </div>
+            <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+              Sachez chaque soir ce que vos chantiers vous rapportent
+              réellement.
+            </h2>
+            <p className="mt-4 text-base leading-7 text-[#9CA3AF]">
+              Rentabilité, temps réel, marges et alertes intelligentes.
+              Batimum vous aide à prendre les bonnes décisions avant
+              qu&apos;il ne soit trop tard.
+            </p>
+          </header>
+        </LandingReveal>
+
+        <LandingRevealStagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {highlights.map((item) => (
+            <LandingRevealItem key={item.title}>
+              <article className="rounded-2xl border border-white/[0.08] bg-[#0D0D0D] p-6">
+                <span className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                  <item.icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <h3 className="text-base font-semibold text-white">
+                  {item.title}
+                </h3>
+                <p className="mt-1.5 text-[0.6875rem] font-semibold tracking-wide text-primary">
+                  {item.badge}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[#9CA3AF]">
+                  {item.description}
+                </p>
+              </article>
+            </LandingRevealItem>
+          ))}
+        </LandingRevealStagger>
       </div>
     </section>
   );

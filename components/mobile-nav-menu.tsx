@@ -135,7 +135,7 @@ export function MobileNavMenu() {
                   <BrandLogo variant="sidebarFooter" showSubtitle={false} />
                 </div>
                 <p className="btp-sidebar-brand-subtitle mt-3 text-[10px] leading-snug text-muted-foreground/80">
-                  Solution de gestion BTP
+                  Logiciel de gestion BTP
                 </p>
                 <p className="btp-sidebar-brand-version mt-1 text-[9px] tracking-wide text-muted-foreground/45">
                   Version 1.0
