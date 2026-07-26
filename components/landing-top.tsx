@@ -82,16 +82,28 @@ export function LandingTop() {
             </Link>
           </div>
 
-          <LandingNavMenus className="landing-header-nav flex min-w-0 items-center justify-center" />
+          <LandingNavMenus
+            className="landing-header-nav hidden min-w-0 items-center justify-center lg:flex"
+            variant="desktop"
+          />
 
           <div className="landing-header-actions flex items-center gap-3">
-            <Link href="/login-employe" className={headerEmployeeLinkClass}>
+            <Link
+              href="/login-employe"
+              className={cn(headerEmployeeLinkClass, "hidden md:inline-flex")}
+            >
               Connexion employé
             </Link>
-            <Link href="/login" className={btnHeaderSecondaryClass}>
+            <Link
+              href="/login"
+              className={cn(btnHeaderSecondaryClass, "hidden sm:inline-flex")}
+            >
               Connexion
             </Link>
-            <Link href={getPublicSignupHref()} className={btnHeaderPrimaryClass}>
+            <Link
+              href={getPublicSignupHref()}
+              className={cn(btnHeaderPrimaryClass, "hidden sm:inline-flex")}
+            >
               <span className="hidden sm:inline">
                 {isPrivateBetaEnabled() ? "Se connecter" : "Commencer gratuitement"}
               </span>
@@ -103,6 +115,7 @@ export function LandingTop() {
                 aria-hidden="true"
               />
             </Link>
+            <LandingNavMenus variant="mobile" className="lg:hidden" />
           </div>
         </div>
       </header>
@@ -121,9 +134,7 @@ export function LandingTop() {
             heroVisible && "landing-hero--visible",
           )}
         >
-          <LandingHeroScene visible={heroVisible} />
-
-          <div className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">
+          <div className="landing-hero__copy mx-auto flex w-full max-w-3xl flex-col items-center text-center">
             <h1 className="landing-hero-title landing-hero-title--centered landing-hero-title--hook">
               <HeroRevealLine delay={920}>
                 Le terrain.
@@ -185,6 +196,11 @@ export function LandingTop() {
               <span>Support français</span>
             </p>
           </div>
+
+          <LandingHeroScene
+            visible={heroVisible}
+            className="landing-hero__visual lg:order-first"
+          />
         </div>
       </section>
     </div>

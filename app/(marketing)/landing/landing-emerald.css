@@ -691,11 +691,16 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-nav__desktop {
+  display: flex;
+  align-items: center;
   gap: 22px;
   flex-wrap: nowrap;
   white-space: nowrap;
   justify-content: center;
   max-width: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .landing-emerald .landing-nav__trigger,
@@ -747,6 +752,82 @@ html:has(.landing-emerald) body {
 .landing-emerald .landing-nav__mobile-toggle {
   height: 40px;
   width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 0.625rem;
+  background: #fff;
+  color: #0f172a;
+}
+
+/* Panneau mobile : masqué tant qu’il n’est pas ouvert */
+.landing-emerald .landing-nav-mobile {
+  display: none;
+}
+
+.landing-emerald .landing-nav-mobile--open {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+}
+
+.landing-emerald .landing-nav-mobile__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.landing-emerald .landing-nav-mobile__sheet {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 22rem);
+  height: 100%;
+  background: #fff;
+  box-shadow: -12px 0 40px rgba(15, 23, 42, 0.12);
+}
+
+.landing-emerald .landing-nav-mobile__head,
+.landing-emerald .landing-nav-mobile__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.landing-emerald .landing-nav-mobile__foot {
+  border-bottom: 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  margin-top: auto;
+  flex-direction: column;
+}
+
+.landing-emerald .landing-nav-mobile__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  overflow: auto;
+}
+
+.landing-emerald .landing-nav-mobile__link {
+  display: block;
+  padding: 0.7rem 0.5rem;
+  color: #0f172a;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.landing-emerald .landing-nav-mobile__link--muted {
+  color: #64748b;
+  font-weight: 500;
 }
 
 /* Typographie hero */
