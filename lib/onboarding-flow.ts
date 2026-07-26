@@ -26,6 +26,14 @@ export type OnboardingCompanyDraft = {
   siteInternet: string;
   siret: string;
   tvaIntracom: string;
+  /** Activité / NAF (optionnel, prérempli si lookup disponible). */
+  activite: string;
+  codeApe: string;
+  /**
+   * Société en cours de création : SIRET non exigé,
+   * l’inscription ne doit pas être bloquée.
+   */
+  entrepriseEnCreation: boolean;
 };
 
 export type OnboardingDocumentsDraft = {
@@ -73,6 +81,9 @@ export function emptyCompanyDraft(email = ""): OnboardingCompanyDraft {
     siteInternet: "",
     siret: "",
     tvaIntracom: "",
+    activite: "",
+    codeApe: "",
+    entrepriseEnCreation: false,
   };
 }
 

@@ -153,15 +153,15 @@ const GLOBAL_CATALOGUE_IDS: Record<string, string> = {
 };
 
 const CATEGORIE_SECTION: Record<string, string> = {
-  Placo: "PARTIE PLACO",
-  Isolation: "PARTIE ISOLATION",
-  "Carrelage / Faïence": "PARTIE CARRELAGE / FAÏENCE",
-  Sols: "PARTIE SOLS",
-  Peinture: "PARTIE PEINTURE / FINITIONS",
-  Plomberie: "PARTIE PLOMBERIE",
-  Électricité: "PARTIE ÉLECTRICITÉ",
-  Dépose: "PARTIE DÉPOSE / PRÉPARATION",
-  "Évacuation / Nettoyage": "PARTIE NETTOYAGE / ÉVACUATION",
+  Placo: "LOT PLACO",
+  Isolation: "LOT ISOLATION",
+  "Carrelage / Faïence": "LOT CARRELAGE / FAÏENCE",
+  Sols: "LOT SOLS",
+  Peinture: "LOT PEINTURE / FINITIONS",
+  Plomberie: "LOT PLOMBERIE",
+  Électricité: "LOT ÉLECTRICITÉ",
+  Dépose: "LOT DÉPOSE / PRÉPARATION",
+  "Évacuation / Nettoyage": "LOT NETTOYAGE / ÉVACUATION",
 };
 
 function buildElementRegistry(): ChantierElementRef[] {
@@ -170,7 +170,7 @@ function buildElementRegistry(): ChantierElementRef[] {
     label: entry.designation,
     keywords: [entry.designation, ...entry.motsCles],
     catalogueId: entry.id,
-    sectionTitre: CATEGORIE_SECTION[entry.categorie] ?? "PARTIE DIVERS",
+    sectionTitre: CATEGORIE_SECTION[entry.categorie] ?? "LOT DIVERS",
     unite: entry.unite,
     tva: entry.tvaHabituelle,
     coveredByGlobals: POSTES_GLOBAUX_BUNDLES.filter((bundle) =>
@@ -185,7 +185,7 @@ function buildElementRegistry(): ChantierElementRef[] {
     label: bundle.label,
     keywords: bundle.matchKeywords,
     catalogueId: GLOBAL_CATALOGUE_IDS[bundle.id],
-    sectionTitre: "PARTIE PLOMBERIE",
+    sectionTitre: "LOT PLOMBERIE",
     unite: "forfait",
     tva: 10,
     coveredByGlobals: POSTES_GLOBAUX_BUNDLES.filter(

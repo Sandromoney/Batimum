@@ -1,7 +1,7 @@
 import type { LigneDevis } from "@/lib/types";
 import { generateId } from "@/lib/utils";
 
-export const DEFAULT_DEVIS_SECTION_TITLE = "PARTIE ...";
+export const DEFAULT_DEVIS_SECTION_TITLE = "LOT ...";
 
 export function isSectionLigne(ligne: LigneDevis): boolean {
   return ligne.typeLigne === "section";

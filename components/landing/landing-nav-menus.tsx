@@ -2,50 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 import {
   getLandingNavHash,
   LANDING_NAV_ENTRIES,
   type LandingNavItem,
   type LandingNavMenu,
 } from "@/lib/landing-nav";
+import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 import { cn } from "@/lib/utils";
 
 type LandingNavMenusProps = {
   className?: string;
+  /** desktop = liens seuls ; mobile = bouton + panneau ; both = tout */
+  variant?: "desktop" | "mobile" | "both";
 };
-
-const navTriggerClass =
-  "landing-nav__trigger inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-[#0f172a] transition-colors hover:bg-black/[0.03]";
-
-function DropdownPanel({
-  menu,
-  onNavigate,
-}: {
-  menu: LandingNavMenu;
-  onNavigate: (href: string) => boolean;
-}) {
-  return (
-    <div className="landing-nav-dropdown__panel p-2">
-      {menu.intro ? (
-        <p className="landing-nav-dropdown__intro px-3 pb-2 pt-1 text-xs text-[#64748b]">
-          {menu.intro}
-        </p>
-      ) : null}
-      <ul className="space-y-0.5">
-        {menu.items.map((item) => (
-          <DropdownLink
-            key={item.label}
-            item={item}
-            onNavigate={onNavigate}
-            variant="desktop"
-          />
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 function DropdownLink({
   item,
@@ -58,46 +30,32 @@ function DropdownLink({
 }) {
   const Icon = item.icon;
 
-  if (variant === "desktop") {
-    return (
-      <li>
-        <Link
-          href={item.href}
-          className="landing-nav-dropdown__link group flex rounded-2xl px-3 py-2.5 no-underline transition-colors hover:bg-[#f8faf8]"
-          onClick={(event) => {
-            if (onNavigate(item.href)) event.preventDefault();
-          }}
-        >
-          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(15,23,42,0.06)] bg-white text-[#10b981] shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
-            <Icon className="h-4 w-4" aria-hidden="true" />
-          </span>
-          <span className="landing-nav-dropdown__link-text min-w-0">
-            <span className="block text-sm font-medium text-[#0f172a] group-hover:text-[#10b981]">
-              {item.label}
-            </span>
-            <span className="landing-nav-dropdown__desc mt-0.5 block text-xs text-[#64748b]">
-              {item.description}
-            </span>
-          </span>
-        </Link>
-      </li>
-    );
-  }
-
   return (
     <li>
       <Link
         href={item.href}
-        className="flex gap-3 rounded-xl px-2 py-2.5 no-underline hover:bg-[#f8faf8]"
+        className={cn(
+          "landing-nav-dropdown__link group no-underline",
+          variant === "desktop"
+            ? "flex rounded-xl px-3 py-2.5 transition-colors hover:bg-[#f8faf8]"
+            : "flex gap-3 rounded-xl px-2 py-2.5 hover:bg-[#f8faf8]",
+        )}
         onClick={(event) => {
           if (onNavigate(item.href)) event.preventDefault();
         }}
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f8faf8] text-[#10b981]">
-          <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+        <span
+          className={cn(
+            "flex shrink-0 items-center justify-center text-[#10b981]",
+            variant === "desktop"
+              ? "mt-0.5 h-9 w-9 rounded-xl border border-[rgba(15,23,42,0.06)] bg-white shadow-[0_2px_8px_rgba(15,23,42,0.04)]"
+              : "h-8 w-8 rounded-lg bg-[#f3f4f6]",
+          )}
+        >
+          <Icon className={variant === "desktop" ? "h-4 w-4" : "h-3.5 w-3.5"} aria-hidden />
         </span>
-        <span>
-          <span className="block text-sm font-medium text-[#0f172a]">
+        <span className="min-w-0">
+          <span className="block text-sm font-medium text-[#0f172a] group-hover:text-[#10b981]">
             {item.label}
           </span>
           <span className="mt-0.5 block text-xs leading-5 text-[#64748b]">
@@ -109,17 +67,24 @@ function DropdownLink({
   );
 }
 
-export function LandingNavMenus({ className }: LandingNavMenusProps) {
+export function LandingNavMenus({
+  className,
+  variant = "both",
+}: LandingNavMenusProps) {
   const pathname = usePathname();
+  const panelId = useId();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpandedId, setMobileExpandedId] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const signupHref = getPublicSignupHref();
+  const ctaLabel = isPrivateBetaEnabled()
+    ? "Se connecter"
+    : "Essayer gratuitement";
+  const showDesktop = variant === "desktop" || variant === "both";
+  const showMobile = variant === "mobile" || variant === "both";
 
-  const closeMenus = useCallback(() => {
-    setOpenMenuId(null);
-  }, []);
-
+  const closeMenus = useCallback(() => setOpenMenuId(null), []);
   const closeMobile = useCallback(() => {
     setMobileOpen(false);
     setMobileExpandedId(null);
@@ -130,9 +95,7 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
       const hash = getLandingNavHash(href);
       if (!hash) return false;
 
-      const onLanding =
-        pathname === "/landing" || pathname === "/landing/";
-
+      const onLanding = pathname === "/landing" || pathname === "/landing/";
       if (!onLanding) return false;
 
       const target = document.getElementById(hash);
@@ -148,18 +111,14 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
-      if (!navRef.current?.contains(event.target as Node)) {
-        closeMenus();
-      }
+      if (!navRef.current?.contains(event.target as Node)) closeMenus();
     }
-
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
         closeMenus();
         closeMobile();
       }
     }
-
     document.addEventListener("mousedown", handlePointerDown);
     document.addEventListener("keydown", handleEscape);
     return () => {
@@ -169,11 +128,12 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
   }, [closeMenus, closeMobile]);
 
   useEffect(() => {
+    if (!showMobile) return;
     document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [mobileOpen]);
+  }, [mobileOpen, showMobile]);
 
   return (
     <nav
@@ -181,14 +141,15 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
       className={cn("landing-nav", className)}
       aria-label="Navigation principale"
     >
-      <ul className="landing-nav__desktop hidden items-center xl:flex">
+      {showDesktop ? (
+      <ul className="landing-nav__desktop">
         {LANDING_NAV_ENTRIES.map((entry) => {
           if (entry.type === "link") {
             return (
               <li key={entry.link.id}>
                 <Link
                   href={entry.link.href}
-                  className={navTriggerClass}
+                  className="landing-nav__trigger"
                   onClick={(event) => {
                     if (scrollToSection(entry.link.href)) event.preventDefault();
                   }}
@@ -212,7 +173,7 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
               <button
                 type="button"
                 className={cn(
-                  navTriggerClass,
+                  "landing-nav__trigger",
                   isOpen && "landing-nav__trigger--open",
                 )}
                 aria-expanded={isOpen}
@@ -226,83 +187,92 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
                 {menu.label}
                 <ChevronDown
                   className={cn(
-                    "h-3.5 w-3.5 text-[#64748b] transition-transform duration-200",
-                    isOpen && "rotate-180",
+                    "landing-nav__chevron",
+                    isOpen && "landing-nav__chevron--open",
                   )}
-                  aria-hidden="true"
+                  aria-hidden
                 />
               </button>
 
               <div
                 className={cn(
-                  "landing-nav-dropdown pointer-events-none absolute left-1/2 top-[calc(100%+0.5rem)] z-50 -translate-x-1/2 opacity-0",
+                  "landing-nav-dropdown",
                   `landing-nav-dropdown--${menu.id}`,
-                  isOpen && "landing-nav-dropdown--open pointer-events-auto",
+                  isOpen && "landing-nav-dropdown--open",
                 )}
               >
-                <DropdownPanel menu={menu} onNavigate={scrollToSection} />
+                <div className="landing-nav-dropdown__panel">
+                  <ul className="space-y-0.5 p-2">
+                    {menu.items.map((item) => (
+                      <DropdownLink
+                        key={item.label}
+                        item={item}
+                        onNavigate={scrollToSection}
+                        variant="desktop"
+                      />
+                    ))}
+                  </ul>
+                </div>
               </div>
             </li>
           );
         })}
       </ul>
+      ) : null}
 
+      {showMobile ? (
+        <>
       <button
         type="button"
-        className="landing-nav__mobile-toggle inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[rgba(15,23,42,0.08)] bg-white text-[#0f172a] shadow-[0_2px_8px_rgba(15,23,42,0.04)] xl:hidden"
+        className="landing-nav__mobile-toggle"
         aria-expanded={mobileOpen}
-        aria-controls="landing-nav-mobile-panel"
+        aria-controls={panelId}
         onClick={() => setMobileOpen((open) => !open)}
       >
         {mobileOpen ? (
-          <X className="h-5 w-5" aria-hidden="true" />
+          <X className="h-5 w-5" aria-hidden />
         ) : (
-          <Menu className="h-5 w-5" aria-hidden="true" />
+          <Menu className="h-5 w-5" aria-hidden />
         )}
         <span className="sr-only">Menu</span>
       </button>
 
       <div
-        id="landing-nav-mobile-panel"
+        id={panelId}
         className={cn(
-          "landing-nav-mobile fixed inset-0 z-[60] xl:hidden",
-          mobileOpen ? "pointer-events-auto" : "pointer-events-none",
+          "landing-nav-mobile",
+          mobileOpen && "landing-nav-mobile--open",
         )}
         aria-hidden={!mobileOpen}
       >
         <button
           type="button"
-          className={cn(
-            "absolute inset-0 bg-[#0f172a]/20 backdrop-blur-[2px] transition-opacity duration-300",
-            mobileOpen ? "opacity-100" : "opacity-0",
-          )}
+          className="landing-nav-mobile__backdrop"
           aria-label="Fermer le menu"
+          tabIndex={mobileOpen ? 0 : -1}
           onClick={closeMobile}
         />
-        <div
-          className={cn(
-            "landing-nav-mobile__sheet absolute right-0 top-0 flex h-full w-[min(100%,20rem)] flex-col bg-[#f8faf8] shadow-[-12px_0_40px_rgba(15,23,42,0.08)] transition-transform duration-300 ease-out",
-            mobileOpen ? "translate-x-0" : "translate-x-full",
-          )}
-        >
-          <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] px-5 py-4">
-            <p className="text-sm font-semibold text-[#0f172a]">Menu</p>
+        <div className="landing-nav-mobile__sheet">
+          <div className="landing-nav-mobile__head">
+            <p>Menu</p>
             <button
               type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#64748b] hover:bg-black/[0.04]"
+              className="landing-nav-mobile__close"
               onClick={closeMobile}
+              aria-label="Fermer"
             >
-              <X className="h-5 w-5" aria-hidden="true" />
+              <X className="h-5 w-5" aria-hidden />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto px-3 py-4">
+
+          <div className="landing-nav-mobile__body">
             {LANDING_NAV_ENTRIES.map((entry) => {
               if (entry.type === "link") {
                 return (
                   <Link
                     key={entry.link.id}
                     href={entry.link.href}
-                    className="mb-2 flex w-full items-center rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white px-4 py-3.5 text-sm font-semibold text-[#0f172a] no-underline hover:bg-[#f8faf8]"
+                    className="landing-nav-mobile__link"
                     onClick={(event) => {
                       if (scrollToSection(entry.link.href)) event.preventDefault();
                     }}
@@ -316,59 +286,102 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
               const expanded = mobileExpandedId === menu.id;
 
               return (
-                <div
+                <MobileAccordion
                   key={menu.id}
-                  className="mb-2 overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white"
-                >
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm font-semibold text-[#0f172a]"
-                    aria-expanded={expanded}
-                    onClick={() =>
-                      setMobileExpandedId((current) =>
-                        current === menu.id ? null : menu.id,
-                      )
-                    }
-                  >
-                    {menu.label}
-                    <ChevronDown
-                      className={cn(
-                        "h-4 w-4 text-[#64748b] transition-transform duration-200",
-                        expanded && "rotate-180",
-                      )}
-                      aria-hidden="true"
-                    />
-                  </button>
-                  <div
-                    className={cn(
-                      "grid transition-[grid-template-rows] duration-300 ease-out",
-                      expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-                    )}
-                  >
-                    <div className="overflow-hidden">
-                      {menu.intro ? (
-                        <p className="border-t border-[rgba(15,23,42,0.06)] px-4 py-2.5 text-xs leading-5 text-[#64748b]">
-                          {menu.intro}
-                        </p>
-                      ) : null}
-                      <ul className="space-y-0.5 border-t border-[rgba(15,23,42,0.06)] px-2 py-2">
-                        {menu.items.map((item) => (
-                          <DropdownLink
-                            key={item.label}
-                            item={item}
-                            onNavigate={scrollToSection}
-                            variant="mobile"
-                          />
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
+                  menu={menu}
+                  expanded={expanded}
+                  onToggle={() =>
+                    setMobileExpandedId((current) =>
+                      current === menu.id ? null : menu.id,
+                    )
+                  }
+                  onNavigate={scrollToSection}
+                />
               );
             })}
+
+            <Link
+              href="/login-employe"
+              className="landing-nav-mobile__link landing-nav-mobile__link--muted"
+              onClick={closeMobile}
+            >
+              Connexion employé
+            </Link>
+          </div>
+
+          <div className="landing-nav-mobile__foot">
+            <Link
+              href="/login"
+              className="landing-header-btn landing-header-btn--secondary w-full"
+              onClick={closeMobile}
+            >
+              Connexion
+            </Link>
+            <Link
+              href={signupHref}
+              className="landing-header-btn landing-header-btn--primary group w-full"
+              onClick={closeMobile}
+            >
+              {ctaLabel}
+              <ArrowRight
+                className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </Link>
           </div>
         </div>
       </div>
+        </>
+      ) : null}
     </nav>
+  );
+}
+
+function MobileAccordion({
+  menu,
+  expanded,
+  onToggle,
+  onNavigate,
+}: {
+  menu: LandingNavMenu;
+  expanded: boolean;
+  onToggle: () => void;
+  onNavigate: (href: string) => boolean;
+}) {
+  return (
+    <div className="landing-nav-mobile__accordion">
+      <button
+        type="button"
+        className="landing-nav-mobile__accordion-btn"
+        aria-expanded={expanded}
+        onClick={onToggle}
+      >
+        {menu.label}
+        <ChevronDown
+          className={cn(
+            "landing-nav__chevron",
+            expanded && "landing-nav__chevron--open",
+          )}
+          aria-hidden
+        />
+      </button>
+      <div
+        className={cn(
+          "landing-nav-mobile__accordion-panel",
+          expanded && "landing-nav-mobile__accordion-panel--open",
+        )}
+      >
+        <ul className="space-y-0.5 px-2 pb-2">
+          {menu.items.map((item) => (
+            <DropdownLink
+              key={item.label}
+              item={item}
+              onNavigate={onNavigate}
+              variant="mobile"
+            />
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 }

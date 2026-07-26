@@ -1,0 +1,28 @@
+{
+  "phone": {
+    "kind": "phone",
+    "width": 699,
+    "height": 1360,
+    "screen": {
+      "top": "1.176",
+      "left": "8.011",
+      "width": "83.405",
+      "height": "94.779",
+      "radiusX": "12.00",
+      "radiusY": "5.50"
+    }
+  },
+  "laptop": {
+    "kind": "laptop",
+    "width": 1407,
+    "height": 895,
+    "screen": {
+      "top": "0.670",
+      "left": "11.656",
+      "width": "76.190",
+      "height": "81.341",
+      "radiusX": "1.20",
+      "radiusY": "2.00"
+    }
+  }
+}

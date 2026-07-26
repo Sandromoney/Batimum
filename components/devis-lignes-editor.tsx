@@ -280,7 +280,7 @@ export function DevisLignesEditor({
                           designation: value,
                         })
                       }
-                      placeholder="Ex : PARTIE PLACO"
+                      placeholder="Ex : LOT PLACO"
                     />
                   )}
                 </td>

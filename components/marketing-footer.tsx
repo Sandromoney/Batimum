@@ -16,28 +16,38 @@ type MarketingFooterProps = {
 
 export function MarketingFooter({ variant = "default" }: MarketingFooterProps) {
   const links = variant === "landing" ? LANDING_FOOTER_LINKS : LEGAL_LINKS;
+  const isLanding = variant === "landing";
 
   return (
-    <footer className={cn(
-      "marketing-footer border-t",
-      variant === "landing"
-        ? "border-white/[0.08] bg-[#050505] text-[#9CA3AF]"
-        : "border-border bg-transparent text-muted-foreground",
-    )}>
+    <footer
+      className={cn(
+        "marketing-footer border-t",
+        isLanding
+          ? "border-[#E5E7EB] bg-white text-[#6B7280]"
+          : "border-border bg-transparent text-muted-foreground",
+      )}
+    >
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 py-10 text-sm sm:px-8 md:flex-row md:items-center md:justify-between lg:px-10">
         <div className="flex flex-col gap-2">
-          <div className={cn(
-            "flex items-center gap-3",
-            variant === "landing" ? "text-white" : "text-foreground",
-          )}>
+          <div
+            className={cn(
+              "flex items-center gap-3",
+              isLanding ? "text-[#111827]" : "text-foreground",
+            )}
+          >
             <BrandLogo variant="footer" showSubtitle={false} />
           </div>
-          {variant === "landing" ? (
-            <p className="text-xs text-[#9CA3AF]">
-              Le terrain et le bureau, enfin connectés.
+          {isLanding ? (
+            <p className="text-xs text-[#6B7280]">
+              La solution tout-en-un des dirigeants du BTP.
             </p>
           ) : null}
-          <p className={cn("text-xs", variant === "landing" ? "text-[#9CA3AF]" : "text-muted-foreground")}>
+          <p
+            className={cn(
+              "text-xs",
+              isLanding ? "text-[#9CA3AF]" : "text-muted-foreground",
+            )}
+          >
             © 2026 Batimum. Tous droits réservés.
           </p>
         </div>
@@ -48,7 +58,7 @@ export function MarketingFooter({ variant = "default" }: MarketingFooterProps) {
           {links.map((link, index) => (
             <span key={link.href} className="inline-flex items-center">
               {index > 0 && (
-                <span className="mx-2 text-border/60" aria-hidden="true">
+                <span className="mx-2 text-[#D1D5DB]" aria-hidden="true">
                   |
                 </span>
               )}
@@ -56,8 +66,8 @@ export function MarketingFooter({ variant = "default" }: MarketingFooterProps) {
                 href={link.href}
                 className={cn(
                   "no-underline transition-colors",
-                  variant === "landing"
-                    ? "hover:text-white"
+                  isLanding
+                    ? "text-[#6B7280] hover:text-[#111827]"
                     : "text-muted-foreground hover:text-primary",
                 )}
               >

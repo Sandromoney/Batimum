@@ -73,7 +73,7 @@ function isPlacoLine(designation: string, description?: string): string | null {
       "ba13",
     ])
   ) {
-    return "PARTIE PLACO";
+    return "LOT PLACO";
   }
   return null;
 }
@@ -241,7 +241,7 @@ export function runCoherenceEngine(
         !section.titre.includes("PLACO")
       ) {
         report.corrections.push(
-          `${working.designation} : catégorie incorrecte (doit être en PARTIE PLACO, pas PARTIE SOLS)`,
+          `${working.designation} : catégorie incorrecte (doit être en LOT PLACO, pas LOT SOLS)`,
         );
       }
 

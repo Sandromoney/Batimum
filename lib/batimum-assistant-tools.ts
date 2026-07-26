@@ -245,7 +245,7 @@ export function assignEmployeeToSite(
         result: {
           success: false,
           verified: false,
-          message: `${employe.prenom} ${employe.nom} est déjà planifié sur une partie de cette période. Ouvrez le Planning pour ajuster les conflits.`,
+          message: `${employe.prenom} ${employe.nom} est déjà planifié sur une LOT de cette période. Ouvrez le Planning pour ajuster les conflits.`,
           employeId: employe.id,
           chantierId: chantier.id,
           navigateTo: "/planning",

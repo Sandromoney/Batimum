@@ -19,6 +19,7 @@ import {
   TERMS_ACCEPTANCE_REQUIRED_MESSAGE,
 } from "@/lib/legal-acceptance";
 import {
+  emptyCompanyDraft,
   saveOnboardingFlowState,
   type OnboardingAccountDraft,
 } from "@/lib/onboarding-flow";
@@ -92,6 +93,14 @@ function SignupForm() {
       setSubmitError(
         "Aucun compte n'existe encore pour cette adresse Google. Acceptez les CGU et les CGV pour créer votre compte.",
       );
+    }
+    if (searchParams.get("nouvelle-entreprise") === "1") {
+      saveOnboardingFlowState({
+        company: {
+          ...emptyCompanyDraft(),
+          entrepriseEnCreation: true,
+        },
+      });
     }
   }, [router, searchParams]);
 

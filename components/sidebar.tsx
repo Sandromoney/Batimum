@@ -66,7 +66,7 @@ export function Sidebar() {
             />
           </div>
           <p className="btp-sidebar-brand-subtitle mt-3 text-[10px] leading-snug text-muted-foreground/80">
-            Logiciel de gestion BTP
+            Solution de gestion BTP
           </p>
           <p className="btp-sidebar-brand-version mt-1 text-[9px] tracking-wide text-muted-foreground/45">
             Version 1.0

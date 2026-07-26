@@ -761,6 +761,13 @@ html:has(.landing-emerald) body {
   color: #0f172a;
 }
 
+@media (min-width: 1024px) {
+  .landing-emerald .landing-nav--mobile-only,
+  .landing-emerald .landing-nav--mobile-only .landing-nav__mobile-toggle {
+    display: none !important;
+  }
+}
+
 /* Panneau mobile : masqué tant qu’il n’est pas ouvert */
 .landing-emerald .landing-nav-mobile {
   display: none;
@@ -1378,4 +1385,382 @@ html:has(.landing-emerald) body {
 .landing-emerald .landing-hero-scene:not(.landing-hero-scene--visible) .landing-hero-scene__card,
 .landing-emerald .landing-hero-scene:not(.landing-hero-scene--visible) .landing-hero-scene__hub {
   animation: landingEmeraldForceVisible 0s 2s forwards;
+}
+
+/* ——— Hero référence 40/60 (statique, sans coques expérimentales) ——— */
+
+.landing-emerald .landing-hero-section--ref {
+  overflow: visible;
+}
+
+.landing-emerald .landing-hero-section--viewport {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: calc(100svh - 72px);
+  padding-block: 1.5rem 2.5rem;
+  overflow-x: clip;
+}
+
+.landing-emerald .landing-hero--split {
+  margin-inline: auto;
+  display: grid;
+  gap: 1.75rem;
+  width: 100%;
+  max-width: 92rem;
+  padding-inline: 1.25rem;
+  align-items: center;
+}
+
+@media (min-width: 640px) {
+  .landing-emerald .landing-hero--split {
+    padding-inline: 2rem;
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-emerald .landing-hero--split {
+    grid-template-columns: minmax(0, 0.4fr) minmax(0, 0.6fr);
+    gap: 2rem;
+    padding-inline: 2.25rem;
+    align-items: center;
+    min-height: calc(100svh - 160px);
+  }
+}
+
+@media (min-width: 1440px) {
+  .landing-emerald .landing-hero--split {
+    max-width: 96rem;
+    padding-inline: 2.75rem;
+    gap: 2.5rem;
+  }
+}
+
+.landing-emerald .landing-hero--split .landing-hero__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  max-width: 34rem;
+  margin: 0;
+  min-width: 0;
+}
+
+.landing-emerald .landing-hero--split .landing-hero-line,
+.landing-emerald .landing-hero--split .landing-hero-fade,
+.landing-emerald .landing-hero--split .landing-hero-cta,
+.landing-emerald .landing-hero--split .landing-hero-reassurance {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+.landing-emerald .landing-hero--split .landing-hero-title {
+  margin: 0;
+  font-size: clamp(2rem, 4.2vw, 3.15rem);
+  font-weight: 750;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  color: #111827;
+  text-align: left;
+}
+
+.landing-emerald .landing-hero-word-green {
+  color: #10b981;
+}
+
+.landing-emerald .landing-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1.1rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(17, 24, 39, 0.06);
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: clamp(0.68rem, 2.4vw, 0.78rem);
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  max-width: 100%;
+}
+
+.landing-emerald .landing-hero-badge__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+}
+
+.landing-emerald .landing-hero--split .landing-hero-subtitle {
+  margin-top: 1rem;
+  max-width: 32rem;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: #6b7280;
+  text-align: left;
+}
+
+.landing-emerald .landing-hero--split .landing-hero-cta {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.landing-emerald .landing-btn-demo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-height: 3rem;
+  padding: 0.7rem 1.15rem;
+  border-radius: 0.85rem;
+  border: 1.5px solid #10b981;
+  background: #fff;
+  color: #059669;
+  font-size: 0.95rem;
+  font-weight: 650;
+  text-decoration: none;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.landing-emerald .landing-btn-demo:hover {
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.landing-emerald .landing-btn-demo__play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  background: #10b981;
+  color: #fff;
+}
+
+.landing-emerald .landing-btn-demo__play svg {
+  margin-left: 1px;
+}
+
+.landing-emerald .landing-hero-proof {
+  margin-top: 1.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 34rem;
+  color: #4b5563;
+  font-size: 0.88rem;
+  font-weight: 550;
+  line-height: 1.45;
+}
+
+.landing-emerald .landing-hero-proof__avatars {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.landing-emerald .landing-hero-proof__avatars span {
+  width: 2rem;
+  height: 2rem;
+  margin-left: -0.5rem;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+  background: #e5e7eb;
+}
+
+.landing-emerald .landing-hero-proof__avatars span:first-child {
+  margin-left: 0;
+}
+
+.landing-emerald .landing-hero-proof__avatars span img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.landing-emerald .landing-hero-proof__count {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 0.35rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.14);
+  color: #059669;
+  font-size: 0.78rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.landing-emerald .landing-hero__visual {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.landing-emerald .landing-hero__visual-img {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.landing-emerald .landing-hero-places {
+  margin: 2rem auto 0;
+  width: 100%;
+  max-width: 72rem;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .landing-emerald .landing-hero-places {
+    padding-inline: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-emerald .landing-hero-places {
+    margin-top: 2.35rem;
+    padding-inline: 2.5rem;
+  }
+}
+
+.landing-emerald .landing-hero-places__list {
+  position: relative;
+  display: grid;
+  gap: 1.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 900px) {
+  .landing-emerald .landing-hero-places__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .landing-emerald .landing-hero-places__list::before {
+    content: "";
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    top: 1.05rem;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(148, 163, 184, 0.55) 12%,
+      rgba(148, 163, 184, 0.55) 88%,
+      transparent
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+.landing-emerald .landing-hero-places__item {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.landing-emerald .landing-hero-places__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #fff;
+  color: #4b5563;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.landing-emerald .landing-hero-places__item strong {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111827;
+}
+
+.landing-emerald .landing-hero-places__item p {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #6b7280;
+}
+
+.landing-emerald .landing-hero-places__tagline {
+  margin: 1.5rem auto 0;
+  max-width: 36rem;
+  text-align: center;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.landing-emerald .landing-hero-places__tagline strong {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+.landing-emerald .landing-hero-places__tagline span {
+  font-size: 0.88rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+@media (max-width: 1023px) {
+  .landing-emerald .landing-hero--split .landing-hero__copy {
+    max-width: 40rem;
+    margin-inline: auto;
+  }
+
+  .landing-emerald .landing-hero-proof {
+    width: 100%;
+  }
+
+  .landing-emerald .landing-hero__visual {
+    order: 2;
+    max-width: 36rem;
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-emerald .landing-hero-badge {
+    white-space: normal;
+  }
+
+  .landing-emerald .landing-hero--split .landing-hero-title {
+    font-size: clamp(1.75rem, 8vw, 2.25rem);
+  }
+
+  .landing-emerald .landing-hero-proof {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
