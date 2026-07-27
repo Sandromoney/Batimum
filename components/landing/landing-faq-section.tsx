@@ -58,8 +58,10 @@ export function LandingFaqSection({
                 >
                   <button
                     type="button"
+                    id={`faq-trigger-${index}`}
                     className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
                     aria-expanded={open}
+                    aria-controls={`faq-panel-${index}`}
                     onClick={() => setOpenIndex(open ? null : index)}
                   >
                     <span className="font-semibold">{faq.question}</span>
@@ -71,16 +73,19 @@ export function LandingFaqSection({
                       aria-hidden="true"
                     />
                   </button>
-                  {open ? (
-                    <div
-                      className={cn(
-                        "px-5 pb-4 text-sm leading-6",
-                        isLight ? "text-[#667085]" : "text-white/70",
-                      )}
-                    >
-                      {faq.answer}
-                    </div>
-                  ) : null}
+                  <div
+                    id={`faq-panel-${index}`}
+                    role="region"
+                    aria-labelledby={`faq-trigger-${index}`}
+                    hidden={!open}
+                    className={cn(
+                      "px-5 pb-4 text-sm leading-6",
+                      isLight ? "text-[#667085]" : "text-white/70",
+                      !open && "hidden",
+                    )}
+                  >
+                    {open ? faq.answer : null}
+                  </div>
                 </div>
               </LandingRevealItem>
             );

@@ -6,7 +6,16 @@ const COLUMNS = [
     links: [
       { href: "/landing#fonctionnalites", label: "Fonctionnalités" },
       { href: "/landing#plans", label: "Tarifs" },
-      { href: "/landing#sms", label: "Mises à jour" },
+      { href: "/landing#evolutions", label: "Mises à jour" },
+    ],
+  },
+  {
+    title: "Pour les équipes",
+    links: [
+      { href: "/landing#bureau-terrain", label: "Dirigeants" },
+      { href: "/login-employe", label: "Employés" },
+      { href: "/landing#bureau-terrain", label: "Bureau" },
+      { href: "/landing#assistant-vocal", label: "Terrain" },
     ],
   },
   {
@@ -20,7 +29,7 @@ const COLUMNS = [
   {
     title: "Entreprise",
     links: [
-      { href: "/landing#temoignages", label: "À propos" },
+      { href: "/landing#avant-apres", label: "À propos" },
       { href: "/landing#temoignages", label: "Témoignages" },
     ],
   },
@@ -47,7 +56,12 @@ export function LandingFooter() {
     <footer className="lp-footer" aria-label="Pied de page Batimum">
       <div className="lp-container lp-footer__inner">
         <div className="lp-footer__brand">
-          <Link href="/landing" className="lp-footer__logo-link no-underline" aria-label="Batimum">
+          <Link
+            href="/landing"
+            className="lp-footer__logo-link no-underline"
+            aria-label="Batimum"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo-batimum.png"
               alt="Batimum"

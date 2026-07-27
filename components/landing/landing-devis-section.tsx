@@ -12,51 +12,47 @@ const BENEFITS = [
   "Devis mieux structurés",
   "Vocabulaire adapté au BTP",
   "Création plus rapide",
-  "Modification avant l’envoi",
+  "Modification possible avant l’envoi",
 ] as const;
 
 const LOTS = [
   "Lot plomberie",
+  "Lot carrelage",
   "Lot électricité",
-  "Lot maçonnerie",
   "Lot peinture",
 ] as const;
 
-const STEPS = [
-  {
-    label: "Demande",
-    body: "Rénovation salle de bain — 12 m², carrelage, plomberie, peinture.",
-  },
-  {
-    label: "Analyse IA",
-    body: "Batimum structure les lots, prestations et quantités.",
-  },
-  {
-    label: "Lots",
-    body: null,
-  },
-  {
-    label: "Devis prêt",
-    body: "Devis clair à vérifier, ajuster, puis envoyer au client.",
-  },
+const PRESTATIONS = [
+  "Fourniture et pose",
+  "Dépose existant",
+  "Mise en conformité",
 ] as const;
+
+type DemoStep = "demande" | "analyse" | "lots" | "prestations" | "pret";
+
+const STEP_ORDER: DemoStep[] = [
+  "demande",
+  "analyse",
+  "lots",
+  "prestations",
+  "pret",
+];
 
 export function LandingDevisSection() {
   const reduced = usePrefersReducedMotion();
-  const [step, setStep] = useState(0);
+  const [stepIndex, setStepIndex] = useState(0);
+  const step = STEP_ORDER[stepIndex] ?? "demande";
   const signupHref = getPublicSignupHref();
-  const ctaLabel = isPrivateBetaEnabled()
-    ? "Se connecter"
-    : "Créer mon premier devis";
+  const ctaLabel = isPrivateBetaEnabled() ? "Se connecter" : "Découvrir MUM IA";
 
   useEffect(() => {
     if (reduced) {
-      setStep(3);
+      setStepIndex(STEP_ORDER.length - 1);
       return;
     }
     const id = window.setInterval(() => {
-      setStep((current) => (current + 1) % STEPS.length);
-    }, 2200);
+      setStepIndex((current) => (current + 1) % STEP_ORDER.length);
+    }, 2400);
     return () => window.clearInterval(id);
   }, [reduced]);
 
@@ -71,15 +67,15 @@ export function LandingDevisSection() {
           <LandingReveal>
             <span className="lp-eyebrow">
               <span className="lp-eyebrow__dot" aria-hidden="true" />
-              Devis avec IA
+              MUM IA
             </span>
             <h2 id="devis-title" className="lp-title mt-5">
               Passez de la demande client au devis en quelques minutes.
             </h2>
             <p className="lp-subtitle mt-5 max-w-xl">
-              Décrivez les travaux à réaliser. Batimum vous aide à structurer
-              les lots, les prestations, les quantités et les prix pour créer un
-              devis clair et professionnel.
+              Décrivez les travaux à réaliser. MUM IA vous aide à organiser les
+              lots, détailler les prestations et préparer un devis professionnel
+              que vous pouvez vérifier avant l’envoi.
             </p>
             <ul className="lp-benefit-list">
               {BENEFITS.map((item) => (
@@ -99,53 +95,73 @@ export function LandingDevisSection() {
               >
                 {ctaLabel}
                 <ArrowRight
-                  className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                  className="landing-btn-arrow h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
                   aria-hidden="true"
                 />
               </Link>
             </div>
           </LandingReveal>
 
-          <LandingReveal delay={120}>
+          <LandingReveal delay={120} direction="right">
             <div className="lp-devis-demo" aria-live="polite">
-              <div className="lp-devis-demo__header">
-                <Bot className="h-4 w-4 text-[#3B82F6]" aria-hidden="true" />
-                <span>Démonstration</span>
+              <div className="lp-devis-demo__head">
+                <Bot size={16} strokeWidth={1.75} aria-hidden />
+                <span>MUM IA · préparation du devis</span>
               </div>
 
-              <div className="lp-devis-demo__steps">
-                {STEPS.map((item, index) => {
-                  const active = index === step;
-                  const done = index < step;
-                  return (
-                    <div
-                      key={item.label}
-                      className={
-                        active
-                          ? "lp-devis-card is-active"
-                          : done
-                            ? "lp-devis-card is-done"
-                            : "lp-devis-card"
-                      }
+              <div
+                className={`lp-devis-demo__block${step === "demande" || stepIndex >= 0 ? " is-on" : ""}`}
+              >
+                <p className="lp-devis-demo__label">Demande client</p>
+                <p className="lp-devis-demo__body">
+                  Rénovation d’une salle de bain de 6 m²
+                </p>
+              </div>
+
+              <div
+                className={`lp-devis-demo__block${stepIndex >= 1 ? " is-on" : ""}`}
+              >
+                <p className="lp-devis-demo__label">Analyse</p>
+                <p className="lp-devis-demo__body">
+                  MUM IA structure les lots et les prestations.
+                </p>
+              </div>
+
+              <div
+                className={`lp-devis-demo__block${stepIndex >= 2 ? " is-on" : ""}`}
+              >
+                <p className="lp-devis-demo__label">Lots</p>
+                <ul className="lp-devis-demo__lots">
+                  {LOTS.map((lot, i) => (
+                    <li
+                      key={lot}
+                      className={stepIndex >= 2 && (reduced || i <= stepIndex) ? "is-on" : undefined}
+                      style={{ transitionDelay: `${i * 80}ms` }}
                     >
-                      <div className="lp-devis-card__label">
-                        <span className="lp-devis-card__index">{index + 1}</span>
-                        {item.label}
-                      </div>
-                      {item.body ? (
-                        <p className="lp-devis-card__body">{item.body}</p>
-                      ) : (
-                        <div className="lp-lots">
-                          {LOTS.map((lot) => (
-                            <span key={lot} className="lp-lot">
-                              {lot}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      {lot}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div
+                className={`lp-devis-demo__block${stepIndex >= 3 ? " is-on" : ""}`}
+              >
+                <p className="lp-devis-demo__label">Prestations</p>
+                <ul className="lp-devis-demo__lots lp-devis-demo__lots--soft">
+                  {PRESTATIONS.map((item) => (
+                    <li key={item} className={stepIndex >= 3 ? "is-on" : undefined}>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div
+                className={`lp-devis-demo__ready${stepIndex >= 4 ? " is-on" : ""}`}
+              >
+                <Check size={16} strokeWidth={2} aria-hidden />
+                Devis prêt à être vérifié
               </div>
             </div>
           </LandingReveal>

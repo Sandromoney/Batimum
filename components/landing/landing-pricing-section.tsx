@@ -16,14 +16,14 @@ const YEARLY_TOTAL = 348;
 const YEARLY_SAVINGS = 120;
 
 const PREMIUM_FEATURES = [
-  "Toutes les fonctionnalités essentielles",
+  "Devis",
+  "Factures",
+  "Clients",
+  "Chantiers",
+  "Planning",
+  "Pilotage",
+  "Espace employé",
   "100 devis IA par mois",
-  "Planning des équipes",
-  "Suivi des chantiers",
-  "Facturation simplifiée",
-  "Pilotage et rentabilité",
-  "Clients, devis et chantiers",
-  "Support français",
 ] as const;
 
 type BillingCycle = "monthly" | "yearly";
@@ -211,13 +211,13 @@ export function LandingPricingSection() {
             Tarifs
           </span>
           <h2 className="lp-title mt-5">
-            Une seule offre.
+            Un tarif simple.
             <br />
-            Toutes les fonctionnalités essentielles.
+            Toutes les fonctions essentielles.
           </h2>
           <p className="lp-subtitle mt-5">
-            7 jours d&apos;essai · sans engagement sur l&apos;offre mensuelle ·
-            économie sur l&apos;offre annuelle
+            Mensuel 39&nbsp;€ · Annuel 29&nbsp;€ / mois · économie de
+            120&nbsp;€ par an
           </p>
         </header>
       </LandingReveal>
@@ -297,11 +297,11 @@ export function LandingPricingSection() {
 
               <Link
                 href={checkoutHref}
-                className="landing-pricing-cta landing-btn-primary landing-btn-interactive group mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground no-underline shadow-glow transition-all hover:bg-primary-hover active:scale-[0.98]"
+                className="landing-pricing-cta landing-btn-primary landing-btn-interactive group mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold no-underline"
               >
-                Essayer Batimum
+                {isPrivateBetaEnabled() ? "Se connecter" : "Essayer gratuitement"}
                 <ArrowRight
-                  className="landing-pricing-cta__arrow h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1"
+                  className="landing-pricing-cta__arrow h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
                   aria-hidden="true"
                 />
               </Link>

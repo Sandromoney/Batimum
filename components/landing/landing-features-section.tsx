@@ -1,55 +1,61 @@
 import {
-  BarChart3,
-  CalendarDays,
-  FileText,
-  FolderKanban,
+  Bot,
+  Calendar,
+  HardHat,
+  LineChart,
   Receipt,
   Users,
 } from "lucide-react";
 import { LandingReveal } from "@/components/landing/landing-reveal";
 
-const FEATURES = [
+const BENEFITS = [
   {
-    id: "devis-feature",
-    title: "Devis avec IA",
-    text: "Créez des devis structurés plus rapidement.",
-    icon: FileText,
-    accent: "#3B82F6",
+    id: "devis",
+    anchor: "devis-rapides",
+    title: "Répondez plus vite à vos clients.",
+    text: "Préparez des devis structurés sans repartir de zéro à chaque demande.",
+    eyebrow: "Devis plus rapides",
+    Icon: Bot,
   },
   {
     id: "planning",
-    title: "Planning des équipes",
-    text: "Gardez chaque équipe au bon endroit, au bon moment.",
-    icon: CalendarDays,
-    accent: "#2563EB",
+    anchor: "planning",
+    title: "Chaque équipe sait où elle doit être.",
+    text: "Planifiez les interventions et gardez une vision claire des disponibilités.",
+    eyebrow: "Équipes organisées",
+    Icon: Calendar,
   },
   {
     id: "chantiers",
-    title: "Suivi des chantiers",
-    text: "Retrouvez les étapes, documents et informations essentielles.",
-    icon: FolderKanban,
-    accent: "#60A5FA",
+    anchor: "chantiers",
+    title: "Gardez le contrôle sur chaque chantier.",
+    text: "Suivez les étapes, les documents et les informations essentielles.",
+    eyebrow: "Chantiers maîtrisés",
+    Icon: HardHat,
   },
   {
     id: "facturation",
-    title: "Facturation simplifiée",
-    text: "Transformez vos devis et suivez vos paiements.",
-    icon: Receipt,
-    accent: "#93C5FD",
+    anchor: "facturation",
+    title: "Facturez sans tout ressaisir.",
+    text: "Transformez vos devis et suivez les paiements plus simplement.",
+    eyebrow: "Facturation simplifiée",
+    Icon: Receipt,
   },
   {
     id: "clients",
-    title: "Gestion client",
-    text: "Centralisez les coordonnées, documents et échanges.",
-    icon: Users,
-    accent: "#64748B",
+    anchor: "clients",
+    title: "Retrouvez tout en quelques secondes.",
+    text: "Coordonnées, devis, factures, documents et historique restent regroupés.",
+    eyebrow: "Clients centralisés",
+    Icon: Users,
   },
   {
-    id: "pilotage-card",
-    title: "Pilotage et rentabilité",
-    text: "Comparez le prévu au réel et surveillez vos marges.",
-    icon: BarChart3,
-    accent: "#1D4ED8",
+    id: "rentabilite",
+    anchor: "rentabilite-visible",
+    title: "Sachez ce que vous rapporte vraiment un chantier.",
+    text: "Comparez les coûts prévus et réels pour mieux protéger vos marges.",
+    eyebrow: "Rentabilité visible",
+    Icon: LineChart,
   },
 ] as const;
 
@@ -57,7 +63,7 @@ export function LandingFeaturesSection() {
   return (
     <section
       id="fonctionnalites"
-      className="lp-section"
+      className="lp-section lp-section--soft"
       aria-labelledby="features-title"
     >
       <div className="lp-container">
@@ -65,32 +71,33 @@ export function LandingFeaturesSection() {
           <div className="lp-section-head">
             <span className="lp-eyebrow">
               <span className="lp-eyebrow__dot" aria-hidden="true" />
-              Fonctionnalités principales
+              Bénéfices concrets
             </span>
             <h2 id="features-title" className="lp-title mt-5 max-w-3xl">
-              Un outil de pilotage pensé pour les dirigeants du BTP.
+              Ce que Batimum change dans votre quotidien.
             </h2>
             <p className="lp-subtitle mt-5 max-w-2xl">
-              Devis, équipes, chantiers, facturation et rentabilité : tout est
-              réuni pour simplifier votre quotidien.
+              Moins d’outils dispersés, plus de clarté — pour répondre plus vite
+              et garder le contrôle.
             </p>
           </div>
         </LandingReveal>
 
-        <div className="lp-feature-grid mt-12">
-          {FEATURES.map((feature, index) => {
-            const Icon = feature.icon;
+        <div className="lp-benefits">
+          {BENEFITS.map((item, index) => {
+            const Icon = item.Icon;
             return (
-              <LandingReveal key={feature.title} delay={index * 60}>
-                <article id={feature.id} className="lp-feature">
-                  <div
-                    className="lp-feature__icon"
-                    style={{ color: feature.accent }}
-                  >
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <h3 className="lp-feature__title">{feature.title}</h3>
-                  <p className="lp-feature__text">{feature.text}</p>
+              <LandingReveal key={item.id} delay={index * 60}>
+                <article
+                  id={item.anchor}
+                  className="lp-benefit-card"
+                >
+                  <span className="lp-benefit-card__icon" aria-hidden="true">
+                    <Icon size={18} strokeWidth={1.75} />
+                  </span>
+                  <p className="lp-benefit-card__eyebrow">{item.eyebrow}</p>
+                  <h3 className="lp-benefit-card__title">{item.title}</h3>
+                  <p className="lp-benefit-card__text">{item.text}</p>
                 </article>
               </LandingReveal>
             );

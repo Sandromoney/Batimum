@@ -1,11 +1,13 @@
-import { Check, Mic } from "lucide-react";
+"use client";
+
+import { Mic, Smartphone } from "lucide-react";
 import { LandingReveal } from "@/components/landing/landing-reveal";
 
-const HIGHLIGHTS = [
+const BENEFITS = [
   "Moins de saisie",
-  "Pas besoin d’attendre le retour au bureau",
-  "Devis préparé immédiatement",
-  "Gain de temps après les rendez-vous",
+  "Devis préparés après le rendez-vous",
+  "Accès rapide aux informations",
+  "Utilisation adaptée au terrain",
 ] as const;
 
 export function LandingVoiceSection() {
@@ -16,48 +18,47 @@ export function LandingVoiceSection() {
       aria-labelledby="voice-title"
     >
       <div className="lp-container">
-        <div className="lp-split">
+        <div className="lp-split lp-split--voice">
           <LandingReveal>
             <span className="lp-eyebrow">
               <span className="lp-eyebrow__dot" aria-hidden="true" />
               Bientôt sur mobile
             </span>
             <h2 id="voice-title" className="lp-title mt-5">
-              Dictez votre devis directement depuis le chantier.
+              Pilotez votre entreprise directement depuis le chantier.
             </h2>
             <p className="lp-subtitle mt-5 max-w-xl">
-              L’assistant vocal Batimum est en préparation. Il permettra de
-              dicter une demande sur le terrain et de préparer un devis à
-              vérifier avant envoi.
+              Consultez votre planning, retrouvez les informations clients et
+              préparez vos devis sans attendre le retour au bureau.
             </p>
-            <ul className="lp-benefit-list">
-              {HIGHLIGHTS.map((item) => (
-                <li key={item} className="lp-benefit-item">
-                  <Check
-                    className="lp-check mt-0.5 h-4 w-4 shrink-0"
-                    aria-hidden="true"
-                  />
-                  <span>{item}</span>
-                </li>
+            <ul className="lp-voice__benefits">
+              {BENEFITS.map((item) => (
+                <li key={item}>{item}</li>
               ))}
             </ul>
-            <p className="lp-soon-note">Fonctionnalité en préparation.</p>
+            <p className="lp-soon-note">
+              <Smartphone size={14} strokeWidth={1.75} aria-hidden />
+              Fonctionnalité en préparation
+            </p>
           </LandingReveal>
 
-          <LandingReveal delay={120}>
-            <div className="lp-voice-bubble">
-              <div className="lp-voice-bubble__badge">
-                <Mic className="h-3.5 w-3.5" aria-hidden="true" />
-                Exemple de commande
+          <LandingReveal delay={100} direction="right">
+            <div className="lp-voice-demo">
+              <div className="lp-voice-demo__badge">
+                <Mic size={14} strokeWidth={1.75} aria-hidden />
+                Assistant vocal · démo
               </div>
-              <p className="lp-voice-quote">
+              <blockquote className="lp-voice-demo__quote">
                 « Fais un devis pour Monsieur Dupont : fourniture et pose de
                 25 m² de carrelage. »
+              </blockquote>
+              <p className="lp-voice-demo__reply">
+                MUM IA prépare le devis. Il ne reste plus qu’à le vérifier.
               </p>
-              <div className="lp-voice-reply">
-                Le devis a été préparé. Il ne reste plus qu’à le vérifier et
-                l’envoyer.
-              </div>
+              <p className="lp-voice-demo__note">
+                Démonstration illustrative — assistant vocal non disponible
+                aujourd’hui.
+              </p>
             </div>
           </LandingReveal>
         </div>

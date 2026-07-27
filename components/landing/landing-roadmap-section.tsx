@@ -1,30 +1,42 @@
+import {
+  MessageSquareText,
+  Mic,
+  Store,
+} from "lucide-react";
 import { LandingReveal } from "@/components/landing/landing-reveal";
 
-const ITEMS = [
+const PROJECTS = [
   {
-    title: "Marges par devis et chantier",
-    status: "Disponible",
-    badge: "available",
-  },
-  {
-    title: "Assistant vocal sur mobile",
-    status: "Bientôt",
-    badge: "soon",
-  },
-  {
+    id: "sms",
     title: "SMS automatiques",
-    status: "Bientôt",
-    badge: "soon",
+    Icon: MessageSquareText,
+    points: [
+      "Confirmations de rendez-vous",
+      "Rappels de chantier",
+      "Relances de paiement",
+      "Notifications de facture",
+    ],
   },
   {
+    id: "marketplace",
     title: "Marketplace BTP",
-    status: "À venir",
-    badge: "later",
+    Icon: Store,
+    points: [
+      "Recherche de sous-traitants",
+      "Artisans disponibles",
+      "Intérimaires et salariés",
+      "Filtres par métier et localisation",
+    ],
   },
   {
-    title: "Recrutement et sous-traitance",
-    status: "À venir",
-    badge: "later",
+    id: "voice",
+    title: "Assistant vocal",
+    Icon: Mic,
+    points: [
+      "Création de devis à la voix",
+      "Recherche d’informations",
+      "Actions depuis le chantier",
+    ],
   },
 ] as const;
 
@@ -35,38 +47,45 @@ export function LandingRoadmapSection() {
       className="lp-section lp-section--soft"
       aria-labelledby="roadmap-title"
     >
+      {/* Ancres conservées pour la navigation existante */}
+      <span id="sms" className="lp-anchor-target" aria-hidden="true" />
+      <span id="marketplace" className="lp-anchor-target" aria-hidden="true" />
+
       <div className="lp-container">
         <LandingReveal>
-          <span className="lp-eyebrow">
-            <span className="lp-eyebrow__dot" aria-hidden="true" />
-            Évolutions
-          </span>
-          <h2 id="roadmap-title" className="lp-title mt-4 text-3xl sm:text-4xl">
-            Batimum évolue avec les besoins du bâtiment.
-          </h2>
-          <p className="lp-subtitle mt-3 max-w-2xl">
-            Les fonctions disponibles et les prochaines étapes restent clairement
-            distinguées.
-          </p>
+          <div className="lp-section-head">
+            <h2 id="roadmap-title" className="lp-title mt-5 max-w-3xl">
+              Batimum continue d’évoluer avec les besoins du terrain.
+            </h2>
+            <p className="lp-subtitle mt-5 max-w-2xl">
+              Une vision claire de ce qui arrive ensuite — sans présenter ces
+              projets comme déjà disponibles.
+            </p>
+          </div>
         </LandingReveal>
 
-        <div className="lp-roadmap mt-8 max-w-3xl">
-          {ITEMS.map((item) => (
-            <div key={item.title} className="lp-roadmap-item">
-              <div className="font-medium text-[#101828]">{item.title}</div>
-              <span
-                className={
-                  item.badge === "available"
-                    ? "lp-badge lp-badge--available"
-                    : item.badge === "soon"
-                      ? "lp-badge lp-badge--soon"
-                      : "lp-badge lp-badge--later"
-                }
-              >
-                {item.status}
-              </span>
-            </div>
-          ))}
+        <div className="lp-future">
+          {PROJECTS.map((project, index) => {
+            const Icon = project.Icon;
+            return (
+              <LandingReveal key={project.id} delay={index * 80}>
+                <article className="lp-future__card">
+                  <div className="lp-future__top">
+                    <span className="lp-future__icon" aria-hidden>
+                      <Icon size={18} strokeWidth={1.75} />
+                    </span>
+                    <span className="lp-future__badge">En préparation</span>
+                  </div>
+                  <h3 className="lp-future__title">{project.title}</h3>
+                  <ul className="lp-future__list">
+                    {project.points.map((point) => (
+                      <li key={point}>{point}</li>
+                    ))}
+                  </ul>
+                </article>
+              </LandingReveal>
+            );
+          })}
         </div>
       </div>
     </section>

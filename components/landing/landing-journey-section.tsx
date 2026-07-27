@@ -3,11 +3,14 @@
 import {
   Bot,
   Calendar,
+  FileSignature,
   HardHat,
   LineChart,
   MessageSquare,
   Receipt,
-  Users,
+  UserPlus,
+  Wallet,
+  ClipboardList,
 } from "lucide-react";
 import { LandingReveal } from "@/components/landing/landing-reveal";
 import { useInView } from "@/lib/hooks/use-in-view";
@@ -17,50 +20,61 @@ const JOURNEY_STEPS = [
   {
     id: "demande",
     short: "Demande client",
-    label: "Une demande client arrive",
-    detail: "Le besoin est capté clairement, sans perdre d’information.",
+    detail: "Les premières informations sont enregistrées.",
     Icon: MessageSquare,
+  },
+  {
+    id: "client",
+    short: "Création du client",
+    detail: "Le dossier client est créé et prêt à être suivi.",
+    Icon: UserPlus,
   },
   {
     id: "devis",
     short: "Devis avec MUM IA",
-    label: "MUM IA prépare le devis",
-    detail: "Lots et prestations structurés, prêts à vérifier avant envoi.",
+    detail: "Les travaux sont structurés en lots et prestations.",
     Icon: Bot,
+  },
+  {
+    id: "signature",
+    short: "Signature du devis",
+    detail: "Le devis accepté devient le point de départ du chantier.",
+    Icon: FileSignature,
   },
   {
     id: "chantier",
     short: "Création du chantier",
-    label: "Le chantier est créé",
-    detail: "Le devis accepté devient le fil conducteur du chantier.",
+    detail: "Les étapes, documents et consignes restent accessibles.",
     Icon: HardHat,
   },
   {
     id: "planning",
     short: "Planning de l’équipe",
-    label: "L’équipe est planifiée",
-    detail: "Chacun sait où aller — sans appels en chaîne.",
+    detail: "Les bonnes équipes sont affectées au bon moment.",
     Icon: Calendar,
   },
   {
     id: "suivi",
-    short: "Suivi sur le terrain",
-    label: "Le chantier est suivi",
-    detail: "Étapes, consignes et documents au même endroit.",
-    Icon: Users,
+    short: "Suivi du chantier",
+    detail: "L’avancement et les informations restent partagés.",
+    Icon: ClipboardList,
   },
   {
     id: "facture",
     short: "Facturation",
-    label: "La facture est générée",
-    detail: "Du devis à la facture, sans tout ressaisir.",
+    detail: "Le devis accepté devient une facture sans ressaisie.",
     Icon: Receipt,
   },
   {
+    id: "paiement",
+    short: "Paiement",
+    detail: "Les règlements sont suivis jusqu’à l’encaissement.",
+    Icon: Wallet,
+  },
+  {
     id: "marge",
-    short: "Pilotage de la rentabilité",
-    label: "La rentabilité est visible",
-    detail: "Le dirigeant garde le contrôle avant qu’il ne soit trop tard.",
+    short: "Analyse de la rentabilité",
+    detail: "Le prévu et le réel sont comparés.",
     Icon: LineChart,
   },
 ] as const;
@@ -88,17 +102,16 @@ function JourneyStep({
         inView && "is-visible",
         index === total - 1 && "is-last",
       )}
-      style={{ ["--journey-delay" as string]: `${index * 90}ms` }}
+      style={{ ["--journey-delay" as string]: `${index * 70}ms` }}
     >
       <div className="lp-journey__rail" aria-hidden="true">
         <span className="lp-journey__dot">
-          <Icon size={16} strokeWidth={1.75} />
+          <Icon size={15} strokeWidth={1.75} />
         </span>
         {index < total - 1 ? <span className="lp-journey__line" /> : null}
       </div>
       <article className="lp-journey__card">
         <p className="lp-journey__index">{step.short}</p>
-        <h3 className="lp-journey__title">{step.label}</h3>
         <p className="lp-journey__text">{step.detail}</p>
       </article>
     </li>
@@ -117,19 +130,19 @@ export function LandingJourneySection() {
           <div className="lp-section-head">
             <span className="lp-eyebrow">
               <span className="lp-eyebrow__dot" aria-hidden="true" />
-              Comment Batimum transforme votre quotidien
+              Parcours complet
             </span>
             <h2 id="journey-title" className="lp-title mt-5 max-w-3xl">
-              Du premier contact à la rentabilité, tout reste connecté.
+              Du premier appel au paiement, tout reste connecté.
             </h2>
             <p className="lp-subtitle mt-5 max-w-2xl">
-              Chaque action alimente automatiquement la suivante, sans ressaisie
-              inutile.
+              Chaque action alimente automatiquement la suivante, sans
+              multiplier les outils ni les ressaisies.
             </p>
           </div>
         </LandingReveal>
 
-        <ol className="lp-journey" aria-label="Parcours Batimum">
+        <ol className="lp-journey" aria-label="Parcours d’un chantier">
           {JOURNEY_STEPS.map((step, index) => (
             <JourneyStep
               key={step.id}

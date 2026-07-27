@@ -2,18 +2,18 @@
 
 import "./landing-emerald.css";
 import { LandingTop } from "@/components/landing-top";
-import { LandingProofsSection } from "@/components/landing/landing-proofs-section";
+import { LandingBeforeAfterSection } from "@/components/landing/landing-before-after-section";
 import { LandingJourneySection } from "@/components/landing/landing-journey-section";
+import { LandingProofsSection } from "@/components/landing/landing-proofs-section";
 import { LandingDevisSection } from "@/components/landing/landing-devis-section";
-import { LandingVoiceSection } from "@/components/landing/landing-voice-section";
 import { LandingTerrainSection } from "@/components/landing/landing-terrain-section";
 import { LandingFeaturesSection } from "@/components/landing/landing-features-section";
 import { LandingRentabilitySection } from "@/components/landing/landing-rentability-section";
-import { LandingAccountSection } from "@/components/landing/landing-account-section";
+import { LandingMetiersSection } from "@/components/landing/landing-metiers-section";
+import { LandingVoiceSection } from "@/components/landing/landing-voice-section";
 import { LandingStepsSection } from "@/components/landing/landing-steps-section";
-import { LandingSmsSection } from "@/components/landing/landing-sms-section";
-import { LandingMarketplaceSection } from "@/components/landing/landing-marketplace-section";
 import { LandingTestimonialsSection } from "@/components/landing/landing-testimonials-section";
+import { LandingRoadmapSection } from "@/components/landing/landing-roadmap-section";
 import { LandingPricingSection } from "@/components/landing/landing-pricing-section";
 import { LandingFaqSection } from "@/components/landing/landing-faq-section";
 import { LandingFinalCtaSection } from "@/components/landing/landing-final-cta-section";
@@ -21,24 +21,54 @@ import { LandingFooter } from "@/components/landing/landing-footer";
 
 const faqs = [
   {
-    question: "Batimum fonctionne-t-il sur chantier ?",
+    question: "Batimum est-il réservé à un métier précis ?",
     answer:
-      "Oui. Vous pilotez l’activité depuis le bureau, et vos équipes retrouvent planning, consignes et chantiers depuis un téléphone.",
+      "Non. Batimum s’adresse aux entreprises du BTP de différents métiers : plomberie, électricité, maçonnerie, couverture, plaquisterie, carrelage, peinture, paysagisme, clim, et plus encore.",
   },
   {
-    question: "Puis-je gérer devis, factures et clients au même endroit ?",
+    question: "Puis-je utiliser Batimum depuis mon téléphone ?",
     answer:
-      "Oui. Batimum centralise clients, devis, chantiers, planning et facturation pour limiter la ressaisie.",
+      "Vous pouvez déjà consulter Batimum depuis un navigateur mobile. Une expérience mobile plus poussée et un assistant vocal sont en préparation.",
   },
   {
-    question: "Les données sont-elles sécurisées ?",
+    question: "Mes salariés peuvent-ils avoir leur propre accès ?",
     answer:
-      "Vos données sont protégées par authentification sécurisée. Vous restez propriétaire de vos informations.",
+      "Oui. Les employés disposent d’un accès dédié pour retrouver planning, consignes et informations de chantier, sans exposer les données sensibles de direction.",
   },
   {
-    question: "Comment fonctionne l’essai gratuit ?",
+    question: "Puis-je modifier un devis créé avec MUM IA ?",
     answer:
-      "7 jours pour tester Batimum, sans engagement. Vous pouvez annuler simplement si la solution ne vous convient pas.",
+      "Oui. MUM IA prépare une base structurée. Vous vérifiez, ajustez et validez avant l’envoi au client.",
+  },
+  {
+    question: "Combien de devis IA puis-je créer chaque mois ?",
+    answer:
+      "L’offre inclut 100 devis IA par mois. Au-delà, vous continuez à créer des devis manuellement.",
+  },
+  {
+    question: "Puis-je importer mes clients ?",
+    answer:
+      "Aujourd’hui, les clients s’ajoutent manuellement dans Batimum. Un import groupé n’est pas encore disponible.",
+  },
+  {
+    question: "Mes données sont-elles sécurisées ?",
+    answer:
+      "Oui. L’accès est protégé par authentification sécurisée. Vous restez propriétaire de vos informations.",
+  },
+  {
+    question: "Puis-je résilier quand je le souhaite ?",
+    answer:
+      "Oui. L’offre mensuelle est sans engagement : vous pouvez annuler simplement si la solution ne vous convient pas.",
+  },
+  {
+    question: "La facturation électronique sera-t-elle prise en charge ?",
+    answer:
+      "La facturation électronique fait partie de la feuille de route produit. Les évolutions seront annoncées au fur et à mesure.",
+  },
+  {
+    question: "Combien de temps faut-il pour commencer ?",
+    answer:
+      "Vous pouvez créer votre compte, ajouter un client et préparer un premier devis dès le premier jour.",
   },
 ] as const;
 
@@ -46,18 +76,18 @@ export default function LandingPage() {
   return (
     <main className="landing-emerald relative min-h-screen overflow-x-hidden bg-white text-[#111111]">
       <LandingTop />
-      <LandingProofsSection />
+      <LandingBeforeAfterSection />
       <LandingJourneySection />
+      <LandingProofsSection />
       <LandingDevisSection />
-      <LandingVoiceSection />
       <LandingTerrainSection />
       <LandingFeaturesSection />
       <LandingRentabilitySection />
-      <LandingAccountSection />
+      <LandingMetiersSection />
+      <LandingVoiceSection />
       <LandingStepsSection />
-      <LandingSmsSection />
-      <LandingMarketplaceSection />
       <LandingTestimonialsSection />
+      <LandingRoadmapSection />
       <LandingPricingSection />
       <LandingFaqSection faqs={faqs} />
       <LandingFinalCtaSection />

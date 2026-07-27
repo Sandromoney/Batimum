@@ -113,7 +113,7 @@ const RESSOURCES_MENU: LandingNavMenu = {
     },
     {
       label: "Évolutions",
-      href: "/landing#sms",
+      href: "/landing#evolutions",
       description: "Disponible, bientôt et à venir.",
       icon: Sparkles,
     },
