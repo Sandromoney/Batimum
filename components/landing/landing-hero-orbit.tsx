@@ -41,7 +41,10 @@ type OrbitCard = {
   angle: number;
   accent: string;
   Icon: typeof Sparkles;
+  floatClass: string;
 };
+
+const ICON_ACCENT = "#3B82F6";
 
 export const HERO_FEATURES: OrbitCard[] = [
   {
@@ -51,8 +54,9 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail: "Transformez vos devis en factures simplement.",
     orbit: 2,
     angle: 15,
-    accent: "#64748B",
+    accent: ICON_ACCENT,
     Icon: Receipt,
+    floatClass: "batimumHero__bubble--floatA",
   },
   {
     id: "clients",
@@ -61,8 +65,9 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail: "Retrouvez toutes les informations au même endroit.",
     orbit: 2,
     angle: 190,
-    accent: "#60A5FA",
+    accent: ICON_ACCENT,
     Icon: Users,
+    floatClass: "batimumHero__bubble--floatB",
   },
   {
     id: "planning",
@@ -71,8 +76,9 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail: "Organisez vos équipes en quelques clics.",
     orbit: 1,
     angle: 80,
-    accent: "#2563EB",
+    accent: ICON_ACCENT,
     Icon: CalendarDays,
+    floatClass: "batimumHero__bubble--floatC",
   },
   {
     id: "devis",
@@ -81,8 +87,9 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail: "Décrivez les travaux, Batimum prépare le devis.",
     orbit: 1,
     angle: 260,
-    accent: "#3B82F6",
+    accent: ICON_ACCENT,
     Icon: Sparkles,
+    floatClass: "batimumHero__bubble--floatD",
   },
   {
     id: "chantiers",
@@ -91,8 +98,9 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail: "Suivez l’avancement depuis le bureau ou le terrain.",
     orbit: 0,
     angle: 140,
-    accent: "#93C5FD",
+    accent: ICON_ACCENT,
     Icon: Building2,
+    floatClass: "batimumHero__bubble--floatE",
   },
   {
     id: "pilotage",
@@ -101,11 +109,13 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail: "Visualisez vos marges avant qu’il ne soit trop tard.",
     orbit: 0,
     angle: 320,
-    accent: "#1D4ED8",
+    accent: ICON_ACCENT,
     Icon: LayoutDashboard,
+    floatClass: "batimumHero__bubble--floatF",
   },
 ];
 
+/** Scroll focus order: Devis → Clients → Planning → Chantiers → Pilotage → Facturation */
 export const FOCUS_RANGES: {
   id: HeroFeatureId | null;
   start: number;
@@ -113,11 +123,11 @@ export const FOCUS_RANGES: {
 }[] = [
   { id: null, start: 0, end: 0.24 },
   { id: "devis", start: 0.24, end: 0.36 },
-  { id: "planning", start: 0.36, end: 0.48 },
-  { id: "chantiers", start: 0.48, end: 0.6 },
-  { id: "facturation", start: 0.6, end: 0.72 },
-  { id: "clients", start: 0.72, end: 0.84 },
-  { id: "pilotage", start: 0.84, end: 0.94 },
+  { id: "clients", start: 0.36, end: 0.48 },
+  { id: "planning", start: 0.48, end: 0.6 },
+  { id: "chantiers", start: 0.6, end: 0.72 },
+  { id: "pilotage", start: 0.72, end: 0.84 },
+  { id: "facturation", start: 0.84, end: 0.94 },
   { id: null, start: 0.94, end: 1 },
 ];
 
@@ -127,6 +137,9 @@ const ORBIT_CFG = [
   { radiusPx: 270, duration: 34, reverse: true },
   { radiusPx: 340, duration: 42, reverse: false },
 ] as const;
+
+/** Full rotation of the grinder disc background (seconds). */
+const DISC_DURATION = 62;
 
 function useSceneSize(ref: RefObject<HTMLDivElement | null>) {
   const [size, setSize] = useState(820);
@@ -160,6 +173,151 @@ function focusStrength(progress: number, id: HeroFeatureId): number {
   return 1 - d / half;
 }
 
+function GrinderDisc({
+  rotate,
+  staticMode,
+  dimmed,
+}: {
+  rotate: MotionValue<number>;
+  staticMode: boolean;
+  dimmed: MotionValue<number>;
+}) {
+  const opacity = useTransform(dimmed, (d) => 1 - d * 0.35);
+
+  return (
+    <motion.div
+      className="batimumHero__grinderDisc"
+      style={staticMode ? { opacity: 1 } : { rotate, opacity }}
+      aria-hidden="true"
+    >
+      <svg
+        className="batimumHero__grinderSvg"
+        viewBox="0 0 400 400"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Outer rim */}
+        <circle
+          cx="200"
+          cy="200"
+          r="188"
+          stroke="rgba(17,17,17,0.08)"
+          strokeWidth="1.2"
+        />
+        <circle
+          cx="200"
+          cy="200"
+          r="176"
+          stroke="rgba(59,130,246,0.1)"
+          strokeWidth="0.9"
+        />
+        {/* Concentric rings */}
+        <circle
+          cx="200"
+          cy="200"
+          r="158"
+          stroke="rgba(17,17,17,0.06)"
+          strokeWidth="1"
+        />
+        <circle
+          cx="200"
+          cy="200"
+          r="138"
+          stroke="rgba(17,17,17,0.055)"
+          strokeWidth="0.9"
+        />
+        <circle
+          cx="200"
+          cy="200"
+          r="118"
+          stroke="rgba(59,130,246,0.09)"
+          strokeWidth="0.8"
+        />
+        <circle
+          cx="200"
+          cy="200"
+          r="98"
+          stroke="rgba(17,17,17,0.06)"
+          strokeWidth="0.9"
+        />
+        <circle
+          cx="200"
+          cy="200"
+          r="78"
+          stroke="rgba(17,17,17,0.05)"
+          strokeWidth="0.8"
+        />
+        {/* Diamond-disc radial segments (subtle slots) */}
+        {Array.from({ length: 28 }, (_, i) => {
+          const a = (i / 28) * Math.PI * 2;
+          const x1 = 200 + Math.cos(a) * 148;
+          const y1 = 200 + Math.sin(a) * 148;
+          const x2 = 200 + Math.cos(a) * 172;
+          const y2 = 200 + Math.sin(a) * 172;
+          return (
+            <line
+              key={`seg-${i}`}
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke={
+                i % 4 === 0
+                  ? "rgba(59,130,246,0.1)"
+                  : "rgba(17,17,17,0.055)"
+              }
+              strokeWidth="1"
+              strokeLinecap="round"
+            />
+          );
+        })}
+        {/* Inner technical notches */}
+        {Array.from({ length: 12 }, (_, i) => {
+          const a = (i / 12) * Math.PI * 2 + Math.PI / 12;
+          const x1 = 200 + Math.cos(a) * 86;
+          const y1 = 200 + Math.sin(a) * 86;
+          const x2 = 200 + Math.cos(a) * 104;
+          const y2 = 200 + Math.sin(a) * 104;
+          return (
+            <line
+              key={`notch-${i}`}
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke="rgba(17,17,17,0.06)"
+              strokeWidth="1.1"
+              strokeLinecap="round"
+            />
+          );
+        })}
+        {/* Hub */}
+        <circle
+          cx="200"
+          cy="200"
+          r="36"
+          stroke="rgba(17,17,17,0.07)"
+          strokeWidth="1"
+        />
+        <circle
+          cx="200"
+          cy="200"
+          r="22"
+          stroke="rgba(59,130,246,0.1)"
+          strokeWidth="0.9"
+        />
+        <circle
+          cx="200"
+          cy="200"
+          r="8"
+          stroke="rgba(17,17,17,0.08)"
+          strokeWidth="1"
+        />
+      </svg>
+    </motion.div>
+  );
+}
+
 function OrbitingCard({
   card,
   radiusPx,
@@ -168,7 +326,6 @@ function OrbitingCard({
   scrollProgress,
   sceneSize,
   staticMode,
-  index,
 }: {
   card: OrbitCard;
   radiusPx: number;
@@ -213,11 +370,26 @@ function OrbitingCard({
     const t = focusStrength(p, card.id);
     const anyFocus = activeFeatureAt(p) !== null;
     if (t > 0) return 1;
-    if (anyFocus) return 0.32;
+    if (anyFocus) return 0.38;
     return 1;
   });
   const zIndex = useTransform(scrollProgress, (p) =>
     focusStrength(p, card.id) > 0.12 ? 20 : 4,
+  );
+
+  const bubble = (
+    <article
+      className={`batimumHero__bubble ${card.floatClass}`}
+      style={{ "--card-accent": card.accent } as CSSProperties}
+    >
+      <span className="batimumHero__bubbleIcon" aria-hidden>
+        <Icon size={18} strokeWidth={1.8} />
+      </span>
+      <span className="batimumHero__bubbleCopy">
+        <span className="batimumHero__bubbleTitle">{card.title}</span>
+        <span className="batimumHero__bubbleSub">{card.subtitle}</span>
+      </span>
+    </article>
   );
 
   if (staticMode) {
@@ -229,18 +401,7 @@ function OrbitingCard({
           transform: `translate(-50%, -50%) translate(${Math.cos(rad) * radiusPx}px, ${Math.sin(rad) * radiusPx}px)`,
         }}
       >
-        <article
-          className="batimumHero__bubble"
-          style={{ "--card-accent": card.accent } as CSSProperties}
-        >
-          <span className="batimumHero__bubbleIcon" aria-hidden>
-            <Icon size={17} strokeWidth={1.8} />
-          </span>
-          <span className="batimumHero__bubbleCopy">
-            <span className="batimumHero__bubbleTitle">{card.title}</span>
-            <span className="batimumHero__bubbleSub">{card.subtitle}</span>
-          </span>
-        </article>
+        {bubble}
       </div>
     );
   }
@@ -254,18 +415,7 @@ function OrbitingCard({
       }
       transition={{ duration: 0.18 }}
     >
-      <article
-        className="batimumHero__bubble"
-        style={{ "--card-accent": card.accent } as CSSProperties}
-      >
-        <span className="batimumHero__bubbleIcon" aria-hidden>
-          <Icon size={17} strokeWidth={1.8} />
-        </span>
-        <span className="batimumHero__bubbleCopy">
-          <span className="batimumHero__bubbleTitle">{card.title}</span>
-          <span className="batimumHero__bubbleSub">{card.subtitle}</span>
-        </span>
-      </article>
+      {bubble}
     </motion.div>
   );
 }
@@ -287,6 +437,7 @@ export function LandingHeroOrbit({
   const rotate0 = useMotionValue(0);
   const rotate1 = useMotionValue(0);
   const rotate2 = useMotionValue(0);
+  const discRotate = useMotionValue(0);
 
   useEffect(() => setMounted(true), []);
 
@@ -303,17 +454,30 @@ export function LandingHeroOrbit({
       else if (p >= 0.24 && p < 0.94) speed = 0.04;
       else if (p >= 0.94) speed = 0.3;
 
+      // Disc slows more gently than bubbles during focus
+      let discSpeed = 1;
+      if (p >= 0.12 && p < 0.24) discSpeed = 1 - ((p - 0.12) / 0.12) * 0.55;
+      else if (p >= 0.24 && p < 0.94) discSpeed = 0.22;
+      else if (p >= 0.94) discSpeed = 0.55;
+
       ORBIT_CFG.forEach((cfg, i) => {
         const mv = [rotate0, rotate1, rotate2][i];
         const delta =
           (360 / cfg.duration) * dt * speed * (cfg.reverse ? -1 : 1);
         mv.set((mv.get() + delta) % 360);
       });
+
+      // Clockwise disc rotation
+      discRotate.set(
+        (discRotate.get() + (360 / DISC_DURATION) * dt * discSpeed) % 360,
+      );
+
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
   }, [
+    discRotate,
     enableOrbit,
     mounted,
     reduced,
@@ -333,6 +497,10 @@ export function LandingHeroOrbit({
     damping: 24,
     mass: 0.8,
   });
+
+  const discDim = useTransform(scrollProgress, (p) =>
+    activeFeatureAt(p) ? 1 : 0,
+  );
 
   const staticMode = !mounted || reduced || !enableOrbit;
   const [detailText, setDetailText] = useState("");
@@ -360,15 +528,14 @@ export function LandingHeroOrbit({
       >
         <div className="batimumHero__glow" aria-hidden />
 
-        {[0, 1, 2].map((i) => (
-          <div
-            key={`ring-${i}`}
-            className={`batimumHero__ring batimumHero__ring--${i}`}
-          />
-        ))}
+        <GrinderDisc
+          rotate={discRotate}
+          staticMode={staticMode}
+          dimmed={discDim}
+        />
 
         <div className="batimumHero__logoCore">
-          <div className="batimumHero__logoPad">
+          <div className="batimumHero__logoPad batimumHero__logoPad--breathe">
             {/* Same asset + ratio as top bar (.landing-header-logo = 115px contain) */}
             <img
               src="/logo-batimum.png"

@@ -138,7 +138,7 @@ export function LandingHero() {
                 <li key={label} className="batimumHero__benefit">
                   <Icon
                     className="batimumHero__benefitIcon"
-                    size={16}
+                    size={18}
                     strokeWidth={1.8}
                     aria-hidden="true"
                   />
@@ -203,7 +203,7 @@ export function LandingHero() {
                           }
                           aria-hidden
                         >
-                          <Icon size={17} strokeWidth={1.8} />
+                          <Icon size={18} strokeWidth={1.8} />
                         </span>
                         <span className="batimumHero__bubbleCopy">
                           <span className="batimumHero__bubbleTitle">
