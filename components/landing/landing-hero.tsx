@@ -154,31 +154,55 @@ export function LandingHero() {
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
                     >
+                      <defs>
+                        <linearGradient
+                          id="batimumNutFaceMobile"
+                          x1="70"
+                          y1="60"
+                          x2="320"
+                          y2="340"
+                          gradientUnits="userSpaceOnUse"
+                        >
+                          <stop offset="0%" stopColor="rgba(255,255,255,0.45)" />
+                          <stop offset="100%" stopColor="rgba(255,255,255,0.10)" />
+                        </linearGradient>
+                      </defs>
+                      <polygon
+                        points="392.5,205.5 298.5,367.5 110.5,367.5 16.5,205.5 110.5,43.5 298.5,43.5"
+                        fill="rgba(248,250,252,0.22)"
+                        stroke="rgba(17,17,17,0.055)"
+                        strokeWidth="1.05"
+                        strokeLinejoin="round"
+                      />
                       <polygon
                         points="388,200 294,362 106,362 12,200 106,38 294,38"
-                        stroke="rgba(17,17,17,0.10)"
-                        strokeWidth="1.45"
+                        fill="url(#batimumNutFaceMobile)"
+                        stroke="rgba(17,17,17,0.14)"
+                        strokeWidth="1.25"
                         strokeLinejoin="round"
                       />
                       <polygon
                         points="372,200 286,350 114,350 28,200 114,50 286,50"
-                        stroke="rgba(17,17,17,0.055)"
+                        fill="rgba(255,255,255,0.08)"
+                        stroke="rgba(17,17,17,0.08)"
                         strokeWidth="1.05"
                         strokeLinejoin="round"
                       />
                       <circle
                         cx="200"
                         cy="200"
-                        r="94"
-                        stroke="rgba(59,130,246,0.10)"
-                        strokeWidth="1.05"
+                        r="68"
+                        stroke="rgba(59,130,246,0.12)"
+                        strokeWidth="1.1"
+                        fill="rgba(255,255,255,0.05)"
                       />
                       <circle
                         cx="200"
                         cy="200"
                         r="54"
-                        stroke="rgba(17,17,17,0.09)"
+                        stroke="rgba(17,17,17,0.16)"
                         strokeWidth="1.35"
+                        fill="rgba(255,255,255,0.02)"
                       />
                     </svg>
                   </div>

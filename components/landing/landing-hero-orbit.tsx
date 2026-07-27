@@ -403,12 +403,22 @@ function computePopoverPosition(args: {
 }
 
 /**
- * Écrou hexagonal flat-top — fin, géométrique, légèrement plus lisible.
+ * Écrou hexagonal mécanique — blanc translucide, fin, identifiable.
+ * Flat-top, centre = logo BM. Épaisseur via face arrière décalée.
  */
 function HeroNutSvg() {
-  const outer = hexPoints(200, 200, 188);
-  const mid = hexPoints(200, 200, 172);
-  const inner = hexPoints(200, 200, 158);
+  const cx = 200;
+  const cy = 200;
+  const outerR = 188;
+  const midR = 170;
+  const innerR = 156;
+  const holeR = 54;
+  const ringR = 68;
+  const chamferR = 78;
+  const back = hexPoints(cx + 4.5, cy + 5.5, outerR);
+  const outer = hexPoints(cx, cy, outerR);
+  const mid = hexPoints(cx, cy, midR);
+  const inner = hexPoints(cx, cy, innerR);
 
   return (
     <svg
@@ -418,86 +428,172 @@ function HeroNutSvg() {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <polygon points={outer} fill="rgba(17,17,17,0.018)" stroke="none" />
+      <defs>
+        <linearGradient id="batimumNutFace" x1="70" y1="60" x2="320" y2="340" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.45)" />
+          <stop offset="55%" stopColor="rgba(255,255,255,0.28)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0.10)" />
+        </linearGradient>
+        <linearGradient id="batimumNutShine" x1="90" y1="70" x2="210" y2="190" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.42)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+        </linearGradient>
+        <radialGradient id="batimumNutBlue" cx="42%" cy="38%" r="55%">
+          <stop offset="0%" stopColor="rgba(59,130,246,0.06)" />
+          <stop offset="100%" stopColor="rgba(59,130,246,0)" />
+        </radialGradient>
+        <radialGradient id="batimumNutHoleShade" cx="50%" cy="42%" r="60%">
+          <stop offset="0%" stopColor="rgba(17,17,17,0)" />
+          <stop offset="70%" stopColor="rgba(17,17,17,0.02)" />
+          <stop offset="100%" stopColor="rgba(17,17,17,0.05)" />
+        </radialGradient>
+      </defs>
+
+      {/* Face arrière — épaisseur légère */}
       <polygon
-        points={outer}
-        stroke="rgba(17,17,17,0.16)"
-        strokeWidth="1.85"
+        points={back}
+        fill="rgba(248,250,252,0.22)"
+        stroke="rgba(17,17,17,0.055)"
+        strokeWidth="1.05"
         strokeLinejoin="round"
       />
+
+      {/* Face principale */}
+      <polygon
+        points={outer}
+        fill="url(#batimumNutFace)"
+        stroke="rgba(17,17,17,0.14)"
+        strokeWidth="1.25"
+        strokeLinejoin="round"
+      />
+      <polygon points={outer} fill="url(#batimumNutBlue)" stroke="none" />
+
+      {/* Chanfrein extérieur / face intérieure */}
       <polygon
         points={mid}
+        fill="rgba(255,255,255,0.10)"
         stroke="rgba(17,17,17,0.08)"
-        strokeWidth="1.25"
+        strokeWidth="1.05"
         strokeLinejoin="round"
       />
       <polygon
         points={inner}
-        stroke="rgba(17,17,17,0.045)"
-        strokeWidth="0.95"
+        fill="rgba(255,255,255,0.04)"
+        stroke="rgba(17,17,17,0.055)"
+        strokeWidth="0.9"
         strokeLinejoin="round"
       />
+
+      {/* Six pans — contraste discret */}
       {Array.from({ length: 6 }, (_, i) => {
         const a0 = (Math.PI / 180) * (i * 60);
         const a1 = (Math.PI / 180) * ((i + 1) * 60);
-        const x0 = 200 + Math.cos(a0) * 165;
-        const y0 = 200 + Math.sin(a0) * 165;
-        const x1 = 200 + Math.cos(a1) * 165;
-        const y1 = 200 + Math.sin(a1) * 165;
+        const x0 = cx + Math.cos(a0) * midR;
+        const y0 = cy + Math.sin(a0) * midR;
+        const x1 = cx + Math.cos(a1) * midR;
+        const y1 = cy + Math.sin(a1) * midR;
+        const ix0 = cx + Math.cos(a0) * ringR;
+        const iy0 = cy + Math.sin(a0) * ringR;
+        const ix1 = cx + Math.cos(a1) * ringR;
+        const iy1 = cy + Math.sin(a1) * ringR;
         return (
-          <polygon
-            key={`pan-${i}`}
-            points={`200,200 ${x0},${y0} ${x1},${y1}`}
-            fill={
-              i % 2 === 0
-                ? "rgba(17,17,17,0.012)"
-                : "rgba(59,130,246,0.018)"
-            }
-            stroke="none"
-          />
+          <g key={`pan-${i}`}>
+            <polygon
+              points={`${x0},${y0} ${x1},${y1} ${ix1},${iy1} ${ix0},${iy0}`}
+              fill={
+                i === 0 || i === 1
+                  ? "rgba(255,255,255,0.14)"
+                  : i === 3 || i === 4
+                    ? "rgba(17,17,17,0.028)"
+                    : "rgba(255,255,255,0.04)"
+              }
+              stroke="none"
+            />
+            <line
+              x1={x0}
+              y1={y0}
+              x2={ix0}
+              y2={iy0}
+              stroke="rgba(17,17,17,0.045)"
+              strokeWidth="0.85"
+              strokeLinecap="round"
+            />
+          </g>
         );
       })}
-      <circle cx="200" cy="200" r="108" stroke="rgba(17,17,17,0.045)" strokeWidth="1" />
-      <circle cx="200" cy="200" r="92" stroke="rgba(59,130,246,0.10)" strokeWidth="1.2" />
-      <circle cx="200" cy="200" r="76" stroke="rgba(17,17,17,0.05)" strokeWidth="0.95" />
-      <circle cx="200" cy="200" r="54" stroke="rgba(17,17,17,0.16)" strokeWidth="1.6" />
-      <circle cx="200" cy="200" r="46" stroke="rgba(17,17,17,0.05)" strokeWidth="0.95" />
+
+      {/* Reflet pan supérieur gauche */}
+      <polygon
+        points={`${cx + Math.cos((-20 * Math.PI) / 180) * midR},${cy + Math.sin((-20 * Math.PI) / 180) * midR} ${cx + Math.cos((40 * Math.PI) / 180) * midR},${cy + Math.sin((40 * Math.PI) / 180) * midR} ${cx + Math.cos((40 * Math.PI) / 180) * (ringR + 8)},${cy + Math.sin((40 * Math.PI) / 180) * (ringR + 8)} ${cx + Math.cos((-20 * Math.PI) / 180) * (ringR + 8)},${cy + Math.sin((-20 * Math.PI) / 180) * (ringR + 8)}`}
+        fill="url(#batimumNutShine)"
+        opacity="0.55"
+        stroke="none"
+      />
+
+      {/* Bague / alésage + trou */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={chamferR}
+        stroke="rgba(17,17,17,0.05)"
+        strokeWidth="0.9"
+        fill="none"
+      />
+      <circle
+        cx={cx}
+        cy={cy}
+        r={ringR}
+        stroke="rgba(59,130,246,0.12)"
+        strokeWidth="1.15"
+        fill="rgba(255,255,255,0.06)"
+      />
+      <circle
+        cx={cx}
+        cy={cy}
+        r={holeR + 6}
+        stroke="rgba(17,17,17,0.06)"
+        strokeWidth="0.9"
+        fill="url(#batimumNutHoleShade)"
+      />
+      <circle
+        cx={cx}
+        cy={cy}
+        r={holeR}
+        stroke="rgba(17,17,17,0.16)"
+        strokeWidth="1.35"
+        fill="rgba(255,255,255,0.02)"
+      />
+      <circle
+        cx={cx}
+        cy={cy}
+        r={holeR - 7}
+        stroke="rgba(17,17,17,0.05)"
+        strokeWidth="0.8"
+        fill="none"
+      />
+
+      {/* Repères sommets */}
       {Array.from({ length: 6 }, (_, i) => {
         const a = (Math.PI / 180) * (i * 60);
-        return (
-          <line
-            key={`spoke-${i}`}
-            x1={200 + Math.cos(a) * 54}
-            y1={200 + Math.sin(a) * 54}
-            x2={200 + Math.cos(a) * 158}
-            y2={200 + Math.sin(a) * 158}
-            stroke={
-              i % 2 === 0
-                ? "rgba(59,130,246,0.12)"
-                : "rgba(17,17,17,0.055)"
-            }
-            strokeWidth="1"
-            strokeLinecap="round"
-          />
-        );
-      })}
-      {Array.from({ length: 6 }, (_, i) => {
-        const a = (Math.PI / 180) * (i * 60);
+        const vx = cx + Math.cos(a) * outerR;
+        const vy = cy + Math.sin(a) * outerR;
         return (
           <g key={`vertex-${i}`}>
             <circle
-              cx={200 + Math.cos(a) * 188}
-              cy={200 + Math.sin(a) * 188}
-              r="2.75"
+              cx={vx}
+              cy={vy}
+              r="2.4"
               fill="rgba(59,130,246,0.16)"
+              stroke="rgba(59,130,246,0.16)"
+              strokeWidth="0.6"
             />
             <line
-              x1={200 + Math.cos(a) * 176}
-              y1={200 + Math.sin(a) * 176}
-              x2={200 + Math.cos(a) * 188}
-              y2={200 + Math.sin(a) * 188}
-              stroke="rgba(17,17,17,0.1)"
-              strokeWidth="1.2"
+              x1={cx + Math.cos(a) * (outerR - 12)}
+              y1={cy + Math.sin(a) * (outerR - 12)}
+              x2={vx}
+              y2={vy}
+              stroke="rgba(17,17,17,0.08)"
+              strokeWidth="1"
               strokeLinecap="round"
             />
           </g>
@@ -662,7 +758,7 @@ function FeatureVertexCard({
     return 1;
   });
 
-  const scale = isActive ? 1.035 : undefined;
+  const scale = isActive ? 1.025 : undefined;
   const opacity = isActive ? 1 : isDimmed ? 0.4 : undefined;
 
   const microHint =
