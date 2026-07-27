@@ -172,31 +172,33 @@ html:has(.landing-emerald) body {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: max(760px, calc(100svh - 88px));
-  background: #ffffff;
-  padding: 3rem 0 4rem;
+  min-height: 820px;
+  background:
+    radial-gradient(ellipse 42% 36% at 78% 28%, rgba(16, 185, 129, 0.07), transparent 70%),
+    radial-gradient(ellipse 28% 24% at 62% 72%, rgba(186, 230, 253, 0.35), transparent 72%),
+    #ffffff;
+  padding: 2rem 0 3.5rem;
+}
+
+@media (min-width: 1024px) {
+  .landing-emerald .lp-hero {
+    display: flex;
+    align-items: center;
+    min-height: max(820px, calc(100svh - 76px));
+    padding: 2.5rem 0 4rem;
+  }
 }
 
 .landing-emerald .lp-hero__container {
-  width: min(1440px, 100%);
+  width: 100%;
   max-width: 1440px;
   margin-inline: auto;
-  padding-inline: 48px;
-  box-sizing: border-box;
+  padding-inline: 1.5rem;
 }
 
-@media (max-width: 899px) {
-  .landing-emerald .lp-hero {
-    min-height: 0;
-    padding: 2.5rem 0 3.25rem;
-  }
-
+@media (min-width: 640px) {
   .landing-emerald .lp-hero__container {
-    width: 100%;
-    padding-inline: 16px;
+    padding-inline: 2rem;
   }
 }
 
@@ -206,123 +208,54 @@ html:has(.landing-emerald) body {
   align-items: center;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1024px) {
   .landing-emerald .lp-hero__grid {
-    grid-template-columns: minmax(0, 42%) minmax(0, 58%);
-    gap: 48px;
-    padding-block: 48px 56px;
-  }
-}
-
-@media (min-width: 1280px) {
-  .landing-emerald .lp-hero__grid {
-    padding-block: 56px 64px;
+    grid-template-columns: minmax(0, 0.45fr) minmax(0, 0.55fr);
+    gap: 1.5rem;
   }
 }
 
 .landing-emerald .lp-hero__copy {
   position: relative;
   z-index: 2;
-  max-width: 650px;
-  will-change: transform;
-}
-
-@media (max-width: 899px) {
-  .landing-emerald .lp-hero__copy {
-    text-align: center;
-    margin-inline: auto;
-  }
-}
-
-.landing-emerald .lp-hero__badge.lp-eyebrow {
-  height: 34px;
-  padding: 0 14px;
-  background: #f8fafc;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: none;
-  color: #475569;
-  font-size: 0.8125rem;
-  font-weight: 500;
-}
-
-@media (max-width: 899px) {
-  .landing-emerald .lp-hero__badge.lp-eyebrow {
-    margin-inline: auto;
-  }
+  max-width: 34rem;
 }
 
 .landing-emerald .lp-hero__title {
-  margin: 1.15rem 0 0;
-  max-width: 650px;
-  color: #0f172a;
-  font-size: clamp(3.375rem, 4.5vw, 4.75rem);
+  margin: 1.1rem 0 0;
+  color: #101828;
+  font-size: clamp(2.15rem, 4.2vw, 3.4rem);
   font-weight: 700;
   letter-spacing: -0.045em;
-  line-height: 1.01;
-}
-
-@media (max-width: 899px) and (min-width: 640px) {
-  .landing-emerald .lp-hero__title {
-    font-size: 3rem;
-  }
-}
-
-@media (max-width: 639px) {
-  .landing-emerald .lp-hero__title {
-    font-size: clamp(2.15rem, 9vw, 2.75rem);
-  }
+  line-height: 1.05;
 }
 
 .landing-emerald .lp-hero__title-accent {
   display: block;
-  color: #059669;
+  color: #10b981;
 }
 
 .landing-emerald .lp-hero__subtitle {
-  margin: 1.2rem 0 0;
-  max-width: 600px;
-  color: #64748b;
-  font-size: clamp(1.125rem, 1.4vw, 1.25rem);
-  line-height: 1.6;
-}
-
-@media (max-width: 899px) {
-  .landing-emerald .lp-hero__subtitle {
-    margin-inline: auto;
-  }
+  margin: 1.1rem 0 0;
+  max-width: 32rem;
+  color: #667085;
+  font-size: 1.0625rem;
+  line-height: 1.65;
 }
 
 .landing-emerald .lp-hero__benefits {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem 1.35rem;
-  margin: 1.4rem 0 1.55rem;
-  padding: 0;
-  list-style: none;
-}
-
-@media (max-width: 899px) {
-  .landing-emerald .lp-hero__benefits {
-    justify-content: center;
-  }
+  display: grid;
+  gap: 0.65rem;
+  margin: 1.35rem 0 1.5rem;
 }
 
 .landing-emerald .lp-hero__benefit {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: #0f172a;
-  font-size: 0.875rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  color: var(--bm-anthracite);
+  font-size: 0.9375rem;
   font-weight: 500;
-  line-height: 1.35;
-}
-
-.landing-emerald .lp-hero__benefit-icon {
-  width: 0.95rem;
-  height: 0.95rem;
-  flex: 0 0 auto;
-  color: #10b981;
-  stroke: #10b981;
 }
 
 .landing-emerald .lp-hero__ctas {
@@ -331,67 +264,13 @@ html:has(.landing-emerald) body {
   gap: 0.75rem;
 }
 
-@media (max-width: 899px) {
-  .landing-emerald .lp-hero__ctas {
-    justify-content: center;
-  }
-}
-
-.landing-emerald .lp-hero__cta-primary,
-.landing-emerald .lp-hero__cta-secondary {
-  height: 54px;
-  padding-inline: 26px;
-  border-radius: 12px;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    background-color 180ms ease;
-}
-
-.landing-emerald .lp-hero__cta-primary {
-  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.18) !important;
-}
-
-.landing-emerald .lp-hero__cta-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(16, 185, 129, 0.22) !important;
-}
-
-.landing-emerald .lp-hero__cta-arrow {
-  transition: transform 180ms ease;
-}
-
-.landing-emerald .lp-hero__cta-primary:hover .lp-hero__cta-arrow {
-  transform: translateX(3px);
-}
-
-.landing-emerald .lp-hero__cta-secondary {
-  box-shadow: none !important;
+.landing-emerald .lp-hero__ctas a {
+  min-height: 2.875rem;
 }
 
 @media (max-width: 639px) {
-  .landing-emerald .lp-hero__ctas {
-    flex-direction: column;
-  }
-
   .landing-emerald .lp-hero__ctas a {
     width: 100%;
-  }
-}
-
-.landing-emerald .lp-hero__trust {
-  margin: 1rem 0 0;
-  color: #94a3b8;
-  font-size: 0.75rem;
-  letter-spacing: 0.01em;
-  line-height: 1.4;
-}
-
-@media (max-width: 899px) {
-  .landing-emerald .lp-hero__trust {
-    text-align: center;
   }
 }
 
@@ -399,123 +278,66 @@ html:has(.landing-emerald) body {
   position: relative;
   z-index: 1;
   width: 100%;
+  min-height: 420px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 430px;
-  overflow: hidden;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1024px) {
   .landing-emerald .lp-hero__visual {
     min-height: 620px;
-  }
-}
-
-.landing-emerald .lp-hero__scroll-cue {
-  position: absolute;
-  left: 50%;
-  bottom: 1.25rem;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 0;
-  transform: translateX(-50%);
-  color: #94a3b8;
-  font-size: 0.75rem;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.landing-emerald .lp-hero__scroll-icon {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1rem;
-  color: #94a3b8;
-}
-
-.landing-emerald .lp-hero__scroll-arrow {
-  animation: lp-hero-cue-bob 2.4s ease-in-out infinite;
-}
-
-@keyframes lp-hero-cue-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.55;
-  }
-  50% {
-    transform: translateY(3px);
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .landing-emerald .lp-hero__scroll-arrow {
-    animation: none;
   }
 }
 
 /* ——— Hero orbit ——— */
 .landing-emerald .lp-orbit {
   position: relative;
-  width: min(720px, 100%);
-  height: min(660px, 100%);
-  max-width: 100%;
+  width: min(100%, 600px);
+  aspect-ratio: 1 / 1;
   margin-inline: auto;
-  overflow: hidden;
-}
-
-.landing-emerald .lp-orbit__scene {
-  position: relative;
-  width: 100%;
-  height: 100%;
   transform-origin: center center;
 }
 
-.landing-emerald .lp-orbit__glow {
+.landing-emerald .lp-orbit__halos {
   position: absolute;
-  inset: 18% 16%;
+  inset: 18%;
   border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08), transparent 62%),
+    radial-gradient(circle at 60% 40%, rgba(186, 230, 253, 0.2), transparent 55%);
   pointer-events: none;
-  opacity: 0.55;
-  filter: blur(2px);
 }
 
 .landing-emerald .lp-orbit__ring {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: calc(var(--rx) * 2);
-  height: calc(var(--ry) * 2);
-  margin-left: calc(var(--rx) * -1);
-  margin-top: calc(var(--ry) * -1);
-  border: 1px solid rgba(148, 163, 184, 0.28);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 50%;
+  transform: translate(-50%, -50%);
   pointer-events: none;
-  box-sizing: border-box;
 }
 
-.landing-emerald .lp-orbit__card-wrap {
-  position: absolute;
-  z-index: 4;
-  width: 178px;
-  height: 82px;
-  will-change: left, top, transform;
+.landing-emerald .lp-orbit__ring--inner {
+  width: 380px;
+  height: 380px;
+}
+
+.landing-emerald .lp-orbit__ring--outer {
+  width: 560px;
+  height: 560px;
 }
 
 .landing-emerald .lp-orbit__dot {
   position: absolute;
-  z-index: 2;
-  width: 5px;
-  height: 5px;
+  left: 50%;
+  top: 50%;
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.55);
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.25);
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.85), rgba(16, 185, 129, 0.05));
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
   pointer-events: none;
+  z-index: 1;
 }
 
 .landing-emerald .lp-orbit__core {
@@ -526,166 +348,165 @@ html:has(.landing-emerald) body {
   transform: translate(-50%, -50%);
 }
 
-.landing-emerald .lp-orbit__logo-pad {
+.landing-emerald .lp-orbit__logo-card {
   display: grid;
   place-items: center;
-  width: 104px;
-  height: 104px;
-  border-radius: 24px;
-  background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
-  border: none;
+  width: 180px;
+  height: 180px;
+  border-radius: 32px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
   box-shadow:
-    0 0 0 1px rgba(16, 185, 129, 0.12),
-    0 0 28px rgba(16, 185, 129, 0.18),
-    0 18px 40px rgba(15, 23, 42, 0.22);
-  animation: lp-orbit-breathe 4.6s ease-in-out infinite;
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 18px 40px rgba(15, 23, 42, 0.08),
+    0 40px 70px rgba(15, 23, 42, 0.05);
 }
 
 .landing-emerald .lp-orbit__logo {
-  width: 72px;
+  width: auto;
   height: auto;
-  max-height: 28px;
+  max-width: 132px;
+  max-height: 44px;
   object-fit: contain;
-  object-position: center;
-  filter: brightness(0) invert(1);
-  opacity: 0.96;
 }
 
-.landing-emerald .lp-orbit__card {
+.landing-emerald .lp-orbit-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 4;
   display: flex;
   align-items: flex-start;
   gap: 0.65rem;
-  width: 100%;
-  height: 100%;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  width: 170px;
+  height: 90px;
+  margin-left: -85px;
+  margin-top: -45px;
+  padding: 0.75rem 0.8rem;
+  border-radius: 22px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.95);
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.03),
-    0 10px 28px rgba(15, 23, 42, 0.06);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: box-shadow 180ms ease;
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 12px 28px rgba(15, 23, 42, 0.07);
+  cursor: default;
+  will-change: transform;
 }
 
-.landing-emerald .lp-orbit__card-wrap:hover .lp-orbit__card {
+.landing-emerald .lp-orbit-card.is-hovered,
+.landing-emerald .lp-orbit-card:hover {
   box-shadow:
-    0 2px 4px rgba(15, 23, 42, 0.04),
-    0 14px 32px rgba(15, 23, 42, 0.1);
+    0 0 0 1px rgba(16, 185, 129, 0.18),
+    0 10px 30px rgba(16, 185, 129, 0.12),
+    0 18px 40px rgba(15, 23, 42, 0.08);
+  z-index: 6;
 }
 
-.landing-emerald .lp-orbit__card-icon {
+.landing-emerald .lp-orbit-card__icon {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
-  margin-top: 1px;
-  color: var(--orbit-accent, #10b981);
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.65rem;
 }
 
-.landing-emerald .lp-orbit__card-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+.landing-emerald .lp-orbit-card__copy {
   min-width: 0;
 }
 
-.landing-emerald .lp-orbit__card-title {
+.landing-emerald .lp-orbit-card__title {
   color: #0f172a;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
-.landing-emerald .lp-orbit__card-sub {
-  color: #64748b;
-  font-size: 0.75rem;
+.landing-emerald .lp-orbit-card__subtitle {
+  margin-top: 0.2rem;
+  color: #667085;
+  font-size: 0.6875rem;
   line-height: 1.35;
 }
 
-@keyframes lp-orbit-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.025);
+.landing-emerald .lp-orbit__beam-line {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  width: 230px;
+  height: 2px;
+  margin-top: -1px;
+  transform-origin: 0 50%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(16, 185, 129, 0.55) 0%,
+    rgba(16, 185, 129, 0.2) 55%,
+    rgba(16, 185, 129, 0) 100%
+  );
+  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.35));
+}
+
+@media (max-width: 1023px) {
+  .landing-emerald .lp-orbit__beam-line {
+    width: 170px;
   }
 }
 
-@media (max-width: 1099px) and (min-width: 900px) {
+@media (max-width: 1023px) {
+  .landing-emerald .lp-hero {
+    min-height: 0;
+  }
+
   .landing-emerald .lp-orbit {
-    width: min(560px, 100%);
-    height: 520px;
+    width: min(100%, 420px);
   }
 
-  .landing-emerald .lp-orbit__card-wrap {
-    width: 158px;
-    height: 76px;
+  .landing-emerald .lp-orbit__ring--inner {
+    width: 280px;
+    height: 280px;
   }
 
-  .landing-emerald .lp-orbit__card {
-    padding: 12px 14px;
+  .landing-emerald .lp-orbit__ring--outer {
+    width: 400px;
+    height: 400px;
   }
 
-  .landing-emerald .lp-orbit__card-title {
-    font-size: 0.8125rem;
+  .landing-emerald .lp-orbit__logo-card {
+    width: 140px;
+    height: 140px;
+    border-radius: 28px;
   }
-}
 
-@media (max-width: 899px) {
-  .landing-emerald .lp-orbit {
-    width: min(520px, 100%);
-    height: 480px;
+  .landing-emerald .lp-orbit__logo {
+    max-width: 104px;
   }
 }
 
 @media (max-width: 639px) {
-  .landing-emerald .lp-orbit {
-    width: calc(100vw - 32px);
-    height: 430px;
-  }
-
-  .landing-emerald .lp-orbit__logo-pad {
-    width: 88px;
-    height: 88px;
-    border-radius: 20px;
-  }
-
-  .landing-emerald .lp-orbit__logo {
-    width: 60px;
-    max-height: 24px;
-  }
-
-  .landing-emerald .lp-orbit__card-wrap {
+  .landing-emerald .lp-orbit-card {
     width: 148px;
-    height: 72px;
+    height: 82px;
+    margin-left: -74px;
+    margin-top: -41px;
+    padding: 0.6rem 0.65rem;
+    border-radius: 18px;
   }
 
-  .landing-emerald .lp-orbit__card {
-    padding: 12px 13px;
-    border-radius: 14px;
-  }
-
-  .landing-emerald .lp-orbit__card-title {
+  .landing-emerald .lp-orbit-card__title {
     font-size: 0.75rem;
   }
 
-  .landing-emerald .lp-orbit__card-sub {
-    font-size: 0.6875rem;
-  }
-
-  .landing-emerald .lp-hero__scroll-cue {
-    display: none;
+  .landing-emerald .lp-orbit-card__subtitle {
+    font-size: 0.625rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-emerald .lp-orbit__logo-pad {
-    animation: none;
+  .landing-emerald .lp-orbit__beam-line {
+    display: none;
   }
 }
 

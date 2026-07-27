@@ -1,8 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import {
   motion,
-  useMotionTemplate,
   useMotionValue,
   useReducedMotion,
   useScroll,
@@ -11,373 +11,396 @@ import {
   type MotionValue,
 } from "framer-motion";
 import {
-  Building2,
-  CalendarDays,
-  LayoutDashboard,
-  Receipt,
-  Sparkles,
-  Users,
-} from "lucide-react";
-import {
   useEffect,
   useRef,
   useState,
-  type CSSProperties,
+  type ReactNode,
+  type RefObject,
 } from "react";
+import {
+  Calculator,
+  CalendarDays,
+  HardHat,
+  Receipt,
+  Users,
+  TrendingUp,
+} from "lucide-react";
 
-type OrbitFeature = {
+type OrbitCard = {
   id: string;
   title: string;
   subtitle: string;
-  orbit: 0 | 1 | 2;
+  icon: ReactNode;
   accent: string;
-  Icon: typeof Sparkles;
+  /** Extra drift on scroll (px) — suggests feeding the next sections */
+  scrollDriftY: number;
+  scrollDriftX: number;
 };
 
-const FEATURES: OrbitFeature[] = [
+const ORBIT_CARDS: OrbitCard[] = [
   {
     id: "devis",
-    title: "Devis avec IA",
-    subtitle: "Créés en quelques minutes",
-    orbit: 2,
-    accent: "#10B981",
-    Icon: Sparkles,
+    title: "Devis IA",
+    subtitle: "Crée vos devis automatiquement",
+    icon: <Calculator className="h-4 w-4" strokeWidth={2.25} />,
+    accent: "#10b981",
+    scrollDriftY: 120,
+    scrollDriftX: -40,
   },
   {
     id: "planning",
-    title: "Planning des équipes",
-    subtitle: "Toujours à jour",
-    orbit: 2,
-    accent: "#A78BFA",
-    Icon: CalendarDays,
+    title: "Planning",
+    subtitle: "Vos équipes toujours organisées",
+    icon: <CalendarDays className="h-4 w-4" strokeWidth={2.25} />,
+    accent: "#0ea5e9",
+    scrollDriftY: 90,
+    scrollDriftX: 20,
   },
   {
     id: "chantiers",
-    title: "Suivi des chantiers",
-    subtitle: "En temps réel",
-    orbit: 1,
-    accent: "#60A5FA",
-    Icon: Building2,
+    title: "Chantiers",
+    subtitle: "Suivi en temps réel",
+    icon: <HardHat className="h-4 w-4" strokeWidth={2.25} />,
+    accent: "#14b8a6",
+    scrollDriftY: 70,
+    scrollDriftX: 50,
   },
   {
     id: "facturation",
     title: "Facturation",
-    subtitle: "Simple et rapide",
-    orbit: 1,
-    accent: "#FB923C",
-    Icon: Receipt,
+    subtitle: "Paiements et relances simplifiés",
+    icon: <Receipt className="h-4 w-4" strokeWidth={2.25} />,
+    accent: "#22c55e",
+    scrollDriftY: 100,
+    scrollDriftX: -10,
   },
   {
     id: "clients",
-    title: "Clients centralisés",
-    subtitle: "Tout au même endroit",
-    orbit: 0,
-    accent: "#FBBF24",
-    Icon: Users,
+    title: "Clients",
+    subtitle: "Toutes vos informations réunies",
+    icon: <Users className="h-4 w-4" strokeWidth={2.25} />,
+    accent: "#38bdf8",
+    scrollDriftY: 80,
+    scrollDriftX: -55,
   },
   {
-    id: "pilotage",
-    title: "Pilotage et rentabilité",
-    subtitle: "Décisions plus claires",
-    orbit: 0,
+    id: "rentabilite",
+    title: "Rentabilité",
+    subtitle: "Pilotez vos marges instantanément",
+    icon: <TrendingUp className="h-4 w-4" strokeWidth={2.25} />,
     accent: "#059669",
-    Icon: LayoutDashboard,
+    scrollDriftY: 110,
+    scrollDriftX: 35,
   },
 ];
 
-/** Ellipse radii as % of scene — cards stay inside with padding. */
-const ORBIT_DESKTOP = [
-  { rx: 18, ry: 14, duration: 26, reverse: false },
-  { rx: 27, ry: 21, duration: 31, reverse: true },
-  { rx: 35, ry: 27, duration: 37, reverse: false },
-] as const;
+const ORBIT_RADIUS_DESKTOP = 230;
+const ORBIT_RADIUS_MOBILE = 168;
+const FULL_TURN_MS = 90_000;
 
-const ORBIT_MOBILE = [
-  { rx: 22, ry: 17, duration: 28, reverse: false },
-  { rx: 32, ry: 25, duration: 34, reverse: true },
-] as const;
+type LandingHeroOrbitProps = {
+  sectionRef: RefObject<HTMLElement | null>;
+};
 
-const MOBILE_FEATURE_IDS = new Set([
-  "devis",
-  "planning",
-  "chantiers",
-  "pilotage",
-]);
+export function LandingHeroOrbit({ sectionRef }: LandingHeroOrbitProps) {
+  const reducedMotion = useReducedMotion();
+  const stageRef = useRef<HTMLDivElement>(null);
+  const angleDeg = useMotionValue(0);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [orbitRadius, setOrbitRadius] = useState(ORBIT_RADIUS_DESKTOP);
 
-function useIsNarrow(breakpoint = 768) {
-  const [narrow, setNarrow] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
-    const apply = () => setNarrow(mq.matches);
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () =>
+      setOrbitRadius(mq.matches ? ORBIT_RADIUS_MOBILE : ORBIT_RADIUS_DESKTOP);
     apply();
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
-  }, [breakpoint]);
-  return narrow;
-}
+  }, []);
 
-function OrbitingCard({
-  feature,
-  rx,
-  ry,
-  duration,
-  reverse,
-  phase,
-  speedMul,
-  index,
-  reduced,
-}: {
-  feature: OrbitFeature;
-  rx: number;
-  ry: number;
-  duration: number;
-  reverse: boolean;
-  phase: number;
-  speedMul: MotionValue<number>;
-  index: number;
-  reduced: boolean;
-}) {
-  const angle = useMotionValue(phase);
-  const paused = useRef(false);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+
+  const scrollProgress = useSpring(scrollYProgress, {
+    stiffness: 60,
+    damping: 28,
+    mass: 0.5,
+  });
+
+  const orbitOpacity = useTransform(scrollProgress, [0, 0.55, 0.85], [1, 0.92, 0.55]);
+  const stageScale = useTransform(scrollProgress, [0, 0.8], [1, 0.94]);
 
   useEffect(() => {
-    if (reduced) {
-      angle.set(phase);
-      return;
-    }
+    if (reducedMotion) return;
 
     let frame = 0;
     let last = performance.now();
-    const tick = (now: number) => {
-      const dt = (now - last) / 1000;
-      last = now;
-      if (!paused.current) {
-        const mul = speedMul.get();
-        angle.set(
-          angle.get() +
-            ((Math.PI * 2) / duration) * dt * mul * (reverse ? -1 : 1),
-        );
-      }
-      frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [angle, duration, phase, reduced, reverse, speedMul]);
 
-  const left = useTransform(
-    angle,
-    (a) => `calc(50% + ${Math.cos(a) * rx}%)`,
-  );
-  const top = useTransform(
-    angle,
-    (a) => `calc(50% + ${Math.sin(a) * ry + Math.sin(a * 2) * 0.45}%)`,
-  );
-  const Icon = feature.Icon;
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const slowdown = 1 - Math.min(0.55, scrollYProgress.get() * 0.7);
+      const degPerSec = (360 / (FULL_TURN_MS / 1000)) * slowdown;
+      angleDeg.set((angleDeg.get() + degPerSec * dt) % 360);
+      frame = window.requestAnimationFrame(tick);
+    };
+
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, [angleDeg, reducedMotion, scrollYProgress]);
 
   return (
     <motion.div
-      className="lp-orbit__card-wrap"
-      style={{ left, top, x: "-50%", y: "-50%" }}
-      initial={reduced ? false : { opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={reduced ? undefined : { scale: 1.03 }}
-      transition={{
-        opacity: { duration: 0.45, delay: 0.55 + index * 0.08 },
-        scale: { type: "spring", stiffness: 380, damping: 28 },
-      }}
-      onPointerEnter={() => {
-        paused.current = true;
-      }}
-      onPointerLeave={() => {
-        paused.current = false;
-      }}
+      ref={stageRef}
+      className="lp-orbit"
+      style={{ opacity: orbitOpacity, scale: stageScale }}
+      aria-hidden="true"
     >
-      <article
-        className="lp-orbit__card"
-        style={{ "--orbit-accent": feature.accent } as CSSProperties}
+      <div className="lp-orbit__halos" />
+
+      <div className="lp-orbit__ring lp-orbit__ring--inner" />
+      <div className="lp-orbit__ring lp-orbit__ring--outer" />
+
+      <OrbitDots
+        angleDeg={angleDeg}
+        reducedMotion={Boolean(reducedMotion)}
+        orbitRadius={orbitRadius}
+      />
+
+      {ORBIT_CARDS.map((card, index) => (
+        <OrbitFeatureCard
+          key={`${card.id}-${orbitRadius}`}
+          card={card}
+          index={index}
+          total={ORBIT_CARDS.length}
+          angleDeg={angleDeg}
+          scrollProgress={scrollProgress}
+          reducedMotion={Boolean(reducedMotion)}
+          orbitRadius={orbitRadius}
+          hovered={hoveredId === card.id}
+          onHoverChange={(active) => setHoveredId(active ? card.id : null)}
+        />
+      ))}
+
+      {hoveredId ? (
+        <OrbitBeam
+          cardId={hoveredId}
+          angleDeg={angleDeg}
+          orbitRadius={orbitRadius}
+        />
+      ) : null}
+
+      <motion.div
+        className="lp-orbit__core"
+        animate={
+          reducedMotion
+            ? undefined
+            : { y: [0, -3, 0] }
+        }
+        transition={
+          reducedMotion
+            ? undefined
+            : { duration: 6, repeat: Infinity, ease: "easeInOut" }
+        }
       >
-        <span className="lp-orbit__card-icon" aria-hidden>
-          <Icon size={18} strokeWidth={1.75} />
-        </span>
-        <span className="lp-orbit__card-copy">
-          <span className="lp-orbit__card-title">{feature.title}</span>
-          <span className="lp-orbit__card-sub">{feature.subtitle}</span>
-        </span>
-      </article>
+        <div className="lp-orbit__logo-card">
+          <Image
+            src="/logo-batimum.png"
+            alt="Batimum"
+            width={140}
+            height={40}
+            className="lp-orbit__logo"
+            priority
+          />
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
 
-function OrbitDot({
-  rx,
-  ry,
-  duration,
-  reverse,
-  phase,
-  speedMul,
-  reduced,
+function OrbitDots({
+  angleDeg,
+  reducedMotion,
+  orbitRadius,
 }: {
-  rx: number;
-  ry: number;
-  duration: number;
-  reverse: boolean;
-  phase: number;
-  speedMul: MotionValue<number>;
-  reduced: boolean;
+  angleDeg: MotionValue<number>;
+  reducedMotion: boolean;
+  orbitRadius: number;
 }) {
-  const angle = useMotionValue(phase);
+  const dots = [
+    { ring: orbitRadius * 0.82, phase: 0, size: 0.35 },
+    { ring: orbitRadius * 0.82, phase: 120, size: 0.5 },
+    { ring: orbitRadius * 0.82, phase: 240, size: 0.4 },
+    { ring: orbitRadius * 1.2, phase: 40, size: 0.3 },
+    { ring: orbitRadius * 1.2, phase: 160, size: 0.45 },
+    { ring: orbitRadius * 1.2, phase: 280, size: 0.35 },
+  ];
 
-  useEffect(() => {
-    if (reduced) {
-      angle.set(phase);
-      return;
-    }
-    let frame = 0;
-    let last = performance.now();
-    const tick = (now: number) => {
-      const dt = (now - last) / 1000;
-      last = now;
-      angle.set(
-        angle.get() +
-          ((Math.PI * 2) / duration) *
-            dt *
-            speedMul.get() *
-            (reverse ? -1 : 1),
-      );
-      frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [angle, duration, phase, reduced, reverse, speedMul]);
+  return (
+    <>
+      {dots.map((dot, i) => (
+        <OrbitDot
+          key={i}
+          ring={dot.ring}
+          phase={dot.phase}
+          size={dot.size}
+          angleDeg={angleDeg}
+          reducedMotion={reducedMotion}
+        />
+      ))}
+    </>
+  );
+}
 
-  const left = useTransform(angle, (a) => `calc(50% + ${Math.cos(a) * rx}%)`);
-  const top = useTransform(angle, (a) => `calc(50% + ${Math.sin(a) * ry}%)`);
+function OrbitDot({
+  ring,
+  phase,
+  size,
+  angleDeg,
+  reducedMotion,
+}: {
+  ring: number;
+  phase: number;
+  size: number;
+  angleDeg: MotionValue<number>;
+  reducedMotion: boolean;
+}) {
+  const x = useTransform(angleDeg, (deg) => {
+    const rad = ((deg * 0.35 + phase) * Math.PI) / 180;
+    return Math.cos(rad) * ring;
+  });
+  const y = useTransform(angleDeg, (deg) => {
+    const rad = ((deg * 0.35 + phase) * Math.PI) / 180;
+    return Math.sin(rad) * ring;
+  });
+
+  if (reducedMotion) {
+    const rad = (phase * Math.PI) / 180;
+    return (
+      <span
+        className="lp-orbit__dot"
+        style={{
+          width: size * 8,
+          height: size * 8,
+          transform: `translate(-50%, -50%) translate(${Math.cos(rad) * ring}px, ${Math.sin(rad) * ring}px)`,
+        }}
+      />
+    );
+  }
 
   return (
     <motion.span
       className="lp-orbit__dot"
-      style={{ left, top, x: "-50%", y: "-50%" }}
-      aria-hidden
+      style={{
+        width: size * 8,
+        height: size * 8,
+        x,
+        y,
+      }}
     />
   );
 }
 
-export function LandingHeroOrbit() {
-  const reduced = useReducedMotion() ?? false;
-  const narrow = useIsNarrow(768);
-  const { scrollY } = useScroll();
+function OrbitFeatureCard({
+  card,
+  index,
+  total,
+  angleDeg,
+  scrollProgress,
+  reducedMotion,
+  orbitRadius,
+  hovered,
+  onHoverChange,
+}: {
+  card: OrbitCard;
+  index: number;
+  total: number;
+  angleDeg: MotionValue<number>;
+  scrollProgress: MotionValue<number>;
+  reducedMotion: boolean;
+  orbitRadius: number;
+  hovered: boolean;
+  onHoverChange: (active: boolean) => void;
+}) {
+  const baseAngle = (index / total) * 360 - 90;
 
-  const speedMul = useMotionValue(1);
-  const sceneScale = useSpring(1, { stiffness: 120, damping: 28 });
-
-  useEffect(() => {
-    if (reduced || narrow) {
-      sceneScale.set(1);
-      speedMul.set(1);
-      return;
-    }
-    return scrollY.on("change", (y) => {
-      const t = Math.min(Math.max(y / 600, 0), 1);
-      sceneScale.set(1 - t * 0.05);
-      speedMul.set(1 + t * 0.35);
-    });
-  }, [narrow, reduced, sceneScale, scrollY, speedMul]);
-
-  const orbits = narrow ? ORBIT_MOBILE : ORBIT_DESKTOP;
-  const features = narrow
-    ? FEATURES.filter((f) => MOBILE_FEATURE_IDS.has(f.id))
-    : FEATURES;
-
-  const featureMeta = features.map((f, i) => {
-    const orbitIdx = narrow ? (f.orbit === 0 ? 0 : 1) : f.orbit;
-    const cfg = orbits[Math.min(orbitIdx, orbits.length - 1)];
-    const sameOrbit = features.filter((x) => {
-      const oi = narrow ? (x.orbit === 0 ? 0 : 1) : x.orbit;
-      return oi === orbitIdx;
-    });
-    const slot = sameOrbit.findIndex((x) => x.id === f.id);
-    const phase =
-      (slot / Math.max(sameOrbit.length, 1)) * Math.PI * 2 + i * 0.12;
-    return { feature: f, cfg, phase };
+  const x = useTransform(angleDeg, (deg) => {
+    const rad = ((deg + baseAngle) * Math.PI) / 180;
+    return Math.cos(rad) * orbitRadius;
+  });
+  const y = useTransform(angleDeg, (deg) => {
+    const rad = ((deg + baseAngle) * Math.PI) / 180;
+    return Math.sin(rad) * orbitRadius;
   });
 
-  const glowOpacity = useTransform(sceneScale, [0.95, 1], [0.28, 0.45]);
-  const glow = useMotionTemplate`radial-gradient(ellipse 52% 48% at 50% 50%, rgba(16,185,129,${glowOpacity}) 0%, transparent 72%)`;
+  const scrollX = useTransform(scrollProgress, [0.15, 0.75], [0, card.scrollDriftX]);
+  const scrollY = useTransform(scrollProgress, [0.15, 0.75], [0, card.scrollDriftY]);
+  const scrollOpacity = useTransform(scrollProgress, [0.35, 0.85], [1, 0.35]);
+
+  const combinedX = useTransform([x, scrollX], ([a, b]) => Number(a) + Number(b));
+  const combinedY = useTransform([y, scrollY], ([a, b]) => Number(a) + Number(b));
+
+  const staticRad = (baseAngle * Math.PI) / 180;
+  const staticStyle = reducedMotion
+    ? {
+        transform: `translate(${Math.cos(staticRad) * orbitRadius}px, ${Math.sin(staticRad) * orbitRadius}px)`,
+      }
+    : undefined;
 
   return (
-    <div className="lp-orbit" aria-hidden>
-      <motion.div className="lp-orbit__scene" style={{ scale: sceneScale }}>
-        <motion.div
-          className="lp-orbit__glow"
-          style={{ background: glow }}
-          initial={reduced ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.9, delay: 0.2 }}
-        />
-
-        {orbits.map((cfg, i) => (
-          <motion.div
-            key={`ring-${i}`}
-            className="lp-orbit__ring"
-            style={
-              {
-                "--rx": `${cfg.rx}%`,
-                "--ry": `${cfg.ry}%`,
-              } as CSSProperties
+    <motion.div
+      className={`lp-orbit-card${hovered ? " is-hovered" : ""}`}
+      style={
+        reducedMotion
+          ? staticStyle
+          : {
+              x: combinedX,
+              y: combinedY,
+              opacity: scrollOpacity,
             }
-            initial={reduced ? false : { opacity: 0, scale: 0.94 }}
-            animate={{ opacity: 0.2 + i * 0.05, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.35 + i * 0.1 }}
-          />
-        ))}
+      }
+      onMouseEnter={() => onHoverChange(true)}
+      onMouseLeave={() => onHoverChange(false)}
+      whileHover={reducedMotion ? undefined : { scale: 1.05 }}
+      transition={{ type: "spring", stiffness: 320, damping: 24 }}
+    >
+      <div
+        className="lp-orbit-card__icon"
+        style={{ color: card.accent, background: `${card.accent}14` }}
+      >
+        {card.icon}
+      </div>
+      <div className="lp-orbit-card__copy">
+        <div className="lp-orbit-card__title">{card.title}</div>
+        <div className="lp-orbit-card__subtitle">{card.subtitle}</div>
+      </div>
+    </motion.div>
+  );
+}
 
-        {!reduced &&
-          orbits.map((cfg, i) => (
-            <OrbitDot
-              key={`dot-${i}`}
-              rx={cfg.rx}
-              ry={cfg.ry}
-              duration={cfg.duration * 0.85}
-              reverse={!cfg.reverse}
-              phase={i * 1.7}
-              speedMul={speedMul}
-              reduced={reduced}
-            />
-          ))}
+function OrbitBeam({
+  cardId,
+  angleDeg,
+  orbitRadius,
+}: {
+  cardId: string;
+  angleDeg: MotionValue<number>;
+  orbitRadius: number;
+}) {
+  const index = ORBIT_CARDS.findIndex((c) => c.id === cardId);
+  const baseAngle =
+    index >= 0 ? (index / ORBIT_CARDS.length) * 360 - 90 : -90;
+  const rotate = useTransform(angleDeg, (deg) => deg + baseAngle);
 
-        <motion.div
-          className="lp-orbit__core"
-          initial={reduced ? false : { opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="lp-orbit__logo-pad">
-            <img
-              src="/logo-batimum.png"
-              alt=""
-              className="lp-orbit__logo"
-              width={64}
-              height={64}
-              decoding="async"
-            />
-          </div>
-        </motion.div>
+  if (index < 0) return null;
 
-        {featureMeta.map(({ feature, cfg, phase }, index) => (
-          <OrbitingCard
-            key={feature.id}
-            feature={feature}
-            rx={cfg.rx}
-            ry={cfg.ry}
-            duration={cfg.duration}
-            reverse={cfg.reverse}
-            phase={phase}
-            speedMul={speedMul}
-            index={index}
-            reduced={reduced}
-          />
-        ))}
-      </motion.div>
-    </div>
+  return (
+    <motion.div
+      className="lp-orbit__beam-line"
+      style={{ rotate, width: orbitRadius }}
+      aria-hidden="true"
+    />
   );
 }
