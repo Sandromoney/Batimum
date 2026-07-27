@@ -108,6 +108,12 @@ export function LandingHeroOrbit({ sectionRef }: LandingHeroOrbitProps) {
   const angleDeg = useMotionValue(0);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [orbitRadius, setOrbitRadius] = useState(ORBIT_RADIUS_DESKTOP);
+  /** Avoid SSR/client Framer style mismatches that crash Fast Refresh. */
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 1023px)");
@@ -132,8 +138,10 @@ export function LandingHeroOrbit({ sectionRef }: LandingHeroOrbitProps) {
   const orbitOpacity = useTransform(scrollProgress, [0, 0.55, 0.85], [1, 0.92, 0.55]);
   const stageScale = useTransform(scrollProgress, [0, 0.8], [1, 0.94]);
 
+  const staticMode = !mounted || Boolean(reducedMotion);
+
   useEffect(() => {
-    if (reducedMotion) return;
+    if (staticMode) return;
 
     let frame = 0;
     let last = performance.now();
@@ -149,13 +157,13 @@ export function LandingHeroOrbit({ sectionRef }: LandingHeroOrbitProps) {
 
     frame = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(frame);
-  }, [angleDeg, reducedMotion, scrollYProgress]);
+  }, [angleDeg, scrollYProgress, staticMode]);
 
   return (
     <motion.div
       ref={stageRef}
       className="lp-orbit"
-      style={{ opacity: orbitOpacity, scale: stageScale }}
+      style={staticMode ? undefined : { opacity: orbitOpacity, scale: stageScale }}
       aria-hidden="true"
     >
       <div className="lp-orbit__halos" />
@@ -165,7 +173,7 @@ export function LandingHeroOrbit({ sectionRef }: LandingHeroOrbitProps) {
 
       <OrbitDots
         angleDeg={angleDeg}
-        reducedMotion={Boolean(reducedMotion)}
+        reducedMotion={staticMode}
         orbitRadius={orbitRadius}
       />
 
@@ -177,7 +185,7 @@ export function LandingHeroOrbit({ sectionRef }: LandingHeroOrbitProps) {
           total={ORBIT_CARDS.length}
           angleDeg={angleDeg}
           scrollProgress={scrollProgress}
-          reducedMotion={Boolean(reducedMotion)}
+          reducedMotion={staticMode}
           orbitRadius={orbitRadius}
           hovered={hoveredId === card.id}
           onHoverChange={(active) => setHoveredId(active ? card.id : null)}
@@ -195,12 +203,12 @@ export function LandingHeroOrbit({ sectionRef }: LandingHeroOrbitProps) {
       <motion.div
         className="lp-orbit__core"
         animate={
-          reducedMotion
+          staticMode
             ? undefined
             : { y: [0, -3, 0] }
         }
         transition={
-          reducedMotion
+          staticMode
             ? undefined
             : { duration: 6, repeat: Infinity, ease: "easeInOut" }
         }
@@ -276,15 +284,19 @@ function OrbitDot({
     return Math.sin(rad) * ring;
   });
 
+  const dim = `${size * 8}px`;
+
   if (reducedMotion) {
     const rad = (phase * Math.PI) / 180;
+    const tx = Math.round(Math.cos(rad) * ring * 1000) / 1000;
+    const ty = Math.round(Math.sin(rad) * ring * 1000) / 1000;
     return (
       <span
         className="lp-orbit__dot"
         style={{
-          width: size * 8,
-          height: size * 8,
-          transform: `translate(-50%, -50%) translate(${Math.cos(rad) * ring}px, ${Math.sin(rad) * ring}px)`,
+          width: dim,
+          height: dim,
+          transform: `translate(-50%, -50%) translate(${tx}px, ${ty}px)`,
         }}
       />
     );
@@ -294,8 +306,8 @@ function OrbitDot({
     <motion.span
       className="lp-orbit__dot"
       style={{
-        width: size * 8,
-        height: size * 8,
+        width: dim,
+        height: dim,
         x,
         y,
       }}
