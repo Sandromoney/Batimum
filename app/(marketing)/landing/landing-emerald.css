@@ -1711,7 +1711,8 @@ html:has(.landing-emerald) body {
     animation: none;
   }
 
-  .landing-emerald .batimumHero__logoSymbol--breathe {
+  .landing-emerald .batimumHero__logoSymbol--breathe,
+  .landing-emerald .batimumHero__glow {
     animation: none;
   }
 
