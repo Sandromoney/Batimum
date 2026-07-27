@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import {
   motion,
   useMotionValue,
@@ -11,408 +10,401 @@ import {
   type MotionValue,
 } from "framer-motion";
 import {
+  Building2,
+  CalendarDays,
+  LayoutDashboard,
+  Receipt,
+  Sparkles,
+  Users,
+} from "lucide-react";
+import {
   useEffect,
   useRef,
   useState,
-  type ReactNode,
+  type CSSProperties,
   type RefObject,
 } from "react";
-import {
-  Calculator,
-  CalendarDays,
-  HardHat,
-  Receipt,
-  Users,
-  TrendingUp,
-} from "lucide-react";
 
 type OrbitCard = {
   id: string;
   title: string;
   subtitle: string;
-  icon: ReactNode;
+  orbit: 0 | 1 | 2;
+  angle: number;
   accent: string;
-  /** Extra drift on scroll (px) — suggests feeding the next sections */
-  scrollDriftY: number;
-  scrollDriftX: number;
+  Icon: typeof Sparkles;
 };
 
-const ORBIT_CARDS: OrbitCard[] = [
+const CARDS: OrbitCard[] = [
   {
     id: "devis",
-    title: "Devis IA",
-    subtitle: "Crée vos devis automatiquement",
-    icon: <Calculator className="h-4 w-4" strokeWidth={2.25} />,
-    accent: "#10b981",
-    scrollDriftY: 120,
-    scrollDriftX: -40,
+    title: "Devis avec IA",
+    subtitle: "Créés en quelques minutes",
+    orbit: 2,
+    angle: 10,
+    accent: "#10B981",
+    Icon: Sparkles,
   },
   {
     id: "planning",
-    title: "Planning",
-    subtitle: "Vos équipes toujours organisées",
-    icon: <CalendarDays className="h-4 w-4" strokeWidth={2.25} />,
-    accent: "#0ea5e9",
-    scrollDriftY: 90,
-    scrollDriftX: 20,
+    title: "Planning des équipes",
+    subtitle: "Toujours à jour",
+    orbit: 1,
+    angle: 70,
+    accent: "#A78BFA",
+    Icon: CalendarDays,
   },
   {
     id: "chantiers",
-    title: "Chantiers",
-    subtitle: "Suivi en temps réel",
-    icon: <HardHat className="h-4 w-4" strokeWidth={2.25} />,
-    accent: "#14b8a6",
-    scrollDriftY: 70,
-    scrollDriftX: 50,
+    title: "Suivi des chantiers",
+    subtitle: "En temps réel",
+    orbit: 0,
+    angle: 135,
+    accent: "#60A5FA",
+    Icon: Building2,
   },
   {
     id: "facturation",
     title: "Facturation",
-    subtitle: "Paiements et relances simplifiés",
-    icon: <Receipt className="h-4 w-4" strokeWidth={2.25} />,
-    accent: "#22c55e",
-    scrollDriftY: 100,
-    scrollDriftX: -10,
+    subtitle: "Simple et rapide",
+    orbit: 2,
+    angle: 195,
+    accent: "#FB923C",
+    Icon: Receipt,
   },
   {
     id: "clients",
-    title: "Clients",
-    subtitle: "Toutes vos informations réunies",
-    icon: <Users className="h-4 w-4" strokeWidth={2.25} />,
-    accent: "#38bdf8",
-    scrollDriftY: 80,
-    scrollDriftX: -55,
+    title: "Clients centralisés",
+    subtitle: "Tout au même endroit",
+    orbit: 1,
+    angle: 250,
+    accent: "#FBBF24",
+    Icon: Users,
   },
   {
-    id: "rentabilite",
-    title: "Rentabilité",
-    subtitle: "Pilotez vos marges instantanément",
-    icon: <TrendingUp className="h-4 w-4" strokeWidth={2.25} />,
+    id: "pilotage",
+    title: "Pilotage et rentabilité",
+    subtitle: "Décisions plus claires",
+    orbit: 0,
+    angle: 315,
     accent: "#059669",
-    scrollDriftY: 110,
-    scrollDriftX: 35,
+    Icon: LayoutDashboard,
   },
 ];
 
-const ORBIT_RADIUS_DESKTOP = 230;
-const ORBIT_RADIUS_MOBILE = 168;
-const FULL_TURN_MS = 90_000;
+const ORBIT_CFG = [
+  { radiusPct: 21, duration: 28, reverse: false },
+  { radiusPct: 33, duration: 34, reverse: true },
+  { radiusPct: 40, duration: 40, reverse: false },
+] as const;
 
-type LandingHeroOrbitProps = {
-  sectionRef: RefObject<HTMLElement | null>;
-};
+const MOBILE_IDS = new Set(["devis", "planning", "chantiers", "pilotage"]);
 
-export function LandingHeroOrbit({ sectionRef }: LandingHeroOrbitProps) {
-  const reducedMotion = useReducedMotion();
-  const stageRef = useRef<HTMLDivElement>(null);
-  const angleDeg = useMotionValue(0);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [orbitRadius, setOrbitRadius] = useState(ORBIT_RADIUS_DESKTOP);
-  /** Avoid SSR/client Framer style mismatches that crash Fast Refresh. */
-  const [mounted, setMounted] = useState(false);
-
+function useIsMobile(breakpoint = 768) {
+  const [mobile, setMobile] = useState(false);
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 1023px)");
-    const apply = () =>
-      setOrbitRadius(mq.matches ? ORBIT_RADIUS_MOBILE : ORBIT_RADIUS_DESKTOP);
+    const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    const apply = () => setMobile(mq.matches);
     apply();
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
-  }, []);
+  }, [breakpoint]);
+  return mobile;
+}
 
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end start"],
-  });
-
-  const scrollProgress = useSpring(scrollYProgress, {
-    stiffness: 60,
-    damping: 28,
-    mass: 0.5,
-  });
-
-  const orbitOpacity = useTransform(scrollProgress, [0, 0.55, 0.85], [1, 0.92, 0.55]);
-  const stageScale = useTransform(scrollProgress, [0, 0.8], [1, 0.94]);
-
-  const staticMode = !mounted || Boolean(reducedMotion);
-
+function useSceneSize(ref: RefObject<HTMLDivElement | null>) {
+  const [size, setSize] = useState(700);
   useEffect(() => {
-    if (staticMode) return;
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setSize(entry.contentRect.width);
+    });
+    ro.observe(el);
+    setSize(el.clientWidth || 700);
+    return () => ro.disconnect();
+  }, [ref]);
+  return size;
+}
 
-    let frame = 0;
-    let last = performance.now();
+function OrbitingCard({
+  card,
+  radiusPx,
+  reverse,
+  orbitRotate,
+  index,
+  staticMode,
+}: {
+  card: OrbitCard;
+  radiusPx: number;
+  reverse: boolean;
+  orbitRotate: MotionValue<number>;
+  index: number;
+  staticMode: boolean;
+}) {
+  const Icon = card.Icon;
+  const base = card.angle;
 
-    const tick = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      const slowdown = 1 - Math.min(0.55, scrollYProgress.get() * 0.7);
-      const degPerSec = (360 / (FULL_TURN_MS / 1000)) * slowdown;
-      angleDeg.set((angleDeg.get() + degPerSec * dt) % 360);
-      frame = window.requestAnimationFrame(tick);
-    };
+  const armRotate = useTransform(orbitRotate, (r) =>
+    reverse ? -r + base : r + base,
+  );
+  const counterRotate = useTransform(orbitRotate, (r) =>
+    reverse ? r - base : -r - base,
+  );
 
-    frame = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(frame);
-  }, [angleDeg, scrollYProgress, staticMode]);
+  if (staticMode) {
+    const rad = (base * Math.PI) / 180;
+    const x = Math.cos(rad) * radiusPx;
+    const y = Math.sin(rad) * radiusPx;
+    return (
+      <div
+        className="batimumHero__cardWrap"
+        style={{
+          left: "50%",
+          top: "50%",
+          transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
+        }}
+      >
+        <article
+          className="batimumHero__card"
+          style={{ "--card-accent": card.accent } as CSSProperties}
+        >
+          <span className="batimumHero__cardIcon" aria-hidden>
+            <Icon size={17} strokeWidth={1.8} />
+          </span>
+          <span className="batimumHero__cardCopy">
+            <span className="batimumHero__cardTitle">{card.title}</span>
+            <span className="batimumHero__cardSub">{card.subtitle}</span>
+          </span>
+        </article>
+      </div>
+    );
+  }
 
   return (
     <motion.div
-      ref={stageRef}
-      className="lp-orbit"
-      style={staticMode ? undefined : { opacity: orbitOpacity, scale: stageScale }}
-      aria-hidden="true"
+      className="batimumHero__arm"
+      style={{
+        width: radiusPx,
+        rotate: armRotate,
+        transformOrigin: "0% 50%",
+      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.45, delay: 0.45 + index * 0.07 }}
     >
-      <div className="lp-orbit__halos" />
-
-      <div className="lp-orbit__ring lp-orbit__ring--inner" />
-      <div className="lp-orbit__ring lp-orbit__ring--outer" />
-
-      <OrbitDots
-        angleDeg={angleDeg}
-        reducedMotion={staticMode}
-        orbitRadius={orbitRadius}
-      />
-
-      {ORBIT_CARDS.map((card, index) => (
-        <OrbitFeatureCard
-          key={`${card.id}-${orbitRadius}`}
-          card={card}
-          index={index}
-          total={ORBIT_CARDS.length}
-          angleDeg={angleDeg}
-          scrollProgress={scrollProgress}
-          reducedMotion={staticMode}
-          orbitRadius={orbitRadius}
-          hovered={hoveredId === card.id}
-          onHoverChange={(active) => setHoveredId(active ? card.id : null)}
-        />
-      ))}
-
-      {hoveredId ? (
-        <OrbitBeam
-          cardId={hoveredId}
-          angleDeg={angleDeg}
-          orbitRadius={orbitRadius}
-        />
-      ) : null}
-
       <motion.div
-        className="lp-orbit__core"
-        animate={
-          staticMode
-            ? undefined
-            : { y: [0, -3, 0] }
-        }
-        transition={
-          staticMode
-            ? undefined
-            : { duration: 6, repeat: Infinity, ease: "easeInOut" }
-        }
+        className="batimumHero__cardWrap batimumHero__cardWrap--live"
+        style={{
+          left: "100%",
+          top: "50%",
+          x: "-50%",
+          y: "-50%",
+          rotate: counterRotate,
+        }}
+        initial={{ scale: 0.96 }}
+        animate={{ scale: 1 }}
+        whileHover={{ scale: 1.025 }}
+        transition={{ duration: 0.18 }}
       >
-        <div className="lp-orbit__logo-card">
-          <Image
-            src="/logo-batimum.png"
-            alt="Batimum"
-            width={140}
-            height={40}
-            className="lp-orbit__logo"
-            priority
-          />
-        </div>
+        <article
+          className="batimumHero__card"
+          style={{ "--card-accent": card.accent } as CSSProperties}
+        >
+          <span className="batimumHero__cardIcon" aria-hidden>
+            <Icon size={17} strokeWidth={1.8} />
+          </span>
+          <span className="batimumHero__cardCopy">
+            <span className="batimumHero__cardTitle">{card.title}</span>
+            <span className="batimumHero__cardSub">{card.subtitle}</span>
+          </span>
+        </article>
       </motion.div>
     </motion.div>
   );
 }
 
-function OrbitDots({
-  angleDeg,
-  reducedMotion,
-  orbitRadius,
-}: {
-  angleDeg: MotionValue<number>;
-  reducedMotion: boolean;
-  orbitRadius: number;
-}) {
-  const dots = [
-    { ring: orbitRadius * 0.82, phase: 0, size: 0.35 },
-    { ring: orbitRadius * 0.82, phase: 120, size: 0.5 },
-    { ring: orbitRadius * 0.82, phase: 240, size: 0.4 },
-    { ring: orbitRadius * 1.2, phase: 40, size: 0.3 },
-    { ring: orbitRadius * 1.2, phase: 160, size: 0.45 },
-    { ring: orbitRadius * 1.2, phase: 280, size: 0.35 },
-  ];
-
-  return (
-    <>
-      {dots.map((dot, i) => (
-        <OrbitDot
-          key={i}
-          ring={dot.ring}
-          phase={dot.phase}
-          size={dot.size}
-          angleDeg={angleDeg}
-          reducedMotion={reducedMotion}
-        />
-      ))}
-    </>
-  );
-}
-
 function OrbitDot({
-  ring,
+  radiusPx,
   phase,
-  size,
-  angleDeg,
-  reducedMotion,
+  duration,
+  reverse,
+  color,
+  staticMode,
 }: {
-  ring: number;
+  radiusPx: number;
   phase: number;
-  size: number;
-  angleDeg: MotionValue<number>;
-  reducedMotion: boolean;
+  duration: number;
+  reverse: boolean;
+  color: string;
+  staticMode: boolean;
 }) {
-  const x = useTransform(angleDeg, (deg) => {
-    const rad = ((deg * 0.35 + phase) * Math.PI) / 180;
-    return Math.cos(rad) * ring;
-  });
-  const y = useTransform(angleDeg, (deg) => {
-    const rad = ((deg * 0.35 + phase) * Math.PI) / 180;
-    return Math.sin(rad) * ring;
-  });
+  const rotate = useMotionValue(phase);
 
-  const dim = `${size * 8}px`;
+  useEffect(() => {
+    if (staticMode) return;
+    let frame = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      rotate.set(rotate.get() + (360 / duration) * dt * (reverse ? -1 : 1));
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [duration, reverse, rotate, staticMode]);
 
-  if (reducedMotion) {
+  const x = useTransform(rotate, (deg) => Math.cos((deg * Math.PI) / 180) * radiusPx);
+  const y = useTransform(rotate, (deg) => Math.sin((deg * Math.PI) / 180) * radiusPx);
+
+  if (staticMode) {
     const rad = (phase * Math.PI) / 180;
-    const tx = Math.round(Math.cos(rad) * ring * 1000) / 1000;
-    const ty = Math.round(Math.sin(rad) * ring * 1000) / 1000;
     return (
       <span
-        className="lp-orbit__dot"
+        className="batimumHero__dot"
         style={{
-          width: dim,
-          height: dim,
-          transform: `translate(-50%, -50%) translate(${tx}px, ${ty}px)`,
+          background: color,
+          transform: `translate(-50%, -50%) translate(${Math.cos(rad) * radiusPx}px, ${Math.sin(rad) * radiusPx}px)`,
         }}
+        aria-hidden
       />
     );
   }
 
   return (
     <motion.span
-      className="lp-orbit__dot"
-      style={{
-        width: dim,
-        height: dim,
-        x,
-        y,
-      }}
+      className="batimumHero__dot"
+      style={{ x, y, background: color }}
+      aria-hidden
     />
   );
 }
 
-function OrbitFeatureCard({
-  card,
-  index,
-  total,
-  angleDeg,
-  scrollProgress,
-  reducedMotion,
-  orbitRadius,
-  hovered,
-  onHoverChange,
-}: {
-  card: OrbitCard;
-  index: number;
-  total: number;
-  angleDeg: MotionValue<number>;
-  scrollProgress: MotionValue<number>;
-  reducedMotion: boolean;
-  orbitRadius: number;
-  hovered: boolean;
-  onHoverChange: (active: boolean) => void;
-}) {
-  const baseAngle = (index / total) * 360 - 90;
+export function LandingHeroOrbit() {
+  const reduced = useReducedMotion() ?? false;
+  const mobile = useIsMobile(768);
+  const sceneRef = useRef<HTMLDivElement>(null);
+  const sceneSize = useSceneSize(sceneRef);
+  const [mounted, setMounted] = useState(false);
 
-  const x = useTransform(angleDeg, (deg) => {
-    const rad = ((deg + baseAngle) * Math.PI) / 180;
-    return Math.cos(rad) * orbitRadius;
-  });
-  const y = useTransform(angleDeg, (deg) => {
-    const rad = ((deg + baseAngle) * Math.PI) / 180;
-    return Math.sin(rad) * orbitRadius;
-  });
+  const rotate0 = useMotionValue(0);
+  const rotate1 = useMotionValue(0);
+  const rotate2 = useMotionValue(0);
+  const orbitRotates = [rotate0, rotate1, rotate2];
 
-  const scrollX = useTransform(scrollProgress, [0.15, 0.75], [0, card.scrollDriftX]);
-  const scrollY = useTransform(scrollProgress, [0.15, 0.75], [0, card.scrollDriftY]);
-  const scrollOpacity = useTransform(scrollProgress, [0.35, 0.85], [1, 0.35]);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const combinedX = useTransform([x, scrollX], ([a, b]) => Number(a) + Number(b));
-  const combinedY = useTransform([y, scrollY], ([a, b]) => Number(a) + Number(b));
+  useEffect(() => {
+    if (reduced || !mounted) return;
+    let frame = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      ORBIT_CFG.forEach((cfg, i) => {
+        const delta = (360 / cfg.duration) * dt * (cfg.reverse ? -1 : 1);
+        orbitRotates[i].set((orbitRotates[i].get() + delta) % 360);
+      });
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [mounted, reduced, rotate0, rotate1, rotate2]);
 
-  const staticRad = (baseAngle * Math.PI) / 180;
-  const staticStyle = reducedMotion
-    ? {
-        transform: `translate(${Math.cos(staticRad) * orbitRadius}px, ${Math.sin(staticRad) * orbitRadius}px)`,
-      }
-    : undefined;
+  const staticMode = !mounted || reduced;
+  const cards = mobile ? CARDS.filter((c) => MOBILE_IDS.has(c.id)) : CARDS;
+  const pills = mobile ? CARDS.filter((c) => !MOBILE_IDS.has(c.id)) : [];
 
   return (
-    <motion.div
-      className={`lp-orbit-card${hovered ? " is-hovered" : ""}`}
-      style={
-        reducedMotion
-          ? staticStyle
-          : {
-              x: combinedX,
-              y: combinedY,
-              opacity: scrollOpacity,
+    <div className="batimumHero__orbitRoot">
+      <div ref={sceneRef} className="batimumHero__orbit">
+        <motion.div
+          className="batimumHero__glow"
+          initial={reduced ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        />
+
+        {[0, 1, 2].map((i) => (
+          <motion.div
+            key={`ring-${i}`}
+            className={`batimumHero__ring batimumHero__ring--${i}`}
+            initial={reduced ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.25 + i * 0.08 }}
+          />
+        ))}
+
+        {ORBIT_CFG.map((cfg, i) => (
+          <OrbitDot
+            key={`dot-${i}`}
+            radiusPx={sceneSize * (cfg.radiusPct / 100)}
+            phase={i * 80}
+            duration={cfg.duration * 0.9}
+            reverse={!cfg.reverse}
+            color={
+              i === 0
+                ? "rgba(16,185,129,0.55)"
+                : i === 1
+                  ? "rgba(96,165,250,0.45)"
+                  : "rgba(167,139,250,0.4)"
             }
-      }
-      onMouseEnter={() => onHoverChange(true)}
-      onMouseLeave={() => onHoverChange(false)}
-      whileHover={reducedMotion ? undefined : { scale: 1.05 }}
-      transition={{ type: "spring", stiffness: 320, damping: 24 }}
-    >
-      <div
-        className="lp-orbit-card__icon"
-        style={{ color: card.accent, background: `${card.accent}14` }}
-      >
-        {card.icon}
+            staticMode={staticMode}
+          />
+        ))}
+
+        <motion.div
+          className="batimumHero__logoCore"
+          style={{ left: "50%", top: "50%", x: "-50%", y: "-50%" }}
+          initial={reduced ? false : { opacity: 0, scale: 0.94 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="batimumHero__logoPad">
+            <img
+              src="/logo-batimum.png"
+              alt=""
+              className="batimumHero__logoImg"
+              width={62}
+              height={62}
+              decoding="async"
+            />
+          </div>
+        </motion.div>
+
+        {cards.map((card, index) => {
+          const cfg = ORBIT_CFG[card.orbit];
+          const radiusScale = mobile ? 0.88 : 1;
+          return (
+            <OrbitingCard
+              key={card.id}
+              card={card}
+              radiusPx={sceneSize * (cfg.radiusPct / 100) * radiusScale}
+              reverse={cfg.reverse}
+              orbitRotate={orbitRotates[card.orbit]}
+              index={index}
+              staticMode={staticMode}
+            />
+          );
+        })}
       </div>
-      <div className="lp-orbit-card__copy">
-        <div className="lp-orbit-card__title">{card.title}</div>
-        <div className="lp-orbit-card__subtitle">{card.subtitle}</div>
-      </div>
-    </motion.div>
-  );
-}
 
-function OrbitBeam({
-  cardId,
-  angleDeg,
-  orbitRadius,
-}: {
-  cardId: string;
-  angleDeg: MotionValue<number>;
-  orbitRadius: number;
-}) {
-  const index = ORBIT_CARDS.findIndex((c) => c.id === cardId);
-  const baseAngle =
-    index >= 0 ? (index / ORBIT_CARDS.length) * 360 - 90 : -90;
-  const rotate = useTransform(angleDeg, (deg) => deg + baseAngle);
-
-  if (index < 0) return null;
-
-  return (
-    <motion.div
-      className="lp-orbit__beam-line"
-      style={{ rotate, width: orbitRadius }}
-      aria-hidden="true"
-    />
+      {pills.length > 0 ? (
+        <ul className="batimumHero__pills" aria-label="Autres fonctionnalités">
+          {pills.map((card) => {
+            const Icon = card.Icon;
+            return (
+              <li key={card.id} className="batimumHero__pill">
+                <Icon size={14} strokeWidth={1.8} aria-hidden />
+                <span>{card.title}</span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </div>
   );
 }

@@ -167,82 +167,203 @@ html:has(.landing-emerald) body {
   color: var(--bm-green);
 }
 
-/* ——— Hero ——— */
-.landing-emerald .lp-hero {
+/* ——— Hero (batimumHero) ——— */
+.landing-emerald .batimumHero {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: 820px;
-  background:
-    radial-gradient(ellipse 42% 36% at 78% 28%, rgba(16, 185, 129, 0.07), transparent 70%),
-    radial-gradient(ellipse 28% 24% at 62% 72%, rgba(186, 230, 253, 0.35), transparent 72%),
-    #ffffff;
-  padding: 2rem 0 3.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: max(760px, calc(100svh - 84px));
+  background: #ffffff;
+  padding: 48px 0 56px;
 }
 
-@media (min-width: 1024px) {
-  .landing-emerald .lp-hero {
-    display: flex;
-    align-items: center;
-    min-height: max(820px, calc(100svh - 76px));
-    padding: 2.5rem 0 4rem;
-  }
-}
-
-.landing-emerald .lp-hero__container {
-  width: 100%;
-  max-width: 1440px;
+.landing-emerald .batimumHero__container {
+  width: min(1500px, calc(100vw - 48px));
   margin-inline: auto;
-  padding-inline: 1.5rem;
+  padding-inline: clamp(32px, 4vw, 72px);
+  box-sizing: border-box;
 }
 
-@media (min-width: 640px) {
-  .landing-emerald .lp-hero__container {
-    padding-inline: 2rem;
-  }
-}
-
-.landing-emerald .lp-hero__grid {
+.landing-emerald .batimumHero__grid {
   display: grid;
-  gap: 2.5rem;
+  grid-template-columns: minmax(460px, 0.9fr) minmax(620px, 1.1fr);
+  gap: clamp(40px, 5vw, 88px);
   align-items: center;
 }
 
-@media (min-width: 1024px) {
-  .landing-emerald .lp-hero__grid {
-    grid-template-columns: minmax(0, 0.45fr) minmax(0, 0.55fr);
-    gap: 1.5rem;
-  }
-}
-
-.landing-emerald .lp-hero__copy {
+.landing-emerald .batimumHero__copy {
   position: relative;
   z-index: 2;
-  max-width: 34rem;
+  max-width: 650px;
+  will-change: transform;
 }
 
-.landing-emerald .lp-hero__title {
-  margin: 1.1rem 0 0;
-  color: #101828;
-  font-size: clamp(2.15rem, 4.2vw, 3.4rem);
+.landing-emerald .batimumHero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.landing-emerald .batimumHero__badgeDot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: #10b981;
+  flex: 0 0 auto;
+}
+
+.landing-emerald .batimumHero__title {
+  margin: 1.15rem 0 0;
+  max-width: 650px;
+  color: #0f172a;
+  font-size: clamp(3.375rem, 4.5vw, 4.75rem);
   font-weight: 700;
   letter-spacing: -0.045em;
-  line-height: 1.05;
+  line-height: 1.01;
 }
 
-.landing-emerald .lp-hero__title-accent {
+.landing-emerald .batimumHero__titleAccent {
   display: block;
   color: #10b981;
 }
 
-.landing-emerald .lp-hero__subtitle {
-  margin: 1.1rem 0 0;
-  max-width: 32rem;
-  color: #667085;
-  font-size: 1.0625rem;
-  line-height: 1.65;
+.landing-emerald .batimumHero__subtitle {
+  margin: 1.15rem 0 0;
+  max-width: 610px;
+  color: #64748b;
+  font-size: clamp(1.125rem, 1.35vw, 1.25rem);
+  line-height: 1.6;
 }
 
+.landing-emerald .batimumHero__benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.25rem;
+  margin: 1.35rem 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-emerald .batimumHero__benefit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #0f172a;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.landing-emerald .batimumHero__benefitIcon {
+  flex: 0 0 auto;
+  color: #10b981;
+}
+
+.landing-emerald .batimumHero__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.landing-emerald .batimumHero__ctaPrimary,
+.landing-emerald .batimumHero__ctaSecondary {
+  height: 54px;
+  padding-inline: 26px;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.landing-emerald .batimumHero__ctaPrimary {
+  box-shadow: 0 10px 22px rgba(16, 185, 129, 0.16) !important;
+}
+
+.landing-emerald .batimumHero__ctaPrimary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(16, 185, 129, 0.2) !important;
+}
+
+.landing-emerald .batimumHero__ctaArrow {
+  transition: transform 180ms ease;
+}
+
+.landing-emerald .batimumHero__ctaPrimary:hover .batimumHero__ctaArrow {
+  transform: translateX(3px);
+}
+
+.landing-emerald .batimumHero__ctaSecondary {
+  box-shadow: none !important;
+}
+
+.landing-emerald .batimumHero__trust {
+  margin: 0.95rem 0 0;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.landing-emerald .batimumHero__visual {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.landing-emerald .batimumHero__scrollCue {
+  position: absolute;
+  left: 50%;
+  bottom: 1.1rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  transform: translateX(-50%);
+  color: #94a3b8;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.landing-emerald .batimumHero__scrollArrow {
+  animation: batimumHero-cue-bob 2.6s ease-in-out infinite;
+}
+
+@keyframes batimumHero-cue-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
+
+/* Shared helpers still used by other landing sections */
 .landing-emerald .lp-hero__benefits {
   display: grid;
   gap: 0.65rem;
@@ -269,244 +390,334 @@ html:has(.landing-emerald) body {
 }
 
 @media (max-width: 639px) {
-  .landing-emerald .lp-hero__ctas a {
+  .landing-emerald .lp-hero__ctas a,
+  .landing-emerald .batimumHero__ctas a {
     width: 100%;
   }
 }
 
-.landing-emerald .lp-hero__visual {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  min-height: 420px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (min-width: 1024px) {
-  .landing-emerald .lp-hero__visual {
-    min-height: 620px;
-  }
-}
-
 /* ——— Hero orbit ——— */
-.landing-emerald .lp-orbit {
+.landing-emerald .batimumHero__orbitRoot {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.landing-emerald .batimumHero__orbit {
   position: relative;
-  width: min(100%, 600px);
+  width: min(700px, 100%);
   aspect-ratio: 1 / 1;
   margin-inline: auto;
-  transform-origin: center center;
-}
-
-.landing-emerald .lp-orbit__halos {
-  position: absolute;
-  inset: 18%;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08), transparent 62%),
-    radial-gradient(circle at 60% 40%, rgba(186, 230, 253, 0.2), transparent 55%);
-  pointer-events: none;
-}
-
-.landing-emerald .lp-orbit__ring {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.landing-emerald .lp-orbit__ring--inner {
-  width: 380px;
-  height: 380px;
-}
-
-.landing-emerald .lp-orbit__ring--outer {
-  width: 560px;
-  height: 560px;
-}
-
-.landing-emerald .lp-orbit__dot {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.85), rgba(16, 185, 129, 0.05));
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.landing-emerald .lp-orbit__core {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 5;
-  transform: translate(-50%, -50%);
-}
-
-.landing-emerald .lp-orbit__logo-card {
   display: grid;
   place-items: center;
-  width: 180px;
-  height: 180px;
-  border-radius: 32px;
-  background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 18px 40px rgba(15, 23, 42, 0.08),
-    0 40px 70px rgba(15, 23, 42, 0.05);
+  transform-origin: center center;
+  overflow: visible;
 }
 
-.landing-emerald .lp-orbit__logo {
-  width: auto;
-  height: auto;
-  max-width: 132px;
-  max-height: 44px;
-  object-fit: contain;
-}
-
-.landing-emerald .lp-orbit-card {
+.landing-emerald .batimumHero__glow {
   position: absolute;
   left: 50%;
   top: 50%;
-  z-index: 4;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
-  width: 170px;
-  height: 90px;
-  margin-left: -85px;
-  margin-top: -45px;
-  padding: 0.75rem 0.8rem;
-  border-radius: 22px;
-  background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 12px 28px rgba(15, 23, 42, 0.07);
-  cursor: default;
-  will-change: transform;
+  width: 58%;
+  height: 58%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(16, 185, 129, 0.07) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
 }
 
-.landing-emerald .lp-orbit-card.is-hovered,
-.landing-emerald .lp-orbit-card:hover {
-  box-shadow:
-    0 0 0 1px rgba(16, 185, 129, 0.18),
-    0 10px 30px rgba(16, 185, 129, 0.12),
-    0 18px 40px rgba(15, 23, 42, 0.08);
+.landing-emerald .batimumHero__ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(100, 116, 139, 0.18);
+  border-radius: 50%;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.landing-emerald .batimumHero__ring--0 {
+  width: 42%;
+  height: 42%;
+}
+
+.landing-emerald .batimumHero__ring--1 {
+  width: 66%;
+  height: 66%;
+}
+
+.landing-emerald .batimumHero__ring--2 {
+  width: 91%;
+  height: 82%;
+}
+
+.landing-emerald .batimumHero__dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 999px;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.landing-emerald .batimumHero__logoCore {
+  position: absolute;
   z-index: 6;
 }
 
-.landing-emerald .lp-orbit-card__icon {
+.landing-emerald .batimumHero__logoPad {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  padding: 16px;
+  box-sizing: border-box;
+  border-radius: 22px;
+  background: #0f172a;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.1),
+    0 0 24px rgba(16, 185, 129, 0.14),
+    0 14px 32px rgba(15, 23, 42, 0.2);
+  animation: batimumHero-breathe 4.8s ease-in-out infinite;
+}
+
+.landing-emerald .batimumHero__logoImg {
+  width: 62px;
+  height: 62px;
+  object-fit: cover;
+  object-position: left center;
+  filter: brightness(0) invert(1);
+  opacity: 0.96;
+}
+
+.landing-emerald .batimumHero__arm {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 0;
+  transform-origin: left center;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.landing-emerald .batimumHero__cardWrap {
+  position: absolute;
+  z-index: 4;
+  width: 174px;
+  min-height: 72px;
+  pointer-events: auto;
+}
+
+.landing-emerald .batimumHero__cardWrap--live {
+  left: 100%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+}
+
+.landing-emerald .batimumHero__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 72px;
+  padding: 13px 15px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(15, 23, 42, 0.055);
+  box-shadow:
+    0 12px 35px rgba(15, 23, 42, 0.07),
+    0 2px 8px rgba(15, 23, 42, 0.035);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: box-shadow 180ms ease;
+}
+
+.landing-emerald .batimumHero__cardWrap:hover .batimumHero__card {
+  box-shadow:
+    0 14px 38px rgba(15, 23, 42, 0.09),
+    0 3px 10px rgba(15, 23, 42, 0.045);
+}
+
+.landing-emerald .batimumHero__cardIcon {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 1.85rem;
-  height: 1.85rem;
-  border-radius: 0.65rem;
+  width: 28px;
+  height: 28px;
+  margin-top: 1px;
+  color: var(--card-accent, #10b981);
 }
 
-.landing-emerald .lp-orbit-card__copy {
+.landing-emerald .batimumHero__cardCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
   min-width: 0;
 }
 
-.landing-emerald .lp-orbit-card__title {
+.landing-emerald .batimumHero__cardTitle {
   color: #0f172a;
-  font-size: 0.8125rem;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
-.landing-emerald .lp-orbit-card__subtitle {
-  margin-top: 0.2rem;
-  color: #667085;
-  font-size: 0.6875rem;
+.landing-emerald .batimumHero__cardSub {
+  color: #64748b;
+  font-size: 12px;
   line-height: 1.35;
 }
 
-.landing-emerald .lp-orbit__beam-line {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 3;
-  width: 230px;
-  height: 2px;
-  margin-top: -1px;
-  transform-origin: 0 50%;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    rgba(16, 185, 129, 0.55) 0%,
-    rgba(16, 185, 129, 0.2) 55%,
-    rgba(16, 185, 129, 0) 100%
-  );
-  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.35));
+.landing-emerald .batimumHero__pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-@media (max-width: 1023px) {
-  .landing-emerald .lp-orbit__beam-line {
-    width: 170px;
+.landing-emerald .batimumHero__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.85);
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+@keyframes batimumHero-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
   }
 }
 
-@media (max-width: 1023px) {
-  .landing-emerald .lp-hero {
+@media (max-width: 1099px) {
+  .landing-emerald .batimumHero {
     min-height: 0;
+    padding: 40px 0 48px;
   }
 
-  .landing-emerald .lp-orbit {
-    width: min(100%, 420px);
+  .landing-emerald .batimumHero__grid {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 
-  .landing-emerald .lp-orbit__ring--inner {
-    width: 280px;
-    height: 280px;
+  .landing-emerald .batimumHero__copy {
+    text-align: center;
+    margin-inline: auto;
   }
 
-  .landing-emerald .lp-orbit__ring--outer {
-    width: 400px;
-    height: 400px;
+  .landing-emerald .batimumHero__badge,
+  .landing-emerald .batimumHero__benefits,
+  .landing-emerald .batimumHero__ctas {
+    justify-content: center;
   }
 
-  .landing-emerald .lp-orbit__logo-card {
-    width: 140px;
-    height: 140px;
-    border-radius: 28px;
+  .landing-emerald .batimumHero__subtitle,
+  .landing-emerald .batimumHero__trust {
+    margin-inline: auto;
   }
 
-  .landing-emerald .lp-orbit__logo {
-    max-width: 104px;
+  .landing-emerald .batimumHero__title {
+    font-size: clamp(2.75rem, 6vw, 3.5rem);
+  }
+
+  .landing-emerald .batimumHero__visual {
+    margin-top: 42px;
+  }
+
+  .landing-emerald .batimumHero__orbit {
+    width: min(600px, calc(100vw - 48px));
   }
 }
 
 @media (max-width: 639px) {
-  .landing-emerald .lp-orbit-card {
-    width: 148px;
-    height: 82px;
-    margin-left: -74px;
-    margin-top: -41px;
-    padding: 0.6rem 0.65rem;
+  .landing-emerald .batimumHero {
+    padding: 32px 0 40px;
+  }
+
+  .landing-emerald .batimumHero__container {
+    width: 100%;
+    padding-inline: 20px;
+  }
+
+  .landing-emerald .batimumHero__title {
+    font-size: clamp(2.5rem, 11vw, 3.375rem);
+  }
+
+  .landing-emerald .batimumHero__ctas {
+    flex-direction: column;
+  }
+
+  .landing-emerald .batimumHero__orbit {
+    width: calc(100vw - 24px);
+    max-width: 430px;
+  }
+
+  .landing-emerald .batimumHero__logoPad {
+    width: 74px;
+    height: 74px;
+    padding: 12px;
     border-radius: 18px;
   }
 
-  .landing-emerald .lp-orbit-card__title {
-    font-size: 0.75rem;
+  .landing-emerald .batimumHero__logoImg {
+    width: 48px;
+    height: 48px;
   }
 
-  .landing-emerald .lp-orbit-card__subtitle {
-    font-size: 0.625rem;
+  .landing-emerald .batimumHero__cardWrap {
+    width: 132px;
+    min-height: 64px;
+  }
+
+  .landing-emerald .batimumHero__card {
+    min-height: 64px;
+    padding: 11px 12px;
+    border-radius: 12px;
+  }
+
+  .landing-emerald .batimumHero__cardTitle {
+    font-size: 12px;
+  }
+
+  .landing-emerald .batimumHero__cardSub {
+    font-size: 11px;
+  }
+
+  .landing-emerald .batimumHero__scrollCue {
+    display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-emerald .lp-orbit__beam-line {
-    display: none;
+  .landing-emerald .batimumHero__logoPad,
+  .landing-emerald .batimumHero__scrollArrow {
+    animation: none;
   }
 }
 
