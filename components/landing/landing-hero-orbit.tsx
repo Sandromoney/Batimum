@@ -137,35 +137,41 @@ export const FOCUS_RANGES: {
 ];
 
 /**
- * 3 orbites × 2 bulles à 180° — même vitesse par orbite, même sens.
- *
- * Brief de base : 155×120 / 235×175 / 305×230 sur scène ~760.
- * Fallbacks pour garantir ≥36px logo, ≥28px entre bulles, ≥28px bord :
- * scène 880px + rayons légèrement augmentés (bulles restent 156px).
+ * 3 orbites × 2 bulles à 180°.
+ * Brief : 185×135 / 265×195 / 340×255 sur scène ~840.
+ * Ajustements anti-collision (logo BM ~80px, marge bord ≥28px) :
+ * inner ↑, outer plafonné. reverse: true → antihoraire (écrou horaire).
  */
 const ORBIT_CFG = [
-  { rx: 200, ry: 152, duration: 52, reverse: false },
-  { rx: 255, ry: 192, duration: 68, reverse: false },
-  { rx: 318, ry: 240, duration: 84, reverse: false },
+  { rx: 200, ry: 150, duration: 52, reverse: true },
+  { rx: 268, ry: 198, duration: 68, reverse: true },
+  { rx: 305, ry: 228, duration: 84, reverse: true },
 ] as const;
 
-/** Scène de référence (CSS: min(880px, 56vw)). */
-const BASE_SCENE = 880;
-const LOGO_HALF = 50;
+/** Scène de référence (CSS: min(840px, 52vw)). */
+const BASE_SCENE = 840;
+/** Demi-emprise symbole BM (~80px). */
+const LOGO_HALF = 40;
 const BUBBLE_HALF_W = 78; /* 156px / 2 */
-const FOCUS_NUDGE_MAX = 28;
-const DISC_DURATION = 62;
+const FOCUS_NUDGE_MAX = 24;
+const NUT_DURATION = 80;
+
+/** Asset top bar — symbole BM = portion gauche (~224×210 sur 829×210). */
+export const HERO_BM_SYMBOL_SRC = "/logo-batimum.png";
+const BM_SYMBOL_SRC_W = 829;
+const BM_SYMBOL_MARK_W = 224;
+const BM_SYMBOL_SRC_H = 210;
 
 function useSceneSize(ref: RefObject<HTMLDivElement | null>) {
-  const [size, setSize] = useState(880);
+  const [size, setSize] = useState(840);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
-      setSize(entry.contentRect.width || 880);
+      setSize(entry.contentRect.width || 840);
     });
     ro.observe(el);
-    setSize(el.clientWidth || 880);
+    setSize(el.clientWidth || 840);
     return () => ro.disconnect();
   }, [ref]);
   return size;
@@ -196,7 +202,8 @@ function orbitPoint(angleDeg: number, rx: number, ry: number) {
   };
 }
 
-function GrinderDisc({
+/** Écrou hexagonal minimaliste — SVG inline, rotation lente indépendante. */
+function HeroNut({
   rotate,
   staticMode,
   dimmed,
@@ -205,11 +212,22 @@ function GrinderDisc({
   staticMode: boolean;
   dimmed: MotionValue<number>;
 }) {
-  const opacity = useTransform(dimmed, (d) => 1 - d * 0.35);
+  const opacity = useTransform(dimmed, (d) => 1 - d * 0.22);
+
+  // Hexagone régulier pointu en haut (flat-to-point), centre 200,200, rayon 188
+  const hex = Array.from({ length: 6 }, (_, i) => {
+    const a = (Math.PI / 180) * (-90 + i * 60);
+    return `${200 + Math.cos(a) * 188},${200 + Math.sin(a) * 188}`;
+  }).join(" ");
+
+  const hexInner = Array.from({ length: 6 }, (_, i) => {
+    const a = (Math.PI / 180) * (-90 + i * 60);
+    return `${200 + Math.cos(a) * 168},${200 + Math.sin(a) * 168}`;
+  }).join(" ");
 
   return (
     <motion.div
-      className="batimumHero__grinderDisc"
+      className="batimumHero__nut"
       style={staticMode ? { opacity: 1 } : { rotate, opacity }}
       transformTemplate={({ rotate: r }) =>
         `translate(-50%, -50%) rotate(${r ?? 0})`
@@ -217,117 +235,124 @@ function GrinderDisc({
       aria-hidden="true"
     >
       <svg
-        className="batimumHero__grinderSvg"
+        className="batimumHero__nutSvg"
         viewBox="0 0 400 400"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <circle
-          cx="200"
-          cy="200"
-          r="188"
-          stroke="rgba(17,17,17,0.08)"
-          strokeWidth="1.2"
+        <polygon
+          points={hex}
+          stroke="rgba(17,17,17,0.07)"
+          strokeWidth="1.35"
+          strokeLinejoin="round"
         />
-        <circle
-          cx="200"
-          cy="200"
-          r="176"
-          stroke="rgba(59,130,246,0.1)"
-          strokeWidth="0.9"
+        <polygon
+          points={hexInner}
+          stroke="rgba(17,17,17,0.04)"
+          strokeWidth="1"
+          strokeLinejoin="round"
         />
+        {/* Anneaux concentriques */}
         <circle
           cx="200"
           cy="200"
-          r="158"
-          stroke="rgba(17,17,17,0.06)"
+          r="118"
+          stroke="rgba(17,17,17,0.045)"
           strokeWidth="1"
         />
         <circle
           cx="200"
           cy="200"
-          r="138"
-          stroke="rgba(17,17,17,0.055)"
-          strokeWidth="0.9"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="118"
-          stroke="rgba(59,130,246,0.09)"
-          strokeWidth="0.8"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="98"
-          stroke="rgba(17,17,17,0.06)"
-          strokeWidth="0.9"
+          r="96"
+          stroke="rgba(59,130,246,0.12)"
+          strokeWidth="1"
         />
         <circle
           cx="200"
           cy="200"
           r="78"
           stroke="rgba(17,17,17,0.05)"
-          strokeWidth="0.8"
+          strokeWidth="1"
         />
-        {Array.from({ length: 28 }, (_, i) => {
-          const a = (i / 28) * Math.PI * 2;
+        {/* Trou central */}
+        <circle
+          cx="200"
+          cy="200"
+          r="52"
+          stroke="rgba(17,17,17,0.07)"
+          strokeWidth="1.2"
+        />
+        <circle
+          cx="200"
+          cy="200"
+          r="44"
+          stroke="rgba(17,17,17,0.035)"
+          strokeWidth="0.9"
+        />
+        {/* Lignes techniques radiales discrètes (vers sommets) */}
+        {Array.from({ length: 6 }, (_, i) => {
+          const a = (Math.PI / 180) * (-90 + i * 60);
           return (
             <line
-              key={`seg-${i}`}
-              x1={200 + Math.cos(a) * 148}
-              y1={200 + Math.sin(a) * 148}
-              x2={200 + Math.cos(a) * 172}
-              y2={200 + Math.sin(a) * 172}
+              key={`spoke-${i}`}
+              x1={200 + Math.cos(a) * 52}
+              y1={200 + Math.sin(a) * 52}
+              x2={200 + Math.cos(a) * 168}
+              y2={200 + Math.sin(a) * 168}
               stroke={
-                i % 4 === 0
+                i % 2 === 0
                   ? "rgba(59,130,246,0.1)"
-                  : "rgba(17,17,17,0.055)"
+                  : "rgba(17,17,17,0.04)"
               }
-              strokeWidth="1"
+              strokeWidth="0.9"
               strokeLinecap="round"
             />
           );
         })}
-        {Array.from({ length: 12 }, (_, i) => {
-          const a = (i / 12) * Math.PI * 2 + Math.PI / 12;
+        {/* Petits traits d’outillage sur les flats */}
+        {Array.from({ length: 6 }, (_, i) => {
+          const a = (Math.PI / 180) * (-60 + i * 60);
           return (
             <line
-              key={`notch-${i}`}
-              x1={200 + Math.cos(a) * 86}
-              y1={200 + Math.sin(a) * 86}
-              x2={200 + Math.cos(a) * 104}
-              y2={200 + Math.sin(a) * 104}
-              stroke="rgba(17,17,17,0.06)"
+              key={`tick-${i}`}
+              x1={200 + Math.cos(a) * 176}
+              y1={200 + Math.sin(a) * 176}
+              x2={200 + Math.cos(a) * 186}
+              y2={200 + Math.sin(a) * 186}
+              stroke="rgba(17,17,17,0.055)"
               strokeWidth="1.1"
               strokeLinecap="round"
             />
           );
         })}
-        <circle
-          cx="200"
-          cy="200"
-          r="36"
-          stroke="rgba(17,17,17,0.07)"
-          strokeWidth="1"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="22"
-          stroke="rgba(59,130,246,0.1)"
-          strokeWidth="0.9"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="8"
-          stroke="rgba(17,17,17,0.08)"
-          strokeWidth="1"
-        />
       </svg>
     </motion.div>
+  );
+}
+
+/** Symbole BM seul — même asset que la top bar, portion gauche clipée. */
+function HeroBmSymbol() {
+  return (
+    <div className="batimumHero__logoCore">
+      <div className="batimumHero__logoSymbol" aria-label="Batimum">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={HERO_BM_SYMBOL_SRC}
+          alt="Batimum"
+          className="batimumHero__logoSymbolImg"
+          width={BM_SYMBOL_SRC_W}
+          height={BM_SYMBOL_SRC_H}
+          decoding="async"
+          style={
+            {
+              ["--bm-src-w" as string]: BM_SYMBOL_SRC_W,
+              ["--bm-mark-w" as string]: BM_SYMBOL_MARK_W,
+              ["--bm-src-h" as string]: BM_SYMBOL_SRC_H,
+            } as CSSProperties
+          }
+        />
+      </div>
+    </div>
   );
 }
 
@@ -390,7 +415,7 @@ function OrbitingCard({
         ny *= s;
       }
 
-      const minDist = LOGO_HALF + 36 + BUBBLE_HALF_W * 0.55;
+      const minDist = LOGO_HALF + 32 + BUBBLE_HALF_W * 0.55;
       const dist = Math.hypot(nx, ny);
       if (dist < minDist && dist > 0) {
         const s = minDist / dist;
@@ -498,10 +523,10 @@ export function LandingHeroOrbit({
       else if (p >= 0.24 && p < 0.94) speed = 0;
       else if (p >= 0.94) speed = 0.28;
 
-      let discSpeed = 1;
-      if (p >= 0.1 && p < 0.24) discSpeed = 1 - ((p - 0.1) / 0.14) * 0.7;
-      else if (p >= 0.24 && p < 0.94) discSpeed = 0.18;
-      else if (p >= 0.94) discSpeed = 0.5;
+      let nutSpeed = 1;
+      if (p >= 0.1 && p < 0.24) nutSpeed = 1 - ((p - 0.1) / 0.14) * 0.55;
+      else if (p >= 0.24 && p < 0.94) nutSpeed = 0.28;
+      else if (p >= 0.94) nutSpeed = 0.55;
 
       ORBIT_CFG.forEach((cfg, i) => {
         const mv = [rotate0, rotate1, rotate2][i];
@@ -511,7 +536,7 @@ export function LandingHeroOrbit({
       });
 
       discRotate.set(
-        (discRotate.get() + (360 / DISC_DURATION) * dt * discSpeed) % 360,
+        (discRotate.get() + (360 / NUT_DURATION) * dt * nutSpeed) % 360,
       );
 
       frame = requestAnimationFrame(tick);
@@ -529,7 +554,7 @@ export function LandingHeroOrbit({
     scrollProgress,
   ]);
 
-  const discDim = useTransform(
+  const nutDim = useTransform(
     scrollProgress,
     (p): number => (activeFeatureAt(p) ? 1 : 0),
   );
@@ -558,24 +583,13 @@ export function LandingHeroOrbit({
         <div className="batimumHero__center" aria-hidden />
         <div className="batimumHero__glow" aria-hidden />
 
-        <GrinderDisc
+        <HeroNut
           rotate={discRotate}
           staticMode={staticMode}
-          dimmed={discDim}
+          dimmed={nutDim}
         />
 
-        <div className="batimumHero__logoCore">
-          <div className="batimumHero__logoPad batimumHero__logoPad--breathe">
-            <img
-              src="/logo-batimum.png"
-              alt="Batimum"
-              className="batimumHero__logoImg"
-              width={88}
-              height={22}
-              decoding="async"
-            />
-          </div>
-        </div>
+        <HeroBmSymbol />
 
         {HERO_FEATURES.map((card) => {
           const cfg = ORBIT_CFG[card.orbit];

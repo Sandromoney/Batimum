@@ -12,6 +12,7 @@ import {
 import { ArrowDown, ArrowRight, CalendarRange, Sparkles, TrendingUp } from "lucide-react";
 import {
   HERO_FEATURES,
+  HERO_BM_SYMBOL_SRC,
   LandingHeroOrbit,
 } from "@/components/landing/landing-hero-orbit";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
@@ -170,15 +171,47 @@ export function LandingHero() {
               />
             ) : (
               <div className="batimumHero__mobileStack">
-                <div className="batimumHero__logoPad batimumHero__logoPad--solo">
-                  <img
-                    src="/logo-batimum.png"
-                    alt="Batimum"
-                    className="batimumHero__logoImg"
-                    width={115}
-                    height={29}
-                    decoding="async"
-                  />
+                <div className="batimumHero__mobileScene">
+                  <div className="batimumHero__nut batimumHero__nut--static" aria-hidden>
+                    <svg
+                      className="batimumHero__nutSvg"
+                      viewBox="0 0 400 400"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <polygon
+                        points="200,12 362,106 362,294 200,388 38,294 38,106"
+                        stroke="rgba(17,17,17,0.07)"
+                        strokeWidth="1.35"
+                        strokeLinejoin="round"
+                      />
+                      <circle
+                        cx="200"
+                        cy="200"
+                        r="96"
+                        stroke="rgba(59,130,246,0.12)"
+                        strokeWidth="1"
+                      />
+                      <circle
+                        cx="200"
+                        cy="200"
+                        r="52"
+                        stroke="rgba(17,17,17,0.07)"
+                        strokeWidth="1.2"
+                      />
+                    </svg>
+                  </div>
+                  <div className="batimumHero__logoSymbol" aria-label="Batimum">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={HERO_BM_SYMBOL_SRC}
+                      alt="Batimum"
+                      className="batimumHero__logoSymbolImg"
+                      width={829}
+                      height={210}
+                      decoding="async"
+                    />
+                  </div>
                 </div>
                 <ul className="batimumHero__stackList">
                   {HERO_FEATURES.map((feature) => {
@@ -194,14 +227,14 @@ export function LandingHero() {
                           }
                           aria-hidden
                         >
-                          <Icon size={18} strokeWidth={1.8} />
+                          <Icon size={16} strokeWidth={1.8} />
                         </span>
                         <span className="batimumHero__bubbleCopy">
                           <span className="batimumHero__bubbleTitle">
                             {feature.title}
                           </span>
                           <span className="batimumHero__bubbleSub">
-                            {feature.detail}
+                            {feature.subtitle}
                           </span>
                         </span>
                       </li>

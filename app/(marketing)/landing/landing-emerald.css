@@ -563,9 +563,9 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .batimumHero__scene {
   position: relative;
-  width: min(880px, 56vw);
+  width: min(840px, 52vw);
   min-width: 0;
-  max-width: 880px;
+  max-width: 840px;
   aspect-ratio: 1 / 1;
   margin-inline: auto;
   display: grid;
@@ -622,23 +622,28 @@ html:has(.landing-emerald) body {
   pointer-events: none;
 }
 
-.landing-emerald .batimumHero__grinderDisc {
+.landing-emerald .batimumHero__nut {
   position: absolute;
   left: 50%;
   top: 50%;
   z-index: 1;
-  width: min(82%, 740px);
+  width: 78%;
   aspect-ratio: 1 / 1;
   transform: translate(-50%, -50%);
   transform-origin: center center;
-  border-radius: 50%;
+  border-radius: 0;
   pointer-events: none;
 }
 
-.landing-emerald .batimumHero__grinderSvg {
+.landing-emerald .batimumHero__nutSvg {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.landing-emerald .batimumHero__grinderDisc,
+.landing-emerald .batimumHero__grinderSvg {
+  display: none;
 }
 
 .landing-emerald .batimumHero__logoCore {
@@ -647,32 +652,58 @@ html:has(.landing-emerald) body {
   top: 50%;
   z-index: 20;
   transform: translate(-50%, -50%);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
 
-.landing-emerald .batimumHero__logoPad {
+/* Symbole BM seul (clip de /logo-batimum.png, même asset que la top bar) */
+.landing-emerald .batimumHero__logoSymbol {
+  --bm-logo-h: 80px;
+  /* Portion marque BM dans l’asset : 224×210 sur 829×210 */
+  width: calc(var(--bm-logo-h) * 224 / 210);
+  height: var(--bm-logo-h);
+  padding: 0;
+  margin: 0;
   display: grid;
-  place-items: center;
-  width: 100px;
-  height: 44px;
-  padding: 6px 8px;
-  box-sizing: border-box;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.94);
+  place-items: start center;
+  overflow: hidden;
+  background: transparent;
   border: none;
-  box-shadow:
-    0 10px 24px rgba(17, 17, 17, 0.07),
-    0 2px 6px rgba(17, 17, 17, 0.035);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  border-radius: 0;
+  box-shadow: 0 12px 28px rgba(17, 17, 17, 0.12);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.landing-emerald .batimumHero__logoSymbolImg {
+  display: block;
+  height: var(--bm-logo-h);
+  width: auto;
+  max-width: none;
+  margin: 0;
+  object-fit: cover;
+  object-position: left center;
+  /* Largeur native mise à l’échelle de la hauteur → clip = carré BM seul */
+  min-width: calc(var(--bm-logo-h) * 829 / 210);
+}
+
+/* Ancienne carte blanche : neutralisée */
+.landing-emerald .batimumHero__logoPad {
+  display: contents;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .landing-emerald .batimumHero__logoPad--breathe {
-  animation: batimumHero-logo-breathe 6s ease-in-out infinite;
-}
-
-@keyframes batimumHero-logo-breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
+  animation: none;
 }
 
 .landing-emerald .batimumHero__logoPad--solo {
@@ -680,12 +711,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .batimumHero__logoImg {
-  display: block;
-  width: 88px;
-  min-width: 88px;
-  max-width: 88px;
-  height: auto;
-  object-fit: contain;
+  display: none;
 }
 
 .landing-emerald .batimumHero__bubbleWrap {
@@ -695,17 +721,17 @@ html:has(.landing-emerald) body {
   z-index: 10;
   width: 156px;
   flex: 0 0 156px;
-  min-height: 62px;
-  max-height: 72px;
+  min-height: 60px;
+  max-height: 68px;
   will-change: transform, opacity;
   pointer-events: auto;
 }
 
 .landing-emerald .batimumHero__bubbleWrap--live .batimumHero__bubble {
   box-shadow:
-    0 12px 32px rgba(17, 17, 17, 0.1),
-    0 3px 10px rgba(17, 17, 17, 0.05),
-    0 0 24px rgba(59, 130, 246, 0.08);
+    0 12px 28px rgba(17, 17, 17, 0.09),
+    0 3px 10px rgba(17, 17, 17, 0.04),
+    0 0 20px rgba(59, 130, 246, 0.07);
 }
 
 .landing-emerald .batimumHero__bubble {
@@ -714,18 +740,18 @@ html:has(.landing-emerald) body {
   gap: 0.5rem;
   width: 156px;
   flex: 0 0 156px;
-  min-height: 62px;
-  max-height: 72px;
+  min-height: 60px;
+  max-height: 68px;
   padding: 10px 12px;
   box-sizing: border-box;
   border-radius: 16px;
   border: none;
   outline: none;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.96);
   color: var(--batimum-hero-black);
   box-shadow:
-    0 10px 28px rgba(17, 17, 17, 0.08),
-    0 2px 8px rgba(17, 17, 17, 0.04);
+    0 10px 26px rgba(17, 17, 17, 0.07),
+    0 2px 8px rgba(17, 17, 17, 0.03);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: transform 180ms ease, box-shadow 180ms ease;
@@ -825,6 +851,27 @@ html:has(.landing-emerald) body {
   gap: 1.25rem;
 }
 
+.landing-emerald .batimumHero__mobileScene {
+  position: relative;
+  width: min(72vw, 280px);
+  aspect-ratio: 1 / 1;
+  margin-inline: auto;
+  display: grid;
+  place-items: center;
+}
+
+.landing-emerald .batimumHero__mobileScene .batimumHero__nut {
+  width: 88%;
+}
+
+.landing-emerald .batimumHero__mobileScene .batimumHero__logoSymbol {
+  position: relative;
+  z-index: 20;
+  left: auto;
+  top: auto;
+  transform: none;
+}
+
 .landing-emerald .batimumHero__stackList {
   display: flex;
   flex-direction: column;
@@ -850,13 +897,22 @@ html:has(.landing-emerald) body {
 
 @media (min-width: 1440px) {
   .landing-emerald .batimumHero__scene {
-    width: min(880px, 54vw);
+    width: min(840px, 52vw);
   }
 
   .landing-emerald .batimumHero__bubbleWrap,
   .landing-emerald .batimumHero__bubble {
     width: 156px;
     flex-basis: 156px;
+  }
+
+  .landing-emerald .batimumHero__logoSymbol {
+    --bm-logo-h: 80px;
+  }
+
+  .landing-emerald .batimumHero__logoSymbolImg {
+    height: var(--bm-logo-h);
+    min-width: calc(var(--bm-logo-h) * 829 / 210);
   }
 }
 
@@ -871,20 +927,33 @@ html:has(.landing-emerald) body {
     flex-basis: 148px;
   }
 
-  .landing-emerald .batimumHero__grinderDisc {
-    width: min(80%, 640px);
+  .landing-emerald .batimumHero__nut {
+    width: 76%;
+  }
+
+  .landing-emerald .batimumHero__logoSymbol {
+    --bm-logo-h: 76px;
+  }
+
+  .landing-emerald .batimumHero__logoSymbolImg {
+    height: var(--bm-logo-h);
+    min-width: calc(var(--bm-logo-h) * 829 / 210);
   }
 }
 
 @media (max-width: 1279px) {
   .landing-emerald .batimumHero__scene {
-    width: min(660px, 58vw);
+    width: min(640px, 58vw);
   }
 
   .landing-emerald .batimumHero__bubbleWrap,
   .landing-emerald .batimumHero__bubble {
     width: 142px;
     flex-basis: 142px;
+  }
+
+  .landing-emerald .batimumHero__nut {
+    width: 74%;
   }
 }
 
@@ -944,8 +1013,8 @@ html:has(.landing-emerald) body {
     flex-basis: 138px;
   }
 
-  .landing-emerald .batimumHero__grinderDisc {
-    width: min(78%, 480px);
+  .landing-emerald .batimumHero__nut {
+    width: 72%;
   }
 
   .landing-emerald .batimumHero__scrollCue,
@@ -969,19 +1038,13 @@ html:has(.landing-emerald) body {
     flex-direction: column;
   }
 
-  .landing-emerald .batimumHero__logoPad {
-    width: 128px;
-    height: 56px;
+  .landing-emerald .batimumHero__logoSymbol {
+    --bm-logo-h: 72px;
   }
 
-  .landing-emerald .batimumHero__logoImg {
-    width: 100px;
-    min-width: 100px;
-    max-width: 100px;
-  }
-
-  .landing-emerald .batimumHero__grinderDisc {
-    width: min(72%, 420px);
+  .landing-emerald .batimumHero__logoSymbolImg {
+    height: var(--bm-logo-h);
+    min-width: calc(var(--bm-logo-h) * 829 / 210);
   }
 
   .landing-emerald .batimumHero__bubble--floatA,
@@ -999,7 +1062,7 @@ html:has(.landing-emerald) body {
     animation: none;
   }
 
-  .landing-emerald .batimumHero__logoPad--breathe {
+  .landing-emerald .batimumHero__nut {
     animation: none;
   }
 
