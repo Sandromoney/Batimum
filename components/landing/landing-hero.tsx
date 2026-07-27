@@ -9,7 +9,7 @@ import {
   useScroll,
   useTransform,
 } from "framer-motion";
-import { ArrowDown, ArrowRight, Check } from "lucide-react";
+import { ArrowDown, ArrowRight, CalendarRange, Sparkles, TrendingUp } from "lucide-react";
 import {
   HERO_FEATURES,
   LandingHeroOrbit,
@@ -17,9 +17,18 @@ import {
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 
 const BENEFITS = [
-  "Devis IA créés en quelques minutes",
-  "Planning et équipes toujours synchronisés",
-  "Rentabilité visible en temps réel",
+  {
+    label: "Devis IA créés en quelques minutes",
+    Icon: Sparkles,
+  },
+  {
+    label: "Planning et équipes toujours synchronisés",
+    Icon: CalendarRange,
+  },
+  {
+    label: "Rentabilité visible en temps réel",
+    Icon: TrendingUp,
+  },
 ] as const;
 
 /** Scroll story only on large desktop (≥1100). Default false avoids SSR 350vh flash. */
@@ -124,15 +133,15 @@ export function LandingHero() {
             </p>
 
             <ul className="batimumHero__benefits">
-              {BENEFITS.map((item) => (
-                <li key={item} className="batimumHero__benefit">
-                  <Check
+              {BENEFITS.map(({ label, Icon }) => (
+                <li key={label} className="batimumHero__benefit">
+                  <Icon
                     className="batimumHero__benefitIcon"
-                    size={17}
-                    strokeWidth={2.25}
+                    size={16}
+                    strokeWidth={1.8}
                     aria-hidden="true"
                   />
-                  <span>{item}</span>
+                  <span>{label}</span>
                 </li>
               ))}
             </ul>
@@ -185,7 +194,7 @@ export function LandingHero() {
                     return (
                       <li key={feature.id} className="batimumHero__stackItem">
                         <span
-                          className="batimumHero__cardIcon"
+                          className="batimumHero__bubbleIcon"
                           style={
                             {
                               "--card-accent": feature.accent,
@@ -195,11 +204,11 @@ export function LandingHero() {
                         >
                           <Icon size={17} strokeWidth={1.8} />
                         </span>
-                        <span className="batimumHero__cardCopy">
-                          <span className="batimumHero__cardTitle">
+                        <span className="batimumHero__bubbleCopy">
+                          <span className="batimumHero__bubbleTitle">
                             {feature.title}
                           </span>
-                          <span className="batimumHero__cardSub">
+                          <span className="batimumHero__bubbleSub">
                             {feature.detail}
                           </span>
                         </span>

@@ -4,7 +4,6 @@ import {
   motion,
   useMotionValue,
   useReducedMotion,
-  useScroll,
   useSpring,
   useTransform,
   type MotionValue,
@@ -46,25 +45,25 @@ type OrbitCard = {
 
 export const HERO_FEATURES: OrbitCard[] = [
   {
-    id: "devis",
-    title: "Devis avec IA",
-    subtitle: "Créés en quelques minutes",
-    detail: "Créez des devis complets en quelques minutes grâce à l’IA.",
-    orbit: 2,
-    angle: 20,
-    accent: "#10B981",
-    Icon: Sparkles,
-  },
-  {
     id: "facturation",
     title: "Facturation",
     subtitle: "Simple et rapide",
     detail:
       "Transformez vos devis en factures et suivez les paiements simplement.",
     orbit: 2,
-    angle: 200,
-    accent: "#FB923C",
+    angle: 15,
+    accent: "#FDBA74",
     Icon: Receipt,
+  },
+  {
+    id: "clients",
+    title: "Clients centralisés",
+    subtitle: "Tout au même endroit",
+    detail: "Retrouvez toutes les informations clients au même endroit.",
+    orbit: 2,
+    angle: 190,
+    accent: "#FCD34D",
+    Icon: Users,
   },
   {
     id: "planning",
@@ -72,19 +71,19 @@ export const HERO_FEATURES: OrbitCard[] = [
     subtitle: "Toujours à jour",
     detail: "Organisez les équipes et gardez le planning toujours à jour.",
     orbit: 1,
-    angle: 95,
-    accent: "#A78BFA",
+    angle: 80,
+    accent: "#C4B5FD",
     Icon: CalendarDays,
   },
   {
-    id: "clients",
-    title: "Clients centralisés",
-    subtitle: "Tout au même endroit",
-    detail: "Retrouvez toutes les informations clients au même endroit.",
+    id: "devis",
+    title: "Devis avec IA",
+    subtitle: "Créés en quelques minutes",
+    detail: "Créez des devis complets en quelques minutes grâce à l’IA.",
     orbit: 1,
-    angle: 275,
-    accent: "#FBBF24",
-    Icon: Users,
+    angle: 260,
+    accent: "#34D399",
+    Icon: Sparkles,
   },
   {
     id: "chantiers",
@@ -93,8 +92,8 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail:
       "Suivez l’avancement, les tâches et les informations du chantier en temps réel.",
     orbit: 0,
-    angle: 145,
-    accent: "#60A5FA",
+    angle: 140,
+    accent: "#93C5FD",
     Icon: Building2,
   },
   {
@@ -104,7 +103,7 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail:
       "Visualisez vos marges, vos coûts et la rentabilité de chaque chantier.",
     orbit: 0,
-    angle: 325,
+    angle: 320,
     accent: "#059669",
     Icon: LayoutDashboard,
   },
@@ -126,9 +125,10 @@ export const FOCUS_RANGES: {
 ];
 
 const ORBIT_CFG = [
-  { radiusPct: 0.22, duration: 28, reverse: false },
-  { radiusPct: 0.31, duration: 34, reverse: true },
-  { radiusPct: 0.38, duration: 42, reverse: false },
+  /** Radii calibrated for ~820–900px scene (inner / mid / outer). */
+  { radiusPx: 205, duration: 28, reverse: false },
+  { radiusPx: 270, duration: 34, reverse: true },
+  { radiusPx: 340, duration: 42, reverse: false },
 ] as const;
 
 function useSceneSize(ref: RefObject<HTMLDivElement | null>) {
@@ -208,15 +208,15 @@ function OrbitingCard({
   const scale = useTransform(scrollProgress, (p) => {
     const t = focusStrength(p, card.id);
     const anyFocus = activeFeatureAt(p) !== null;
-    if (t > 0) return 1 + 0.15 * t;
-    if (anyFocus) return 0.97;
+    if (t > 0) return 1 + 0.08 * t;
+    if (anyFocus) return 0.98;
     return 1;
   });
   const opacity = useTransform(scrollProgress, (p) => {
     const t = focusStrength(p, card.id);
     const anyFocus = activeFeatureAt(p) !== null;
     if (t > 0) return 1;
-    if (anyFocus) return 0.28;
+    if (anyFocus) return 0.3;
     return 1;
   });
   const zIndex = useTransform(scrollProgress, (p) =>
@@ -227,21 +227,21 @@ function OrbitingCard({
     const rad = (base * Math.PI) / 180;
     return (
       <div
-        className="batimumHero__cardWrap"
+        className="batimumHero__bubbleWrap"
         style={{
           transform: `translate(-50%, -50%) translate(${Math.cos(rad) * radiusPx}px, ${Math.sin(rad) * radiusPx}px)`,
         }}
       >
         <article
-          className="batimumHero__card"
+          className="batimumHero__bubble"
           style={{ "--card-accent": card.accent } as CSSProperties}
         >
-          <span className="batimumHero__cardIcon" aria-hidden>
+          <span className="batimumHero__bubbleIcon" aria-hidden>
             <Icon size={17} strokeWidth={1.8} />
           </span>
-          <span className="batimumHero__cardCopy">
-            <span className="batimumHero__cardTitle">{card.title}</span>
-            <span className="batimumHero__cardSub">{card.subtitle}</span>
+          <span className="batimumHero__bubbleCopy">
+            <span className="batimumHero__bubbleTitle">{card.title}</span>
+            <span className="batimumHero__bubbleSub">{card.subtitle}</span>
           </span>
         </article>
       </div>
@@ -250,22 +250,23 @@ function OrbitingCard({
 
   return (
     <motion.div
-      className="batimumHero__cardWrap batimumHero__cardWrap--live"
+      className="batimumHero__bubbleWrap batimumHero__bubbleWrap--live"
       style={{ x, y, scale, opacity, zIndex }}
       transformTemplate={({ x: tx, y: ty, scale: s }) =>
         `translate(-50%, -50%) translate(${tx}, ${ty}) scale(${s})`
       }
+      transition={{ duration: 0.18 }}
     >
       <article
-        className="batimumHero__card"
+        className="batimumHero__bubble"
         style={{ "--card-accent": card.accent } as CSSProperties}
       >
-        <span className="batimumHero__cardIcon" aria-hidden>
+        <span className="batimumHero__bubbleIcon" aria-hidden>
           <Icon size={17} strokeWidth={1.8} />
         </span>
-        <span className="batimumHero__cardCopy">
-          <span className="batimumHero__cardTitle">{card.title}</span>
-          <span className="batimumHero__cardSub">{card.subtitle}</span>
+        <span className="batimumHero__bubbleCopy">
+          <span className="batimumHero__bubbleTitle">{card.title}</span>
+          <span className="batimumHero__bubbleSub">{card.subtitle}</span>
         </span>
       </article>
     </motion.div>
@@ -383,19 +384,23 @@ export function LandingHeroOrbit({
           </div>
         </div>
 
-        {HERO_FEATURES.map((card, index) => (
-          <OrbitingCard
-            key={card.id}
-            card={card}
-            radiusPx={sceneSize * ORBIT_CFG[card.orbit].radiusPct}
-            reverse={ORBIT_CFG[card.orbit].reverse}
-            orbitRotate={orbitRotates[card.orbit]}
-            scrollProgress={scrollProgress}
-            sceneSize={sceneSize}
-            staticMode={staticMode}
-            index={index}
-          />
-        ))}
+        {HERO_FEATURES.map((card, index) => {
+          const cfg = ORBIT_CFG[card.orbit];
+          const scale = Math.min(1, (sceneSize / 2 - 110) / 340);
+          return (
+            <OrbitingCard
+              key={card.id}
+              card={card}
+              radiusPx={cfg.radiusPx * scale}
+              reverse={cfg.reverse}
+              orbitRotate={orbitRotates[card.orbit]}
+              scrollProgress={scrollProgress}
+              sceneSize={sceneSize}
+              staticMode={staticMode}
+              index={index}
+            />
+          );
+        })}
 
         <motion.p
           className="batimumHero__focus"
