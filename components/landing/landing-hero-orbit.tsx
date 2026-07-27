@@ -4,7 +4,6 @@ import {
   motion,
   useMotionValue,
   useReducedMotion,
-  useSpring,
   useTransform,
   type MotionValue,
 } from "framer-motion";
@@ -59,7 +58,7 @@ export const HERO_FEATURES: OrbitCard[] = [
     subtitle: "Créés en quelques minutes",
     detail: "Décrivez les travaux, Batimum prépare le devis.",
     orbit: 0,
-    angle: 15,
+    angle: 20,
     accent: ICON_ACCENT,
     Icon: Sparkles,
     floatClass: "batimumHero__bubble--floatA",
@@ -67,10 +66,10 @@ export const HERO_FEATURES: OrbitCard[] = [
   {
     id: "pilotage",
     title: "Pilotage et rentabilité",
-    subtitle: "Marges et coûts sous contrôle",
+    subtitle: "Marge suivie en direct",
     detail: "Visualisez vos marges avant qu’il ne soit trop tard.",
     orbit: 0,
-    angle: 195,
+    angle: 200,
     accent: ICON_ACCENT,
     Icon: LayoutDashboard,
     floatClass: "batimumHero__bubble--floatB",
@@ -78,10 +77,10 @@ export const HERO_FEATURES: OrbitCard[] = [
   {
     id: "planning",
     title: "Planning des équipes",
-    subtitle: "Équipes toujours organisées",
+    subtitle: "Organisation claire",
     detail: "Organisez vos équipes en quelques clics.",
     orbit: 1,
-    angle: 95,
+    angle: 100,
     accent: ICON_ACCENT,
     Icon: CalendarDays,
     floatClass: "batimumHero__bubble--floatC",
@@ -89,10 +88,10 @@ export const HERO_FEATURES: OrbitCard[] = [
   {
     id: "chantiers",
     title: "Suivi des chantiers",
-    subtitle: "Avancement en temps réel",
+    subtitle: "Avancement maîtrisé",
     detail: "Suivez l’avancement depuis le bureau ou le terrain.",
     orbit: 1,
-    angle: 275,
+    angle: 280,
     accent: ICON_ACCENT,
     Icon: Building2,
     floatClass: "batimumHero__bubble--floatD",
@@ -100,10 +99,10 @@ export const HERO_FEATURES: OrbitCard[] = [
   {
     id: "facturation",
     title: "Facturation",
-    subtitle: "Simple et rapide",
+    subtitle: "Devis → facture",
     detail: "Transformez vos devis en factures simplement.",
     orbit: 2,
-    angle: 145,
+    angle: 150,
     accent: ICON_ACCENT,
     Icon: Receipt,
     floatClass: "batimumHero__bubble--floatE",
@@ -111,10 +110,10 @@ export const HERO_FEATURES: OrbitCard[] = [
   {
     id: "clients",
     title: "Clients centralisés",
-    subtitle: "Tout au même endroit",
+    subtitle: "Historique complet",
     detail: "Retrouvez toutes les informations au même endroit.",
     orbit: 2,
-    angle: 325,
+    angle: 330,
     accent: ICON_ACCENT,
     Icon: Users,
     floatClass: "batimumHero__bubble--floatF",
@@ -137,27 +136,36 @@ export const FOCUS_RANGES: {
   { id: null, start: 0.94, end: 1 },
 ];
 
-/** Base radii for ~820px scene — scaled to actual scene size. */
+/**
+ * 3 orbites × 2 bulles à 180° — même vitesse par orbite, même sens.
+ *
+ * Brief de base : 155×120 / 235×175 / 305×230 sur scène ~760.
+ * Fallbacks pour garantir ≥36px logo, ≥28px entre bulles, ≥28px bord :
+ * scène 880px + rayons légèrement augmentés (bulles restent 156px).
+ */
 const ORBIT_CFG = [
-  { rx: 190, ry: 145, duration: 28, reverse: false },
-  { rx: 275, ry: 205, duration: 34, reverse: true },
-  { rx: 360, ry: 270, duration: 42, reverse: false },
+  { rx: 200, ry: 152, duration: 52, reverse: false },
+  { rx: 255, ry: 192, duration: 68, reverse: false },
+  { rx: 318, ry: 240, duration: 84, reverse: false },
 ] as const;
 
-const BASE_SCENE = 820;
-const LOGO_SAFE_RADIUS = 145;
+/** Scène de référence (CSS: min(880px, 56vw)). */
+const BASE_SCENE = 880;
+const LOGO_HALF = 50;
+const BUBBLE_HALF_W = 78; /* 156px / 2 */
+const FOCUS_NUDGE_MAX = 28;
 const DISC_DURATION = 62;
 
 function useSceneSize(ref: RefObject<HTMLDivElement | null>) {
-  const [size, setSize] = useState(820);
+  const [size, setSize] = useState(880);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
-      setSize(entry.contentRect.width || 820);
+      setSize(entry.contentRect.width || 880);
     });
     ro.observe(el);
-    setSize(el.clientWidth || 820);
+    setSize(el.clientWidth || 880);
     return () => ro.disconnect();
   }, [ref]);
   return size;
@@ -344,6 +352,9 @@ function OrbitingCard({
 }) {
   const Icon = card.Icon;
   const base = card.angle;
+  const halfScene = sceneSize / 2;
+  /** Marge intérieure scène (bulles ne doivent pas approcher le bord < 28px). */
+  const edgeLimit = Math.max(0, halfScene - 28 - BUBBLE_HALF_W);
 
   const orbitX = useTransform(orbitRotate, (r) => {
     const deg = reverse ? -r + base : r + base;
@@ -354,23 +365,47 @@ function OrbitingCard({
     return orbitPoint(deg, rx, ry).y;
   });
 
-  // Focus slot: right of logo, outside safe radius — never through center
-  const focusX = Math.max(sceneSize * 0.26, LOGO_SAFE_RADIUS + 70);
-  const focusY = -sceneSize * 0.04;
+  /**
+   * Focus : nudge radial extérieur uniquement (≤28px), scale ≤ 1.08.
+   * Pas de trajet vers le centre — évite logo + collisions entre bulles.
+   */
+  const focusedPos = useTransform(
+    [orbitX, orbitY, scrollProgress],
+    ([oxRaw, oyRaw, p]) => {
+      const ox = Number(oxRaw);
+      const oy = Number(oyRaw);
+      const t = focusStrength(Number(p), card.id);
+      if (t <= 0) return { x: ox, y: oy };
 
-  const x = useTransform([orbitX, scrollProgress], ([ox, p]) => {
-    const t = focusStrength(Number(p), card.id);
-    return Number(ox) + (focusX - Number(ox)) * t;
-  });
-  const y = useTransform([orbitY, scrollProgress], ([oy, p]) => {
-    const t = focusStrength(Number(p), card.id);
-    return Number(oy) + (focusY - Number(oy)) * t;
-  });
+      const len = Math.hypot(ox, oy) || 1;
+      const nudge = FOCUS_NUDGE_MAX * t;
+      let nx = ox + (ox / len) * nudge;
+      let ny = oy + (oy / len) * nudge;
+
+      const maxR = edgeLimit;
+      const nr = Math.hypot(nx, ny);
+      if (nr > maxR && nr > 0) {
+        const s = maxR / nr;
+        nx *= s;
+        ny *= s;
+      }
+
+      const minDist = LOGO_HALF + 36 + BUBBLE_HALF_W * 0.55;
+      const dist = Math.hypot(nx, ny);
+      if (dist < minDist && dist > 0) {
+        const s = minDist / dist;
+        nx *= s;
+        ny *= s;
+      }
+
+      return { x: nx, y: ny };
+    },
+  );
+  const x = useTransform(focusedPos, (pos) => pos.x);
+  const y = useTransform(focusedPos, (pos) => pos.y);
   const scale = useTransform(scrollProgress, (p) => {
     const t = focusStrength(p, card.id);
-    const anyFocus = activeFeatureAt(p) !== null;
-    if (t > 0) return 1 + 0.1 * t;
-    if (anyFocus) return 0.98;
+    if (t > 0) return 1 + 0.08 * t;
     return 1;
   });
   const opacity = useTransform(scrollProgress, (p) => {
@@ -390,7 +425,7 @@ function OrbitingCard({
       style={{ "--card-accent": card.accent } as CSSProperties}
     >
       <span className="batimumHero__bubbleIcon" aria-hidden>
-        <Icon size={18} strokeWidth={1.8} />
+        <Icon size={16} strokeWidth={1.8} />
       </span>
       <span className="batimumHero__bubbleCopy">
         <span className="batimumHero__bubbleTitle">{card.title}</span>
@@ -494,17 +529,6 @@ export function LandingHeroOrbit({
     scrollProgress,
   ]);
 
-  const sceneScale = useTransform(
-    scrollProgress,
-    [0, 0.12, 0.24, 0.94, 1],
-    [1, 1, 1.04, 1.03, 1],
-  );
-  const smoothScale = useSpring(sceneScale, {
-    stiffness: 90,
-    damping: 24,
-    mass: 0.8,
-  });
-
   const discDim = useTransform(
     scrollProgress,
     (p): number => (activeFeatureAt(p) ? 1 : 0),
@@ -530,11 +554,7 @@ export function LandingHeroOrbit({
 
   return (
     <div className="batimumHero__orbitRoot">
-      <motion.div
-        ref={sceneRef}
-        className="batimumHero__scene"
-        style={staticMode ? undefined : { scale: smoothScale }}
-      >
+      <motion.div ref={sceneRef} className="batimumHero__scene">
         <div className="batimumHero__center" aria-hidden />
         <div className="batimumHero__glow" aria-hidden />
 
@@ -550,8 +570,8 @@ export function LandingHeroOrbit({
               src="/logo-batimum.png"
               alt="Batimum"
               className="batimumHero__logoImg"
-              width={115}
-              height={29}
+              width={88}
+              height={22}
               decoding="async"
             />
           </div>

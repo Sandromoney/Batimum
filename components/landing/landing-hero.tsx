@@ -83,11 +83,6 @@ export function LandingHero() {
   const idleProgress = useMotionValue(0);
   const progress = enableScrollStory ? scrollYProgress : idleProgress;
 
-  const copyOpacity = useTransform(
-    progress,
-    [0, 0.2, 0.35, 0.94, 1],
-    [1, 1, 0.45, 0.4, 0.85],
-  );
   const copyY = useTransform(progress, [0, 0.35, 1], [0, -16, -8]);
   const cueOpacity = useTransform(progress, [0, 0.08], [1, 0]);
 
@@ -105,11 +100,7 @@ export function LandingHero() {
         <div className="batimumHero__inner">
           <motion.div
             className="batimumHero__copy"
-            style={
-              enableScrollStory
-                ? { opacity: copyOpacity, y: copyY }
-                : undefined
-            }
+            style={enableScrollStory ? { y: copyY } : undefined}
             initial={reduced ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
@@ -224,7 +215,7 @@ export function LandingHero() {
 
         {enableScrollStory ? (
           <motion.p
-            className="batimumHero__scrollCue"
+            className="batimumHero__scrollCue batimumHero__scrollHint"
             style={{ opacity: cueOpacity }}
           >
             <ArrowDown
