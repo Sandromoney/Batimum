@@ -170,89 +170,54 @@ html:has(.landing-emerald) body {
 /* ——— Hero ——— */
 .landing-emerald .lp-hero {
   position: relative;
-  background: #ffffff;
-}
-
-.landing-emerald .lp-hero__track {
-  height: 240vh;
-}
-
-@media (max-width: 767px) {
-  .landing-emerald .lp-hero__track {
-    height: 200vh;
-  }
-}
-
-.landing-emerald .lp-hero__sticky {
-  position: sticky;
-  top: 76px;
-  min-height: calc(100svh - 76px);
-  display: flex;
-  align-items: center;
-  overflow: visible;
-  background: #ffffff;
-}
-
-.landing-emerald .lp-hero__inner {
-  width: 100%;
-  display: grid;
-  gap: 1.25rem;
-  padding-top: 1rem;
-  padding-bottom: 1.5rem;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 50% at 85% 20%, rgba(16, 185, 129, 0.06), transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, #f6f8f9 100%);
+  padding: 1.5rem 0 3rem;
 }
 
 @media (min-width: 1024px) {
-  .landing-emerald .lp-hero__inner {
-    grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
-    gap: 1.5rem;
+  .landing-emerald .lp-hero {
+    min-height: calc(100svh - 72px);
+    display: flex;
     align-items: center;
-    padding-top: 0.5rem;
-    padding-bottom: 1rem;
+    padding: 2rem 0 3.5rem;
   }
 }
 
-.landing-emerald .lp-hero__copy {
-  max-width: 34rem;
-  position: relative;
-  z-index: 2;
+.landing-emerald .lp-hero__grid {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
 }
 
-.landing-emerald .lp-hero__eyebrow {
-  margin: 0;
-  color: #667085;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+@media (min-width: 1024px) {
+  .landing-emerald .lp-hero__grid {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    gap: 2rem;
+  }
 }
 
-.landing-emerald .lp-hero__title {
-  margin: 0.85rem 0 0;
-  color: #101828;
-  font-size: clamp(2.15rem, 4.6vw, 3.55rem);
-  font-weight: 700;
-  letter-spacing: -0.045em;
-  line-height: 1.02;
+.landing-emerald .lp-hero__benefits {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1.25rem 0 1.5rem;
 }
 
-.landing-emerald .lp-hero__title-accent {
-  display: block;
-  color: #10b981;
-}
-
-.landing-emerald .lp-hero__subtitle {
-  margin: 1rem 0 0;
-  max-width: 32rem;
-  color: #667085;
-  font-size: 1rem;
-  line-height: 1.55;
+.landing-emerald .lp-hero__benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  color: var(--bm-anthracite);
+  font-size: 0.9375rem;
+  font-weight: 500;
 }
 
 .landing-emerald .lp-hero__ctas {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  margin-top: 1.35rem;
 }
 
 .landing-emerald .lp-hero__ctas a {
@@ -265,255 +230,34 @@ html:has(.landing-emerald) body {
   }
 }
 
-/* ——— Hero device stage (image mockups) ——— */
-.landing-emerald .lp-pro-stage {
-  position: relative;
-  width: 100%;
-  min-height: 380px;
-  height: clamp(380px, 58vh, 560px);
-  overflow: visible;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (min-width: 1024px) {
-  .landing-emerald .lp-pro-stage {
-    min-height: 520px;
-    height: clamp(480px, 64vh, 620px);
-  }
-}
-
-.landing-emerald .lp-pro-stage__canvas {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  transform-style: preserve-3d;
-  perspective: 2200px;
-  perspective-origin: 50% 50%;
-}
-
-.landing-emerald .lp-pro-stage__floor {
-  position: absolute;
-  left: 14%;
-  right: 10%;
-  bottom: 6%;
-  height: 18%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.1), transparent 74%);
-  filter: blur(20px);
-  pointer-events: none;
-}
-
-.landing-emerald .lp-pro-mac,
-.landing-emerald .lp-pro-phone {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform-style: preserve-3d;
-  will-change: transform, opacity;
-  z-index: 1;
-}
-
-.landing-emerald .lp-pro-mac {
-  width: min(92%, 560px);
-  max-width: 560px;
-}
-
-.landing-emerald .lp-pro-phone {
-  width: min(30%, 168px);
-}
-
-.landing-emerald .lp-pro-caption {
-  position: absolute;
-  left: 50%;
-  bottom: 0.35rem;
-  transform: translateX(-50%);
-  margin: 0;
-  color: #667085;
+.landing-emerald .lp-hero__reassurance {
+  margin-top: 0.875rem;
+  color: var(--bm-text-secondary);
   font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  z-index: 2;
 }
 
-/* Device image mockups */
-.landing-emerald .lp-device-mock {
+/* Simple stable Hero visual (no device images / sticky / 3D) */
+.landing-emerald .lp-hero__visual {
   position: relative;
   width: 100%;
-  overflow: visible;
-  transform-style: preserve-3d;
+  min-height: 280px;
 }
 
-.landing-emerald .lp-device-mock--mac {
-  aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4% 3% 6%;
-  box-sizing: border-box;
-}
-
-.landing-emerald .lp-device-mock--phone {
-  aspect-ratio: 1350 / 2760;
-}
-
-.landing-emerald .lp-device-mock__body {
+.landing-emerald .lp-hero__panel {
   position: relative;
   width: 100%;
-  height: auto;
-  z-index: 1;
-  overflow: visible;
-}
-
-.landing-emerald .lp-device-mock--mac .lp-device-mock__body {
-  width: 100%;
-  max-width: 100%;
-}
-
-.landing-emerald .lp-device-mock__frame {
-  position: relative;
-  z-index: 2;
-  display: block;
-  width: 100%;
-  height: auto;
-  max-width: 100%;
-  object-fit: contain;
-  object-position: center;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.landing-emerald .lp-device-mock__frame--mac {
-  width: 100%;
-  height: auto;
-  max-width: 100%;
-  object-fit: contain;
-  object-position: center;
-}
-
-.landing-emerald .lp-device-mock--phone .lp-device-mock__frame {
-  position: relative;
-  z-index: 2;
-}
-
-.landing-emerald .lp-device-mock__screen {
-  position: absolute;
-  z-index: 1;
+  aspect-ratio: 16 / 10;
+  max-height: 420px;
   overflow: hidden;
-  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  border-radius: 1rem;
+  border: 1px solid var(--bm-border);
+  background: #fff;
+  box-shadow: var(--bm-shadow-soft);
 }
 
-.landing-emerald .lp-device-mock__screen--mac {
-  z-index: 3;
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
-}
-
-.landing-emerald .lp-device-mock__screen--phone {
-  z-index: 1;
-}
-
-.landing-emerald .lp-device-mock__shadow {
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.landing-emerald .lp-device-mock__shadow--ambient {
-  bottom: -6%;
-  height: 14%;
-  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.18), transparent 72%);
-  filter: blur(14px);
-}
-
-.landing-emerald .lp-device-mock__shadow--contact {
-  bottom: -2%;
-  height: 5%;
-  left: 22%;
-  right: 22%;
-  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.28), transparent 70%);
-  filter: blur(5px);
-}
-
-.landing-emerald .lp-device-mock__reflection {
-  position: absolute;
-  left: 16%;
-  right: 16%;
-  bottom: -8%;
-  height: 8%;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(148, 163, 184, 0.14), transparent 80%);
-  filter: blur(8px);
-  opacity: 0.45;
-  transform: scaleY(-1);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.landing-emerald .lp-device-mock--mac {
-  filter: drop-shadow(0 32px 48px rgba(15, 23, 42, 0.16));
-}
-
-.landing-emerald .lp-device-mock--phone {
-  filter: drop-shadow(0 24px 36px rgba(15, 23, 42, 0.18));
-}
-
-/* Reduced motion / static */
-.landing-emerald .lp-pro-stage--static {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 1.25rem;
-  perspective: none;
-  min-height: 340px;
-  height: auto;
-  padding-bottom: 2rem;
-  overflow: visible;
-}
-
-.landing-emerald .lp-pro-stage--static .lp-pro-mac,
-.landing-emerald .lp-pro-stage--static .lp-pro-phone {
-  position: relative;
-  left: auto;
-  top: auto;
-  transform: none !important;
-}
-
-.landing-emerald .lp-pro-stage--static .lp-pro-mac {
-  width: min(72%, 520px);
-  max-width: 520px;
-}
-
-.landing-emerald .lp-pro-stage--static .lp-pro-phone {
-  width: min(26%, 148px);
-}
-
-.landing-emerald .lp-pro-stage--static .lp-pro-caption {
-  position: absolute;
-  bottom: 0;
-}
-
-@media (max-width: 639px) {
-  .landing-emerald .lp-pro-stage--static {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .landing-emerald .lp-pro-stage--static .lp-pro-mac,
-  .landing-emerald .lp-pro-stage--static .lp-pro-phone {
-    width: min(100%, 300px);
-  }
-
-  .landing-emerald .lp-pro-phone {
-    width: min(36%, 148px);
-  }
+.landing-emerald .lp-hero__panel .lp-ui-desktop {
+  height: 100%;
+  min-height: 100%;
 }
 
 /* Keep legacy device chrome used by Terrain section */
