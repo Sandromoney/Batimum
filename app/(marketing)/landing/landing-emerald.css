@@ -2417,7 +2417,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .landing-btn-secondary .landing-btn-arrow,
 .landing-emerald .batimumHero__ctaSecondary svg {
-  color: var(--landing-accent);
+  color: var(--batimum-hero-text, #111111);
 }
 
 .landing-emerald .landing-header-btn--primary .landing-btn-arrow,
