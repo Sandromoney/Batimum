@@ -16,13 +16,13 @@ const YEARLY_TOTAL = 348;
 const YEARLY_SAVINGS = 120;
 
 const PREMIUM_FEATURES = [
-  "IA devis intégrée (MUM IA)",
-  "Pilotage rentabilité",
-  "Gestion employés",
-  "Signature électronique",
-  "Relances automatiques",
-  "Devis → facture automatiquement",
-  "Clients, devis et chantiers illimités",
+  "Toutes les fonctionnalités essentielles",
+  "100 devis IA par mois",
+  "Planning des équipes",
+  "Suivi des chantiers",
+  "Facturation simplifiée",
+  "Pilotage et rentabilité",
+  "Clients, devis et chantiers",
   "Support français",
 ] as const;
 
@@ -202,20 +202,22 @@ export function LandingPricingSection() {
       : getPublicSignupHref();
 
   return (
-    <section id="plans" className="bg-[#050505] text-white">
-      <div className="mx-auto w-full max-w-7xl px-6 py-20 sm:px-8 lg:px-10">
+    <section id="plans" className="lp-section lp-section--soft">
+      <div className="lp-container">
       <LandingReveal variant="title">
         <header className="mx-auto mb-10 max-w-3xl text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+          <span className="lp-eyebrow">
+            <span className="lp-eyebrow__dot" aria-hidden="true" />
             Tarifs
-          </p>
-          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+          </span>
+          <h2 className="lp-title mt-5">
             Une seule offre.
             <br />
-            Tout ce qu&apos;il faut pour gérer une TPE du bâtiment.
+            Toutes les fonctionnalités essentielles.
           </h2>
-          <p className="mt-4 text-sm leading-7 text-[#9CA3AF] sm:text-base">
-            7 jours d&apos;essai · sans engagement · support français
+          <p className="lp-subtitle mt-5">
+            7 jours d&apos;essai · sans engagement sur l&apos;offre mensuelle ·
+            économie sur l&apos;offre annuelle
           </p>
         </header>
       </LandingReveal>
@@ -297,7 +299,7 @@ export function LandingPricingSection() {
                 href={checkoutHref}
                 className="landing-pricing-cta landing-btn-primary landing-btn-interactive group mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground no-underline shadow-glow transition-all hover:bg-primary-hover active:scale-[0.98]"
               >
-                Essayer gratuitement — 7 jours
+                Essayer gratuitement
                 <ArrowRight
                   className="landing-pricing-cta__arrow h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1"
                   aria-hidden="true"

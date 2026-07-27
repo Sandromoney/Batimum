@@ -18,11 +18,11 @@ import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 
 const BENEFITS = [
   {
-    label: "Devis IA créés en quelques minutes",
+    label: "Devis générés rapidement avec l’IA",
     Icon: Sparkles,
   },
   {
-    label: "Planning et équipes toujours synchronisés",
+    label: "Équipes et planning toujours synchronisés",
     Icon: CalendarRange,
   },
   {
@@ -120,16 +120,17 @@ export function LandingHero() {
             </span>
 
             <h1 className="batimumHero__title">
-              Votre entreprise du BTP.
+              La solution tout-en-un pour{" "}
               <span className="batimumHero__titleAccent">
-                Enfin sous contrôle.
-              </span>
+                piloter votre entreprise
+              </span>{" "}
+              du BTP.
             </h1>
 
             <p className="batimumHero__subtitle">
-              Batimum centralise vos devis, vos équipes, vos chantiers, vos
-              factures et votre rentabilité dans une seule plateforme simple et
-              intelligente.
+              Créez vos devis en quelques minutes, planifiez vos équipes,
+              suivez vos chantiers et pilotez votre rentabilité depuis le
+              bureau comme sur le terrain.
             </p>
 
             <ul className="batimumHero__benefits">

@@ -10,6 +10,9 @@ const STEPS = [
   "Envoyer sa première facture",
 ] as const;
 
+/** Premières étapes présentées comme déjà franchies pour illustrer la progression. */
+const DONE_COUNT = 3;
+
 export function LandingStepsSection() {
   return (
     <section
@@ -24,23 +27,31 @@ export function LandingStepsSection() {
               <span className="lp-eyebrow__dot" aria-hidden="true" />
               Premiers pas
             </span>
-            <h2 id="steps-title" className="lp-title mt-4 text-3xl sm:text-4xl">
-              Opérationnel en quelques étapes.
+            <h2 id="steps-title" className="lp-title mt-5">
+              Vos premiers résultats dès le premier jour.
             </h2>
-            <p className="lp-subtitle mt-3 max-w-xl">
-              Une mise en route progressive, rassurante, pour démarrer sans
-              friction et structurer votre activité dès les premiers jours.
+            <p className="lp-subtitle mt-5 max-w-xl">
+              Une mise en route progressive pour structurer votre activité sans
+              friction et obtenir des résultats concrets rapidement.
             </p>
           </LandingReveal>
 
           <LandingReveal delay={80}>
-            <ol className="lp-steps">
-              {STEPS.map((step, index) => (
-                <li key={step} className="lp-step">
-                  <span className="lp-step__index">{index + 1}</span>
-                  <span className="font-medium text-[#101828]">{step}</span>
-                </li>
-              ))}
+            <ol className="lp-checklist">
+              {STEPS.map((step, index) => {
+                const done = index < DONE_COUNT;
+                return (
+                  <li
+                    key={step}
+                    className={done ? "lp-checklist__item is-done" : "lp-checklist__item"}
+                  >
+                    <span className="lp-checklist__mark" aria-hidden="true">
+                      {done ? "✓" : index + 1}
+                    </span>
+                    <span>{step}</span>
+                  </li>
+                );
+              })}
             </ol>
           </LandingReveal>
         </div>

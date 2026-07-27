@@ -48,8 +48,7 @@ export const HERO_FEATURES: OrbitCard[] = [
     id: "facturation",
     title: "Facturation",
     subtitle: "Simple et rapide",
-    detail:
-      "Transformez vos devis en factures et suivez les paiements simplement.",
+    detail: "Transformez vos devis en factures simplement.",
     orbit: 2,
     angle: 15,
     accent: "#FDBA74",
@@ -59,7 +58,7 @@ export const HERO_FEATURES: OrbitCard[] = [
     id: "clients",
     title: "Clients centralisés",
     subtitle: "Tout au même endroit",
-    detail: "Retrouvez toutes les informations clients au même endroit.",
+    detail: "Retrouvez toutes les informations au même endroit.",
     orbit: 2,
     angle: 190,
     accent: "#FCD34D",
@@ -68,8 +67,8 @@ export const HERO_FEATURES: OrbitCard[] = [
   {
     id: "planning",
     title: "Planning des équipes",
-    subtitle: "Toujours à jour",
-    detail: "Organisez les équipes et gardez le planning toujours à jour.",
+    subtitle: "Équipes toujours organisées",
+    detail: "Organisez vos équipes en quelques clics.",
     orbit: 1,
     angle: 80,
     accent: "#C4B5FD",
@@ -79,7 +78,7 @@ export const HERO_FEATURES: OrbitCard[] = [
     id: "devis",
     title: "Devis avec IA",
     subtitle: "Créés en quelques minutes",
-    detail: "Créez des devis complets en quelques minutes grâce à l’IA.",
+    detail: "Décrivez les travaux, Batimum prépare le devis.",
     orbit: 1,
     angle: 260,
     accent: "#34D399",
@@ -88,9 +87,8 @@ export const HERO_FEATURES: OrbitCard[] = [
   {
     id: "chantiers",
     title: "Suivi des chantiers",
-    subtitle: "En temps réel",
-    detail:
-      "Suivez l’avancement, les tâches et les informations du chantier en temps réel.",
+    subtitle: "Avancement en temps réel",
+    detail: "Suivez l’avancement depuis le bureau ou le terrain.",
     orbit: 0,
     angle: 140,
     accent: "#93C5FD",
@@ -99,9 +97,8 @@ export const HERO_FEATURES: OrbitCard[] = [
   {
     id: "pilotage",
     title: "Pilotage et rentabilité",
-    subtitle: "Décisions plus claires",
-    detail:
-      "Visualisez vos marges, vos coûts et la rentabilité de chaque chantier.",
+    subtitle: "Marges et coûts sous contrôle",
+    detail: "Visualisez vos marges avant qu’il ne soit trop tard.",
     orbit: 0,
     angle: 320,
     accent: "#059669",
@@ -208,7 +205,7 @@ function OrbitingCard({
   const scale = useTransform(scrollProgress, (p) => {
     const t = focusStrength(p, card.id);
     const anyFocus = activeFeatureAt(p) !== null;
-    if (t > 0) return 1 + 0.08 * t;
+    if (t > 0) return 1 + 0.12 * t;
     if (anyFocus) return 0.98;
     return 1;
   });
@@ -216,7 +213,7 @@ function OrbitingCard({
     const t = focusStrength(p, card.id);
     const anyFocus = activeFeatureAt(p) !== null;
     if (t > 0) return 1;
-    if (anyFocus) return 0.3;
+    if (anyFocus) return 0.32;
     return 1;
   });
   const zIndex = useTransform(scrollProgress, (p) =>
@@ -329,7 +326,7 @@ export function LandingHeroOrbit({
   const sceneScale = useTransform(
     scrollProgress,
     [0, 0.12, 0.24, 0.94, 1],
-    [1, 1, 1.08, 1.05, 1],
+    [1, 1, 1.06, 1.04, 1],
   );
   const smoothScale = useSpring(sceneScale, {
     stiffness: 90,

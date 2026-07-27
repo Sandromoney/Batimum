@@ -2,10 +2,10 @@ import { Check, Mic } from "lucide-react";
 import { LandingReveal } from "@/components/landing/landing-reveal";
 
 const HIGHLIGHTS = [
-  "Moins de saisie sur le chantier",
-  "Gain de temps au quotidien",
+  "Moins de saisie",
+  "Pas besoin d’attendre le retour au bureau",
   "Devis préparé immédiatement",
-  "Utilisation simple depuis le mobile",
+  "Gain de temps après les rendez-vous",
 ] as const;
 
 export function LandingVoiceSection() {
@@ -20,22 +20,19 @@ export function LandingVoiceSection() {
           <LandingReveal>
             <span className="lp-eyebrow">
               <span className="lp-eyebrow__dot" aria-hidden="true" />
-              À venir
+              Bientôt sur mobile
             </span>
-            <h2
-              id="voice-title"
-              className="lp-title mt-4 text-3xl sm:text-4xl"
-            >
-              Créez un devis directement depuis le chantier.
+            <h2 id="voice-title" className="lp-title mt-5">
+              Dictez votre devis directement depuis le chantier.
             </h2>
-            <p className="lp-subtitle mt-3 max-w-xl">
-              L’assistant vocal Batimum permettra de dicter une demande et de
-              préparer un devis à vérifier avant envoi. Cette évolution est en
-              cours de préparation.
+            <p className="lp-subtitle mt-5 max-w-xl">
+              L’assistant vocal Batimum est en préparation. Il permettra de
+              dicter une demande sur le terrain et de préparer un devis à
+              vérifier avant envoi.
             </p>
             <ul className="lp-benefit-list">
               {HIGHLIGHTS.map((item) => (
-                <li key={item} className="lp-hero__benefit">
+                <li key={item} className="lp-benefit-item">
                   <Check
                     className="lp-check mt-0.5 h-4 w-4 shrink-0"
                     aria-hidden="true"
@@ -44,20 +41,22 @@ export function LandingVoiceSection() {
                 </li>
               ))}
             </ul>
+            <p className="lp-soon-note">Fonctionnalité en préparation.</p>
           </LandingReveal>
 
           <LandingReveal delay={120}>
             <div className="lp-voice-bubble">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#ECFDF5] px-3 py-1 text-xs font-semibold text-[#059669]">
+              <div className="lp-voice-bubble__badge">
                 <Mic className="h-3.5 w-3.5" aria-hidden="true" />
-                Exemple de commande vocale
+                Exemple de commande
               </div>
               <p className="lp-voice-quote">
-                « Fais un devis pour Monsieur Dupont. Fourniture et pose de
+                « Fais un devis pour Monsieur Dupont : fourniture et pose de
                 25 m² de carrelage. »
               </p>
               <div className="lp-voice-reply">
-                Le devis est prêt à être vérifié et envoyé.
+                Le devis a été préparé. Il ne reste plus qu’à le vérifier et
+                l’envoyer.
               </div>
             </div>
           </LandingReveal>

@@ -43,7 +43,7 @@ const FONCTIONNALITES_MENU: LandingNavMenu = {
   items: [
     {
       label: "Devis",
-      href: "/landing#fonctionnalites",
+      href: "/landing#devis-ia",
       description: "Devis clairs, structurés par lots.",
       icon: FileText,
     },
@@ -55,7 +55,7 @@ const FONCTIONNALITES_MENU: LandingNavMenu = {
     },
     {
       label: "Suivi des chantiers",
-      href: "/landing#pour-les-equipes",
+      href: "/landing#bureau-terrain",
       description: "Étapes, photos, documents et avancement.",
       icon: FolderKanban,
     },
@@ -67,7 +67,7 @@ const FONCTIONNALITES_MENU: LandingNavMenu = {
     },
     {
       label: "Pilotage et rentabilité",
-      href: "/landing#fonctionnalites",
+      href: "/landing#rentabilite",
       description: "Marge par devis et par chantier.",
       icon: BarChart3,
     },
@@ -88,7 +88,7 @@ const EQUIPES_MENU: LandingNavMenu = {
   items: [
     {
       label: "Espace terrain",
-      href: "/landing#pour-les-equipes",
+      href: "/landing#bureau-terrain",
       description: "Planning, adresse, photos et étapes sur mobile.",
       icon: Users,
     },
@@ -113,7 +113,7 @@ const RESSOURCES_MENU: LandingNavMenu = {
     },
     {
       label: "Évolutions",
-      href: "/landing#evolutions",
+      href: "/landing#sms",
       description: "Disponible, bientôt et à venir.",
       icon: Sparkles,
     },

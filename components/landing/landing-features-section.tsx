@@ -10,35 +10,40 @@ import { LandingReveal } from "@/components/landing/landing-reveal";
 
 const FEATURES = [
   {
-    title: "Devis",
-    text: "Créez des devis clairs, structurés par lots et envoyez-les directement à vos clients.",
+    title: "Devis avec IA",
+    text: "Créez des devis structurés plus rapidement.",
     icon: FileText,
-    lots: ["Lot plomberie", "Lot électricité", "Lot peinture", "Lot maçonnerie"],
+    accent: "#34D399",
   },
   {
     title: "Planning des équipes",
-    text: "Planifiez les interventions et attribuez chaque chantier aux bons collaborateurs.",
+    text: "Gardez chaque équipe au bon endroit, au bon moment.",
     icon: CalendarDays,
+    accent: "#C4B5FD",
   },
   {
     title: "Suivi des chantiers",
-    text: "Suivez les étapes, les photos, les documents et l’avancement de chaque chantier.",
+    text: "Retrouvez les étapes, documents et informations essentielles.",
     icon: FolderKanban,
+    accent: "#93C5FD",
   },
   {
-    title: "Facturation",
-    text: "Transformez vos devis en factures et gardez une vue claire sur vos paiements.",
+    title: "Facturation simplifiée",
+    text: "Transformez vos devis et suivez vos paiements.",
     icon: Receipt,
+    accent: "#FDBA74",
   },
   {
     title: "Gestion client",
-    text: "Centralisez les coordonnées, les documents, les devis et l’historique de vos clients.",
+    text: "Centralisez les coordonnées, documents et échanges.",
     icon: Users,
+    accent: "#FCD34D",
   },
   {
     title: "Pilotage et rentabilité",
-    text: "Comparez le prévu au réel et suivez les marges par devis et par chantier.",
+    text: "Comparez le prévu au réel et surveillez vos marges.",
     icon: BarChart3,
+    accent: "#059669",
   },
 ] as const;
 
@@ -46,47 +51,40 @@ export function LandingFeaturesSection() {
   return (
     <section
       id="fonctionnalites"
-      className="lp-section lp-section--soft"
+      className="lp-section"
       aria-labelledby="features-title"
     >
       <div className="lp-container">
         <LandingReveal>
-          <span className="lp-eyebrow">
-            <span className="lp-eyebrow__dot" aria-hidden="true" />
-            Fonctionnalités
-          </span>
-          <h2
-            id="features-title"
-            className="lp-title mt-4 max-w-2xl text-3xl sm:text-4xl"
-          >
-            Tout ce qu’il vous faut pour gérer votre entreprise.
-          </h2>
-          <p className="lp-subtitle mt-3 max-w-2xl">
-            Un outil unique pour le bureau et le terrain, pensé pour les TPE et
-            PME du bâtiment.
-          </p>
+          <div className="lp-section-head">
+            <span className="lp-eyebrow">
+              <span className="lp-eyebrow__dot" aria-hidden="true" />
+              Fonctionnalités principales
+            </span>
+            <h2 id="features-title" className="lp-title mt-5 max-w-3xl">
+              Un outil de pilotage pensé pour les dirigeants du BTP.
+            </h2>
+            <p className="lp-subtitle mt-5 max-w-2xl">
+              Devis, équipes, chantiers, facturation et rentabilité : tout est
+              réuni pour simplifier votre quotidien.
+            </p>
+          </div>
         </LandingReveal>
 
-        <div className="lp-feature-grid mt-10">
+        <div className="lp-feature-grid mt-12">
           {FEATURES.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <LandingReveal key={feature.title} delay={index * 60}>
                 <article className="lp-feature">
-                  <div className="lp-feature__icon">
-                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  <div
+                    className="lp-feature__icon"
+                    style={{ color: feature.accent }}
+                  >
+                    <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <h3 className="lp-feature__title">{feature.title}</h3>
                   <p className="lp-feature__text">{feature.text}</p>
-                  {"lots" in feature && feature.lots ? (
-                    <div className="lp-lots">
-                      {feature.lots.map((lot) => (
-                        <span key={lot} className="lp-lot">
-                          {lot}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
                 </article>
               </LandingReveal>
             );

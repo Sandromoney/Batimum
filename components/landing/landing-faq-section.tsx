@@ -31,7 +31,7 @@ export function LandingFaqSection({
       id="faq"
       className={cn(
         "lp-section",
-        isLight ? "lp-section--soft text-[#101828]" : "bg-[#101828] text-white",
+        isLight ? "text-[#0F172A]" : "bg-[#111827] text-white",
       )}
     >
       <div className="lp-container">
