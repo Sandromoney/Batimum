@@ -179,8 +179,8 @@ const BASE_SCENE = 840;
 const NUT_SIZE_RATIO = 0.8;
 const NUT_VERTEX_SVG = 188 / 200;
 const SYSTEM_DURATION = 82;
-const MICRO_CYCLE_MS = 10000;
-const MICRO_VISIBLE_MS = 1500;
+const MICRO_CYCLE_MS = 3000;
+const MICRO_VISIBLE_MS = 1600;
 const FEATURE_IDS: HeroFeatureId[] = [
   "devis",
   "planning",
@@ -418,23 +418,23 @@ function HeroNutSvg() {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <polygon points={outer} fill="rgba(17,17,17,0.012)" stroke="none" />
+      <polygon points={outer} fill="rgba(17,17,17,0.018)" stroke="none" />
       <polygon
         points={outer}
-        stroke="rgba(17,17,17,0.11)"
-        strokeWidth="1.5"
+        stroke="rgba(17,17,17,0.16)"
+        strokeWidth="1.85"
         strokeLinejoin="round"
       />
       <polygon
         points={mid}
-        stroke="rgba(17,17,17,0.045)"
-        strokeWidth="1"
+        stroke="rgba(17,17,17,0.08)"
+        strokeWidth="1.25"
         strokeLinejoin="round"
       />
       <polygon
         points={inner}
-        stroke="rgba(17,17,17,0.035)"
-        strokeWidth="0.85"
+        stroke="rgba(17,17,17,0.045)"
+        strokeWidth="0.95"
         strokeLinejoin="round"
       />
       {Array.from({ length: 6 }, (_, i) => {
@@ -450,18 +450,18 @@ function HeroNutSvg() {
             points={`200,200 ${x0},${y0} ${x1},${y1}`}
             fill={
               i % 2 === 0
-                ? "rgba(17,17,17,0.01)"
-                : "rgba(59,130,246,0.014)"
+                ? "rgba(17,17,17,0.012)"
+                : "rgba(59,130,246,0.018)"
             }
             stroke="none"
           />
         );
       })}
-      <circle cx="200" cy="200" r="108" stroke="rgba(17,17,17,0.035)" strokeWidth="0.9" />
-      <circle cx="200" cy="200" r="92" stroke="rgba(59,130,246,0.08)" strokeWidth="1" />
-      <circle cx="200" cy="200" r="76" stroke="rgba(17,17,17,0.04)" strokeWidth="0.85" />
-      <circle cx="200" cy="200" r="54" stroke="rgba(17,17,17,0.1)" strokeWidth="1.35" />
-      <circle cx="200" cy="200" r="46" stroke="rgba(17,17,17,0.04)" strokeWidth="0.85" />
+      <circle cx="200" cy="200" r="108" stroke="rgba(17,17,17,0.045)" strokeWidth="1" />
+      <circle cx="200" cy="200" r="92" stroke="rgba(59,130,246,0.10)" strokeWidth="1.2" />
+      <circle cx="200" cy="200" r="76" stroke="rgba(17,17,17,0.05)" strokeWidth="0.95" />
+      <circle cx="200" cy="200" r="54" stroke="rgba(17,17,17,0.16)" strokeWidth="1.6" />
+      <circle cx="200" cy="200" r="46" stroke="rgba(17,17,17,0.05)" strokeWidth="0.95" />
       {Array.from({ length: 6 }, (_, i) => {
         const a = (Math.PI / 180) * (i * 60);
         return (
@@ -473,10 +473,10 @@ function HeroNutSvg() {
             y2={200 + Math.sin(a) * 158}
             stroke={
               i % 2 === 0
-                ? "rgba(59,130,246,0.08)"
-                : "rgba(17,17,17,0.04)"
+                ? "rgba(59,130,246,0.12)"
+                : "rgba(17,17,17,0.055)"
             }
-            strokeWidth="0.9"
+            strokeWidth="1"
             strokeLinecap="round"
           />
         );
@@ -488,16 +488,16 @@ function HeroNutSvg() {
             <circle
               cx={200 + Math.cos(a) * 188}
               cy={200 + Math.sin(a) * 188}
-              r="2.2"
-              fill="rgba(17,17,17,0.09)"
+              r="2.75"
+              fill="rgba(59,130,246,0.16)"
             />
             <line
-              x1={200 + Math.cos(a) * 178}
-              y1={200 + Math.sin(a) * 178}
+              x1={200 + Math.cos(a) * 176}
+              y1={200 + Math.sin(a) * 176}
               x2={200 + Math.cos(a) * 188}
               y2={200 + Math.sin(a) * 188}
-              stroke="rgba(17,17,17,0.08)"
-              strokeWidth="1.1"
+              stroke="rgba(17,17,17,0.1)"
+              strokeWidth="1.2"
               strokeLinecap="round"
             />
           </g>
@@ -739,10 +739,11 @@ function FeatureVertexCard({
     >
       <span
         className={`batimumHero__featureCard batimumHero__bubble${isActive ? " is-active" : ""}`}
+        data-active={isActive ? "true" : "false"}
         style={{ "--card-accent": feature.accent } as CSSProperties}
       >
         <span className="batimumHero__bubbleIcon" aria-hidden>
-          <Icon size={17} strokeWidth={1.75} />
+          <Icon size={18} strokeWidth={1.75} />
         </span>
         <span className="batimumHero__bubbleCopy">
           <span className="batimumHero__bubbleTitle">{feature.title}</span>
@@ -833,7 +834,7 @@ export function LandingHeroOrbit({
 
   useEffect(() => setMounted(true), []);
 
-  // Une micro-animation à la fois, cycle 10s — pause si interaction active
+  // Une micro-animation à la fois (~3s), cycle ~18s — pause si carte survolée / active
   useEffect(() => {
     if (reduced || !mounted) return;
     let index = 0;

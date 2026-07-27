@@ -30,21 +30,21 @@ const JOURNEY_STEPS = [
   },
   {
     id: "chantier",
-    short: "Chantier",
+    short: "Création du chantier",
     label: "Le chantier est créé",
     detail: "Le devis accepté devient le fil conducteur du chantier.",
     Icon: HardHat,
   },
   {
     id: "planning",
-    short: "Planning",
+    short: "Planning de l’équipe",
     label: "L’équipe est planifiée",
     detail: "Chacun sait où aller — sans appels en chaîne.",
     Icon: Calendar,
   },
   {
     id: "suivi",
-    short: "Suivi terrain",
+    short: "Suivi sur le terrain",
     label: "Le chantier est suivi",
     detail: "Étapes, consignes et documents au même endroit.",
     Icon: Users,
@@ -58,7 +58,7 @@ const JOURNEY_STEPS = [
   },
   {
     id: "marge",
-    short: "Pilotage",
+    short: "Pilotage de la rentabilité",
     label: "La rentabilité est visible",
     detail: "Le dirigeant garde le contrôle avant qu’il ne soit trop tard.",
     Icon: LineChart,

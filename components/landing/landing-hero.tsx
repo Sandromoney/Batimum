@@ -90,11 +90,14 @@ export function LandingHero() {
             </span>
 
             <h1 className="batimumHero__title">
-              {heroContent.titleBefore}
-              <span className="batimumHero__highlight">
-                {heroContent.titleHighlight}
+              <span>La solution</span>
+              <span>
+                <span className="batimumHero__highlightWord">tout-en-un</span>{" "}
+                pour
               </span>
-              {heroContent.titleAfter}
+              <span>piloter votre</span>
+              <span>entreprise du</span>
+              <span>BTP.</span>
             </h1>
 
             <p className="batimumHero__subtitle">{heroContent.subtitle}</p>

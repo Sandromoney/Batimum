@@ -351,56 +351,78 @@ html:has(.landing-emerald) body {
   line-height: 1.02;
 }
 
+
+.landing-emerald .batimumHero__title > span {
+  display: block;
+}
+
 .landing-emerald .batimumHero__titleAccent {
   display: inline;
   color: var(--batimum-hero-black);
 }
 
-/* Soulignement unique — pas de fond / pas de rectangles */
-.landing-emerald .batimumHero__highlight {
+/* Surlignage UNIQUEMENT sur le mot — pas sur le parent */
+.landing-emerald .batimumHero__highlightWord {
   position: relative;
-  display: inline;
-  color: #111111;
-  background: none;
+  display: inline-block;
+  isolation: isolate;
+  color: #111111 !important;
   white-space: nowrap;
+  background: none !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
 }
 
-.landing-emerald .batimumHero__highlight::after {
+.landing-emerald .batimumHero__highlightWord::before {
+  content: "";
+  position: absolute;
+  left: -0.05em;
+  right: -0.05em;
+  bottom: 0.08em;
+  height: 0.28em;
+  background: rgba(59, 130, 246, 0.16);
+  border-radius: 999px;
+  transform: rotate(-1deg) scaleX(0);
+  transform-origin: left center;
+  z-index: -1;
+  animation: batimumHero-hl-fill 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards;
+  pointer-events: none;
+}
+
+.landing-emerald .batimumHero__highlightWord::after {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -0.08em;
+  bottom: -0.04em;
   height: 3px;
-  border-radius: 999px;
   background: #3b82f6;
-  opacity: 0.85;
+  border-radius: 999px;
   transform: scaleX(0);
   transform-origin: left center;
-  animation: batimumHero-mark-draw 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.3s
-    forwards;
+  z-index: -1;
+  animation: batimumHero-hl-line 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards;
   pointer-events: none;
 }
 
-@keyframes batimumHero-mark-draw {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
+@keyframes batimumHero-hl-fill {
+  from { transform: rotate(-1deg) scaleX(0); }
+  to { transform: rotate(-1deg) scaleX(1); }
+}
+
+@keyframes batimumHero-hl-line {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-emerald .batimumHero__highlight::after {
+  .landing-emerald .batimumHero__highlightWord::before,
+  .landing-emerald .batimumHero__highlightWord::after {
     animation: none;
-    transform: scaleX(1);
+    transform: rotate(-1deg) scaleX(1);
   }
-}
-
-@media (max-width: 640px) {
-  .landing-emerald .batimumHero__highlight {
-    white-space: normal;
+  .landing-emerald .batimumHero__highlightWord::after {
+    transform: scaleX(1);
   }
 }
 
@@ -829,7 +851,7 @@ html:has(.landing-emerald) body {
   transform-origin: center center;
   border-radius: 0;
   pointer-events: none;
-  filter: drop-shadow(0 18px 42px rgba(17, 17, 17, 0.025));
+  filter: drop-shadow(0 18px 36px rgba(17, 17, 17, 0.035));
 }
 
 .landing-emerald .batimumHero__nutSvg {
@@ -872,7 +894,7 @@ html:has(.landing-emerald) body {
   border-radius: 0;
   box-shadow: 0 12px 28px rgba(17, 17, 17, 0.12);
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  -webkit-backdrop-filter: drop-shadow(0 18px 36px rgba(17, 17, 17, 0.035));
 }
 
 .landing-emerald .batimumHero__logoSymbol--breathe {
@@ -926,6 +948,7 @@ html:has(.landing-emerald) body {
   display: none;
 }
 
+
 .landing-emerald .batimumHero__featureAnchor,
 .landing-emerald .batimumHero__nutVertex,
 .landing-emerald .batimumHero__bubbleWrap {
@@ -933,51 +956,46 @@ html:has(.landing-emerald) body {
   left: 50%;
   top: 50%;
   z-index: 10;
-  width: 158px;
-  flex: 0 0 158px;
-  min-height: 62px;
-  max-height: 72px;
+  width: 164px;
+  flex: 0 0 164px;
+  min-height: 64px;
   will-change: transform, opacity;
   pointer-events: auto;
-}
-
-.landing-emerald .batimumHero__bubbleWrap--live .batimumHero__bubble,
-.landing-emerald .batimumHero__featureAnchor:hover .batimumHero__featureCard {
-  border-color: rgba(59, 130, 246, 0.22);
-  box-shadow:
-    0 18px 42px rgba(17, 17, 17, 0.085),
-    0 0 0 3px rgba(59, 130, 246, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
 .landing-emerald .batimumHero__featureCard,
 .landing-emerald .batimumHero__bubble {
   position: relative;
+  width: 164px;
+  min-height: 64px;
+  max-height: none;
+  padding: 11px 14px;
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  width: 158px;
-  flex: 0 0 158px;
-  min-height: 62px;
-  max-height: 72px;
-  padding: 11px 13px;
+  gap: 10px;
+  flex: 0 0 164px;
   box-sizing: border-box;
-  border-radius: 22px;
-  border: 1px solid rgba(17, 17, 17, 0.055);
   outline: none;
   overflow: visible;
-  background: rgba(255, 255, 255, 0.86);
-  color: var(--batimum-hero-black);
+
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(248, 250, 252, 0.88)
+  );
+  border: 1px solid rgba(17, 17, 17, 0.07);
+  border-radius: 22px;
   box-shadow:
-    0 14px 34px rgba(17, 17, 17, 0.065),
-    0 4px 10px rgba(17, 17, 17, 0.025),
+    0 18px 38px rgba(17, 17, 17, 0.075),
+    0 4px 12px rgba(17, 17, 17, 0.03),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  color: #111111;
   transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    border-color 180ms ease;
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
 }
 
 .landing-emerald .batimumHero__featureButton {
@@ -1000,14 +1018,17 @@ html:has(.landing-emerald) body {
   outline-offset: 3px;
 }
 
+.landing-emerald .batimumHero__featureCard:hover,
 .landing-emerald .batimumHero__featureCard.is-active,
-.landing-emerald .batimumHero__featureButton.is-active .batimumHero__featureCard {
-  transform: translateY(-2px);
-  border-color: rgba(59, 130, 246, 0.22);
+.landing-emerald .batimumHero__featureCard[data-active="true"],
+.landing-emerald .batimumHero__featureButton.is-active .batimumHero__featureCard,
+.landing-emerald .batimumHero__featureAnchor:hover .batimumHero__featureCard {
+  transform: translateY(-3px) scale(1.035);
+  border-color: rgba(59, 130, 246, 0.28);
   box-shadow:
-    0 18px 42px rgba(17, 17, 17, 0.085),
-    0 0 0 3px rgba(59, 130, 246, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    0 22px 48px rgba(17, 17, 17, 0.1),
+    0 0 0 4px rgba(59, 130, 246, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.98);
 }
 
 .landing-emerald .batimumHero__featurePanelClose {
@@ -1146,33 +1167,18 @@ html:has(.landing-emerald) body {
 }
 
 
-.landing-emerald .batimumHero__featureAnchor:hover .batimumHero__featureCard,
-.landing-emerald .batimumHero__bubbleWrap:hover .batimumHero__bubble {
-  transform: translateY(-2px);
-  border-color: rgba(59, 130, 246, 0.22);
-  box-shadow:
-    0 18px 42px rgba(17, 17, 17, 0.085),
-    0 0 0 3px rgba(59, 130, 246, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
-}
 
 .landing-emerald .batimumHero__bubbleIcon {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  background: rgba(59, 130, 246, 0.05);
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
   color: #3b82f6;
-  border: none;
 }
 
 .landing-emerald .batimumHero__featureButton.is-active .batimumHero__bubbleIcon,
 .landing-emerald .batimumHero__featureAnchor:hover .batimumHero__bubbleIcon,
 .landing-emerald .batimumHero__bubbleWrap:hover .batimumHero__bubbleIcon {
   color: #2563eb;
-  background: rgba(59, 130, 246, 0.08);
 }
 
 .landing-emerald .batimumHero__bubbleCopy {
@@ -1184,30 +1190,34 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .batimumHero__bubbleTitle {
-  color: #111111;
-  font-size: 13.5px;
-  font-weight: 680;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  max-height: calc(1.15em * 2);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  opacity: 1;
+  margin: 0;
+  color: #111111 !important;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  -webkit-box-orient: unset;
 }
 
 .landing-emerald .batimumHero__bubbleSub {
-  color: #111111;
-  font-size: 11.5px;
-  font-weight: 520;
-  line-height: 1.2;
-  max-height: calc(1.2em * 2);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  opacity: 1;
+  margin: 3px 0 0;
+  color: #111111 !important;
+  font-size: 11px;
+  font-weight: 550;
+  line-height: 1.18;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  -webkit-box-orient: unset;
 }
 
 /* Micro-animations — badge flottant visible */
@@ -1458,8 +1468,8 @@ html:has(.landing-emerald) body {
   .landing-emerald .batimumHero__bubbleWrap,
   .landing-emerald .batimumHero__featureCard,
   .landing-emerald .batimumHero__bubble {
-    width: 158px;
-    flex-basis: 158px;
+    width: 164px;
+    flex-basis: 164px;
   }
 
   .landing-emerald .batimumHero__logoSymbol {
@@ -1482,8 +1492,8 @@ html:has(.landing-emerald) body {
   .landing-emerald .batimumHero__bubbleWrap,
   .landing-emerald .batimumHero__featureCard,
   .landing-emerald .batimumHero__bubble {
-    width: 150px;
-    flex-basis: 150px;
+    width: 164px;
+    flex-basis: 164px;
   }
 
   .landing-emerald .batimumHero__nut {
@@ -1510,8 +1520,8 @@ html:has(.landing-emerald) body {
   .landing-emerald .batimumHero__bubbleWrap,
   .landing-emerald .batimumHero__featureCard,
   .landing-emerald .batimumHero__bubble {
-    width: 146px;
-    flex-basis: 146px;
+    width: 164px;
+    flex-basis: 164px;
   }
 
   .landing-emerald .batimumHero__nut {
@@ -1577,16 +1587,14 @@ html:has(.landing-emerald) body {
   }
 
   .landing-emerald .batimumHero__bubbleWrap,
-  .landing-emerald .batimumHero__bubble {
-    width: 150px;
-    flex-basis: 150px;
-  }
-
+  .landing-emerald .batimumHero__bubble,
   .landing-emerald .batimumHero__featureAnchor,
   .landing-emerald .batimumHero__nutVertex,
   .landing-emerald .batimumHero__featureCard {
-    width: 150px;
-    flex-basis: 150px;
+    width: 154px;
+    flex-basis: 154px;
+    min-height: 64px;
+    border-radius: 22px;
   }
 
   .landing-emerald .batimumHero__nut {
