@@ -498,8 +498,9 @@ export function LandingHeroOrbit({
     mass: 0.8,
   });
 
-  const discDim = useTransform(scrollProgress, (p) =>
-    activeFeatureAt(p) ? 1 : 0,
+  const discDim = useTransform(
+    scrollProgress,
+    (p): number => (activeFeatureAt(p) ? 1 : 0),
   );
 
   const staticMode = !mounted || reduced || !enableOrbit;
