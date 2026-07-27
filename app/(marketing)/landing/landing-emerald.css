@@ -213,13 +213,14 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .batimumHero__inner {
   width: 100%;
-  max-width: 1680px;
-  margin-inline: auto;
+  max-width: none;
+  margin-inline: 0;
   min-height: calc(100svh - 84px);
-  padding-inline: clamp(28px, 5vw, 88px);
+  padding-left: 7vw;
+  padding-right: clamp(16px, 3vw, 48px);
   display: grid;
-  grid-template-columns: minmax(480px, 0.92fr) minmax(700px, 1.08fr);
-  gap: clamp(48px, 6vw, 110px);
+  grid-template-columns: minmax(0, 0.45fr) minmax(0, 0.55fr);
+  gap: clamp(32px, 4vw, 72px);
   align-items: center;
   box-sizing: border-box;
   border: none;
@@ -355,6 +356,7 @@ html:has(.landing-emerald) body {
   position: relative;
   z-index: 1;
   width: 100%;
+  max-width: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -423,6 +425,7 @@ html:has(.landing-emerald) body {
 /* ——— Hero orbit ——— */
 .landing-emerald .batimumHero__orbitRoot {
   width: 100%;
+  max-width: none;
   display: flex;
   justify-content: center;
   overflow: visible;
@@ -430,8 +433,9 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .batimumHero__orbit {
   position: relative;
-  width: min(900px, 100%);
+  width: min(100%, 50vw);
   min-width: 0;
+  max-width: none;
   aspect-ratio: 1 / 1;
   margin-inline: auto;
   display: grid;
@@ -638,7 +642,7 @@ html:has(.landing-emerald) body {
 
 @media (max-width: 1279px) {
   .landing-emerald .batimumHero__orbit {
-    width: min(720px, 100%);
+    width: min(100%, 48vw);
   }
 
   .landing-emerald .batimumHero__bubbleWrap {
@@ -664,7 +668,8 @@ html:has(.landing-emerald) body {
     gap: 2.5rem;
     min-height: 0;
     padding-block: 40px 48px;
-    padding-inline: clamp(20px, 4vw, 40px);
+    padding-left: clamp(20px, 5vw, 40px);
+    padding-right: clamp(20px, 5vw, 40px);
   }
 
   .landing-emerald .batimumHero__copy {
@@ -692,7 +697,7 @@ html:has(.landing-emerald) body {
   }
 
   .landing-emerald .batimumHero__orbit {
-    width: min(600px, calc(100vw - 40px));
+    width: min(92vw, 640px);
   }
 
   .landing-emerald .batimumHero__scrollCue {
@@ -702,7 +707,8 @@ html:has(.landing-emerald) body {
 
 @media (max-width: 639px) {
   .landing-emerald .batimumHero__inner {
-    padding-inline: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
     padding-block: 28px 36px;
   }
 
