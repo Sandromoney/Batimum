@@ -176,9 +176,19 @@ export const FOCUS_RANGES: {
 ];
 
 const BASE_SCENE = 840;
-const NUT_SIZE_RATIO = 0.78;
+const NUT_SIZE_RATIO = 0.8;
 const NUT_VERTEX_SVG = 188 / 200;
 const SYSTEM_DURATION = 82;
+const MICRO_CYCLE_MS = 10000;
+const MICRO_VISIBLE_MS = 1500;
+const FEATURE_IDS: HeroFeatureId[] = [
+  "devis",
+  "planning",
+  "chantiers",
+  "facturation",
+  "clients",
+  "pilotage",
+];
 
 export const HERO_BM_SYMBOL_SRC = "/logo-batimum.png";
 const BM_SYMBOL_SRC_W = 829;
@@ -186,7 +196,9 @@ const BM_SYMBOL_MARK_W = 224;
 const BM_SYMBOL_SRC_H = 210;
 
 function vertexRadiusForScene(sceneSize: number) {
-  return sceneSize * NUT_SIZE_RATIO * 0.5 * NUT_VERTEX_SVG;
+  // Grand desktop ~840 → ~316px ; desktop ~740 → ~278px
+  const raw = sceneSize * NUT_SIZE_RATIO * 0.5 * NUT_VERTEX_SVG;
+  return Math.min(330, Math.max(250, raw));
 }
 
 function useSceneSize(ref: RefObject<HTMLDivElement | null>) {
@@ -391,7 +403,7 @@ function computePopoverPosition(args: {
 }
 
 /**
- * Écrou hexagonal flat-top — version sobre (commit 3c5a0f2).
+ * Écrou hexagonal flat-top — fin, géométrique, légèrement plus lisible.
  */
 function HeroNutSvg() {
   const outer = hexPoints(200, 200, 188);
@@ -404,35 +416,27 @@ function HeroNutSvg() {
       viewBox="0 0 400 400"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
-      {/* Ombre de forme très légère */}
+      <polygon points={outer} fill="rgba(17,17,17,0.012)" stroke="none" />
       <polygon
         points={outer}
-        fill="rgba(17,17,17,0.015)"
-        stroke="none"
-      />
-      {/* Contour hexagonal principal */}
-      <polygon
-        points={outer}
-        stroke="rgba(17,17,17,0.10)"
-        strokeWidth="1.45"
+        stroke="rgba(17,17,17,0.11)"
+        strokeWidth="1.5"
         strokeLinejoin="round"
       />
-      {/* Deuxième contour */}
       <polygon
         points={mid}
-        stroke="rgba(17,17,17,0.055)"
-        strokeWidth="1.05"
+        stroke="rgba(17,17,17,0.045)"
+        strokeWidth="1"
         strokeLinejoin="round"
       />
-      {/* Pans internes subtils */}
       <polygon
         points={inner}
         stroke="rgba(17,17,17,0.035)"
-        strokeWidth="0.9"
+        strokeWidth="0.85"
         strokeLinejoin="round"
       />
-      {/* Différence d’opacité très légère entre pans (fill triangulaire) */}
       {Array.from({ length: 6 }, (_, i) => {
         const a0 = (Math.PI / 180) * (i * 60);
         const a1 = (Math.PI / 180) * ((i + 1) * 60);
@@ -446,51 +450,18 @@ function HeroNutSvg() {
             points={`200,200 ${x0},${y0} ${x1},${y1}`}
             fill={
               i % 2 === 0
-                ? "rgba(17,17,17,0.012)"
-                : "rgba(59,130,246,0.018)"
+                ? "rgba(17,17,17,0.01)"
+                : "rgba(59,130,246,0.014)"
             }
             stroke="none"
           />
         );
       })}
-      {/* Anneaux techniques */}
-      <circle
-        cx="200"
-        cy="200"
-        r="112"
-        stroke="rgba(17,17,17,0.04)"
-        strokeWidth="1"
-      />
-      <circle
-        cx="200"
-        cy="200"
-        r="94"
-        stroke="rgba(59,130,246,0.10)"
-        strokeWidth="1.05"
-      />
-      <circle
-        cx="200"
-        cy="200"
-        r="78"
-        stroke="rgba(17,17,17,0.045)"
-        strokeWidth="0.95"
-      />
-      {/* Trou central */}
-      <circle
-        cx="200"
-        cy="200"
-        r="54"
-        stroke="rgba(17,17,17,0.09)"
-        strokeWidth="1.35"
-      />
-      <circle
-        cx="200"
-        cy="200"
-        r="46"
-        stroke="rgba(17,17,17,0.04)"
-        strokeWidth="0.9"
-      />
-      {/* Lignes radiales vers sommets */}
+      <circle cx="200" cy="200" r="108" stroke="rgba(17,17,17,0.035)" strokeWidth="0.9" />
+      <circle cx="200" cy="200" r="92" stroke="rgba(59,130,246,0.08)" strokeWidth="1" />
+      <circle cx="200" cy="200" r="76" stroke="rgba(17,17,17,0.04)" strokeWidth="0.85" />
+      <circle cx="200" cy="200" r="54" stroke="rgba(17,17,17,0.1)" strokeWidth="1.35" />
+      <circle cx="200" cy="200" r="46" stroke="rgba(17,17,17,0.04)" strokeWidth="0.85" />
       {Array.from({ length: 6 }, (_, i) => {
         const a = (Math.PI / 180) * (i * 60);
         return (
@@ -502,15 +473,14 @@ function HeroNutSvg() {
             y2={200 + Math.sin(a) * 158}
             stroke={
               i % 2 === 0
-                ? "rgba(59,130,246,0.10)"
-                : "rgba(17,17,17,0.045)"
+                ? "rgba(59,130,246,0.08)"
+                : "rgba(17,17,17,0.04)"
             }
-            strokeWidth="0.95"
+            strokeWidth="0.9"
             strokeLinecap="round"
           />
         );
       })}
-      {/* Repères aux 6 sommets */}
       {Array.from({ length: 6 }, (_, i) => {
         const a = (Math.PI / 180) * (i * 60);
         return (
@@ -518,8 +488,8 @@ function HeroNutSvg() {
             <circle
               cx={200 + Math.cos(a) * 188}
               cy={200 + Math.sin(a) * 188}
-              r="2.4"
-              fill="rgba(17,17,17,0.08)"
+              r="2.2"
+              fill="rgba(17,17,17,0.09)"
             />
             <line
               x1={200 + Math.cos(a) * 178}
@@ -527,31 +497,16 @@ function HeroNutSvg() {
               x2={200 + Math.cos(a) * 188}
               y2={200 + Math.sin(a) * 188}
               stroke="rgba(17,17,17,0.08)"
-              strokeWidth="1.2"
+              strokeWidth="1.1"
               strokeLinecap="round"
             />
           </g>
         );
       })}
-      {/* Trait supérieur / inférieur (volume discret) */}
-      <path
-        d={`M ${200 + Math.cos(0) * 188} ${200 + Math.sin(0) * 188}
-            L ${200 + Math.cos(Math.PI / 3) * 188} ${200 + Math.sin(Math.PI / 3) * 188}`}
-        stroke="rgba(255,255,255,0.55)"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-        opacity="0.5"
-      />
-      <path
-        d={`M ${200 + Math.cos(Math.PI) * 188} ${200 + Math.sin(Math.PI) * 188}
-            L ${200 + Math.cos((4 * Math.PI) / 3) * 188} ${200 + Math.sin((4 * Math.PI) / 3) * 188}`}
-        stroke="rgba(17,17,17,0.06)"
-        strokeWidth="1.15"
-        strokeLinecap="round"
-      />
     </svg>
   );
 }
+
 
 function FeaturePanel({
   feature,
@@ -666,6 +621,7 @@ function FeatureVertexCard({
   isActive,
   isDimmed,
   pinned,
+  microLive,
   onActivate,
   onHoverStart,
   onHoverEnd,
@@ -680,6 +636,7 @@ function FeatureVertexCard({
   isActive: boolean;
   isDimmed: boolean;
   pinned: boolean;
+  microLive: boolean;
   onActivate: () => void;
   onHoverStart: () => void;
   onHoverEnd: () => void;
@@ -705,41 +662,60 @@ function FeatureVertexCard({
     return 1;
   });
 
-  const scale = isActive ? 1.025 : undefined;
+  const scale = isActive ? 1.035 : undefined;
   const opacity = isActive ? 1 : isDimmed ? 0.4 : undefined;
 
   const microHint =
     feature.id === "devis" ? (
-      <span className="batimumHero__microHint batimumHero__microHint--devis" aria-hidden>
+      <span
+        className={`batimumHero__microHint batimumHero__microHint--devis${microLive ? " is-live" : ""}`}
+        aria-hidden
+      >
         <span className="batimumHero__microCheck" />
         Devis prêt
       </span>
     ) : feature.id === "planning" ? (
-      <span className="batimumHero__microHint batimumHero__microHint--planning" aria-hidden>
+      <span
+        className={`batimumHero__microHint batimumHero__microHint--planning${microLive ? " is-live" : ""}`}
+        aria-hidden
+      >
         <span className="batimumHero__microSwap">
-          <span>À planifier</span>
+          <span>À placer</span>
           <span>Planifié</span>
         </span>
       </span>
     ) : feature.id === "chantiers" ? (
-      <span className="batimumHero__microHint batimumHero__microHint--chantiers" aria-hidden>
+      <span
+        className={`batimumHero__microHint batimumHero__microHint--chantiers${microLive ? " is-live" : ""}`}
+        aria-hidden
+      >
         <span className="batimumHero__microBar">
           <span className="batimumHero__microBarFill" />
         </span>
       </span>
     ) : feature.id === "facturation" ? (
-      <span className="batimumHero__microHint batimumHero__microHint--facturation" aria-hidden>
+      <span
+        className={`batimumHero__microHint batimumHero__microHint--facturation${microLive ? " is-live" : ""}`}
+        aria-hidden
+      >
         <span className="batimumHero__microSwap">
           <span>À préparer</span>
           <span>Prête</span>
         </span>
       </span>
     ) : feature.id === "clients" ? (
-      <span className="batimumHero__microHint batimumHero__microHint--clients" aria-hidden>
+      <span
+        className={`batimumHero__microHint batimumHero__microHint--clients${microLive ? " is-live" : ""}`}
+        aria-hidden
+      >
         <span className="batimumHero__microDoc" />
+        Dossier
       </span>
     ) : (
-      <span className="batimumHero__microHint batimumHero__microHint--pilotage" aria-hidden>
+      <span
+        className={`batimumHero__microHint batimumHero__microHint--pilotage${microLive ? " is-live" : ""}`}
+        aria-hidden
+      >
         <span className="batimumHero__microSpark" />
       </span>
     );
@@ -847,6 +823,7 @@ export function LandingHeroOrbit({
 
   const [activeId, setActiveId] = useState<HeroFeatureId | null>(null);
   const [pinned, setPinned] = useState(false);
+  const [microLiveId, setMicroLiveId] = useState<HeroFeatureId | null>(null);
   const [panelPos, setPanelPos] = useState<{
     x: number;
     y: number;
@@ -855,6 +832,34 @@ export function LandingHeroOrbit({
   } | null>(null);
 
   useEffect(() => setMounted(true), []);
+
+  // Une micro-animation à la fois, cycle 10s — pause si interaction active
+  useEffect(() => {
+    if (reduced || !mounted) return;
+    let index = 0;
+    let hideTimer: ReturnType<typeof setTimeout> | null = null;
+    const tick = () => {
+      if (activeIdRef.current) {
+        setMicroLiveId(null);
+        return;
+      }
+      const id = FEATURE_IDS[index % FEATURE_IDS.length];
+      index += 1;
+      setMicroLiveId(id);
+      if (hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => setMicroLiveId(null), MICRO_VISIBLE_MS);
+    };
+    tick();
+    const cycle = setInterval(tick, MICRO_CYCLE_MS);
+    return () => {
+      clearInterval(cycle);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
+  }, [mounted, reduced]);
+
+  useEffect(() => {
+    if (activeId) setMicroLiveId(null);
+  }, [activeId]);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -1101,6 +1106,7 @@ export function LandingHeroOrbit({
                 isActive={activeId === feature.id}
                 isDimmed={activeId !== null && activeId !== feature.id}
                 pinned={pinned}
+                microLive={microLiveId === feature.id && activeId === null}
                 buttonRef={(el) => {
                   cardRefs.current[feature.id] = el;
                 }}

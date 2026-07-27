@@ -91,7 +91,7 @@ export function LandingHero() {
 
             <h1 className="batimumHero__title">
               {heroContent.titleBefore}
-              <span className="batimumHero__titleAccent batimumHero__titleAccent--mark">
+              <span className="batimumHero__highlight">
                 {heroContent.titleHighlight}
               </span>
               {heroContent.titleAfter}
