@@ -11,25 +11,25 @@ const BENEFITS = [
     title: "Devis plus rapides",
     text: "Passez de la demande à un devis clair, structuré par lots.",
     Icon: FileText,
-    accent: "#111111",
+    accent: "#3B82F6",
   },
   {
     title: "Planning toujours à jour",
     text: "Vos équipes savent où aller, sans appels en chaîne.",
     Icon: CalendarDays,
-    accent: "#404040",
+    accent: "#2563EB",
   },
   {
     title: "Chantiers mieux suivis",
     text: "Avancement, documents et consignes au même endroit.",
     Icon: FolderKanban,
-    accent: "#5A5A5A",
+    accent: "#60A5FA",
   },
   {
     title: "Rentabilité plus claire",
     text: "Visualisez le prévu et le réalisé avant la fin du chantier.",
     Icon: TrendingUp,
-    accent: "#2F2F2F",
+    accent: "#1D4ED8",
   },
 ] as const;
 

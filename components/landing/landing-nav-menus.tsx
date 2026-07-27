@@ -68,11 +68,11 @@ function DropdownLink({
             if (onNavigate(item.href)) event.preventDefault();
           }}
         >
-          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(17,17,17,0.08)] bg-white text-[#111111] shadow-[0_2px_8px_rgba(17,17,17,0.04)]">
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(17,17,17,0.08)] bg-white text-[#3B82F6] shadow-[0_2px_8px_rgba(17,17,17,0.04)]">
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
           <span className="landing-nav-dropdown__link-text min-w-0">
-            <span className="block text-sm font-medium text-[#111111] group-hover:text-[#000000]">
+            <span className="block text-sm font-medium text-[#111111] group-hover:text-[#2563EB]">
               {item.label}
             </span>
             <span className="landing-nav-dropdown__desc mt-0.5 block text-xs text-[#666666]">
@@ -93,7 +93,7 @@ function DropdownLink({
           if (onNavigate(item.href)) event.preventDefault();
         }}
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f7f7f8] text-[#111111]">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f6f7f9] text-[#3B82F6]">
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
         </span>
         <span>

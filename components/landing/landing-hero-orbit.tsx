@@ -51,7 +51,7 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail: "Transformez vos devis en factures simplement.",
     orbit: 2,
     angle: 15,
-    accent: "#707070",
+    accent: "#64748B",
     Icon: Receipt,
   },
   {
@@ -61,7 +61,7 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail: "Retrouvez toutes les informations au même endroit.",
     orbit: 2,
     angle: 190,
-    accent: "#606060",
+    accent: "#60A5FA",
     Icon: Users,
   },
   {
@@ -71,7 +71,7 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail: "Organisez vos équipes en quelques clics.",
     orbit: 1,
     angle: 80,
-    accent: "#404040",
+    accent: "#2563EB",
     Icon: CalendarDays,
   },
   {
@@ -81,7 +81,7 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail: "Décrivez les travaux, Batimum prépare le devis.",
     orbit: 1,
     angle: 260,
-    accent: "#111111",
+    accent: "#3B82F6",
     Icon: Sparkles,
   },
   {
@@ -91,7 +91,7 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail: "Suivez l’avancement depuis le bureau ou le terrain.",
     orbit: 0,
     angle: 140,
-    accent: "#5A5A5A",
+    accent: "#93C5FD",
     Icon: Building2,
   },
   {
@@ -101,7 +101,7 @@ export const HERO_FEATURES: OrbitCard[] = [
     detail: "Visualisez vos marges avant qu’il ne soit trop tard.",
     orbit: 0,
     angle: 320,
-    accent: "#2F2F2F",
+    accent: "#1D4ED8",
     Icon: LayoutDashboard,
   },
 ];

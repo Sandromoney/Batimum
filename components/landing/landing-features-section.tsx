@@ -13,37 +13,37 @@ const FEATURES = [
     title: "Devis avec IA",
     text: "Créez des devis structurés plus rapidement.",
     icon: FileText,
-    accent: "#111111",
+    accent: "#3B82F6",
   },
   {
     title: "Planning des équipes",
     text: "Gardez chaque équipe au bon endroit, au bon moment.",
     icon: CalendarDays,
-    accent: "#404040",
+    accent: "#2563EB",
   },
   {
     title: "Suivi des chantiers",
     text: "Retrouvez les étapes, documents et informations essentielles.",
     icon: FolderKanban,
-    accent: "#5A5A5A",
+    accent: "#60A5FA",
   },
   {
     title: "Facturation simplifiée",
     text: "Transformez vos devis et suivez vos paiements.",
     icon: Receipt,
-    accent: "#707070",
+    accent: "#93C5FD",
   },
   {
     title: "Gestion client",
     text: "Centralisez les coordonnées, documents et échanges.",
     icon: Users,
-    accent: "#606060",
+    accent: "#64748B",
   },
   {
     title: "Pilotage et rentabilité",
     text: "Comparez le prévu au réel et surveillez vos marges.",
     icon: BarChart3,
-    accent: "#2F2F2F",
+    accent: "#1D4ED8",
   },
 ] as const;
 

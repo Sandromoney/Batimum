@@ -91,7 +91,7 @@ export function LandingDevisSection() {
           <LandingReveal delay={120}>
             <div className="lp-devis-demo" aria-live="polite">
               <div className="lp-devis-demo__header">
-                <Sparkles className="h-4 w-4 text-[#111111]" aria-hidden="true" />
+                <Sparkles className="h-4 w-4 text-[#3B82F6]" aria-hidden="true" />
                 <span>Démonstration</span>
               </div>
 

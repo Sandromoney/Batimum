@@ -2,9 +2,9 @@
    Scope : .landing-emerald uniquement — n'affecte pas l'app authentifiée. */
 
 .landing-emerald {
-  /* Attio-like B&W theme — scoped to public landing only */
+  /* Attio-like B&W + blue accent — scoped to public landing only */
   --landing-bg: #ffffff;
-  --landing-surface: #f7f7f8;
+  --landing-surface: #f6f7f9;
   --landing-surface-soft: #fafafa;
   --landing-text: #111111;
   --landing-muted: #666666;
@@ -17,6 +17,10 @@
   --landing-dark-elevated: #111111;
   --landing-on-dark: #ffffff;
   --landing-on-dark-muted: #b8b8b8;
+  --landing-accent: #3b82f6;
+  --landing-accent-hover: #2563eb;
+  --landing-accent-soft: rgba(59, 130, 246, 0.08);
+  --landing-accent-glow: rgba(59, 130, 246, 0.06);
   --landing-success: #22a06b;
   --landing-success-soft: rgba(34, 160, 107, 0.12);
 
@@ -169,7 +173,7 @@ html:has(.landing-emerald) body {
   width: 0.375rem;
   height: 0.375rem;
   border-radius: 999px;
-  background: var(--landing-text);
+  background: var(--landing-accent);
 }
 
 .landing-emerald .lp-title {
@@ -324,7 +328,7 @@ html:has(.landing-emerald) body {
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: #111111;
+  background: var(--landing-accent);
   flex: 0 0 auto;
 }
 
@@ -372,7 +376,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .batimumHero__benefitIcon {
   flex: 0 0 auto;
-  color: #111111;
+  color: var(--landing-accent);
 }
 
 .landing-emerald .batimumHero__ctas {
@@ -439,13 +443,14 @@ html:has(.landing-emerald) body {
   gap: 0.4rem;
   margin: 0;
   transform: translateX(-50%);
-  color: #94a3b8;
+  color: #8a8a8a;
   font-size: 13px;
   pointer-events: none;
   white-space: nowrap;
 }
 
 .landing-emerald .batimumHero__scrollArrow {
+  color: var(--landing-accent);
   animation: batimumHero-cue-bob 2.6s ease-in-out infinite;
 }
 
@@ -520,7 +525,12 @@ html:has(.landing-emerald) body {
   height: 48%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(17, 17, 17, 0.035) 0%, transparent 72%);
+  background: radial-gradient(
+    circle,
+    rgba(59, 130, 246, 0.07) 0%,
+    rgba(59, 130, 246, 0.03) 42%,
+    transparent 72%
+  );
   pointer-events: none;
 }
 
@@ -529,11 +539,11 @@ html:has(.landing-emerald) body {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  border: 1px solid rgba(17, 17, 17, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.1);
   border-radius: 50%;
   pointer-events: none;
   box-sizing: border-box;
-  box-shadow: none;
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.04);
 }
 
 .landing-emerald .batimumHero__ring--0 { width: 50%; height: 50%; }
@@ -601,12 +611,13 @@ html:has(.landing-emerald) body {
   background:
     linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.78),
-      rgba(248, 250, 252, 0.58)
+      rgba(255, 255, 255, 0.82),
+      rgba(246, 247, 249, 0.58)
     );
   box-shadow:
-    0 18px 50px rgba(15, 23, 42, 0.075),
-    0 4px 12px rgba(15, 23, 42, 0.035);
+    0 18px 50px rgba(17, 17, 17, 0.06),
+    0 4px 12px rgba(17, 17, 17, 0.03),
+    0 0 28px rgba(59, 130, 246, 0.07);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   transition: transform 180ms ease, box-shadow 180ms ease;
@@ -615,8 +626,9 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__bubbleWrap:hover .batimumHero__bubble {
   transform: translateY(-2px) scale(1.015);
   box-shadow:
-    0 22px 54px rgba(15, 23, 42, 0.09),
-    0 6px 14px rgba(15, 23, 42, 0.04),
+    0 22px 54px rgba(17, 17, 17, 0.08),
+    0 6px 14px rgba(17, 17, 17, 0.04),
+    0 0 36px rgba(59, 130, 246, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.78);
 }
 
@@ -626,7 +638,7 @@ html:has(.landing-emerald) body {
   flex: 0 0 auto;
   width: 17px;
   height: 17px;
-  color: var(--card-accent, #111111);
+  color: var(--card-accent, var(--landing-accent));
   background: none;
   border: none;
 }
@@ -1239,9 +1251,11 @@ html:has(.landing-emerald) body {
 .landing-emerald .lp-devis-card.is-active {
   opacity: 1;
   background: #fff;
-  border-color: rgba(17, 17, 17, 0.28);
+  border-color: rgba(59, 130, 246, 0.28);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-card);
+  box-shadow:
+    var(--shadow-card),
+    0 0 24px rgba(59, 130, 246, 0.08);
 }
 
 .landing-emerald .lp-devis-card__label {
@@ -1266,7 +1280,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-devis-card.is-active .lp-devis-card__index {
-  background: #111111;
+  background: var(--landing-accent);
   color: #ffffff;
 }
 
@@ -1380,8 +1394,9 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-dual__list li svg {
-  color: #64748b;
+  color: var(--landing-accent);
   flex-shrink: 0;
+  opacity: 0.9;
 }
 
 .landing-emerald .lp-dual__bridge {
@@ -1400,7 +1415,8 @@ html:has(.landing-emerald) body {
   width: 48px;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #d8d8d8, #111111, #d8d8d8);
+  background: linear-gradient(90deg, #d8d8d8, var(--landing-accent), #d8d8d8);
+  opacity: 0.55;
 }
 
 .landing-emerald .lp-dual__message {
@@ -1460,7 +1476,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-status-panel li svg {
-  color: #64748b;
+  color: var(--landing-accent);
 }
 
 .landing-emerald .lp-testimonial-filters {
@@ -1483,13 +1499,13 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-testimonial-filters button:focus-visible {
-  outline: 2px solid #111111;
+  outline: 2px solid var(--landing-accent);
   outline-offset: 2px;
 }
 
 .landing-emerald .lp-testimonial-filters button.is-active {
   border-color: transparent;
-  background: var(--bm-anthracite);
+  background: var(--landing-accent);
   color: #fff;
 }
 
@@ -1679,7 +1695,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-roadmap-card__icon {
-  color: #64748b;
+  color: var(--landing-accent);
   margin-bottom: 0.75rem;
 }
 
@@ -1741,7 +1757,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-market-filters li svg {
-  color: #64748b;
+  color: var(--landing-accent);
 }
 
 .landing-emerald .lp-badge {
@@ -1814,7 +1830,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-section--dark .lp-eyebrow__dot {
-  background: #ffffff;
+  background: var(--landing-accent);
 }
 
 .landing-emerald .lp-section--dark .lp-testimonial-filters button {
@@ -1824,8 +1840,8 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-section--dark .lp-testimonial-filters button.is-active {
-  background: #ffffff;
-  color: #111111;
+  background: var(--landing-accent);
+  color: #ffffff;
   border-color: transparent;
 }
 
@@ -2236,7 +2252,41 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-nav__trigger--open {
-  color: #111111;
+  color: var(--landing-accent);
+}
+
+.landing-emerald .landing-nav__trigger:hover {
+  color: var(--landing-accent-hover);
+}
+
+.landing-emerald .landing-nav-dropdown__link:hover .landing-nav-dropdown__link-text > span:first-child {
+  color: var(--landing-accent-hover);
+}
+
+.landing-emerald .lp-footer__col a:hover {
+  color: #ffffff;
+}
+
+.landing-emerald .lp-footer__col a:focus-visible {
+  outline: 2px solid var(--landing-accent);
+  outline-offset: 2px;
+}
+
+/* Text / nav links (not primary CTAs) */
+.landing-emerald a:not(.landing-btn-primary):not(.landing-header-btn--primary):not(.landing-btn-secondary):not(.landing-header-btn--secondary):not(.landing-pricing-cta) {
+  text-underline-offset: 0.15em;
+}
+
+.landing-emerald .landing-btn-secondary .landing-btn-arrow,
+.landing-emerald .batimumHero__ctaSecondary svg {
+  color: var(--landing-accent);
+}
+
+.landing-emerald .landing-header-btn--primary .landing-btn-arrow,
+.landing-emerald .batimumHero__ctaPrimary .batimumHero__ctaArrow,
+.landing-emerald .landing-btn-primary .landing-btn-arrow,
+.landing-emerald .landing-pricing-cta__arrow {
+  color: #ffffff;
 }
 
 @media (max-width: 1279px) {
