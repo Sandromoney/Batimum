@@ -265,12 +265,13 @@ html:has(.landing-emerald) body {
   }
 }
 
-/* ——— Pro device stage (hero only) ——— */
+/* ——— Hero device stage (image mockups) ——— */
 .landing-emerald .lp-pro-stage {
   position: relative;
   width: 100%;
   min-height: 380px;
   height: clamp(380px, 58vh, 560px);
+  overflow: hidden;
 }
 
 @media (min-width: 1024px) {
@@ -285,27 +286,19 @@ html:has(.landing-emerald) body {
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  perspective: 2000px;
-  perspective-origin: 58% 42%;
-}
-
-.landing-emerald .lp-pro-stage__glow {
-  position: absolute;
-  inset: 20% 14% 24%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.04), transparent 70%);
-  pointer-events: none;
+  perspective: 2200px;
+  perspective-origin: 56% 44%;
 }
 
 .landing-emerald .lp-pro-stage__floor {
   position: absolute;
-  left: 10%;
-  right: 6%;
-  bottom: 2%;
-  height: 28%;
+  left: 14%;
+  right: 10%;
+  bottom: 6%;
+  height: 18%;
   border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.16), transparent 72%);
-  filter: blur(22px);
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.1), transparent 74%);
+  filter: blur(20px);
   pointer-events: none;
 }
 
@@ -316,16 +309,15 @@ html:has(.landing-emerald) body {
   top: 50%;
   transform-style: preserve-3d;
   will-change: transform, opacity;
-  /* Depth from translateZ only — avoid z-index fighting 3D order */
   z-index: 1;
 }
 
 .landing-emerald .lp-pro-mac {
-  width: min(100%, 640px);
+  width: min(100%, 680px);
 }
 
 .landing-emerald .lp-pro-phone {
-  width: min(32%, 168px);
+  width: min(30%, 168px);
 }
 
 .landing-emerald .lp-pro-caption {
@@ -343,432 +335,106 @@ html:has(.landing-emerald) body {
   z-index: 2;
 }
 
-/* MacBook Pro — aluminum Space Gray */
-.landing-emerald .lp-pro-mac__rig {
+/* Device image mockups */
+.landing-emerald .lp-device-mock {
   position: relative;
+  width: 100%;
   transform-style: preserve-3d;
-  filter: drop-shadow(0 48px 70px rgba(15, 23, 42, 0.28));
 }
 
-.landing-emerald .lp-pro-mac__lid {
+.landing-emerald .lp-device-mock--mac {
+  aspect-ratio: 1 / 1;
+}
+
+.landing-emerald .lp-device-mock--phone {
+  aspect-ratio: 1350 / 2760;
+}
+
+.landing-emerald .lp-device-mock__body {
   position: relative;
-  border-radius: 18px 18px 12px 12px;
-  padding: 12px 12px 10px;
-  background:
-    linear-gradient(
-      155deg,
-      #e8ebf0 0%,
-      #c4cad3 18%,
-      #9aa3ae 42%,
-      #7a8490 68%,
-      #5e6772 100%
-    );
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.78),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.28),
-    inset 1px 0 0 rgba(255, 255, 255, 0.32),
-    inset -1px 0 0 rgba(0, 0, 0, 0.16),
-    0 2px 4px rgba(15, 23, 42, 0.14);
+  width: 100%;
+  height: 100%;
+  z-index: 1;
 }
 
-.landing-emerald .lp-pro-mac__lid-metal {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    linear-gradient(
-      105deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.22) 18%,
-      transparent 34%,
-      transparent 62%,
-      rgba(255, 255, 255, 0.08) 78%,
-      transparent 100%
-    );
-  mix-blend-mode: soft-light;
-}
-
-.landing-emerald .lp-pro-mac__lid-edge {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.22),
-    inset 0 0 0 2px rgba(0, 0, 0, 0.06);
-}
-
-.landing-emerald .lp-pro-mac__bezel {
+.landing-emerald .lp-device-mock__frame {
   position: relative;
-  overflow: hidden;
-  border-radius: 9px;
-  background: #05070b;
-  aspect-ratio: 16 / 10.2;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 24px 48px rgba(0, 0, 0, 0.45);
-}
-
-.landing-emerald .lp-pro-mac__camera {
-  position: absolute;
-  top: 7px;
-  left: 50%;
-  z-index: 3;
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  transform: translateX(-50%);
-  background:
-    radial-gradient(circle at 35% 30%, #5b6574 0%, #1a2030 55%, #05070b 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
-    0 0 0 3px rgba(10, 12, 16, 0.9);
-}
-
-.landing-emerald .lp-pro-mac__display {
-  position: absolute;
-  inset: 18px 14px 14px;
-  overflow: hidden;
-  border-radius: 2px;
-  background: #f8fafc;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-
-.landing-emerald .lp-pro-mac__glass {
-  position: absolute;
-  inset: 0;
   z-index: 2;
+  display: block;
+  width: 100%;
+  height: auto;
   pointer-events: none;
-  background:
-    linear-gradient(
-      118deg,
-      rgba(255, 255, 255, 0.28) 0%,
-      rgba(255, 255, 255, 0.06) 16%,
-      transparent 36%,
-      transparent 58%,
-      rgba(255, 255, 255, 0.04) 78%,
-      rgba(255, 255, 255, 0.1) 100%
-    );
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.landing-emerald .lp-pro-mac__chin {
-  height: 4px;
-  margin-top: 6px;
-  border-radius: 2px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.18), transparent);
-  opacity: 0.55;
-}
-
-.landing-emerald .lp-pro-mac__hinge {
-  display: flex;
-  justify-content: space-between;
-  height: 8px;
-  margin: 0 auto;
-  width: 94%;
-  border-radius: 0 0 3px 3px;
-  background: linear-gradient(180deg, #a8b0ba 0%, #6d757f 48%, #4f5660 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    0 1px 0 rgba(0, 0, 0, 0.25);
-}
-
-.landing-emerald .lp-pro-mac__hinge > span {
-  width: 18%;
-  height: 100%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent);
-}
-
-.landing-emerald .lp-pro-mac__deck {
+.landing-emerald .lp-device-mock--phone .lp-device-mock__frame {
   position: relative;
-  width: 120%;
-  margin-left: -10%;
-  border-radius: 0 0 16px 16px;
-  padding: 11px 20px 14px;
-  background:
-    linear-gradient(180deg, #d0d5dd 0%, #a7aeb8 32%, #858e99 70%, #6b7380 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.62),
-    inset 0 -3px 0 rgba(0, 0, 0, 0.2),
-    inset 2px 0 0 rgba(255, 255, 255, 0.18),
-    inset -2px 0 0 rgba(0, 0, 0, 0.12),
-    0 22px 36px rgba(15, 23, 42, 0.18);
+  z-index: 2;
+}
+
+.landing-emerald .lp-device-mock__screen {
+  position: absolute;
+  z-index: 1;
   overflow: hidden;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
 }
 
-.landing-emerald .lp-pro-mac__deck-metal {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(
-      95deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.18) 22%,
-      transparent 40%,
-      transparent 70%,
-      rgba(255, 255, 255, 0.08) 88%,
-      transparent 100%
-    );
-  mix-blend-mode: soft-light;
-}
-
-.landing-emerald .lp-pro-mac__speaker {
-  height: 3px;
-  margin: 0 auto 9px;
-  width: 22%;
-  border-radius: 999px;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #5a616b 0 1px,
-      #8b929c 1px 2px
-    );
-  opacity: 0.85;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-
-.landing-emerald .lp-pro-mac__keyboard {
-  position: relative;
-  display: grid;
-  gap: 3.5px;
-  margin-bottom: 12px;
-  padding: 6px 4px 7px;
-  border-radius: 6px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.08));
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.22);
-}
-
-.landing-emerald .lp-pro-mac__key-row {
-  display: flex;
-  justify-content: center;
-  gap: 3px;
-}
-
-.landing-emerald .lp-pro-mac__key {
-  flex: 0 0 auto;
-  width: 6.6%;
-  max-width: 17px;
-  height: 8px;
-  border-radius: 2.5px;
-  background: linear-gradient(180deg, #4a5160 0%, #232833 55%, #151920 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
-    0 1px 1px rgba(0, 0, 0, 0.35);
-}
-
-.landing-emerald .lp-pro-mac__key--space {
-  width: 42% !important;
-  max-width: none !important;
-}
-
-.landing-emerald .lp-pro-mac__trackpad {
-  position: relative;
-  width: 36%;
-  margin: 0 auto;
-  aspect-ratio: 1.55 / 1;
-  border-radius: 9px;
-  background:
-    linear-gradient(180deg, #c5cad2 0%, #a4abb5 48%, #8f97a2 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
-    inset 0 0 0 1.5px rgba(0, 0, 0, 0.14),
-    inset 0 10px 16px rgba(255, 255, 255, 0.14),
-    inset 0 -6px 10px rgba(0, 0, 0, 0.06);
-}
-
-.landing-emerald .lp-pro-mac__deck-lip {
-  position: absolute;
-  left: 7%;
-  right: 7%;
-  bottom: 4px;
-  height: 3px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-}
-
-.landing-emerald .lp-pro-mac__shadow {
-  position: absolute;
-  left: 6%;
-  right: 6%;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.landing-emerald .lp-pro-mac__shadow--ambient {
-  bottom: -34px;
-  height: 48px;
-  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.22), transparent 72%);
-  filter: blur(16px);
-}
-
-.landing-emerald .lp-pro-mac__shadow--contact {
-  bottom: -14px;
-  height: 18px;
-  left: 18%;
-  right: 18%;
-  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.38), transparent 68%);
-  filter: blur(6px);
-}
-
-.landing-emerald .lp-pro-mac__reflection {
-  position: absolute;
-  left: 14%;
-  right: 14%;
-  bottom: -52px;
-  height: 46px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(148, 163, 184, 0.2), transparent 75%);
-  filter: blur(10px);
-  opacity: 0.5;
-  transform: scaleY(-1);
-  z-index: -2;
-  pointer-events: none;
-}
-
-/* iPhone Pro — front face only (never show back / cameras) */
-.landing-emerald .lp-pro-phone__rig {
-  position: relative;
-  transform-style: preserve-3d;
-  filter: drop-shadow(0 36px 42px rgba(15, 23, 42, 0.28));
-}
-
-.landing-emerald .lp-pro-phone__frame {
-  position: relative;
-  border-radius: 36px;
-  padding: 8px;
-  aspect-ratio: 9 / 19.5;
-  background:
-    linear-gradient(150deg, #eceff4 0%, #b7c0cb 28%, #87919e 58%, #5c6673 82%, #3f4752 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.72),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
-    inset 1px 0 0 rgba(255, 255, 255, 0.3),
-    inset -1px 0 0 rgba(0, 0, 0, 0.22),
-    0 2px 4px rgba(15, 23, 42, 0.2);
-}
-
-.landing-emerald .lp-pro-phone__titanium {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    linear-gradient(
-      125deg,
-      rgba(255, 255, 255, 0.35) 0%,
-      transparent 22%,
-      transparent 55%,
-      rgba(255, 255, 255, 0.1) 78%,
-      transparent 100%
-    );
-  mix-blend-mode: soft-light;
-}
-
-.landing-emerald .lp-pro-phone__screen {
-  position: relative;
-  overflow: hidden;
-  height: 100%;
-  border-radius: 28px;
-  background: #f8fafc;
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.42),
-    inset 0 0 0 2px rgba(255, 255, 255, 0.06);
-}
-
-.landing-emerald .lp-pro-phone__island {
-  position: absolute;
-  top: 11px;
-  left: 50%;
-  z-index: 4;
-  width: 34%;
-  height: 22px;
-  border-radius: 999px;
-  transform: translateX(-50%);
-  background: #05070b;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 0 0 1px rgba(0, 0, 0, 0.35);
-}
-
-.landing-emerald .lp-pro-phone__glass {
-  position: absolute;
-  inset: 0;
+.landing-emerald .lp-device-mock__screen--mac {
   z-index: 3;
-  pointer-events: none;
-  background:
-    linear-gradient(
-      148deg,
-      rgba(255, 255, 255, 0.3) 0%,
-      rgba(255, 255, 255, 0.06) 18%,
-      transparent 40%,
-      transparent 68%,
-      rgba(255, 255, 255, 0.08) 100%
-    );
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
 }
 
-.landing-emerald .lp-pro-phone__btn {
+.landing-emerald .lp-device-mock__screen--phone {
+  z-index: 1;
+}
+
+.landing-emerald .lp-device-mock__shadow {
   position: absolute;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #d2d8e0, #8e97a3 55%, #6d7682);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
-    0 0 1px rgba(0, 0, 0, 0.25);
-}
-
-.landing-emerald .lp-pro-phone__btn--silent {
-  left: -2.5px;
-  top: 15%;
-  width: 2.5px;
-  height: 4.5%;
-}
-
-.landing-emerald .lp-pro-phone__btn--vol-up {
-  left: -2.5px;
-  top: 23%;
-  width: 2.5px;
-  height: 7.5%;
-}
-
-.landing-emerald .lp-pro-phone__btn--vol-down {
-  left: -2.5px;
-  top: 33%;
-  width: 2.5px;
-  height: 7.5%;
-}
-
-.landing-emerald .lp-pro-phone__btn--power {
-  right: -2.5px;
-  top: 25%;
-  width: 2.5px;
-  height: 11%;
-}
-
-.landing-emerald .lp-pro-phone__shadow {
-  position: absolute;
-  left: 8%;
-  right: 8%;
+  left: 10%;
+  right: 10%;
   border-radius: 50%;
   pointer-events: none;
-  z-index: -1;
+  z-index: 0;
 }
 
-.landing-emerald .lp-pro-phone__shadow--ambient {
-  bottom: -28px;
-  height: 36px;
-  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.24), transparent 72%);
-  filter: blur(12px);
+.landing-emerald .lp-device-mock__shadow--ambient {
+  bottom: -6%;
+  height: 14%;
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.18), transparent 72%);
+  filter: blur(14px);
 }
 
-.landing-emerald .lp-pro-phone__shadow--contact {
-  bottom: -12px;
-  height: 16px;
-  left: 18%;
-  right: 18%;
-  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.4), transparent 68%);
+.landing-emerald .lp-device-mock__shadow--contact {
+  bottom: -2%;
+  height: 5%;
+  left: 22%;
+  right: 22%;
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.28), transparent 70%);
   filter: blur(5px);
+}
+
+.landing-emerald .lp-device-mock__reflection {
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  bottom: -8%;
+  height: 8%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.14), transparent 80%);
+  filter: blur(8px);
+  opacity: 0.45;
+  transform: scaleY(-1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.landing-emerald .lp-device-mock--mac {
+  filter: drop-shadow(0 32px 48px rgba(15, 23, 42, 0.16));
+}
+
+.landing-emerald .lp-device-mock--phone {
+  filter: drop-shadow(0 24px 36px rgba(15, 23, 42, 0.18));
 }
 
 /* Reduced motion / static */
@@ -781,6 +447,7 @@ html:has(.landing-emerald) body {
   min-height: 340px;
   height: auto;
   padding-bottom: 2rem;
+  overflow: visible;
 }
 
 .landing-emerald .lp-pro-stage--static .lp-pro-mac,
@@ -792,11 +459,11 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-pro-stage--static .lp-pro-mac {
-  width: min(70%, 460px);
+  width: min(68%, 480px);
 }
 
 .landing-emerald .lp-pro-stage--static .lp-pro-phone {
-  width: min(28%, 150px);
+  width: min(26%, 148px);
 }
 
 .landing-emerald .lp-pro-stage--static .lp-pro-caption {
@@ -812,7 +479,11 @@ html:has(.landing-emerald) body {
 
   .landing-emerald .lp-pro-stage--static .lp-pro-mac,
   .landing-emerald .lp-pro-stage--static .lp-pro-phone {
-    width: min(100%, 320px);
+    width: min(100%, 300px);
+  }
+
+  .landing-emerald .lp-pro-phone {
+    width: min(36%, 148px);
   }
 }
 

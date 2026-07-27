@@ -1,14 +1,32 @@
 "use client";
 
+import Image from "next/image";
 import {
   motion,
   type MotionValue,
   useTransform,
 } from "framer-motion";
-import {
-  LandingDesktopScreen,
-  LandingMobileScreen,
-} from "@/components/landing/landing-device-screens";
+
+const MACBOOK_FRAME = "/assets/devices/macbook.jpg";
+const IPHONE_FRAME = "/assets/devices/iphone17pro.png";
+
+/** Screen slot — calibrated on public/assets/devices/macbook.png (960×960) */
+const MAC_SCREEN = {
+  left: "8.65%",
+  top: "20.94%",
+  width: "86.56%",
+  height: "58.44%",
+  radius: "0.35rem",
+} as const;
+
+/** Screen slot — Apple Design Resources frame (1350×2760) */
+const PHONE_SCREEN = {
+  left: "5.48%",
+  top: "2.57%",
+  width: "88.96%",
+  height: "94.82%",
+  radius: "14.67%",
+} as const;
 
 type LandingDeviceSceneProps = {
   progress?: MotionValue<number>;
@@ -22,12 +40,8 @@ export function LandingDeviceScene({
   if (reducedMotion || !progress) {
     return (
       <div className="lp-pro-stage lp-pro-stage--static" aria-hidden="true">
-        <div className="lp-pro-mac">
-          <MacBookPro />
-        </div>
-        <div className="lp-pro-phone">
-          <IPhonePro />
-        </div>
+        <MacBookMockup />
+        <PhoneMockup />
         <p className="lp-pro-caption">Bureau · Terrain</p>
       </div>
     );
@@ -37,33 +51,31 @@ export function LandingDeviceScene({
 }
 
 function ScrollDrivenStage({ progress }: { progress: MotionValue<number> }) {
-  // Scroll story: Mac dominates → slow yaw → phone emerges → phone leads → fade out.
-  // Phone never shows its back: rotateY stays near 0 (screen always facing camera).
-  const macRotateY = useTransform(progress, [0.04, 0.58], [2, -32]);
-  const macRotateX = useTransform(progress, [0.04, 0.58], [12, 5]);
-  const macZ = useTransform(progress, [0.04, 0.58], [160, -40]);
-  const macX = useTransform(progress, [0.04, 0.58], ["-50%", "-64%"]);
-  const macY = useTransform(progress, [0.04, 0.58], ["-48%", "-45%"]);
-  const macScale = useTransform(progress, [0.04, 0.58, 0.88], [1.02, 0.9, 0.82]);
-  const macOpacity = useTransform(progress, [0.76, 0.94], [1, 0]);
+  const macRotateY = useTransform(progress, [0.04, 0.62], [6, -24]);
+  const macRotateX = useTransform(progress, [0.04, 0.62], [8, 3]);
+  const macZ = useTransform(progress, [0.04, 0.62], [140, -60]);
+  const macX = useTransform(progress, [0.04, 0.62], ["-50%", "-58%"]);
+  const macY = useTransform(progress, [0.04, 0.62], ["-50%", "-48%"]);
+  const macScale = useTransform(progress, [0.04, 0.62, 0.9], [1, 0.92, 0.88]);
+  const macOpacity = useTransform(progress, [0.78, 0.96], [1, 0]);
 
-  const phoneRotateY = useTransform(progress, [0.1, 0.6], [6, -2]);
-  const phoneRotateX = useTransform(progress, [0.1, 0.6], [10, 2]);
-  const phoneZ = useTransform(progress, [0.06, 0.22, 0.6], [-220, -40, 180]);
-  const phoneX = useTransform(progress, [0.06, 0.6], ["-46%", "-10%"]);
-  const phoneY = useTransform(progress, [0.06, 0.6], ["-42%", "-54%"]);
-  const phoneScale = useTransform(progress, [0.06, 0.6], [0.82, 1.1]);
+  const phoneRotateY = useTransform(progress, [0.12, 0.65], [4, -2]);
+  const phoneRotateX = useTransform(progress, [0.12, 0.65], [6, 1]);
+  const phoneZ = useTransform(progress, [0.06, 0.28, 0.65], [-240, -80, 150]);
+  const phoneX = useTransform(progress, [0.06, 0.65], ["-48%", "-8%"]);
+  const phoneY = useTransform(progress, [0.06, 0.65], ["-48%", "-54%"]);
+  const phoneScale = useTransform(progress, [0.06, 0.65], [0.86, 1.06]);
   const phoneOpacity = useTransform(
     progress,
-    [0.06, 0.16, 0.28, 0.76, 0.94],
-    [0, 0.15, 1, 1, 0],
+    [0.06, 0.2, 0.32, 0.78, 0.96],
+    [0, 0, 1, 1, 0],
   );
 
-  const stageOpacity = useTransform(progress, [0.8, 0.98], [1, 0]);
-  const stageY = useTransform(progress, [0.8, 0.98], [0, 56]);
+  const stageOpacity = useTransform(progress, [0.82, 0.98], [1, 0]);
+  const stageY = useTransform(progress, [0.82, 0.98], [0, 48]);
   const captionOpacity = useTransform(
     progress,
-    [0.4, 0.5, 0.7, 0.84],
+    [0.44, 0.54, 0.72, 0.86],
     [0, 1, 1, 0],
   );
 
@@ -74,11 +86,10 @@ function ScrollDrivenStage({ progress }: { progress: MotionValue<number> }) {
         style={{
           opacity: stageOpacity,
           y: stageY,
-          perspective: 2000,
+          perspective: 2200,
           transformStyle: "preserve-3d",
         }}
       >
-        <div className="lp-pro-stage__glow" />
         <div className="lp-pro-stage__floor" />
 
         <motion.div
@@ -94,7 +105,7 @@ function ScrollDrivenStage({ progress }: { progress: MotionValue<number> }) {
             transformStyle: "preserve-3d",
           }}
         >
-          <MacBookPro />
+          <MacBookMockup />
         </motion.div>
 
         <motion.div
@@ -110,7 +121,7 @@ function ScrollDrivenStage({ progress }: { progress: MotionValue<number> }) {
             transformStyle: "preserve-3d",
           }}
         >
-          <IPhonePro />
+          <PhoneMockup />
         </motion.div>
 
         <motion.p className="lp-pro-caption" style={{ opacity: captionOpacity }}>
@@ -121,73 +132,64 @@ function ScrollDrivenStage({ progress }: { progress: MotionValue<number> }) {
   );
 }
 
-function MacBookPro() {
+function MacBookMockup() {
   return (
-    <div className="lp-pro-mac__rig">
-      <div className="lp-pro-mac__lid">
-        <div className="lp-pro-mac__lid-metal" />
-        <div className="lp-pro-mac__lid-edge" />
-        <div className="lp-pro-mac__bezel">
-          <span className="lp-pro-mac__camera" />
-          <div className="lp-pro-mac__display">
-            <div className="lp-pro-mac__glass" />
-            <LandingDesktopScreen />
-          </div>
-        </div>
-        <div className="lp-pro-mac__chin" />
+    <div className="lp-device-mock lp-device-mock--mac">
+      <div className="lp-device-mock__shadow lp-device-mock__shadow--ambient" />
+      <div className="lp-device-mock__shadow lp-device-mock__shadow--contact" />
+      <div className="lp-device-mock__reflection" />
+      <div className="lp-device-mock__body">
+        <div
+          className="lp-device-mock__screen lp-device-mock__screen--mac"
+          style={{
+            left: MAC_SCREEN.left,
+            top: MAC_SCREEN.top,
+            width: MAC_SCREEN.width,
+            height: MAC_SCREEN.height,
+            borderRadius: MAC_SCREEN.radius,
+          }}
+        />
+        <Image
+          src={MACBOOK_FRAME}
+          alt=""
+          width={960}
+          height={960}
+          className="lp-device-mock__frame"
+          priority
+          draggable={false}
+        />
       </div>
-      <div className="lp-pro-mac__hinge">
-        <span />
-        <span />
-      </div>
-      <div className="lp-pro-mac__deck">
-        <div className="lp-pro-mac__deck-metal" />
-        <div className="lp-pro-mac__speaker" />
-        <div className="lp-pro-mac__keyboard">
-          {Array.from({ length: 5 }).map((_, row) => (
-            <div key={row} className={`lp-pro-mac__key-row lp-pro-mac__key-row--${row}`}>
-              {Array.from({ length: row === 4 ? 1 : row === 0 ? 13 : 12 }).map(
-                (__, key) => (
-                  <span
-                    key={key}
-                    className={
-                      row === 4
-                        ? "lp-pro-mac__key lp-pro-mac__key--space"
-                        : "lp-pro-mac__key"
-                    }
-                  />
-                ),
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="lp-pro-mac__trackpad" />
-        <div className="lp-pro-mac__deck-lip" />
-      </div>
-      <div className="lp-pro-mac__shadow lp-pro-mac__shadow--ambient" />
-      <div className="lp-pro-mac__shadow lp-pro-mac__shadow--contact" />
-      <div className="lp-pro-mac__reflection" />
     </div>
   );
 }
 
-function IPhonePro() {
+function PhoneMockup() {
   return (
-    <div className="lp-pro-phone__rig">
-      <div className="lp-pro-phone__frame">
-        <div className="lp-pro-phone__titanium" />
-        <span className="lp-pro-phone__btn lp-pro-phone__btn--silent" />
-        <span className="lp-pro-phone__btn lp-pro-phone__btn--vol-up" />
-        <span className="lp-pro-phone__btn lp-pro-phone__btn--vol-down" />
-        <span className="lp-pro-phone__btn lp-pro-phone__btn--power" />
-        <div className="lp-pro-phone__screen">
-          <span className="lp-pro-phone__island" />
-          <div className="lp-pro-phone__glass" />
-          <LandingMobileScreen />
-        </div>
+    <div className="lp-device-mock lp-device-mock--phone">
+      <div className="lp-device-mock__shadow lp-device-mock__shadow--ambient" />
+      <div className="lp-device-mock__shadow lp-device-mock__shadow--contact" />
+      <div className="lp-device-mock__reflection" />
+      <div className="lp-device-mock__body">
+        <div
+          className="lp-device-mock__screen lp-device-mock__screen--phone"
+          style={{
+            left: PHONE_SCREEN.left,
+            top: PHONE_SCREEN.top,
+            width: PHONE_SCREEN.width,
+            height: PHONE_SCREEN.height,
+            borderRadius: PHONE_SCREEN.radius,
+          }}
+        />
+        <Image
+          src={IPHONE_FRAME}
+          alt=""
+          width={1350}
+          height={2760}
+          className="lp-device-mock__frame"
+          priority
+          draggable={false}
+        />
       </div>
-      <div className="lp-pro-phone__shadow lp-pro-phone__shadow--ambient" />
-      <div className="lp-pro-phone__shadow lp-pro-phone__shadow--contact" />
     </div>
   );
 }
