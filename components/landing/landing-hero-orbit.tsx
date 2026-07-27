@@ -21,9 +21,11 @@ import {
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
+  type FocusEvent,
   type RefObject,
 } from "react";
 
@@ -230,15 +232,164 @@ function scrollToAnchor(href: string) {
   el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+type Placement =
+  | "right"
+  | "top-right"
+  | "top-left"
+  | "left"
+  | "bottom-left"
+  | "bottom-right";
+
+const ANGLE_PLACEMENT: Record<number, Placement> = {
+  0: "right",
+  60: "top-right",
+  120: "top-left",
+  180: "left",
+  240: "bottom-left",
+  300: "bottom-right",
+};
+
+const PANEL_GAP = 16;
+const EDGE_PAD = 16;
+const CLOSE_DELAY_MS = 300;
+const DESKTOP_PANEL_W = 310;
+
+function clamp(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, n));
+}
+
+function computePopoverPosition(args: {
+  placement: Placement;
+  cardLeft: number;
+  cardTop: number;
+  cardWidth: number;
+  cardHeight: number;
+  wrapWidth: number;
+  wrapHeight: number;
+  panelWidth: number;
+  panelHeight: number;
+}) {
+  const {
+    placement: raw,
+    cardLeft,
+    cardTop,
+    cardWidth,
+    cardHeight,
+    wrapWidth,
+    wrapHeight,
+    panelWidth,
+    panelHeight,
+  } = args;
+
+  const cardCx = cardLeft + cardWidth / 2;
+  const cardCy = cardTop + cardHeight / 2;
+
+  let placement = raw;
+  if (placement === "right" && cardCx > wrapWidth * 0.72) placement = "left";
+  if (placement === "left" && cardCx < wrapWidth * 0.28) placement = "right";
+  if (
+    (placement === "top-right" || placement === "top-left") &&
+    cardCy < wrapHeight * 0.28
+  ) {
+    placement = placement === "top-right" ? "bottom-right" : "bottom-left";
+  }
+  if (
+    (placement === "bottom-right" || placement === "bottom-left") &&
+    cardCy > wrapHeight * 0.72
+  ) {
+    placement = placement === "bottom-right" ? "top-right" : "top-left";
+  }
+
+  let x = 0;
+  let y = 0;
+  let arrow: "left" | "right" | "top" | "bottom" = "left";
+
+  switch (placement) {
+    case "right":
+      x = cardLeft + cardWidth + PANEL_GAP;
+      y = cardCy - panelHeight / 2;
+      arrow = "left";
+      break;
+    case "left":
+      x = cardLeft - PANEL_GAP - panelWidth;
+      y = cardCy - panelHeight / 2;
+      arrow = "right";
+      break;
+    case "top-right":
+      x = cardLeft + cardWidth + PANEL_GAP * 0.35;
+      y = cardTop - PANEL_GAP - panelHeight;
+      arrow = "bottom";
+      break;
+    case "top-left":
+      x = cardLeft - PANEL_GAP * 0.35 - panelWidth;
+      y = cardTop - PANEL_GAP - panelHeight;
+      arrow = "bottom";
+      break;
+    case "bottom-right":
+      x = cardLeft + cardWidth + PANEL_GAP * 0.35;
+      y = cardTop + cardHeight + PANEL_GAP;
+      arrow = "top";
+      break;
+    case "bottom-left":
+      x = cardLeft - PANEL_GAP * 0.35 - panelWidth;
+      y = cardTop + cardHeight + PANEL_GAP;
+      arrow = "top";
+      break;
+  }
+
+  if (
+    x + panelWidth > wrapWidth - EDGE_PAD &&
+    (placement === "right" || placement.includes("right"))
+  ) {
+    x = cardLeft - PANEL_GAP - panelWidth;
+    if (placement === "right") arrow = "right";
+  }
+  if (
+    x < EDGE_PAD &&
+    (placement === "left" || placement.includes("left"))
+  ) {
+    x = cardLeft + cardWidth + PANEL_GAP;
+    if (placement === "left") arrow = "left";
+  }
+  if (y < EDGE_PAD && (placement === "top-right" || placement === "top-left")) {
+    y = cardTop + cardHeight + PANEL_GAP;
+    arrow = "top";
+  }
+  if (
+    y + panelHeight > wrapHeight - EDGE_PAD &&
+    (placement === "bottom-right" || placement === "bottom-left")
+  ) {
+    y = cardTop - PANEL_GAP - panelHeight;
+    arrow = "bottom";
+  }
+
+  x = clamp(x, EDGE_PAD, Math.max(EDGE_PAD, wrapWidth - panelWidth - EDGE_PAD));
+  y = clamp(
+    y,
+    EDGE_PAD,
+    Math.max(EDGE_PAD, wrapHeight - panelHeight - EDGE_PAD),
+  );
+
+  const enterFrom =
+    arrow === "left"
+      ? { x: -6, y: 0 }
+      : arrow === "right"
+        ? { x: 6, y: 0 }
+        : arrow === "top"
+          ? { x: 0, y: -6 }
+          : { x: 0, y: 6 };
+
+  return { x, y, arrow, enterFrom };
+}
+
 /**
- * Écrou hexagonal flat-top — plus reconnaissable (épaisseur, chanfrein, trou).
+ * Écrou hexagonal flat-top — faux 3D léger (face avant + face arrière).
  */
 function HeroNutSvg() {
   const outer = hexPoints(200, 200, 188);
-  const rim = hexPoints(200, 200, 182);
-  const mid = hexPoints(200, 200, 168);
-  const chamfer = hexPoints(200, 200, 156);
-  const face = hexPoints(200, 200, 148);
+  const chamfer = hexPoints(200, 200, 180);
+  const face = hexPoints(200, 200, 168);
+  const innerFace = hexPoints(200, 200, 152);
 
   return (
     <svg
@@ -246,143 +397,175 @@ function HeroNutSvg() {
       viewBox="0 0 400 400"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
-      {/* Corps — très léger fill pour lire la pièce */}
-      <polygon points={outer} fill="rgba(17,17,17,0.018)" stroke="none" />
-      {/* Contour extérieur (épaisseur visuelle) */}
-      <polygon
-        points={outer}
-        stroke="rgba(17,17,17,0.12)"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      <polygon
-        points={rim}
-        stroke="rgba(17,17,17,0.06)"
-        strokeWidth="1.1"
-        strokeLinejoin="round"
-      />
-      {/* Chanfrein / double face */}
-      <polygon
-        points={mid}
-        stroke="rgba(17,17,17,0.07)"
-        strokeWidth="1.15"
-        strokeLinejoin="round"
-      />
-      <polygon
-        points={chamfer}
-        stroke="rgba(59,130,246,0.08)"
-        strokeWidth="0.95"
-        strokeLinejoin="round"
-      />
-      <polygon
-        points={face}
-        stroke="rgba(17,17,17,0.045)"
-        strokeWidth="0.9"
-        strokeLinejoin="round"
-      />
-      {/* Pans — contraste alterné très discret */}
-      {Array.from({ length: 6 }, (_, i) => {
-        const a0 = (Math.PI / 180) * (i * 60);
-        const a1 = (Math.PI / 180) * ((i + 1) * 60);
-        const x0 = 200 + Math.cos(a0) * 160;
-        const y0 = 200 + Math.sin(a0) * 160;
-        const x1 = 200 + Math.cos(a1) * 160;
-        const y1 = 200 + Math.sin(a1) * 160;
-        const xi0 = 200 + Math.cos(a0) * 78;
-        const yi0 = 200 + Math.sin(a0) * 78;
-        const xi1 = 200 + Math.cos(a1) * 78;
-        const yi1 = 200 + Math.sin(a1) * 78;
-        return (
-          <polygon
-            key={`pan-${i}`}
-            points={`${xi0},${yi0} ${x0},${y0} ${x1},${y1} ${xi1},${yi1}`}
-            fill={
-              i % 2 === 0
-                ? "rgba(17,17,17,0.016)"
-                : "rgba(59,130,246,0.022)"
-            }
-            stroke="rgba(17,17,17,0.03)"
-            strokeWidth="0.6"
+      <defs>
+        <linearGradient
+          id="batimumNutFaceGrad"
+          x1="110"
+          y1="70"
+          x2="300"
+          y2="330"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="rgba(255,255,255,0.25)" />
+          <stop offset="1" stopColor="rgba(17,17,17,0.015)" />
+        </linearGradient>
+        <filter
+          id="batimumNutDrop"
+          x="-18%"
+          y="-18%"
+          width="136%"
+          height="136%"
+        >
+          <feDropShadow
+            dx="0"
+            dy="10"
+            stdDeviation="11"
+            floodColor="rgba(17,17,17,0.07)"
           />
-        );
-      })}
-      {/* Anneaux concentriques */}
-      <circle cx="200" cy="200" r="118" stroke="rgba(17,17,17,0.045)" strokeWidth="1" />
-      <circle cx="200" cy="200" r="102" stroke="rgba(17,17,17,0.035)" strokeWidth="0.9" />
-      <circle cx="200" cy="200" r="88" stroke="rgba(59,130,246,0.12)" strokeWidth="1.15" />
-      {/* Trou central + anneau */}
-      <circle cx="200" cy="200" r="58" stroke="rgba(17,17,17,0.09)" strokeWidth="1.5" />
-      <circle cx="200" cy="200" r="50" stroke="rgba(17,17,17,0.055)" strokeWidth="1.1" />
-      <circle cx="200" cy="200" r="44" stroke="rgba(17,17,17,0.04)" strokeWidth="0.85" />
-      {/* Traits radiaux techniques */}
-      {Array.from({ length: 6 }, (_, i) => {
-        const a = (Math.PI / 180) * (i * 60);
-        return (
-          <line
-            key={`spoke-${i}`}
-            x1={200 + Math.cos(a) * 58}
-            y1={200 + Math.sin(a) * 58}
-            x2={200 + Math.cos(a) * 148}
-            y2={200 + Math.sin(a) * 148}
-            stroke={
-              i % 2 === 0 ? "rgba(59,130,246,0.11)" : "rgba(17,17,17,0.05)"
-            }
-            strokeWidth="1"
-            strokeLinecap="round"
-          />
-        );
-      })}
-      {/* Repères sommets + petites marques */}
-      {Array.from({ length: 6 }, (_, i) => {
-        const a = (Math.PI / 180) * (i * 60);
-        const midA = (Math.PI / 180) * (i * 60 + 30);
-        return (
-          <g key={`mark-${i}`}>
-            <circle
-              cx={200 + Math.cos(a) * 188}
-              cy={200 + Math.sin(a) * 188}
-              r="2.6"
-              fill="rgba(17,17,17,0.1)"
-            />
+        </filter>
+      </defs>
+
+      {/* Face arrière — épaisseur suggérée */}
+      <g className="batimumHero__nutBack" transform="translate(5 7)" opacity="0.58">
+        <polygon
+          points={outer}
+          fill="rgba(255,255,255,0.10)"
+          stroke="rgba(17,17,17,0.07)"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+        <circle
+          cx="200"
+          cy="200"
+          r="56"
+          fill="rgba(248,250,252,0.5)"
+          stroke="rgba(17,17,17,0.05)"
+          strokeWidth="1"
+        />
+      </g>
+
+      {/* Ombre portée très douce */}
+      <ellipse
+        cx="200"
+        cy="338"
+        rx="122"
+        ry="13"
+        fill="rgba(17,17,17,0.04)"
+      />
+
+      {/* Face avant */}
+      <g className="batimumHero__nutFront" filter="url(#batimumNutDrop)">
+        {/* Chanfrein extérieur léger */}
+        <polygon
+          points={outer}
+          fill="rgba(255,255,255,0.08)"
+          stroke="rgba(17,17,17,0.10)"
+          strokeWidth="1.15"
+          strokeLinejoin="round"
+        />
+        <polygon
+          points={chamfer}
+          fill="none"
+          stroke="rgba(17,17,17,0.06)"
+          strokeWidth="1"
+          strokeLinejoin="round"
+        />
+        {/* Face principale */}
+        <polygon
+          points={face}
+          fill="url(#batimumNutFaceGrad)"
+          stroke="rgba(17,17,17,0.13)"
+          strokeWidth="1.35"
+          strokeLinejoin="round"
+        />
+        <polygon
+          points={innerFace}
+          fill="rgba(255,255,255,0.22)"
+          stroke="rgba(59,130,246,0.07)"
+          strokeWidth="1"
+          strokeLinejoin="round"
+        />
+
+        {/* Traits de profondeur sur les six pans */}
+        {Array.from({ length: 6 }, (_, i) => {
+          const midA = (Math.PI / 180) * (i * 60 + 30);
+          return (
             <line
-              x1={200 + Math.cos(a) * 174}
-              y1={200 + Math.sin(a) * 174}
-              x2={200 + Math.cos(a) * 188}
-              y2={200 + Math.sin(a) * 188}
-              stroke="rgba(17,17,17,0.1)"
-              strokeWidth="1.25"
+              key={`flat-${i}`}
+              x1={200 + Math.cos(midA) * 156}
+              y1={200 + Math.sin(midA) * 156}
+              x2={200 + Math.cos(midA) * 178}
+              y2={200 + Math.sin(midA) * 178}
+              stroke="rgba(17,17,17,0.08)"
+              strokeWidth="1.05"
               strokeLinecap="round"
             />
-            {/* Marque au milieu de chaque pan */}
+          );
+        })}
+
+        {/* Accents bleus discrets aux sommets */}
+        {Array.from({ length: 6 }, (_, i) => {
+          const a = (Math.PI / 180) * (i * 60);
+          return (
             <line
-              x1={200 + Math.cos(midA) * 178}
-              y1={200 + Math.sin(midA) * 178}
-              x2={200 + Math.cos(midA) * 186}
-              y2={200 + Math.sin(midA) * 186}
-              stroke="rgba(17,17,17,0.07)"
+              key={`accent-${i}`}
+              x1={200 + Math.cos(a) * 168}
+              y1={200 + Math.sin(a) * 168}
+              x2={200 + Math.cos(a) * 180}
+              y2={200 + Math.sin(a) * 180}
+              stroke="rgba(59,130,246,0.14)"
               strokeWidth="1.1"
               strokeLinecap="round"
             />
-          </g>
-        );
-      })}
-      {/* Volume : bord clair / bord sombre */}
-      <path
-        d={`M ${200 + Math.cos(0) * 188} ${200 + Math.sin(0) * 188}
-            L ${200 + Math.cos(Math.PI / 3) * 188} ${200 + Math.sin(Math.PI / 3) * 188}`}
-        stroke="rgba(255,255,255,0.65)"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        opacity="0.55"
-      />
-      <path
-        d={`M ${200 + Math.cos(Math.PI) * 188} ${200 + Math.sin(Math.PI) * 188}
-            L ${200 + Math.cos((4 * Math.PI) / 3) * 188} ${200 + Math.sin((4 * Math.PI) / 3) * 188}`}
-        stroke="rgba(17,17,17,0.08)"
-        strokeWidth="1.25"
-        strokeLinecap="round"
-      />
+          );
+        })}
+
+        {/* Trou central — chanfrein + ombre intérieure discrète */}
+        <circle
+          cx="203"
+          cy="203"
+          r="56"
+          fill="rgba(248,250,252,0.55)"
+          stroke="rgba(17,17,17,0.04)"
+          strokeWidth="1"
+        />
+        <circle
+          cx="200"
+          cy="200"
+          r="54"
+          fill="rgba(248,250,252,0.92)"
+          stroke="rgba(17,17,17,0.10)"
+          strokeWidth="1.25"
+        />
+        <circle
+          cx="200"
+          cy="200"
+          r="48"
+          fill="none"
+          stroke="rgba(255,255,255,0.5)"
+          strokeWidth="1.5"
+        />
+        <circle
+          cx="200"
+          cy="200"
+          r="44"
+          fill="none"
+          stroke="rgba(59,130,246,0.08)"
+          strokeWidth="1"
+        />
+        {/* Ombre intérieure discrète du trou */}
+        <circle
+          cx="200"
+          cy="200"
+          r="52"
+          fill="none"
+          stroke="rgba(17,17,17,0.06)"
+          strokeWidth="3"
+          strokeOpacity="0.35"
+        />
+      </g>
     </svg>
   );
 }
@@ -391,23 +574,65 @@ function FeaturePanel({
   feature,
   onClose,
   onNavigate,
+  panelRef,
+  positioned,
+  pos,
+  mobile,
+  onPanelEnter,
+  onPanelLeave,
 }: {
   feature: HexFeature;
   onClose: () => void;
   onNavigate: () => void;
+  panelRef?: RefObject<HTMLDivElement | null>;
+  positioned?: boolean;
+  pos?: {
+    x: number;
+    y: number;
+    arrow: "left" | "right" | "top" | "bottom";
+    enterFrom: { x: number; y: number };
+  } | null;
+  mobile?: boolean;
+  onPanelEnter?: () => void;
+  onPanelLeave?: () => void;
 }) {
   const Icon = feature.Icon;
+  const enter = pos?.enterFrom ?? { x: 0, y: 6 };
+
   return (
     <motion.div
-      className="batimumHero__featurePanel"
+      ref={panelRef}
+      className={[
+        "batimumHero__featurePopover",
+        "batimumHero__featurePanel",
+        mobile ? "batimumHero__featurePopover--mobile" : "",
+        pos ? `batimumHero__featurePopover--arrow-${pos.arrow}` : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       id={`batimum-hero-panel-${feature.id}`}
       role="dialog"
       aria-labelledby={`batimum-hero-panel-title-${feature.id}`}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 6 }}
-      transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+      style={
+        positioned && pos
+          ? {
+              position: "absolute",
+              left: pos.x,
+              top: pos.y,
+            }
+          : undefined
+      }
+      initial={{ opacity: 0, scale: 0.98, x: enter.x, y: enter.y }}
+      animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+      exit={{ opacity: 0, scale: 0.985, x: 0, y: 4 }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      onMouseEnter={onPanelEnter}
+      onMouseLeave={onPanelLeave}
+      onFocus={onPanelEnter}
     >
+      {!mobile ? (
+        <span className="batimumHero__featurePopoverArrow" aria-hidden="true" />
+      ) : null}
       <button
         type="button"
         className="batimumHero__featurePanelClose"
@@ -452,6 +677,8 @@ function FeatureVertexCard({
   onActivate,
   onHoverStart,
   onHoverEnd,
+  onBlurCard,
+  buttonRef,
 }: {
   feature: HexFeature;
   radius: number;
@@ -464,6 +691,8 @@ function FeatureVertexCard({
   onActivate: () => void;
   onHoverStart: () => void;
   onHoverEnd: () => void;
+  onBlurCard: (e: FocusEvent<HTMLButtonElement>) => void;
+  buttonRef: (el: HTMLButtonElement | null) => void;
 }) {
   const Icon = feature.Icon;
   const pt = vertexPoint(feature.angle, radius);
@@ -489,6 +718,7 @@ function FeatureVertexCard({
 
   const card = (
     <button
+      ref={buttonRef}
       type="button"
       className={`batimumHero__featureButton${isActive ? " is-active" : ""}`}
       aria-expanded={isActive}
@@ -501,7 +731,7 @@ function FeatureVertexCard({
       onMouseEnter={onHoverStart}
       onMouseLeave={onHoverEnd}
       onFocus={onHoverStart}
-      onBlur={onHoverEnd}
+      onBlur={onBlurCard}
     >
       <span
         className={`batimumHero__featureCard batimumHero__bubble${isActive ? " is-active" : ""}`}
@@ -561,8 +791,9 @@ type LandingHeroOrbitProps = {
 /**
  * Système hexagonal interactif :
  * - wrapper rotatif = écrou + 6 bulles
- * - hover / clic → fige + panneau explicatif
+ * - hover / clic → fige + panneau explicatif près de la carte
  * - logo BM fixe au centre
+ * - panneau hors flux (aucun reflow du Hero)
  */
 export function LandingHeroOrbit({
   scrollProgress,
@@ -570,18 +801,43 @@ export function LandingHeroOrbit({
 }: LandingHeroOrbitProps) {
   const reduced = useReducedMotion() ?? false;
   const sceneRef = useRef<HTMLDivElement>(null);
+  const sceneWrapRef = useRef<HTMLDivElement>(null);
   const interactRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Partial<Record<HeroFeatureId, HTMLButtonElement | null>>>(
+    {},
+  );
   const sceneSize = useSceneSize(sceneRef);
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const systemRotate = useMotionValue(0);
   const speedFactor = useRef(1);
   const targetSpeed = useRef(1);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeIdRef = useRef<HeroFeatureId | null>(null);
 
   const [activeId, setActiveId] = useState<HeroFeatureId | null>(null);
   const [pinned, setPinned] = useState(false);
+  const [panelPos, setPanelPos] = useState<{
+    x: number;
+    y: number;
+    arrow: "left" | "right" | "top" | "bottom";
+    enterFrom: { x: number; y: number };
+  } | null>(null);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsMobile(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    activeIdRef.current = activeId;
+  }, [activeId]);
 
   const clearCloseTimer = () => {
     if (closeTimer.current) {
@@ -594,9 +850,33 @@ export function LandingHeroOrbit({
     targetSpeed.current = 0;
   }, []);
 
-  const softResume = useCallback(() => {
-    if (!pinned) targetSpeed.current = 1;
-  }, [pinned]);
+  const measurePanel = useCallback((id: HeroFeatureId) => {
+    const wrap = sceneWrapRef.current;
+    const card = cardRefs.current[id];
+    const feature = HERO_FEATURES.find((f) => f.id === id);
+    if (!wrap || !card || !feature) return;
+
+    const wrapRect = wrap.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    const panelEl = panelRef.current;
+    const panelWidth = panelEl?.offsetWidth || DESKTOP_PANEL_W;
+    const panelHeight = panelEl?.offsetHeight || 220;
+    const placement = ANGLE_PLACEMENT[feature.angle] ?? "right";
+
+    const pos = computePopoverPosition({
+      placement,
+      cardLeft: cardRect.left - wrapRect.left,
+      cardTop: cardRect.top - wrapRect.top,
+      cardWidth: cardRect.width,
+      cardHeight: cardRect.height,
+      wrapWidth: wrapRect.width,
+      wrapHeight: wrapRect.height,
+      panelWidth,
+      panelHeight,
+    });
+
+    setPanelPos(pos);
+  }, []);
 
   const openFeature = useCallback(
     (id: HeroFeatureId, pin: boolean) => {
@@ -612,6 +892,7 @@ export function LandingHeroOrbit({
     clearCloseTimer();
     setActiveId(null);
     setPinned(false);
+    setPanelPos(null);
     targetSpeed.current = 1;
   }, []);
 
@@ -620,9 +901,44 @@ export function LandingHeroOrbit({
     clearCloseTimer();
     closeTimer.current = setTimeout(() => {
       setActiveId(null);
+      setPanelPos(null);
       targetSpeed.current = 1;
-    }, 220);
+    }, CLOSE_DELAY_MS);
   }, [pinned]);
+
+  const holdOpen = useCallback(() => {
+    clearCloseTimer();
+    softStop();
+  }, [softStop]);
+
+  // Mesure du panneau : à l'ouverture, au resize, après ralentissement
+  useLayoutEffect(() => {
+    if (!activeId || isMobile) {
+      if (!activeId) setPanelPos(null);
+      return;
+    }
+    measurePanel(activeId);
+    // Affine après montage réel du panneau + fin du ralentissement
+    const t1 = window.setTimeout(() => {
+      if (activeIdRef.current === activeId) measurePanel(activeId);
+    }, 50);
+    const t2 = window.setTimeout(() => {
+      if (activeIdRef.current === activeId) measurePanel(activeId);
+    }, 420);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [activeId, isMobile, measurePanel, sceneSize]);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (!activeIdRef.current || isMobile) return;
+      measurePanel(activeIdRef.current);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [isMobile, measurePanel]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -671,7 +987,7 @@ export function LandingHeroOrbit({
           ? 0
           : targetSpeed.current * scrollSpeed;
 
-      // Ralentissement doux ~400ms
+      // Ralentissement / reprise douce ~400ms
       const lerp = 1 - Math.exp(-dt / 0.38);
       speedFactor.current += (desired - speedFactor.current) * lerp;
 
@@ -696,6 +1012,10 @@ export function LandingHeroOrbit({
     systemRotate,
   ]);
 
+  useEffect(() => {
+    return () => clearCloseTimer();
+  }, []);
+
   const staticMode = !mounted || reduced || !enableOrbit;
   const radius = vertexRadiusForScene(sceneSize);
   const activeFeature = HERO_FEATURES.find((f) => f.id === activeId) ?? null;
@@ -704,97 +1024,140 @@ export function LandingHeroOrbit({
     if (!activeFeature) return;
     const href = activeFeature.href;
     closePanel();
-    // Laisse le panneau se fermer avant le scroll
     requestAnimationFrame(() => scrollToAnchor(href));
+  };
+
+  const onBlurCard = (e: FocusEvent<HTMLButtonElement>) => {
+    const next = e.relatedTarget as Node | null;
+    if (panelRef.current?.contains(next)) {
+      holdOpen();
+      return;
+    }
+    if (interactRef.current?.contains(next)) {
+      const isOtherCard = Object.values(cardRefs.current).some(
+        (el) => el === next,
+      );
+      if (isOtherCard) return;
+    }
+    if (pinned) return;
+    scheduleClose();
   };
 
   return (
     <div className="batimumHero__orbitRoot" ref={interactRef}>
-      <div ref={sceneRef} className="batimumHero__scene">
-        <div className="batimumHero__center" aria-hidden />
-        <div className="batimumHero__glow" aria-hidden />
+      <div ref={sceneWrapRef} className="batimumHero__sceneWrap">
+        <div ref={sceneRef} className="batimumHero__scene">
+          <div className="batimumHero__center" aria-hidden />
+          <div className="batimumHero__glow" aria-hidden />
 
-        <motion.div
-          className="batimumHero__nutSystem batimumHero__rotatingNutSystem"
-          style={staticMode ? undefined : { rotate: systemRotate }}
-          transformTemplate={({ rotate: r }) =>
-            `translate(-50%, -50%) rotate(${r ?? 0})`
-          }
-        >
-          <div className="batimumHero__nut" aria-hidden="true">
-            <HeroNutSvg />
-          </div>
-
-          {HERO_FEATURES.map((feature) => (
-            <FeatureVertexCard
-              key={feature.id}
-              feature={feature}
-              radius={radius}
-              systemRotate={systemRotate}
-              scrollProgress={scrollProgress}
-              staticMode={staticMode}
-              isActive={activeId === feature.id}
-              isDimmed={activeId !== null && activeId !== feature.id}
-              pinned={pinned}
-              onActivate={() => openFeature(feature.id, true)}
-              onHoverStart={() => {
-                if (window.matchMedia("(hover: hover)").matches) {
-                  openFeature(feature.id, false);
-                }
-              }}
-              onHoverEnd={() => {
-                if (window.matchMedia("(hover: hover)").matches) {
-                  scheduleClose();
-                }
-              }}
-            />
-          ))}
-        </motion.div>
-
-        <div className="batimumHero__logoCore">
-          <div
-            className="batimumHero__logoSymbol batimumHero__logoSymbol--breathe"
-            aria-label="Batimum"
+          <motion.div
+            className="batimumHero__nutSystem batimumHero__rotatingNutSystem"
+            style={staticMode ? undefined : { rotate: systemRotate }}
+            transformTemplate={({ rotate: r }) =>
+              `translate(-50%, -50%) rotate(${r ?? 0})`
+            }
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={HERO_BM_SYMBOL_SRC}
-              alt="Batimum"
-              className="batimumHero__logoSymbolImg"
-              width={BM_SYMBOL_SRC_W}
-              height={BM_SYMBOL_SRC_H}
-              decoding="async"
-              style={
-                {
-                  ["--bm-src-w" as string]: BM_SYMBOL_SRC_W,
-                  ["--bm-mark-w" as string]: BM_SYMBOL_MARK_W,
-                  ["--bm-src-h" as string]: BM_SYMBOL_SRC_H,
-                } as CSSProperties
-              }
-            />
+            <div className="batimumHero__nut" aria-hidden="true">
+              <HeroNutSvg />
+            </div>
+
+            {HERO_FEATURES.map((feature) => (
+              <FeatureVertexCard
+                key={feature.id}
+                feature={feature}
+                radius={radius}
+                systemRotate={systemRotate}
+                scrollProgress={scrollProgress}
+                staticMode={staticMode}
+                isActive={activeId === feature.id}
+                isDimmed={activeId !== null && activeId !== feature.id}
+                pinned={pinned}
+                buttonRef={(el) => {
+                  cardRefs.current[feature.id] = el;
+                }}
+                onActivate={() => openFeature(feature.id, true)}
+                onHoverStart={() => {
+                  if (window.matchMedia("(hover: hover)").matches) {
+                    openFeature(feature.id, false);
+                  }
+                }}
+                onHoverEnd={() => {
+                  if (window.matchMedia("(hover: hover)").matches) {
+                    scheduleClose();
+                  }
+                }}
+                onBlurCard={onBlurCard}
+              />
+            ))}
+          </motion.div>
+
+          <div className="batimumHero__logoCore">
+            <div
+              className="batimumHero__logoSymbol batimumHero__logoSymbol--breathe"
+              aria-label="Batimum"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={HERO_BM_SYMBOL_SRC}
+                alt="Batimum"
+                className="batimumHero__logoSymbolImg"
+                width={BM_SYMBOL_SRC_W}
+                height={BM_SYMBOL_SRC_H}
+                decoding="async"
+                style={
+                  {
+                    ["--bm-src-w" as string]: BM_SYMBOL_SRC_W,
+                    ["--bm-mark-w" as string]: BM_SYMBOL_MARK_W,
+                    ["--bm-src-h" as string]: BM_SYMBOL_SRC_H,
+                  } as CSSProperties
+                }
+              />
+            </div>
           </div>
         </div>
+
+        {/* Desktop / tablette : panneau absolu près de la carte — hors flux */}
+        {!isMobile ? (
+          <div
+            className="batimumHero__interactiveZone"
+            aria-hidden={!activeFeature}
+          >
+            <AnimatePresence mode="wait">
+              {activeFeature && panelPos ? (
+                <FeaturePanel
+                  key={activeFeature.id}
+                  feature={activeFeature}
+                  panelRef={panelRef}
+                  positioned
+                  pos={panelPos}
+                  onClose={closePanel}
+                  onNavigate={handleNavigate}
+                  onPanelEnter={holdOpen}
+                  onPanelLeave={() => scheduleClose()}
+                />
+              ) : null}
+            </AnimatePresence>
+          </div>
+        ) : null}
       </div>
 
-      <div
-        className="batimumHero__panelSlot"
-        onMouseEnter={() => {
-          clearCloseTimer();
-          softStop();
-        }}
-        onMouseLeave={() => scheduleClose()}
-      >
-        <AnimatePresence mode="wait">
-          {activeFeature ? (
-            <FeaturePanel
-              key={activeFeature.id}
-              feature={activeFeature}
-              onClose={closePanel}
-              onNavigate={handleNavigate}
-            />
-          ) : null}
-        </AnimatePresence>
-      </div>
+      {/* Mobile : panneau sous la scène, hors colonne texte */}
+      {isMobile ? (
+        <div className="batimumHero__mobilePanelSlot">
+          <AnimatePresence mode="wait">
+            {activeFeature ? (
+              <FeaturePanel
+                key={activeFeature.id}
+                feature={activeFeature}
+                panelRef={panelRef}
+                mobile
+                onClose={closePanel}
+                onNavigate={handleNavigate}
+              />
+            ) : null}
+          </AnimatePresence>
+        </div>
+      ) : null}
     </div>
   );
 }

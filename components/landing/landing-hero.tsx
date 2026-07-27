@@ -83,8 +83,6 @@ export function LandingHero() {
 
   const idleProgress = useMotionValue(0);
   const progress = enableScrollStory ? scrollYProgress : idleProgress;
-
-  const copyY = useTransform(progress, [0, 0.35, 1], [0, -16, -8]);
   const cueOpacity = useTransform(progress, [0, 0.08], [1, 0]);
 
   return (
@@ -99,13 +97,7 @@ export function LandingHero() {
     >
       <div className="batimumHero__sticky">
         <div className="batimumHero__inner">
-          <motion.div
-            className="batimumHero__copy"
-            style={enableScrollStory ? { y: copyY } : undefined}
-            initial={reduced ? false : { opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          >
+          <div className="batimumHero__content batimumHero__copy">
             <span className="batimumHero__badge">
               <span className="batimumHero__badgeDot" aria-hidden="true" />
               Pensé uniquement pour les entreprises du BTP
@@ -161,7 +153,7 @@ export function LandingHero() {
             <p className="batimumHero__trust">
               Sans engagement · Mise en route rapide · Données sécurisées
             </p>
-          </motion.div>
+          </div>
 
           <div className="batimumHero__visual">
             {showOrbit ? (
