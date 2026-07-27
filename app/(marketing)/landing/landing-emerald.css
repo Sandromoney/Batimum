@@ -622,6 +622,18 @@ html:has(.landing-emerald) body {
   pointer-events: none;
 }
 
+.landing-emerald .batimumHero__rotatingNutSystem {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  pointer-events: none;
+}
+
 .landing-emerald .batimumHero__nut {
   position: absolute;
   left: 50%;
@@ -633,6 +645,7 @@ html:has(.landing-emerald) body {
   transform-origin: center center;
   border-radius: 0;
   pointer-events: none;
+  filter: drop-shadow(0 14px 30px rgba(17, 17, 17, 0.035));
 }
 
 .landing-emerald .batimumHero__nutSvg {
@@ -656,6 +669,7 @@ html:has(.landing-emerald) body {
   border: none;
   box-shadow: none;
   padding: 0;
+  pointer-events: none;
 }
 
 /* Symbole BM seul (clip de /logo-batimum.png, même asset que la top bar) */
@@ -675,6 +689,20 @@ html:has(.landing-emerald) body {
   box-shadow: 0 12px 28px rgba(17, 17, 17, 0.12);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+.landing-emerald .batimumHero__logoSymbol--breathe {
+  animation: batimumHero-logo-breathe 6s ease-in-out infinite;
+}
+
+@keyframes batimumHero-logo-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015);
+  }
 }
 
 .landing-emerald .batimumHero__logoSymbolImg {
@@ -714,44 +742,47 @@ html:has(.landing-emerald) body {
   display: none;
 }
 
+.landing-emerald .batimumHero__featureAnchor,
+.landing-emerald .batimumHero__nutVertex,
 .landing-emerald .batimumHero__bubbleWrap {
   position: absolute;
   left: 50%;
   top: 50%;
   z-index: 10;
-  width: 156px;
-  flex: 0 0 156px;
-  min-height: 60px;
+  width: 148px;
+  flex: 0 0 148px;
+  min-height: 58px;
   max-height: 68px;
   will-change: transform, opacity;
   pointer-events: auto;
 }
 
-.landing-emerald .batimumHero__bubbleWrap--live .batimumHero__bubble {
+.landing-emerald .batimumHero__bubbleWrap--live .batimumHero__bubble,
+.landing-emerald .batimumHero__featureAnchor:hover .batimumHero__featureCard {
   box-shadow:
-    0 12px 28px rgba(17, 17, 17, 0.09),
-    0 3px 10px rgba(17, 17, 17, 0.04),
-    0 0 20px rgba(59, 130, 246, 0.07);
+    0 12px 26px rgba(17, 17, 17, 0.08),
+    0 3px 8px rgba(17, 17, 17, 0.035);
 }
 
+.landing-emerald .batimumHero__featureCard,
 .landing-emerald .batimumHero__bubble {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  width: 156px;
-  flex: 0 0 156px;
-  min-height: 60px;
+  width: 148px;
+  flex: 0 0 148px;
+  min-height: 58px;
   max-height: 68px;
   padding: 10px 12px;
   box-sizing: border-box;
-  border-radius: 16px;
+  border-radius: 15px;
   border: none;
   outline: none;
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.97);
   color: var(--batimum-hero-black);
   box-shadow:
-    0 10px 26px rgba(17, 17, 17, 0.07),
-    0 2px 8px rgba(17, 17, 17, 0.03);
+    0 10px 24px rgba(17, 17, 17, 0.065),
+    0 2px 6px rgba(17, 17, 17, 0.025);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: transform 180ms ease, box-shadow 180ms ease;
@@ -762,20 +793,22 @@ html:has(.landing-emerald) body {
   50% { transform: translateY(-2px); }
 }
 
-.landing-emerald .batimumHero__bubble--floatA { animation: batimumHero-bubble-float 4.2s ease-in-out infinite; }
-.landing-emerald .batimumHero__bubble--floatB { animation: batimumHero-bubble-float 5.1s ease-in-out infinite; }
-.landing-emerald .batimumHero__bubble--floatC { animation: batimumHero-bubble-float 4.7s ease-in-out infinite; }
-.landing-emerald .batimumHero__bubble--floatD { animation: batimumHero-bubble-float 6.2s ease-in-out infinite; }
-.landing-emerald .batimumHero__bubble--floatE { animation: batimumHero-bubble-float 5.6s ease-in-out infinite; }
-.landing-emerald .batimumHero__bubble--floatF { animation: batimumHero-bubble-float 6.8s ease-in-out infinite; }
+/* Float désactivé : les bulles sont ancrées aux sommets */
+.landing-emerald .batimumHero__bubble--floatA,
+.landing-emerald .batimumHero__bubble--floatB,
+.landing-emerald .batimumHero__bubble--floatC,
+.landing-emerald .batimumHero__bubble--floatD,
+.landing-emerald .batimumHero__bubble--floatE,
+.landing-emerald .batimumHero__bubble--floatF {
+  animation: none;
+}
 
+.landing-emerald .batimumHero__featureAnchor:hover .batimumHero__featureCard,
 .landing-emerald .batimumHero__bubbleWrap:hover .batimumHero__bubble {
-  animation-play-state: paused;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow:
-    0 12px 32px rgba(17, 17, 17, 0.1),
-    0 3px 10px rgba(17, 17, 17, 0.05),
-    0 0 24px rgba(59, 130, 246, 0.1);
+    0 12px 26px rgba(17, 17, 17, 0.08),
+    0 3px 8px rgba(17, 17, 17, 0.035);
 }
 
 .landing-emerald .batimumHero__bubbleIcon {
@@ -900,10 +933,13 @@ html:has(.landing-emerald) body {
     width: min(840px, 52vw);
   }
 
+  .landing-emerald .batimumHero__featureAnchor,
+  .landing-emerald .batimumHero__nutVertex,
   .landing-emerald .batimumHero__bubbleWrap,
+  .landing-emerald .batimumHero__featureCard,
   .landing-emerald .batimumHero__bubble {
-    width: 156px;
-    flex-basis: 156px;
+    width: 148px;
+    flex-basis: 148px;
   }
 
   .landing-emerald .batimumHero__logoSymbol {
@@ -918,13 +954,16 @@ html:has(.landing-emerald) body {
 
 @media (max-width: 1439px) {
   .landing-emerald .batimumHero__scene {
-    width: min(720px, 54vw);
+    width: min(740px, 54vw);
   }
 
+  .landing-emerald .batimumHero__featureAnchor,
+  .landing-emerald .batimumHero__nutVertex,
   .landing-emerald .batimumHero__bubbleWrap,
+  .landing-emerald .batimumHero__featureCard,
   .landing-emerald .batimumHero__bubble {
-    width: 148px;
-    flex-basis: 148px;
+    width: 140px;
+    flex-basis: 140px;
   }
 
   .landing-emerald .batimumHero__nut {
@@ -943,13 +982,16 @@ html:has(.landing-emerald) body {
 
 @media (max-width: 1279px) {
   .landing-emerald .batimumHero__scene {
-    width: min(640px, 58vw);
+    width: min(680px, 58vw);
   }
 
+  .landing-emerald .batimumHero__featureAnchor,
+  .landing-emerald .batimumHero__nutVertex,
   .landing-emerald .batimumHero__bubbleWrap,
+  .landing-emerald .batimumHero__featureCard,
   .landing-emerald .batimumHero__bubble {
-    width: 142px;
-    flex-basis: 142px;
+    width: 136px;
+    flex-basis: 136px;
   }
 
   .landing-emerald .batimumHero__nut {
@@ -1013,6 +1055,13 @@ html:has(.landing-emerald) body {
     flex-basis: 138px;
   }
 
+  .landing-emerald .batimumHero__featureAnchor,
+  .landing-emerald .batimumHero__nutVertex,
+  .landing-emerald .batimumHero__featureCard {
+    width: 138px;
+    flex-basis: 138px;
+  }
+
   .landing-emerald .batimumHero__nut {
     width: 72%;
   }
@@ -1063,6 +1112,14 @@ html:has(.landing-emerald) body {
   }
 
   .landing-emerald .batimumHero__nut {
+    animation: none;
+  }
+
+  .landing-emerald .batimumHero__logoSymbol--breathe {
+    animation: none;
+  }
+
+  .landing-emerald .batimumHero__rotatingNutSystem {
     animation: none;
   }
 

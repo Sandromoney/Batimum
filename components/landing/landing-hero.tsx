@@ -180,24 +180,30 @@ export function LandingHero() {
                       xmlns="http://www.w3.org/2000/svg"
                     >
                       <polygon
-                        points="200,12 362,106 362,294 200,388 38,294 38,106"
-                        stroke="rgba(17,17,17,0.07)"
-                        strokeWidth="1.35"
+                        points="388,200 294,362 106,362 12,200 106,38 294,38"
+                        stroke="rgba(17,17,17,0.10)"
+                        strokeWidth="1.45"
+                        strokeLinejoin="round"
+                      />
+                      <polygon
+                        points="372,200 286,350 114,350 28,200 114,50 286,50"
+                        stroke="rgba(17,17,17,0.055)"
+                        strokeWidth="1.05"
                         strokeLinejoin="round"
                       />
                       <circle
                         cx="200"
                         cy="200"
-                        r="96"
-                        stroke="rgba(59,130,246,0.12)"
-                        strokeWidth="1"
+                        r="94"
+                        stroke="rgba(59,130,246,0.10)"
+                        strokeWidth="1.05"
                       />
                       <circle
                         cx="200"
                         cy="200"
-                        r="52"
-                        stroke="rgba(17,17,17,0.07)"
-                        strokeWidth="1.2"
+                        r="54"
+                        stroke="rgba(17,17,17,0.09)"
+                        strokeWidth="1.35"
                       />
                     </svg>
                   </div>

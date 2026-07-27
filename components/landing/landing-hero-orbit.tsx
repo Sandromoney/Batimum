@@ -31,130 +31,107 @@ export type HeroFeatureId =
   | "clients"
   | "pilotage";
 
-type OrbitCard = {
+type HexFeature = {
   id: HeroFeatureId;
   title: string;
   subtitle: string;
   detail: string;
-  orbit: 0 | 1 | 2;
+  /** Angle fixe sur un sommet de l’hexagone (0, 60, …, 300). */
   angle: number;
   accent: string;
   Icon: typeof Sparkles;
-  floatClass: string;
 };
 
 const ICON_ACCENT = "#3B82F6";
 
 /**
- * Three separated elliptical orbits (2 bubbles each, always 180° apart).
- * Inner: Devis / Pilotage
- * Mid: Planning / Chantiers
- * Outer: Facturation / Clients
+ * Une fonctionnalité par sommet de l’écrou (flat-top, tous les 60°).
+ * Ordre brief : Devis → Planning → Chantiers → Facturation → Clients → Pilotage.
  */
-export const HERO_FEATURES: OrbitCard[] = [
+export const HERO_FEATURES: HexFeature[] = [
   {
     id: "devis",
     title: "Devis avec IA",
     subtitle: "Créés en quelques minutes",
     detail: "Décrivez les travaux, Batimum prépare le devis.",
-    orbit: 0,
-    angle: 20,
+    angle: 0,
     accent: ICON_ACCENT,
     Icon: Sparkles,
-    floatClass: "batimumHero__bubble--floatA",
-  },
-  {
-    id: "pilotage",
-    title: "Pilotage et rentabilité",
-    subtitle: "Marge suivie en direct",
-    detail: "Visualisez vos marges avant qu’il ne soit trop tard.",
-    orbit: 0,
-    angle: 200,
-    accent: ICON_ACCENT,
-    Icon: LayoutDashboard,
-    floatClass: "batimumHero__bubble--floatB",
   },
   {
     id: "planning",
     title: "Planning des équipes",
     subtitle: "Organisation claire",
     detail: "Organisez vos équipes en quelques clics.",
-    orbit: 1,
-    angle: 100,
+    angle: 60,
     accent: ICON_ACCENT,
     Icon: CalendarDays,
-    floatClass: "batimumHero__bubble--floatC",
   },
   {
     id: "chantiers",
     title: "Suivi des chantiers",
     subtitle: "Avancement maîtrisé",
     detail: "Suivez l’avancement depuis le bureau ou le terrain.",
-    orbit: 1,
-    angle: 280,
+    angle: 120,
     accent: ICON_ACCENT,
     Icon: Building2,
-    floatClass: "batimumHero__bubble--floatD",
   },
   {
     id: "facturation",
     title: "Facturation",
     subtitle: "Devis → facture",
     detail: "Transformez vos devis en factures simplement.",
-    orbit: 2,
-    angle: 150,
+    angle: 180,
     accent: ICON_ACCENT,
     Icon: Receipt,
-    floatClass: "batimumHero__bubble--floatE",
   },
   {
     id: "clients",
     title: "Clients centralisés",
     subtitle: "Historique complet",
     detail: "Retrouvez toutes les informations au même endroit.",
-    orbit: 2,
-    angle: 330,
+    angle: 240,
     accent: ICON_ACCENT,
     Icon: Users,
-    floatClass: "batimumHero__bubble--floatF",
+  },
+  {
+    id: "pilotage",
+    title: "Pilotage et rentabilité",
+    subtitle: "Marge suivie en direct",
+    detail: "Visualisez vos marges avant qu’il ne soit trop tard.",
+    angle: 300,
+    accent: ICON_ACCENT,
+    Icon: LayoutDashboard,
   },
 ];
 
-/** Scroll focus: Devis → Clients → Planning → Chantiers → Pilotage → Facturation */
+/** Scroll focus séquentiel des 6 sommets. */
 export const FOCUS_RANGES: {
   id: HeroFeatureId | null;
   start: number;
   end: number;
 }[] = [
-  { id: null, start: 0, end: 0.24 },
-  { id: "devis", start: 0.24, end: 0.36 },
-  { id: "clients", start: 0.36, end: 0.48 },
-  { id: "planning", start: 0.48, end: 0.6 },
-  { id: "chantiers", start: 0.6, end: 0.72 },
-  { id: "pilotage", start: 0.72, end: 0.84 },
-  { id: "facturation", start: 0.84, end: 0.94 },
+  { id: null, start: 0, end: 0.22 },
+  { id: "devis", start: 0.22, end: 0.34 },
+  { id: "planning", start: 0.34, end: 0.46 },
+  { id: "chantiers", start: 0.46, end: 0.58 },
+  { id: "facturation", start: 0.58, end: 0.7 },
+  { id: "clients", start: 0.7, end: 0.82 },
+  { id: "pilotage", start: 0.82, end: 0.94 },
   { id: null, start: 0.94, end: 1 },
 ];
 
-/**
- * 3 orbites × 2 bulles à 180°.
- * Brief : 185×135 / 265×195 / 340×255 sur scène ~840.
- * Ajustements anti-collision (logo BM ~80px, marge bord ≥28px) :
- * inner ↑, outer plafonné. reverse: true → antihoraire (écrou horaire).
- */
-const ORBIT_CFG = [
-  { rx: 200, ry: 150, duration: 52, reverse: true },
-  { rx: 268, ry: 198, duration: 68, reverse: true },
-  { rx: 305, ry: 228, duration: 84, reverse: true },
-] as const;
-
 /** Scène de référence (CSS: min(840px, 52vw)). */
 const BASE_SCENE = 840;
-/** Demi-emprise symbole BM (~80px). */
-const LOGO_HALF = 40;
-const BUBBLE_HALF_W = 78; /* 156px / 2 */
-const FOCUS_NUDGE_MAX = 24;
-const NUT_DURATION = 80;
+/** Écrou = 78% scène ; sommets SVG à r=188/200 → rayon bulles = scène × 0.3666 */
+const NUT_SIZE_RATIO = 0.78;
+const NUT_VERTEX_SVG = 188 / 200;
+/** Tour complet écrou + bulles (s). */
+const SYSTEM_DURATION = 80;
+
+function vertexRadiusForScene(sceneSize: number) {
+  return sceneSize * NUT_SIZE_RATIO * 0.5 * NUT_VERTEX_SVG;
+}
 
 /** Asset top bar — symbole BM = portion gauche (~224×210 sur 829×210). */
 export const HERO_BM_SYMBOL_SRC = "/logo-batimum.png";
@@ -163,15 +140,15 @@ const BM_SYMBOL_MARK_W = 224;
 const BM_SYMBOL_SRC_H = 210;
 
 function useSceneSize(ref: RefObject<HTMLDivElement | null>) {
-  const [size, setSize] = useState(840);
+  const [size, setSize] = useState(BASE_SCENE);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
-      setSize(entry.contentRect.width || 840);
+      setSize(entry.contentRect.width || BASE_SCENE);
     });
     ro.observe(el);
-    setSize(el.clientWidth || 840);
+    setSize(el.clientWidth || BASE_SCENE);
     return () => ro.disconnect();
   }, [ref]);
   return size;
@@ -194,295 +171,262 @@ function focusStrength(progress: number, id: HeroFeatureId): number {
   return 1 - d / half;
 }
 
-function orbitPoint(angleDeg: number, rx: number, ry: number) {
+function vertexPoint(angleDeg: number, radius: number) {
   const rad = (angleDeg * Math.PI) / 180;
   return {
-    x: Math.cos(rad) * rx,
-    y: Math.sin(rad) * ry,
+    x: Math.cos(rad) * radius,
+    y: Math.sin(rad) * radius,
   };
 }
 
-/** Écrou hexagonal minimaliste — SVG inline, rotation lente indépendante. */
-function HeroNut({
-  rotate,
-  staticMode,
-  dimmed,
-}: {
-  rotate: MotionValue<number>;
-  staticMode: boolean;
-  dimmed: MotionValue<number>;
-}) {
-  const opacity = useTransform(dimmed, (d) => 1 - d * 0.22);
-
-  // Hexagone régulier pointu en haut (flat-to-point), centre 200,200, rayon 188
-  const hex = Array.from({ length: 6 }, (_, i) => {
-    const a = (Math.PI / 180) * (-90 + i * 60);
-    return `${200 + Math.cos(a) * 188},${200 + Math.sin(a) * 188}`;
+/** Hexagone flat-top : sommets à 0°, 60°, …, 300° — alignés sur les bulles. */
+function hexPoints(cx: number, cy: number, r: number) {
+  return Array.from({ length: 6 }, (_, i) => {
+    const a = (Math.PI / 180) * (i * 60);
+    return `${cx + Math.cos(a) * r},${cy + Math.sin(a) * r}`;
   }).join(" ");
+}
 
-  const hexInner = Array.from({ length: 6 }, (_, i) => {
-    const a = (Math.PI / 180) * (-90 + i * 60);
-    return `${200 + Math.cos(a) * 168},${200 + Math.sin(a) * 168}`;
-  }).join(" ");
+/**
+ * Écrou hexagonal flat-top — plus identifiable, toujours premium / léger.
+ * Les 6 sommets correspondent exactement aux angles des fonctionnalités.
+ */
+function HeroNutSvg() {
+  const outer = hexPoints(200, 200, 188);
+  const mid = hexPoints(200, 200, 172);
+  const inner = hexPoints(200, 200, 158);
 
   return (
-    <motion.div
-      className="batimumHero__nut"
-      style={staticMode ? { opacity: 1 } : { rotate, opacity }}
-      transformTemplate={({ rotate: r }) =>
-        `translate(-50%, -50%) rotate(${r ?? 0})`
-      }
-      aria-hidden="true"
+    <svg
+      className="batimumHero__nutSvg"
+      viewBox="0 0 400 400"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
     >
-      <svg
-        className="batimumHero__nutSvg"
-        viewBox="0 0 400 400"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <polygon
-          points={hex}
-          stroke="rgba(17,17,17,0.07)"
-          strokeWidth="1.35"
-          strokeLinejoin="round"
-        />
-        <polygon
-          points={hexInner}
-          stroke="rgba(17,17,17,0.04)"
-          strokeWidth="1"
-          strokeLinejoin="round"
-        />
-        {/* Anneaux concentriques */}
-        <circle
-          cx="200"
-          cy="200"
-          r="118"
-          stroke="rgba(17,17,17,0.045)"
-          strokeWidth="1"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="96"
-          stroke="rgba(59,130,246,0.12)"
-          strokeWidth="1"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="78"
-          stroke="rgba(17,17,17,0.05)"
-          strokeWidth="1"
-        />
-        {/* Trou central */}
-        <circle
-          cx="200"
-          cy="200"
-          r="52"
-          stroke="rgba(17,17,17,0.07)"
-          strokeWidth="1.2"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="44"
-          stroke="rgba(17,17,17,0.035)"
-          strokeWidth="0.9"
-        />
-        {/* Lignes techniques radiales discrètes (vers sommets) */}
-        {Array.from({ length: 6 }, (_, i) => {
-          const a = (Math.PI / 180) * (-90 + i * 60);
-          return (
+      {/* Ombre de forme très légère */}
+      <polygon
+        points={outer}
+        fill="rgba(17,17,17,0.015)"
+        stroke="none"
+      />
+      {/* Contour hexagonal principal */}
+      <polygon
+        points={outer}
+        stroke="rgba(17,17,17,0.10)"
+        strokeWidth="1.45"
+        strokeLinejoin="round"
+      />
+      {/* Deuxième contour */}
+      <polygon
+        points={mid}
+        stroke="rgba(17,17,17,0.055)"
+        strokeWidth="1.05"
+        strokeLinejoin="round"
+      />
+      {/* Pans internes subtils */}
+      <polygon
+        points={inner}
+        stroke="rgba(17,17,17,0.035)"
+        strokeWidth="0.9"
+        strokeLinejoin="round"
+      />
+      {/* Différence d’opacité très légère entre pans (fill triangulaire) */}
+      {Array.from({ length: 6 }, (_, i) => {
+        const a0 = (Math.PI / 180) * (i * 60);
+        const a1 = (Math.PI / 180) * ((i + 1) * 60);
+        const x0 = 200 + Math.cos(a0) * 165;
+        const y0 = 200 + Math.sin(a0) * 165;
+        const x1 = 200 + Math.cos(a1) * 165;
+        const y1 = 200 + Math.sin(a1) * 165;
+        return (
+          <polygon
+            key={`pan-${i}`}
+            points={`200,200 ${x0},${y0} ${x1},${y1}`}
+            fill={
+              i % 2 === 0
+                ? "rgba(17,17,17,0.012)"
+                : "rgba(59,130,246,0.018)"
+            }
+            stroke="none"
+          />
+        );
+      })}
+      {/* Anneaux techniques */}
+      <circle
+        cx="200"
+        cy="200"
+        r="112"
+        stroke="rgba(17,17,17,0.04)"
+        strokeWidth="1"
+      />
+      <circle
+        cx="200"
+        cy="200"
+        r="94"
+        stroke="rgba(59,130,246,0.10)"
+        strokeWidth="1.05"
+      />
+      <circle
+        cx="200"
+        cy="200"
+        r="78"
+        stroke="rgba(17,17,17,0.045)"
+        strokeWidth="0.95"
+      />
+      {/* Trou central */}
+      <circle
+        cx="200"
+        cy="200"
+        r="54"
+        stroke="rgba(17,17,17,0.09)"
+        strokeWidth="1.35"
+      />
+      <circle
+        cx="200"
+        cy="200"
+        r="46"
+        stroke="rgba(17,17,17,0.04)"
+        strokeWidth="0.9"
+      />
+      {/* Lignes radiales vers sommets */}
+      {Array.from({ length: 6 }, (_, i) => {
+        const a = (Math.PI / 180) * (i * 60);
+        return (
+          <line
+            key={`spoke-${i}`}
+            x1={200 + Math.cos(a) * 54}
+            y1={200 + Math.sin(a) * 54}
+            x2={200 + Math.cos(a) * 158}
+            y2={200 + Math.sin(a) * 158}
+            stroke={
+              i % 2 === 0
+                ? "rgba(59,130,246,0.10)"
+                : "rgba(17,17,17,0.045)"
+            }
+            strokeWidth="0.95"
+            strokeLinecap="round"
+          />
+        );
+      })}
+      {/* Repères aux 6 sommets */}
+      {Array.from({ length: 6 }, (_, i) => {
+        const a = (Math.PI / 180) * (i * 60);
+        return (
+          <g key={`vertex-${i}`}>
+            <circle
+              cx={200 + Math.cos(a) * 188}
+              cy={200 + Math.sin(a) * 188}
+              r="2.4"
+              fill="rgba(17,17,17,0.08)"
+            />
             <line
-              key={`spoke-${i}`}
-              x1={200 + Math.cos(a) * 52}
-              y1={200 + Math.sin(a) * 52}
-              x2={200 + Math.cos(a) * 168}
-              y2={200 + Math.sin(a) * 168}
-              stroke={
-                i % 2 === 0
-                  ? "rgba(59,130,246,0.1)"
-                  : "rgba(17,17,17,0.04)"
-              }
-              strokeWidth="0.9"
+              x1={200 + Math.cos(a) * 178}
+              y1={200 + Math.sin(a) * 178}
+              x2={200 + Math.cos(a) * 188}
+              y2={200 + Math.sin(a) * 188}
+              stroke="rgba(17,17,17,0.08)"
+              strokeWidth="1.2"
               strokeLinecap="round"
             />
-          );
-        })}
-        {/* Petits traits d’outillage sur les flats */}
-        {Array.from({ length: 6 }, (_, i) => {
-          const a = (Math.PI / 180) * (-60 + i * 60);
-          return (
-            <line
-              key={`tick-${i}`}
-              x1={200 + Math.cos(a) * 176}
-              y1={200 + Math.sin(a) * 176}
-              x2={200 + Math.cos(a) * 186}
-              y2={200 + Math.sin(a) * 186}
-              stroke="rgba(17,17,17,0.055)"
-              strokeWidth="1.1"
-              strokeLinecap="round"
-            />
-          );
-        })}
-      </svg>
-    </motion.div>
+          </g>
+        );
+      })}
+      {/* Trait supérieur / inférieur (volume discret) */}
+      <path
+        d={`M ${200 + Math.cos(0) * 188} ${200 + Math.sin(0) * 188}
+            L ${200 + Math.cos(Math.PI / 3) * 188} ${200 + Math.sin(Math.PI / 3) * 188}`}
+        stroke="rgba(255,255,255,0.55)"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+        opacity="0.5"
+      />
+      <path
+        d={`M ${200 + Math.cos(Math.PI) * 188} ${200 + Math.sin(Math.PI) * 188}
+            L ${200 + Math.cos((4 * Math.PI) / 3) * 188} ${200 + Math.sin((4 * Math.PI) / 3) * 188}`}
+        stroke="rgba(17,17,17,0.06)"
+        strokeWidth="1.15"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
-/** Symbole BM seul — même asset que la top bar, portion gauche clipée. */
-function HeroBmSymbol() {
-  return (
-    <div className="batimumHero__logoCore">
-      <div className="batimumHero__logoSymbol" aria-label="Batimum">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={HERO_BM_SYMBOL_SRC}
-          alt="Batimum"
-          className="batimumHero__logoSymbolImg"
-          width={BM_SYMBOL_SRC_W}
-          height={BM_SYMBOL_SRC_H}
-          decoding="async"
-          style={
-            {
-              ["--bm-src-w" as string]: BM_SYMBOL_SRC_W,
-              ["--bm-mark-w" as string]: BM_SYMBOL_MARK_W,
-              ["--bm-src-h" as string]: BM_SYMBOL_SRC_H,
-            } as CSSProperties
-          }
-        />
-      </div>
-    </div>
-  );
-}
-
-function OrbitingCard({
-  card,
-  rx,
-  ry,
-  reverse,
-  orbitRotate,
+function FeatureVertexCard({
+  feature,
+  radius,
+  systemRotate,
   scrollProgress,
-  sceneSize,
   staticMode,
 }: {
-  card: OrbitCard;
-  rx: number;
-  ry: number;
-  reverse: boolean;
-  orbitRotate: MotionValue<number>;
+  feature: HexFeature;
+  radius: number;
+  systemRotate: MotionValue<number>;
   scrollProgress: MotionValue<number>;
-  sceneSize: number;
   staticMode: boolean;
 }) {
-  const Icon = card.Icon;
-  const base = card.angle;
-  const halfScene = sceneSize / 2;
-  /** Marge intérieure scène (bulles ne doivent pas approcher le bord < 28px). */
-  const edgeLimit = Math.max(0, halfScene - 28 - BUBBLE_HALF_W);
+  const Icon = feature.Icon;
+  const pt = vertexPoint(feature.angle, radius);
 
-  const orbitX = useTransform(orbitRotate, (r) => {
-    const deg = reverse ? -r + base : r + base;
-    return orbitPoint(deg, rx, ry).x;
-  });
-  const orbitY = useTransform(orbitRotate, (r) => {
-    const deg = reverse ? -r + base : r + base;
-    return orbitPoint(deg, rx, ry).y;
-  });
-
-  /**
-   * Focus : nudge radial extérieur uniquement (≤28px), scale ≤ 1.08.
-   * Pas de trajet vers le centre — évite logo + collisions entre bulles.
-   */
-  const focusedPos = useTransform(
-    [orbitX, orbitY, scrollProgress],
-    ([oxRaw, oyRaw, p]) => {
-      const ox = Number(oxRaw);
-      const oy = Number(oyRaw);
-      const t = focusStrength(Number(p), card.id);
-      if (t <= 0) return { x: ox, y: oy };
-
-      const len = Math.hypot(ox, oy) || 1;
-      const nudge = FOCUS_NUDGE_MAX * t;
-      let nx = ox + (ox / len) * nudge;
-      let ny = oy + (oy / len) * nudge;
-
-      const maxR = edgeLimit;
-      const nr = Math.hypot(nx, ny);
-      if (nr > maxR && nr > 0) {
-        const s = maxR / nr;
-        nx *= s;
-        ny *= s;
-      }
-
-      const minDist = LOGO_HALF + 32 + BUBBLE_HALF_W * 0.55;
-      const dist = Math.hypot(nx, ny);
-      if (dist < minDist && dist > 0) {
-        const s = minDist / dist;
-        nx *= s;
-        ny *= s;
-      }
-
-      return { x: nx, y: ny };
-    },
-  );
-  const x = useTransform(focusedPos, (pos) => pos.x);
-  const y = useTransform(focusedPos, (pos) => pos.y);
+  const counterRotate = useTransform(systemRotate, (r) => -r);
   const scale = useTransform(scrollProgress, (p) => {
-    const t = focusStrength(p, card.id);
-    if (t > 0) return 1 + 0.08 * t;
-    return 1;
+    const t = focusStrength(p, feature.id);
+    return t > 0 ? 1 + 0.08 * t : 1;
   });
   const opacity = useTransform(scrollProgress, (p) => {
-    const t = focusStrength(p, card.id);
-    const anyFocus = activeFeatureAt(p) !== null;
+    const t = focusStrength(p, feature.id);
+    const any = activeFeatureAt(p) !== null;
     if (t > 0) return 1;
-    if (anyFocus) return 0.4;
+    if (any) return 0.38;
     return 1;
   });
   const zIndex = useTransform(scrollProgress, (p) =>
-    focusStrength(p, card.id) > 0.12 ? 30 : 10,
+    focusStrength(p, feature.id) > 0.12 ? 30 : 10,
   );
 
-  const bubble = (
+  const card = (
     <article
-      className={`batimumHero__bubble ${card.floatClass}`}
-      style={{ "--card-accent": card.accent } as CSSProperties}
+      className="batimumHero__featureCard batimumHero__bubble"
+      style={{ "--card-accent": feature.accent } as CSSProperties}
     >
       <span className="batimumHero__bubbleIcon" aria-hidden>
         <Icon size={16} strokeWidth={1.8} />
       </span>
       <span className="batimumHero__bubbleCopy">
-        <span className="batimumHero__bubbleTitle">{card.title}</span>
-        <span className="batimumHero__bubbleSub">{card.subtitle}</span>
+        <span className="batimumHero__bubbleTitle">{feature.title}</span>
+        <span className="batimumHero__bubbleSub">{feature.subtitle}</span>
       </span>
     </article>
   );
 
   if (staticMode) {
-    const pt = orbitPoint(base, rx, ry);
     return (
       <div
-        className="batimumHero__bubbleWrap"
+        className="batimumHero__featureAnchor batimumHero__nutVertex"
         style={{
           transform: `translate(-50%, -50%) translate(${pt.x}px, ${pt.y}px)`,
         }}
       >
-        {bubble}
+        {card}
       </div>
     );
   }
 
   return (
     <motion.div
-      className="batimumHero__bubbleWrap batimumHero__bubbleWrap--live"
-      style={{ x, y, scale, opacity, zIndex }}
-      transformTemplate={({ x: tx, y: ty, scale: s }) =>
-        `translate(-50%, -50%) translate(${tx}, ${ty}) scale(${s})`
+      className="batimumHero__featureAnchor batimumHero__nutVertex"
+      style={{
+        x: pt.x,
+        y: pt.y,
+        rotate: counterRotate,
+        scale,
+        opacity,
+        zIndex,
+      }}
+      transformTemplate={({ x: tx, y: ty, rotate: r, scale: s }) =>
+        `translate(-50%, -50%) translate(${tx}, ${ty}) rotate(${r ?? 0}) scale(${s})`
       }
-      transition={{ duration: 0.2 }}
     >
-      {bubble}
+      {card}
     </motion.div>
   );
 }
@@ -492,6 +436,12 @@ type LandingHeroOrbitProps = {
   enableOrbit: boolean;
 };
 
+/**
+ * Système hexagonal unique :
+ * - un wrapper rotatif = écrou + 6 bulles aux sommets
+ * - contre-rotation des bulles → texte toujours horizontal
+ * - logo BM fixe au centre (hors wrapper)
+ */
 export function LandingHeroOrbit({
   scrollProgress,
   enableOrbit,
@@ -500,11 +450,7 @@ export function LandingHeroOrbit({
   const sceneRef = useRef<HTMLDivElement>(null);
   const sceneSize = useSceneSize(sceneRef);
   const [mounted, setMounted] = useState(false);
-
-  const rotate0 = useMotionValue(0);
-  const rotate1 = useMotionValue(0);
-  const rotate2 = useMotionValue(0);
-  const discRotate = useMotionValue(0);
+  const systemRotate = useMotionValue(0);
 
   useEffect(() => setMounted(true), []);
 
@@ -517,49 +463,24 @@ export function LandingHeroOrbit({
       last = now;
       const p = scrollProgress.get();
 
-      // Slow → full stop before focus; resume gently after
+      // Ralentir → arrêter pendant le focus → reprise lente
       let speed = 1;
-      if (p >= 0.1 && p < 0.24) speed = 1 - ((p - 0.1) / 0.14);
-      else if (p >= 0.24 && p < 0.94) speed = 0;
-      else if (p >= 0.94) speed = 0.28;
+      if (p >= 0.1 && p < 0.22) speed = 1 - (p - 0.1) / 0.12;
+      else if (p >= 0.22 && p < 0.94) speed = 0;
+      else if (p >= 0.94) speed = 0.35;
 
-      let nutSpeed = 1;
-      if (p >= 0.1 && p < 0.24) nutSpeed = 1 - ((p - 0.1) / 0.14) * 0.55;
-      else if (p >= 0.24 && p < 0.94) nutSpeed = 0.28;
-      else if (p >= 0.94) nutSpeed = 0.55;
-
-      ORBIT_CFG.forEach((cfg, i) => {
-        const mv = [rotate0, rotate1, rotate2][i];
-        const delta =
-          (360 / cfg.duration) * dt * speed * (cfg.reverse ? -1 : 1);
-        mv.set((mv.get() + delta) % 360);
-      });
-
-      discRotate.set(
-        (discRotate.get() + (360 / NUT_DURATION) * dt * nutSpeed) % 360,
+      systemRotate.set(
+        (systemRotate.get() + (360 / SYSTEM_DURATION) * dt * speed) % 360,
       );
-
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [
-    discRotate,
-    enableOrbit,
-    mounted,
-    reduced,
-    rotate0,
-    rotate1,
-    rotate2,
-    scrollProgress,
-  ]);
-
-  const nutDim = useTransform(
-    scrollProgress,
-    (p): number => (activeFeatureAt(p) ? 1 : 0),
-  );
+  }, [enableOrbit, mounted, reduced, scrollProgress, systemRotate]);
 
   const staticMode = !mounted || reduced || !enableOrbit;
+  const radius = vertexRadiusForScene(sceneSize);
+
   const [detailText, setDetailText] = useState("");
   const detailOpacity = useTransform(scrollProgress, (p) =>
     activeFeatureAt(p) ? 1 : 0,
@@ -574,39 +495,59 @@ export function LandingHeroOrbit({
     });
   }, [scrollProgress]);
 
-  const orbitRotates = [rotate0, rotate1, rotate2];
-  const scale = Math.min(1, sceneSize / BASE_SCENE);
-
   return (
     <div className="batimumHero__orbitRoot">
-      <motion.div ref={sceneRef} className="batimumHero__scene">
+      <div ref={sceneRef} className="batimumHero__scene">
         <div className="batimumHero__center" aria-hidden />
         <div className="batimumHero__glow" aria-hidden />
 
-        <HeroNut
-          rotate={discRotate}
-          staticMode={staticMode}
-          dimmed={nutDim}
-        />
+        <motion.div
+          className="batimumHero__rotatingNutSystem"
+          style={staticMode ? undefined : { rotate: systemRotate }}
+          transformTemplate={({ rotate: r }) =>
+            `translate(-50%, -50%) rotate(${r ?? 0})`
+          }
+        >
+          <div className="batimumHero__nut" aria-hidden="true">
+            <HeroNutSvg />
+          </div>
 
-        <HeroBmSymbol />
-
-        {HERO_FEATURES.map((card) => {
-          const cfg = ORBIT_CFG[card.orbit];
-          return (
-            <OrbitingCard
-              key={card.id}
-              card={card}
-              rx={cfg.rx * scale}
-              ry={cfg.ry * scale}
-              reverse={cfg.reverse}
-              orbitRotate={orbitRotates[card.orbit]}
+          {HERO_FEATURES.map((feature) => (
+            <FeatureVertexCard
+              key={feature.id}
+              feature={feature}
+              radius={radius}
+              systemRotate={systemRotate}
               scrollProgress={scrollProgress}
-              sceneSize={sceneSize}
               staticMode={staticMode}
             />
-          );
-        })}
+          ))}
+        </motion.div>
+
+        {/* Logo fixe — ne tourne jamais */}
+        <div className="batimumHero__logoCore">
+          <div
+            className="batimumHero__logoSymbol batimumHero__logoSymbol--breathe"
+            aria-label="Batimum"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={HERO_BM_SYMBOL_SRC}
+              alt="Batimum"
+              className="batimumHero__logoSymbolImg"
+              width={BM_SYMBOL_SRC_W}
+              height={BM_SYMBOL_SRC_H}
+              decoding="async"
+              style={
+                {
+                  ["--bm-src-w" as string]: BM_SYMBOL_SRC_W,
+                  ["--bm-mark-w" as string]: BM_SYMBOL_MARK_W,
+                  ["--bm-src-h" as string]: BM_SYMBOL_SRC_H,
+                } as CSSProperties
+              }
+            />
+          </div>
+        </div>
 
         <motion.p
           className="batimumHero__focus"
@@ -615,7 +556,7 @@ export function LandingHeroOrbit({
         >
           {detailText}
         </motion.p>
-      </motion.div>
+      </div>
     </div>
   );
 }
