@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
-  animate,
   motion,
   useMotionValue,
   useReducedMotion,
@@ -11,7 +10,10 @@ import {
   useTransform,
 } from "framer-motion";
 import { ArrowDown, ArrowRight, Check } from "lucide-react";
-import { LandingHeroOrbit } from "@/components/landing/landing-hero-orbit";
+import {
+  HERO_FEATURES,
+  LandingHeroOrbit,
+} from "@/components/landing/landing-hero-orbit";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 
 const BENEFITS = [
@@ -20,62 +22,87 @@ const BENEFITS = [
   "Rentabilité visible en temps réel",
 ] as const;
 
+/** Scroll story only on large desktop (≥1100). Default false avoids SSR 350vh flash. */
+function useDesktopScrollStory(reduced: boolean) {
+  const [enabled, setEnabled] = useState(false);
+  useEffect(() => {
+    if (reduced) {
+      setEnabled(false);
+      return;
+    }
+    const mq = window.matchMedia("(min-width: 1100px)");
+    const apply = () => setEnabled(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, [reduced]);
+  return enabled;
+}
+
+/** Orbit visual between tablet and desktop when scroll story is off. */
+function useShowOrbit(reduced: boolean) {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    if (reduced) {
+      setShow(false);
+      return;
+    }
+    const mq = window.matchMedia("(min-width: 900px)");
+    const apply = () => setShow(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, [reduced]);
+  return show;
+}
+
 export function LandingHero() {
+  const sectionRef = useRef<HTMLElement>(null);
   const signupHref = getPublicSignupHref();
   const primaryLabel = isPrivateBetaEnabled()
     ? "Se connecter"
     : "Essayer gratuitement";
   const reduced = useReducedMotion() ?? false;
-  const { scrollY } = useScroll();
-  const entranceY = useMotionValue(reduced ? 0 : 16);
-  const scrollShift = useTransform(scrollY, [0, 600], [0, -16]);
-  const copyY = useTransform(
-    [entranceY, scrollShift],
-    ([entrance, scroll]) =>
-      (entrance as number) + (reduced ? 0 : (scroll as number)),
+  const enableScrollStory = useDesktopScrollStory(reduced);
+  const showOrbit = useShowOrbit(reduced);
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end end"],
+  });
+
+  const idleProgress = useMotionValue(0);
+  const progress = enableScrollStory ? scrollYProgress : idleProgress;
+
+  const copyOpacity = useTransform(
+    progress,
+    [0, 0.2, 0.35, 0.94, 1],
+    [1, 1, 0.45, 0.4, 0.85],
   );
-  const sceneScale = useTransform(scrollY, [0, 600], [1, 0.96]);
-  const cueOpacity = useTransform(scrollY, [0, 150], [1, 0]);
-  const [cueGone, setCueGone] = useState(false);
-  const [narrow, setNarrow] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const apply = () => setNarrow(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
-
-  useEffect(() => {
-    if (reduced) {
-      entranceY.set(0);
-      return;
-    }
-    const controls = animate(entranceY, 0, {
-      duration: 0.55,
-      ease: [0.22, 1, 0.36, 1],
-    });
-    return controls.stop;
-  }, [entranceY, reduced]);
-
-  useEffect(() => {
-    return scrollY.on("change", (y) => {
-      if (y > 150) setCueGone(true);
-    });
-  }, [scrollY]);
-
-  const disableParallax = reduced || narrow;
+  const copyY = useTransform(progress, [0, 0.35, 1], [0, -16, -8]);
+  const cueOpacity = useTransform(progress, [0, 0.08], [1, 0]);
 
   return (
-    <section className="batimumHero" aria-label="Présentation Batimum">
-      <div className="batimumHero__container">
-        <div className="batimumHero__grid">
+    <section
+      ref={sectionRef}
+      className={
+        enableScrollStory
+          ? "batimumHero batimumHero--scroll"
+          : "batimumHero batimumHero--static"
+      }
+      aria-label="Présentation Batimum"
+    >
+      <div className="batimumHero__sticky">
+        <div className="batimumHero__inner">
           <motion.div
             className="batimumHero__copy"
-            style={disableParallax ? undefined : { y: copyY }}
-            initial={reduced ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
+            style={
+              enableScrollStory
+                ? { opacity: copyOpacity, y: copyY }
+                : undefined
+            }
+            initial={reduced ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           >
             <span className="batimumHero__badge">
@@ -134,32 +161,72 @@ export function LandingHero() {
             </p>
           </motion.div>
 
-          <motion.div
-            className="batimumHero__visual"
-            style={disableParallax ? undefined : { scale: sceneScale }}
-          >
-            <LandingHeroOrbit />
-          </motion.div>
+          <div className="batimumHero__visual">
+            {showOrbit ? (
+              <LandingHeroOrbit
+                scrollProgress={progress}
+                enableOrbit={!reduced}
+              />
+            ) : (
+              <div className="batimumHero__mobileStack">
+                <div className="batimumHero__logoPad batimumHero__logoPad--solo">
+                  <img
+                    src="/logo-batimum.png"
+                    alt="Batimum"
+                    className="batimumHero__logoImg"
+                    width={115}
+                    height={29}
+                    decoding="async"
+                  />
+                </div>
+                <ul className="batimumHero__stackList">
+                  {HERO_FEATURES.map((feature) => {
+                    const Icon = feature.Icon;
+                    return (
+                      <li key={feature.id} className="batimumHero__stackItem">
+                        <span
+                          className="batimumHero__cardIcon"
+                          style={
+                            {
+                              "--card-accent": feature.accent,
+                            } as CSSProperties
+                          }
+                          aria-hidden
+                        >
+                          <Icon size={17} strokeWidth={1.8} />
+                        </span>
+                        <span className="batimumHero__cardCopy">
+                          <span className="batimumHero__cardTitle">
+                            {feature.title}
+                          </span>
+                          <span className="batimumHero__cardSub">
+                            {feature.detail}
+                          </span>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {!cueGone && (
-        <motion.p
-          className="batimumHero__scrollCue"
-          style={reduced ? undefined : { opacity: cueOpacity }}
-          initial={reduced ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.05, duration: 0.45 }}
-        >
-          <ArrowDown
-            className="batimumHero__scrollArrow"
-            size={14}
-            strokeWidth={1.8}
-            aria-hidden
-          />
-          Faites défiler pour découvrir Batimum
-        </motion.p>
-      )}
+        {enableScrollStory ? (
+          <motion.p
+            className="batimumHero__scrollCue"
+            style={{ opacity: cueOpacity }}
+          >
+            <ArrowDown
+              className="batimumHero__scrollArrow"
+              size={14}
+              strokeWidth={1.8}
+              aria-hidden
+            />
+            Faites défiler pour découvrir Batimum
+          </motion.p>
+        ) : null}
+      </div>
     </section>
   );
 }
