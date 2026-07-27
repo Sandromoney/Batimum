@@ -45,7 +45,7 @@ const FEATURES = [
     accent: "#64748B",
   },
   {
-    id: "pilotage",
+    id: "pilotage-card",
     title: "Pilotage et rentabilité",
     text: "Comparez le prévu au réel et surveillez vos marges.",
     icon: BarChart3,

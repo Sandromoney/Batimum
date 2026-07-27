@@ -939,6 +939,16 @@ html:has(.landing-emerald) body {
   outline-offset: 2px;
 }
 
+/* Ancres Hero → sections (header sticky) */
+.landing-emerald #devis-ia,
+.landing-emerald #planning,
+.landing-emerald #chantiers,
+.landing-emerald #facturation,
+.landing-emerald #clients,
+.landing-emerald #pilotage {
+  scroll-margin-top: 108px;
+}
+
 @keyframes batimumHero-bubble-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-2px); }
