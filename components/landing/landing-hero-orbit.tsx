@@ -140,7 +140,6 @@ function OrbitingCard({
 }) {
   const angle = useMotionValue(phase);
   const paused = useRef(false);
-  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     if (reduced) {
@@ -181,18 +180,17 @@ function OrbitingCard({
       className="lp-orbit__card-wrap"
       style={{ left, top, x: "-50%", y: "-50%" }}
       initial={reduced ? false : { opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: hovered ? 1.03 : 1 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={reduced ? undefined : { scale: 1.03 }}
       transition={{
         opacity: { duration: 0.45, delay: 0.55 + index * 0.08 },
         scale: { type: "spring", stiffness: 380, damping: 28 },
       }}
       onPointerEnter={() => {
         paused.current = true;
-        setHovered(true);
       }}
       onPointerLeave={() => {
         paused.current = false;
-        setHovered(false);
       }}
     >
       <article
