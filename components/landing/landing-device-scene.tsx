@@ -7,10 +7,11 @@ import {
   useTransform,
 } from "framer-motion";
 
+/** Fake checkerboard baked in pixels — needs a real PNG with alpha. */
 const MACBOOK_FRAME = "/assets/devices/macbook.jpg";
 const IPHONE_FRAME = "/assets/devices/iphone17pro.png";
 
-/** Screen slot — calibrated on public/assets/devices/macbook.png (960×960) */
+/** Screen slot — calibrated on public/assets/devices/macbook.jpg (960×960) */
 const MAC_SCREEN = {
   left: "8.65%",
   top: "20.94%",
@@ -51,12 +52,13 @@ export function LandingDeviceScene({
 }
 
 function ScrollDrivenStage({ progress }: { progress: MotionValue<number> }) {
-  const macRotateY = useTransform(progress, [0.04, 0.62], [6, -24]);
-  const macRotateX = useTransform(progress, [0.04, 0.62], [8, 3]);
-  const macZ = useTransform(progress, [0.04, 0.62], [140, -60]);
-  const macX = useTransform(progress, [0.04, 0.62], ["-50%", "-58%"]);
-  const macY = useTransform(progress, [0.04, 0.62], ["-50%", "-48%"]);
-  const macScale = useTransform(progress, [0.04, 0.62, 0.9], [1, 0.92, 0.88]);
+  // Keep the full MacBook chassis in view — no aggressive scale/translate.
+  const macRotateY = useTransform(progress, [0.04, 0.62], [4, -18]);
+  const macRotateX = useTransform(progress, [0.04, 0.62], [3, 1]);
+  const macZ = useTransform(progress, [0.04, 0.62], [40, -20]);
+  const macX = useTransform(progress, [0.04, 0.62], ["-50%", "-54%"]);
+  const macY = useTransform(progress, [0.04, 0.62], ["-50%", "-50%"]);
+  const macScale = useTransform(progress, [0.04, 0.62, 0.9], [0.9, 0.86, 0.82]);
   const macOpacity = useTransform(progress, [0.78, 0.96], [1, 0]);
 
   const phoneRotateY = useTransform(progress, [0.12, 0.65], [4, -2]);
@@ -154,7 +156,8 @@ function MacBookMockup() {
           alt=""
           width={960}
           height={960}
-          className="lp-device-mock__frame"
+          className="lp-device-mock__frame lp-device-mock__frame--mac"
+          sizes="(max-width: 1024px) 92vw, 560px"
           priority
           draggable={false}
         />

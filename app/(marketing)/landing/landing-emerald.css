@@ -189,7 +189,7 @@ html:has(.landing-emerald) body {
   min-height: calc(100svh - 76px);
   display: flex;
   align-items: center;
-  overflow: hidden;
+  overflow: visible;
   background: #ffffff;
 }
 
@@ -271,7 +271,10 @@ html:has(.landing-emerald) body {
   width: 100%;
   min-height: 380px;
   height: clamp(380px, 58vh, 560px);
-  overflow: hidden;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (min-width: 1024px) {
@@ -285,9 +288,10 @@ html:has(.landing-emerald) body {
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: visible;
   transform-style: preserve-3d;
   perspective: 2200px;
-  perspective-origin: 56% 44%;
+  perspective-origin: 50% 50%;
 }
 
 .landing-emerald .lp-pro-stage__floor {
@@ -313,7 +317,8 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-pro-mac {
-  width: min(100%, 680px);
+  width: min(92%, 560px);
+  max-width: 560px;
 }
 
 .landing-emerald .lp-pro-phone {
@@ -339,11 +344,17 @@ html:has(.landing-emerald) body {
 .landing-emerald .lp-device-mock {
   position: relative;
   width: 100%;
+  overflow: visible;
   transform-style: preserve-3d;
 }
 
 .landing-emerald .lp-device-mock--mac {
   aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4% 3% 6%;
+  box-sizing: border-box;
 }
 
 .landing-emerald .lp-device-mock--phone {
@@ -353,8 +364,14 @@ html:has(.landing-emerald) body {
 .landing-emerald .lp-device-mock__body {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: auto;
   z-index: 1;
+  overflow: visible;
+}
+
+.landing-emerald .lp-device-mock--mac .lp-device-mock__body {
+  width: 100%;
+  max-width: 100%;
 }
 
 .landing-emerald .lp-device-mock__frame {
@@ -363,9 +380,20 @@ html:has(.landing-emerald) body {
   display: block;
   width: 100%;
   height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: center;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+.landing-emerald .lp-device-mock__frame--mac {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: center;
 }
 
 .landing-emerald .lp-device-mock--phone .lp-device-mock__frame {
@@ -459,7 +487,8 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-pro-stage--static .lp-pro-mac {
-  width: min(68%, 480px);
+  width: min(72%, 520px);
+  max-width: 520px;
 }
 
 .landing-emerald .lp-pro-stage--static .lp-pro-phone {
