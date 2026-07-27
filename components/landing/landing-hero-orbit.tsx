@@ -9,11 +9,13 @@ import {
   type MotionValue,
 } from "framer-motion";
 import {
-  Building2,
-  CalendarDays,
-  LayoutDashboard,
+  ArrowRight,
+  Bot,
+  Calendar,
+  Check,
+  HardHat,
+  LineChart,
   Receipt,
-  Sparkles,
   Users,
   X,
   type LucideIcon,
@@ -61,59 +63,63 @@ const ICON_ACCENT = "#3B82F6";
 export const HERO_FEATURES: HexFeature[] = [
   {
     id: "devis",
-    title: "Devis avec IA",
-    subtitle: "Créés en quelques minutes",
+    title: "Devis avec MUM IA",
+    subtitle: "Prêts en quelques minutes",
     detail: "Décrivez les travaux, Batimum prépare le devis.",
-    panelTitle: "Devis avec MUM IA",
+    panelTitle: "Créez vos devis avec MUM IA",
     panelText:
-      "Décrivez simplement les travaux à réaliser. MUM IA structure les lots, les prestations, les quantités et les prix pour préparer un devis clair en quelques minutes.",
-    benefit: "Moins de saisie, plus de rapidité.",
-    ctaLabel: "Découvrir les devis avec IA",
+      "Décrivez simplement les travaux demandés par votre client. MUM IA vous aide à organiser les lots, détailler les prestations et préparer un devis professionnel en quelques minutes.",
+    benefit:
+      "Vous gagnez du temps dès le rendez-vous client, tout en gardant la main avant l’envoi.",
+    ctaLabel: "Découvrir MUM IA",
     href: "#devis-ia",
     angle: 0,
     accent: ICON_ACCENT,
-    Icon: Sparkles,
+    Icon: Bot,
   },
   {
     id: "planning",
     title: "Planning des équipes",
-    subtitle: "Organisation claire",
+    subtitle: "Tout le monde au bon endroit",
     detail: "Organisez vos équipes en quelques clics.",
-    panelTitle: "Planning des équipes",
+    panelTitle: "Des équipes toujours bien organisées",
     panelText:
-      "Planifiez les interventions, affectez les bons collaborateurs et gardez une vision claire des disponibilités de chacun.",
-    benefit: "Les bonnes équipes, au bon endroit, au bon moment.",
-    ctaLabel: "Voir le planning",
+      "Planifiez les interventions, affectez chaque salarié au bon chantier et visualisez les disponibilités de toute l’entreprise dans un planning simple et partagé.",
+    benefit:
+      "Moins d’oublis, moins d’appels et une organisation claire pour tout le monde.",
+    ctaLabel: "Découvrir le planning",
     href: "#planning",
     angle: 60,
     accent: ICON_ACCENT,
-    Icon: CalendarDays,
+    Icon: Calendar,
   },
   {
     id: "chantiers",
     title: "Suivi des chantiers",
-    subtitle: "Avancement maîtrisé",
+    subtitle: "Gardez toujours le contrôle",
     detail: "Suivez l’avancement depuis le bureau ou le terrain.",
-    panelTitle: "Suivi des chantiers",
+    panelTitle: "Gardez chaque chantier sous contrôle",
     panelText:
-      "Centralisez les étapes, les consignes, les documents et l’avancement de chaque chantier, depuis le bureau comme sur le terrain.",
-    benefit: "Tout le monde travaille avec les mêmes informations.",
+      "Suivez les étapes, les consignes, les documents et l’avancement des travaux depuis une seule fiche accessible au bureau comme sur le terrain.",
+    benefit:
+      "Vos équipes disposent toujours des bonnes informations, au bon moment.",
     ctaLabel: "Découvrir le suivi chantier",
     href: "#chantiers",
     angle: 120,
     accent: ICON_ACCENT,
-    Icon: Building2,
+    Icon: HardHat,
   },
   {
     id: "facturation",
-    title: "Facturation",
-    subtitle: "Devis → facture",
+    title: "Facturation simplifiée",
+    subtitle: "Du devis au paiement",
     detail: "Transformez vos devis en factures simplement.",
-    panelTitle: "Facturation simplifiée",
+    panelTitle: "Facturez sans tout ressaisir",
     panelText:
-      "Transformez vos devis en factures, suivez les paiements et gardez une vision claire de ce qui est encaissé ou encore en attente.",
-    benefit: "Une facturation plus simple, sans ressaisie.",
-    ctaLabel: "Voir la facturation",
+      "Transformez rapidement vos devis en factures, suivez les règlements et identifiez immédiatement les paiements reçus ou encore en attente.",
+    benefit:
+      "Une facturation plus fluide et une vision claire de ce qui doit encore être encaissé.",
+    ctaLabel: "Découvrir la facturation",
     href: "#facturation",
     angle: 180,
     accent: ICON_ACCENT,
@@ -121,13 +127,14 @@ export const HERO_FEATURES: HexFeature[] = [
   },
   {
     id: "clients",
-    title: "Clients centralisés",
-    subtitle: "Historique complet",
+    title: "Gestion client",
+    subtitle: "Chaque information retrouvée",
     detail: "Retrouvez toutes les informations au même endroit.",
-    panelTitle: "Gestion client",
+    panelTitle: "Toute l’histoire de chaque client au même endroit",
     panelText:
-      "Retrouvez les coordonnées, les documents, les devis, les factures et l’historique complet de chaque client au même endroit.",
-    benefit: "Chaque information reste facile à retrouver.",
+      "Retrouvez immédiatement ses coordonnées, ses devis, ses factures, ses documents et les chantiers réalisés ou en cours.",
+    benefit:
+      "Plus besoin de chercher dans les mails, les dossiers ou les anciens messages.",
     ctaLabel: "Découvrir la gestion client",
     href: "#clients",
     angle: 240,
@@ -137,17 +144,18 @@ export const HERO_FEATURES: HexFeature[] = [
   {
     id: "pilotage",
     title: "Pilotage et rentabilité",
-    subtitle: "Marge suivie en direct",
+    subtitle: "Vos marges sous contrôle",
     detail: "Visualisez vos marges avant qu’il ne soit trop tard.",
-    panelTitle: "Pilotage et rentabilité",
+    panelTitle: "Prenez vos décisions avec les bons chiffres",
     panelText:
-      "Comparez le prévu au réel, surveillez vos coûts et visualisez les marges de vos devis et de vos chantiers.",
-    benefit: "Prenez vos décisions avec des chiffres clairs.",
-    ctaLabel: "Voir le pilotage",
+      "Comparez le prévu au réel, suivez les coûts et visualisez la rentabilité de vos devis et de vos chantiers avant qu’un dépassement ne devienne un problème.",
+    benefit:
+      "Vous savez où vous gagnez de l’argent et où votre marge doit être protégée.",
+    ctaLabel: "Découvrir le pilotage",
     href: "#pilotage",
     angle: 300,
     accent: ICON_ACCENT,
-    Icon: LayoutDashboard,
+    Icon: LineChart,
   },
 ];
 
@@ -383,13 +391,12 @@ function computePopoverPosition(args: {
 }
 
 /**
- * Écrou hexagonal flat-top — faux 3D léger (face avant + face arrière).
+ * Écrou hexagonal flat-top — version sobre (commit 3c5a0f2).
  */
 function HeroNutSvg() {
   const outer = hexPoints(200, 200, 188);
-  const chamfer = hexPoints(200, 200, 180);
-  const face = hexPoints(200, 200, 168);
-  const innerFace = hexPoints(200, 200, 152);
+  const mid = hexPoints(200, 200, 172);
+  const inner = hexPoints(200, 200, 158);
 
   return (
     <svg
@@ -397,175 +404,151 @@ function HeroNutSvg() {
       viewBox="0 0 400 400"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
     >
-      <defs>
-        <linearGradient
-          id="batimumNutFaceGrad"
-          x1="110"
-          y1="70"
-          x2="300"
-          y2="330"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="rgba(255,255,255,0.25)" />
-          <stop offset="1" stopColor="rgba(17,17,17,0.015)" />
-        </linearGradient>
-        <filter
-          id="batimumNutDrop"
-          x="-18%"
-          y="-18%"
-          width="136%"
-          height="136%"
-        >
-          <feDropShadow
-            dx="0"
-            dy="10"
-            stdDeviation="11"
-            floodColor="rgba(17,17,17,0.07)"
-          />
-        </filter>
-      </defs>
-
-      {/* Face arrière — épaisseur suggérée */}
-      <g className="batimumHero__nutBack" transform="translate(5 7)" opacity="0.58">
-        <polygon
-          points={outer}
-          fill="rgba(255,255,255,0.10)"
-          stroke="rgba(17,17,17,0.07)"
-          strokeWidth="1.2"
-          strokeLinejoin="round"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="56"
-          fill="rgba(248,250,252,0.5)"
-          stroke="rgba(17,17,17,0.05)"
-          strokeWidth="1"
-        />
-      </g>
-
-      {/* Ombre portée très douce */}
-      <ellipse
-        cx="200"
-        cy="338"
-        rx="122"
-        ry="13"
-        fill="rgba(17,17,17,0.04)"
+      {/* Ombre de forme très légère */}
+      <polygon
+        points={outer}
+        fill="rgba(17,17,17,0.015)"
+        stroke="none"
       />
-
-      {/* Face avant */}
-      <g className="batimumHero__nutFront" filter="url(#batimumNutDrop)">
-        {/* Chanfrein extérieur léger */}
-        <polygon
-          points={outer}
-          fill="rgba(255,255,255,0.08)"
-          stroke="rgba(17,17,17,0.10)"
-          strokeWidth="1.15"
-          strokeLinejoin="round"
-        />
-        <polygon
-          points={chamfer}
-          fill="none"
-          stroke="rgba(17,17,17,0.06)"
-          strokeWidth="1"
-          strokeLinejoin="round"
-        />
-        {/* Face principale */}
-        <polygon
-          points={face}
-          fill="url(#batimumNutFaceGrad)"
-          stroke="rgba(17,17,17,0.13)"
-          strokeWidth="1.35"
-          strokeLinejoin="round"
-        />
-        <polygon
-          points={innerFace}
-          fill="rgba(255,255,255,0.22)"
-          stroke="rgba(59,130,246,0.07)"
-          strokeWidth="1"
-          strokeLinejoin="round"
-        />
-
-        {/* Traits de profondeur sur les six pans */}
-        {Array.from({ length: 6 }, (_, i) => {
-          const midA = (Math.PI / 180) * (i * 60 + 30);
-          return (
+      {/* Contour hexagonal principal */}
+      <polygon
+        points={outer}
+        stroke="rgba(17,17,17,0.10)"
+        strokeWidth="1.45"
+        strokeLinejoin="round"
+      />
+      {/* Deuxième contour */}
+      <polygon
+        points={mid}
+        stroke="rgba(17,17,17,0.055)"
+        strokeWidth="1.05"
+        strokeLinejoin="round"
+      />
+      {/* Pans internes subtils */}
+      <polygon
+        points={inner}
+        stroke="rgba(17,17,17,0.035)"
+        strokeWidth="0.9"
+        strokeLinejoin="round"
+      />
+      {/* Différence d’opacité très légère entre pans (fill triangulaire) */}
+      {Array.from({ length: 6 }, (_, i) => {
+        const a0 = (Math.PI / 180) * (i * 60);
+        const a1 = (Math.PI / 180) * ((i + 1) * 60);
+        const x0 = 200 + Math.cos(a0) * 165;
+        const y0 = 200 + Math.sin(a0) * 165;
+        const x1 = 200 + Math.cos(a1) * 165;
+        const y1 = 200 + Math.sin(a1) * 165;
+        return (
+          <polygon
+            key={`pan-${i}`}
+            points={`200,200 ${x0},${y0} ${x1},${y1}`}
+            fill={
+              i % 2 === 0
+                ? "rgba(17,17,17,0.012)"
+                : "rgba(59,130,246,0.018)"
+            }
+            stroke="none"
+          />
+        );
+      })}
+      {/* Anneaux techniques */}
+      <circle
+        cx="200"
+        cy="200"
+        r="112"
+        stroke="rgba(17,17,17,0.04)"
+        strokeWidth="1"
+      />
+      <circle
+        cx="200"
+        cy="200"
+        r="94"
+        stroke="rgba(59,130,246,0.10)"
+        strokeWidth="1.05"
+      />
+      <circle
+        cx="200"
+        cy="200"
+        r="78"
+        stroke="rgba(17,17,17,0.045)"
+        strokeWidth="0.95"
+      />
+      {/* Trou central */}
+      <circle
+        cx="200"
+        cy="200"
+        r="54"
+        stroke="rgba(17,17,17,0.09)"
+        strokeWidth="1.35"
+      />
+      <circle
+        cx="200"
+        cy="200"
+        r="46"
+        stroke="rgba(17,17,17,0.04)"
+        strokeWidth="0.9"
+      />
+      {/* Lignes radiales vers sommets */}
+      {Array.from({ length: 6 }, (_, i) => {
+        const a = (Math.PI / 180) * (i * 60);
+        return (
+          <line
+            key={`spoke-${i}`}
+            x1={200 + Math.cos(a) * 54}
+            y1={200 + Math.sin(a) * 54}
+            x2={200 + Math.cos(a) * 158}
+            y2={200 + Math.sin(a) * 158}
+            stroke={
+              i % 2 === 0
+                ? "rgba(59,130,246,0.10)"
+                : "rgba(17,17,17,0.045)"
+            }
+            strokeWidth="0.95"
+            strokeLinecap="round"
+          />
+        );
+      })}
+      {/* Repères aux 6 sommets */}
+      {Array.from({ length: 6 }, (_, i) => {
+        const a = (Math.PI / 180) * (i * 60);
+        return (
+          <g key={`vertex-${i}`}>
+            <circle
+              cx={200 + Math.cos(a) * 188}
+              cy={200 + Math.sin(a) * 188}
+              r="2.4"
+              fill="rgba(17,17,17,0.08)"
+            />
             <line
-              key={`flat-${i}`}
-              x1={200 + Math.cos(midA) * 156}
-              y1={200 + Math.sin(midA) * 156}
-              x2={200 + Math.cos(midA) * 178}
-              y2={200 + Math.sin(midA) * 178}
+              x1={200 + Math.cos(a) * 178}
+              y1={200 + Math.sin(a) * 178}
+              x2={200 + Math.cos(a) * 188}
+              y2={200 + Math.sin(a) * 188}
               stroke="rgba(17,17,17,0.08)"
-              strokeWidth="1.05"
+              strokeWidth="1.2"
               strokeLinecap="round"
             />
-          );
-        })}
-
-        {/* Accents bleus discrets aux sommets */}
-        {Array.from({ length: 6 }, (_, i) => {
-          const a = (Math.PI / 180) * (i * 60);
-          return (
-            <line
-              key={`accent-${i}`}
-              x1={200 + Math.cos(a) * 168}
-              y1={200 + Math.sin(a) * 168}
-              x2={200 + Math.cos(a) * 180}
-              y2={200 + Math.sin(a) * 180}
-              stroke="rgba(59,130,246,0.14)"
-              strokeWidth="1.1"
-              strokeLinecap="round"
-            />
-          );
-        })}
-
-        {/* Trou central — chanfrein + ombre intérieure discrète */}
-        <circle
-          cx="203"
-          cy="203"
-          r="56"
-          fill="rgba(248,250,252,0.55)"
-          stroke="rgba(17,17,17,0.04)"
-          strokeWidth="1"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="54"
-          fill="rgba(248,250,252,0.92)"
-          stroke="rgba(17,17,17,0.10)"
-          strokeWidth="1.25"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="48"
-          fill="none"
-          stroke="rgba(255,255,255,0.5)"
-          strokeWidth="1.5"
-        />
-        <circle
-          cx="200"
-          cy="200"
-          r="44"
-          fill="none"
-          stroke="rgba(59,130,246,0.08)"
-          strokeWidth="1"
-        />
-        {/* Ombre intérieure discrète du trou */}
-        <circle
-          cx="200"
-          cy="200"
-          r="52"
-          fill="none"
-          stroke="rgba(17,17,17,0.06)"
-          strokeWidth="3"
-          strokeOpacity="0.35"
-        />
-      </g>
+          </g>
+        );
+      })}
+      {/* Trait supérieur / inférieur (volume discret) */}
+      <path
+        d={`M ${200 + Math.cos(0) * 188} ${200 + Math.sin(0) * 188}
+            L ${200 + Math.cos(Math.PI / 3) * 188} ${200 + Math.sin(Math.PI / 3) * 188}`}
+        stroke="rgba(255,255,255,0.55)"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+        opacity="0.5"
+      />
+      <path
+        d={`M ${200 + Math.cos(Math.PI) * 188} ${200 + Math.sin(Math.PI) * 188}
+            L ${200 + Math.cos((4 * Math.PI) / 3) * 188} ${200 + Math.sin((4 * Math.PI) / 3) * 188}`}
+        stroke="rgba(17,17,17,0.06)"
+        strokeWidth="1.15"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -643,7 +626,7 @@ function FeaturePanel({
       </button>
       <div className="batimumHero__featurePanelHead">
         <span className="batimumHero__featurePanelIcon" aria-hidden>
-          <Icon size={18} strokeWidth={1.8} />
+          <Icon size={18} strokeWidth={1.75} />
         </span>
         <h3
           id={`batimum-hero-panel-title-${feature.id}`}
@@ -653,13 +636,22 @@ function FeaturePanel({
         </h3>
       </div>
       <p className="batimumHero__featurePanelText">{feature.panelText}</p>
-      <p className="batimumHero__featurePanelBenefit">{feature.benefit}</p>
+      <p className="batimumHero__featurePanelBenefit">
+        <Check
+          className="batimumHero__featurePanelBenefitIcon"
+          size={14}
+          strokeWidth={2}
+          aria-hidden
+        />
+        <span>{feature.benefit}</span>
+      </p>
       <button
         type="button"
         className="batimumHero__featurePanelCta"
         onClick={onNavigate}
       >
         {feature.ctaLabel}
+        <ArrowRight size={14} strokeWidth={1.8} aria-hidden />
       </button>
     </motion.div>
   );
@@ -713,7 +705,7 @@ function FeatureVertexCard({
     return 1;
   });
 
-  const scale = isActive ? 1.06 : undefined;
+  const scale = isActive ? 1.04 : undefined;
   const opacity = isActive ? 1 : isDimmed ? 0.4 : undefined;
 
   const card = (
@@ -738,7 +730,7 @@ function FeatureVertexCard({
         style={{ "--card-accent": feature.accent } as CSSProperties}
       >
         <span className="batimumHero__bubbleIcon" aria-hidden>
-          <Icon size={16} strokeWidth={1.8} />
+          <Icon size={17} strokeWidth={1.75} />
         </span>
         <span className="batimumHero__bubbleCopy">
           <span className="batimumHero__bubbleTitle">{feature.title}</span>

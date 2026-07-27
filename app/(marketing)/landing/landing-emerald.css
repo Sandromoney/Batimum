@@ -613,17 +613,17 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__featurePanel {
   position: absolute;
   z-index: 60;
-  width: min(310px, calc(100% - 32px));
-  max-width: 330px;
-  padding: 18px;
+  width: min(320px, calc(100% - 32px));
+  max-width: 340px;
+  padding: 20px;
   box-sizing: border-box;
   border-radius: 18px;
-  border: none;
-  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(17, 17, 17, 0.075);
+  background: rgba(255, 255, 255, 0.985);
   color: #111111;
   box-shadow:
-    0 18px 45px rgba(17, 17, 17, 0.1),
-    0 4px 12px rgba(17, 17, 17, 0.04);
+    0 20px 48px rgba(17, 17, 17, 0.1),
+    0 4px 12px rgba(17, 17, 17, 0.035);
   pointer-events: auto;
 }
 
@@ -762,7 +762,7 @@ html:has(.landing-emerald) body {
   transform-origin: center center;
   border-radius: 0;
   pointer-events: none;
-  filter: none;
+  filter: drop-shadow(0 18px 42px rgba(17, 17, 17, 0.025));
 }
 
 .landing-emerald .batimumHero__nutSvg {
@@ -876,9 +876,11 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .batimumHero__bubbleWrap--live .batimumHero__bubble,
 .landing-emerald .batimumHero__featureAnchor:hover .batimumHero__featureCard {
+  border-color: rgba(59, 130, 246, 0.24);
   box-shadow:
-    0 12px 26px rgba(17, 17, 17, 0.08),
-    0 3px 8px rgba(17, 17, 17, 0.035);
+    0 16px 38px rgba(17, 17, 17, 0.09),
+    0 0 0 3px rgba(59, 130, 246, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .landing-emerald .batimumHero__featureCard,
@@ -892,17 +894,21 @@ html:has(.landing-emerald) body {
   max-height: 68px;
   padding: 10px 12px;
   box-sizing: border-box;
-  border-radius: 15px;
-  border: none;
+  border-radius: 16px;
+  border: 1px solid rgba(17, 17, 17, 0.075);
   outline: none;
   background: rgba(255, 255, 255, 0.97);
   color: var(--batimum-hero-black);
   box-shadow:
-    0 10px 24px rgba(17, 17, 17, 0.065),
-    0 2px 6px rgba(17, 17, 17, 0.025);
+    0 10px 26px rgba(17, 17, 17, 0.06),
+    0 2px 7px rgba(17, 17, 17, 0.025),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  transition: transform 180ms ease, box-shadow 180ms ease;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
 }
 
 .landing-emerald .batimumHero__featureButton {
@@ -928,9 +934,11 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__featureCard.is-active,
 .landing-emerald .batimumHero__featureButton.is-active .batimumHero__featureCard {
   transform: translateY(-2px);
+  border-color: rgba(59, 130, 246, 0.24);
   box-shadow:
-    0 14px 32px rgba(17, 17, 17, 0.1),
-    0 4px 12px rgba(17, 17, 17, 0.04);
+    0 16px 38px rgba(17, 17, 17, 0.09),
+    0 0 0 3px rgba(59, 130, 246, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .landing-emerald .batimumHero__featurePanelClose {
@@ -979,8 +987,8 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__featurePanelTitle {
   margin: 0;
   color: #111111 !important;
-  font-size: 1.05rem;
-  font-weight: 650;
+  font-size: clamp(1.125rem, 1.3vw, 1.25rem);
+  font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.25;
 }
@@ -988,37 +996,53 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__featurePanelText {
   margin: 12px 0 0;
   color: #111111 !important;
-  font-size: 0.9rem;
+  font-size: 0.9375rem;
   line-height: 1.55;
 }
 
 .landing-emerald .batimumHero__featurePanelBenefit {
-  margin: 10px 0 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0 0;
   color: #111111 !important;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.45;
+}
+
+.landing-emerald .batimumHero__featurePanelBenefitIcon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #3b82f6;
 }
 
 .landing-emerald .batimumHero__featurePanelCta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   margin-top: 16px;
-  height: 44px;
-  padding: 0 18px;
-  border: none;
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
   border-radius: 12px;
-  background: #111111;
-  color: #ffffff !important;
+  background: #ffffff;
+  color: #111111 !important;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 180ms ease, transform 180ms ease;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease,
+    color 180ms ease;
 }
 
 .landing-emerald .batimumHero__featurePanelCta:hover {
-  background: #000000;
+  background: #f8fafc;
+  border-color: rgba(59, 130, 246, 0.28);
+  color: #2563eb !important;
   transform: translateY(-1px);
 }
 
@@ -1054,23 +1078,27 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .batimumHero__featureAnchor:hover .batimumHero__featureCard,
 .landing-emerald .batimumHero__bubbleWrap:hover .batimumHero__bubble {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  border-color: rgba(59, 130, 246, 0.24);
   box-shadow:
-    0 12px 26px rgba(17, 17, 17, 0.08),
-    0 3px 8px rgba(17, 17, 17, 0.035);
+    0 16px 38px rgba(17, 17, 17, 0.09),
+    0 0 0 3px rgba(59, 130, 246, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .landing-emerald .batimumHero__bubbleIcon {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   color: #3b82f6;
   background: none;
   border: none;
 }
 
+.landing-emerald .batimumHero__featureButton.is-active .batimumHero__bubbleIcon,
+.landing-emerald .batimumHero__featureAnchor:hover .batimumHero__bubbleIcon,
 .landing-emerald .batimumHero__bubbleWrap:hover .batimumHero__bubbleIcon {
   color: #2563eb;
 }
@@ -1099,10 +1127,10 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .batimumHero__bubbleSub {
   color: var(--batimum-hero-black);
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 500;
-  line-height: 1.2;
-  max-height: calc(1.2em * 2);
+  line-height: 1.25;
+  max-height: calc(1.25em * 2);
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
