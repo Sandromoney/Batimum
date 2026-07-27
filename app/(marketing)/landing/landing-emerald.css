@@ -170,19 +170,35 @@ html:has(.landing-emerald) body {
 /* ——— Hero ——— */
 .landing-emerald .lp-hero {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
+  min-height: 820px;
   background:
-    radial-gradient(ellipse 70% 50% at 85% 20%, rgba(16, 185, 129, 0.06), transparent 60%),
-    linear-gradient(180deg, #ffffff 0%, #f6f8f9 100%);
-  padding: 1.5rem 0 3rem;
+    radial-gradient(ellipse 42% 36% at 78% 28%, rgba(16, 185, 129, 0.07), transparent 70%),
+    radial-gradient(ellipse 28% 24% at 62% 72%, rgba(186, 230, 253, 0.35), transparent 72%),
+    #ffffff;
+  padding: 2rem 0 3.5rem;
 }
 
 @media (min-width: 1024px) {
   .landing-emerald .lp-hero {
-    min-height: calc(100svh - 72px);
     display: flex;
     align-items: center;
-    padding: 2rem 0 3.5rem;
+    min-height: max(820px, calc(100svh - 76px));
+    padding: 2.5rem 0 4rem;
+  }
+}
+
+.landing-emerald .lp-hero__container {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .landing-emerald .lp-hero__container {
+    padding-inline: 2rem;
   }
 }
 
@@ -194,15 +210,43 @@ html:has(.landing-emerald) body {
 
 @media (min-width: 1024px) {
   .landing-emerald .lp-hero__grid {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-    gap: 2rem;
+    grid-template-columns: minmax(0, 0.45fr) minmax(0, 0.55fr);
+    gap: 1.5rem;
   }
+}
+
+.landing-emerald .lp-hero__copy {
+  position: relative;
+  z-index: 2;
+  max-width: 34rem;
+}
+
+.landing-emerald .lp-hero__title {
+  margin: 1.1rem 0 0;
+  color: #101828;
+  font-size: clamp(2.15rem, 4.2vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+}
+
+.landing-emerald .lp-hero__title-accent {
+  display: block;
+  color: #10b981;
+}
+
+.landing-emerald .lp-hero__subtitle {
+  margin: 1.1rem 0 0;
+  max-width: 32rem;
+  color: #667085;
+  font-size: 1.0625rem;
+  line-height: 1.65;
 }
 
 .landing-emerald .lp-hero__benefits {
   display: grid;
   gap: 0.65rem;
-  margin: 1.25rem 0 1.5rem;
+  margin: 1.35rem 0 1.5rem;
 }
 
 .landing-emerald .lp-hero__benefit {
@@ -230,34 +274,240 @@ html:has(.landing-emerald) body {
   }
 }
 
-.landing-emerald .lp-hero__reassurance {
-  margin-top: 0.875rem;
-  color: var(--bm-text-secondary);
-  font-size: 0.8125rem;
-}
-
-/* Simple stable Hero visual (no device images / sticky / 3D) */
 .landing-emerald .lp-hero__visual {
   position: relative;
+  z-index: 1;
   width: 100%;
-  min-height: 280px;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.landing-emerald .lp-hero__panel {
+@media (min-width: 1024px) {
+  .landing-emerald .lp-hero__visual {
+    min-height: 620px;
+  }
+}
+
+/* ——— Hero orbit ——— */
+.landing-emerald .lp-orbit {
   position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  max-height: 420px;
-  overflow: hidden;
-  border-radius: 1rem;
-  border: 1px solid var(--bm-border);
-  background: #fff;
-  box-shadow: var(--bm-shadow-soft);
+  width: min(100%, 600px);
+  aspect-ratio: 1 / 1;
+  margin-inline: auto;
+  transform-origin: center center;
 }
 
-.landing-emerald .lp-hero__panel .lp-ui-desktop {
-  height: 100%;
-  min-height: 100%;
+.landing-emerald .lp-orbit__halos {
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08), transparent 62%),
+    radial-gradient(circle at 60% 40%, rgba(186, 230, 253, 0.2), transparent 55%);
+  pointer-events: none;
+}
+
+.landing-emerald .lp-orbit__ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.landing-emerald .lp-orbit__ring--inner {
+  width: 380px;
+  height: 380px;
+}
+
+.landing-emerald .lp-orbit__ring--outer {
+  width: 560px;
+  height: 560px;
+}
+
+.landing-emerald .lp-orbit__dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.85), rgba(16, 185, 129, 0.05));
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.landing-emerald .lp-orbit__core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
+  transform: translate(-50%, -50%);
+}
+
+.landing-emerald .lp-orbit__logo-card {
+  display: grid;
+  place-items: center;
+  width: 180px;
+  height: 180px;
+  border-radius: 32px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 18px 40px rgba(15, 23, 42, 0.08),
+    0 40px 70px rgba(15, 23, 42, 0.05);
+}
+
+.landing-emerald .lp-orbit__logo {
+  width: auto;
+  height: auto;
+  max-width: 132px;
+  max-height: 44px;
+  object-fit: contain;
+}
+
+.landing-emerald .lp-orbit-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 4;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  width: 170px;
+  height: 90px;
+  margin-left: -85px;
+  margin-top: -45px;
+  padding: 0.75rem 0.8rem;
+  border-radius: 22px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 12px 28px rgba(15, 23, 42, 0.07);
+  cursor: default;
+  will-change: transform;
+}
+
+.landing-emerald .lp-orbit-card.is-hovered,
+.landing-emerald .lp-orbit-card:hover {
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.18),
+    0 10px 30px rgba(16, 185, 129, 0.12),
+    0 18px 40px rgba(15, 23, 42, 0.08);
+  z-index: 6;
+}
+
+.landing-emerald .lp-orbit-card__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.65rem;
+}
+
+.landing-emerald .lp-orbit-card__copy {
+  min-width: 0;
+}
+
+.landing-emerald .lp-orbit-card__title {
+  color: #0f172a;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.landing-emerald .lp-orbit-card__subtitle {
+  margin-top: 0.2rem;
+  color: #667085;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+}
+
+.landing-emerald .lp-orbit__beam-line {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  width: 230px;
+  height: 2px;
+  margin-top: -1px;
+  transform-origin: 0 50%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(16, 185, 129, 0.55) 0%,
+    rgba(16, 185, 129, 0.2) 55%,
+    rgba(16, 185, 129, 0) 100%
+  );
+  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.35));
+}
+
+@media (max-width: 1023px) {
+  .landing-emerald .lp-orbit__beam-line {
+    width: 170px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .landing-emerald .lp-hero {
+    min-height: 0;
+  }
+
+  .landing-emerald .lp-orbit {
+    width: min(100%, 420px);
+  }
+
+  .landing-emerald .lp-orbit__ring--inner {
+    width: 280px;
+    height: 280px;
+  }
+
+  .landing-emerald .lp-orbit__ring--outer {
+    width: 400px;
+    height: 400px;
+  }
+
+  .landing-emerald .lp-orbit__logo-card {
+    width: 140px;
+    height: 140px;
+    border-radius: 28px;
+  }
+
+  .landing-emerald .lp-orbit__logo {
+    max-width: 104px;
+  }
+}
+
+@media (max-width: 639px) {
+  .landing-emerald .lp-orbit-card {
+    width: 148px;
+    height: 82px;
+    margin-left: -74px;
+    margin-top: -41px;
+    padding: 0.6rem 0.65rem;
+    border-radius: 18px;
+  }
+
+  .landing-emerald .lp-orbit-card__title {
+    font-size: 0.75rem;
+  }
+
+  .landing-emerald .lp-orbit-card__subtitle {
+    font-size: 0.625rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-emerald .lp-orbit__beam-line {
+    display: none;
+  }
 }
 
 /* Keep legacy device chrome used by Terrain section */

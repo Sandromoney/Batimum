@@ -1,43 +1,47 @@
 "use client";
 
 import Link from "next/link";
+import { useRef } from "react";
 import { ArrowRight, Check } from "lucide-react";
-import { LandingHeroVisual } from "@/components/landing/landing-device-scene";
+import { LandingHeroOrbit } from "@/components/landing/landing-hero-orbit";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 
 const BENEFITS = [
-  "Devis créés et envoyés plus rapidement",
-  "Planning des équipes toujours à jour",
-  "Suivi des chantiers en temps réel",
-  "Facturation et rentabilité centralisées",
+  "Devis IA en quelques minutes",
+  "Planning toujours synchronisé",
+  "Rentabilité visible instantanément",
 ] as const;
 
 export function LandingHero() {
+  const sectionRef = useRef<HTMLElement>(null);
   const signupHref = getPublicSignupHref();
   const primaryLabel = isPrivateBetaEnabled()
     ? "Se connecter"
     : "Essayer gratuitement";
 
   return (
-    <section className="lp-hero" aria-label="Présentation Batimum">
-      <div className="lp-container">
+    <section
+      ref={sectionRef}
+      className="lp-hero"
+      aria-label="Présentation Batimum"
+    >
+      <div className="lp-hero__container">
         <div className="lp-hero__grid">
-          <div>
+          <div className="lp-hero__copy">
             <span className="lp-eyebrow">
               <span className="lp-eyebrow__dot" aria-hidden="true" />
-              Pensé pour les entreprises du bâtiment
+              Pensé uniquement pour les entreprises du BTP
             </span>
 
-            <h1 className="lp-title mt-5 text-[2rem] sm:text-4xl lg:text-[2.75rem]">
-              La solution tout-en-un pour{" "}
-              <span className="lp-title-accent">piloter votre entreprise</span>{" "}
-              du BTP.
+            <h1 className="lp-hero__title">
+              Votre entreprise du BTP.
+              <span className="lp-hero__title-accent">Enfin sous contrôle.</span>
             </h1>
 
-            <p className="lp-subtitle mt-4 max-w-xl text-base sm:text-lg">
-              Créez vos devis en quelques minutes, planifiez vos équipes, suivez
-              vos chantiers et gérez votre activité depuis le bureau comme sur le
-              terrain.
+            <p className="lp-hero__subtitle">
+              Batimum centralise vos devis, vos équipes, vos chantiers, vos
+              factures et votre rentabilité dans une seule plateforme simple et
+              intelligente.
             </p>
 
             <ul className="lp-hero__benefits">
@@ -70,13 +74,11 @@ export function LandingHero() {
                 Découvrir Batimum
               </Link>
             </div>
-
-            <p className="lp-hero__reassurance">
-              Sans engagement · Mise en route rapide · Données sécurisées
-            </p>
           </div>
 
-          <LandingHeroVisual />
+          <div className="lp-hero__visual">
+            <LandingHeroOrbit sectionRef={sectionRef} />
+          </div>
         </div>
       </div>
     </section>
