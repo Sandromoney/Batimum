@@ -170,54 +170,89 @@ html:has(.landing-emerald) body {
 /* ——— Hero ——— */
 .landing-emerald .lp-hero {
   position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse 70% 50% at 85% 20%, rgba(16, 185, 129, 0.06), transparent 60%),
-    linear-gradient(180deg, #ffffff 0%, #f6f8f9 100%);
-  padding: 1.5rem 0 3rem;
+  background: #ffffff;
 }
 
-@media (min-width: 1024px) {
-  .landing-emerald .lp-hero {
-    min-height: calc(100svh - 72px);
-    display: flex;
-    align-items: center;
-    padding: 2rem 0 3.5rem;
+.landing-emerald .lp-hero__track {
+  height: 240vh;
+}
+
+@media (max-width: 767px) {
+  .landing-emerald .lp-hero__track {
+    height: 200vh;
   }
 }
 
-.landing-emerald .lp-hero__grid {
-  display: grid;
-  gap: 2.5rem;
-  align-items: center;
-}
-
-@media (min-width: 1024px) {
-  .landing-emerald .lp-hero__grid {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-    gap: 2rem;
-  }
-}
-
-.landing-emerald .lp-hero__benefits {
-  display: grid;
-  gap: 0.65rem;
-  margin: 1.25rem 0 1.5rem;
-}
-
-.landing-emerald .lp-hero__benefit {
+.landing-emerald .lp-hero__sticky {
+  position: sticky;
+  top: 76px;
+  min-height: calc(100svh - 76px);
   display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
-  color: var(--bm-anthracite);
-  font-size: 0.9375rem;
-  font-weight: 500;
+  align-items: center;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.landing-emerald .lp-hero__inner {
+  width: 100%;
+  display: grid;
+  gap: 1.25rem;
+  padding-top: 1rem;
+  padding-bottom: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .landing-emerald .lp-hero__inner {
+    grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+    gap: 1.5rem;
+    align-items: center;
+    padding-top: 0.5rem;
+    padding-bottom: 1rem;
+  }
+}
+
+.landing-emerald .lp-hero__copy {
+  max-width: 34rem;
+  position: relative;
+  z-index: 2;
+}
+
+.landing-emerald .lp-hero__eyebrow {
+  margin: 0;
+  color: #667085;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.landing-emerald .lp-hero__title {
+  margin: 0.85rem 0 0;
+  color: #101828;
+  font-size: clamp(2.15rem, 4.6vw, 3.55rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+}
+
+.landing-emerald .lp-hero__title-accent {
+  display: block;
+  color: #10b981;
+}
+
+.landing-emerald .lp-hero__subtitle {
+  margin: 1rem 0 0;
+  max-width: 32rem;
+  color: #667085;
+  font-size: 1rem;
+  line-height: 1.55;
 }
 
 .landing-emerald .lp-hero__ctas {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  margin-top: 1.35rem;
 }
 
 .landing-emerald .lp-hero__ctas a {
@@ -230,162 +265,563 @@ html:has(.landing-emerald) body {
   }
 }
 
-.landing-emerald .lp-hero__reassurance {
-  margin-top: 0.875rem;
-  color: var(--bm-text-secondary);
+/* ——— Pro device stage (hero only) ——— */
+.landing-emerald .lp-pro-stage {
+  position: relative;
+  width: 100%;
+  min-height: 380px;
+  height: clamp(380px, 58vh, 560px);
+}
+
+@media (min-width: 1024px) {
+  .landing-emerald .lp-pro-stage {
+    min-height: 520px;
+    height: clamp(480px, 64vh, 620px);
+  }
+}
+
+.landing-emerald .lp-pro-stage__canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  perspective: 2000px;
+  perspective-origin: 58% 42%;
+}
+
+.landing-emerald .lp-pro-stage__glow {
+  position: absolute;
+  inset: 20% 14% 24%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.04), transparent 70%);
+  pointer-events: none;
+}
+
+.landing-emerald .lp-pro-stage__floor {
+  position: absolute;
+  left: 10%;
+  right: 6%;
+  bottom: 2%;
+  height: 28%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.16), transparent 72%);
+  filter: blur(22px);
+  pointer-events: none;
+}
+
+.landing-emerald .lp-pro-mac,
+.landing-emerald .lp-pro-phone {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  /* Depth from translateZ only — avoid z-index fighting 3D order */
+  z-index: 1;
+}
+
+.landing-emerald .lp-pro-mac {
+  width: min(100%, 640px);
+}
+
+.landing-emerald .lp-pro-phone {
+  width: min(32%, 168px);
+}
+
+.landing-emerald .lp-pro-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 0.35rem;
+  transform: translateX(-50%);
+  margin: 0;
+  color: #667085;
   font-size: 0.8125rem;
-}
-
-.landing-emerald .lp-hero__context {
-  margin-top: 1.25rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem 1rem;
-  color: var(--bm-text-secondary);
-  font-size: 0.875rem;
-}
-
-.landing-emerald .lp-device-toggle {
-  display: inline-flex;
-  gap: 0.25rem;
-  padding: 0.2rem;
-  border: 1px solid var(--bm-border);
-  border-radius: 999px;
-  background: #fff;
-}
-
-.landing-emerald .lp-device-toggle span {
-  border-radius: 999px;
-  padding: 0.25rem 0.7rem;
-  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--bm-text-secondary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  z-index: 2;
 }
 
-.landing-emerald .lp-device-toggle span.is-active {
-  background: var(--bm-green-soft);
-  color: var(--bm-green-dark);
+/* MacBook Pro — aluminum Space Gray */
+.landing-emerald .lp-pro-mac__rig {
+  position: relative;
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 48px 70px rgba(15, 23, 42, 0.28));
 }
 
-/* ——— Device scene ——— */
+.landing-emerald .lp-pro-mac__lid {
+  position: relative;
+  border-radius: 18px 18px 12px 12px;
+  padding: 12px 12px 10px;
+  background:
+    linear-gradient(
+      155deg,
+      #e8ebf0 0%,
+      #c4cad3 18%,
+      #9aa3ae 42%,
+      #7a8490 68%,
+      #5e6772 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.28),
+    inset 1px 0 0 rgba(255, 255, 255, 0.32),
+    inset -1px 0 0 rgba(0, 0, 0, 0.16),
+    0 2px 4px rgba(15, 23, 42, 0.14);
+}
+
+.landing-emerald .lp-pro-mac__lid-metal {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      105deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.22) 18%,
+      transparent 34%,
+      transparent 62%,
+      rgba(255, 255, 255, 0.08) 78%,
+      transparent 100%
+    );
+  mix-blend-mode: soft-light;
+}
+
+.landing-emerald .lp-pro-mac__lid-edge {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+    inset 0 0 0 2px rgba(0, 0, 0, 0.06);
+}
+
+.landing-emerald .lp-pro-mac__bezel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #05070b;
+  aspect-ratio: 16 / 10.2;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+.landing-emerald .lp-pro-mac__camera {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  z-index: 3;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(circle at 35% 30%, #5b6574 0%, #1a2030 55%, #05070b 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 0 0 3px rgba(10, 12, 16, 0.9);
+}
+
+.landing-emerald .lp-pro-mac__display {
+  position: absolute;
+  inset: 18px 14px 14px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #f8fafc;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.landing-emerald .lp-pro-mac__glass {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      118deg,
+      rgba(255, 255, 255, 0.28) 0%,
+      rgba(255, 255, 255, 0.06) 16%,
+      transparent 36%,
+      transparent 58%,
+      rgba(255, 255, 255, 0.04) 78%,
+      rgba(255, 255, 255, 0.1) 100%
+    );
+}
+
+.landing-emerald .lp-pro-mac__chin {
+  height: 4px;
+  margin-top: 6px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.18), transparent);
+  opacity: 0.55;
+}
+
+.landing-emerald .lp-pro-mac__hinge {
+  display: flex;
+  justify-content: space-between;
+  height: 8px;
+  margin: 0 auto;
+  width: 94%;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(180deg, #a8b0ba 0%, #6d757f 48%, #4f5660 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.landing-emerald .lp-pro-mac__hinge > span {
+  width: 18%;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent);
+}
+
+.landing-emerald .lp-pro-mac__deck {
+  position: relative;
+  width: 120%;
+  margin-left: -10%;
+  border-radius: 0 0 16px 16px;
+  padding: 11px 20px 14px;
+  background:
+    linear-gradient(180deg, #d0d5dd 0%, #a7aeb8 32%, #858e99 70%, #6b7380 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.2),
+    inset 2px 0 0 rgba(255, 255, 255, 0.18),
+    inset -2px 0 0 rgba(0, 0, 0, 0.12),
+    0 22px 36px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+
+.landing-emerald .lp-pro-mac__deck-metal {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      95deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.18) 22%,
+      transparent 40%,
+      transparent 70%,
+      rgba(255, 255, 255, 0.08) 88%,
+      transparent 100%
+    );
+  mix-blend-mode: soft-light;
+}
+
+.landing-emerald .lp-pro-mac__speaker {
+  height: 3px;
+  margin: 0 auto 9px;
+  width: 22%;
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #5a616b 0 1px,
+      #8b929c 1px 2px
+    );
+  opacity: 0.85;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.landing-emerald .lp-pro-mac__keyboard {
+  position: relative;
+  display: grid;
+  gap: 3.5px;
+  margin-bottom: 12px;
+  padding: 6px 4px 7px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.08));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.22);
+}
+
+.landing-emerald .lp-pro-mac__key-row {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
+
+.landing-emerald .lp-pro-mac__key {
+  flex: 0 0 auto;
+  width: 6.6%;
+  max-width: 17px;
+  height: 8px;
+  border-radius: 2.5px;
+  background: linear-gradient(180deg, #4a5160 0%, #232833 55%, #151920 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
+    0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+.landing-emerald .lp-pro-mac__key--space {
+  width: 42% !important;
+  max-width: none !important;
+}
+
+.landing-emerald .lp-pro-mac__trackpad {
+  position: relative;
+  width: 36%;
+  margin: 0 auto;
+  aspect-ratio: 1.55 / 1;
+  border-radius: 9px;
+  background:
+    linear-gradient(180deg, #c5cad2 0%, #a4abb5 48%, #8f97a2 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+    inset 0 0 0 1.5px rgba(0, 0, 0, 0.14),
+    inset 0 10px 16px rgba(255, 255, 255, 0.14),
+    inset 0 -6px 10px rgba(0, 0, 0, 0.06);
+}
+
+.landing-emerald .lp-pro-mac__deck-lip {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  bottom: 4px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+}
+
+.landing-emerald .lp-pro-mac__shadow {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.landing-emerald .lp-pro-mac__shadow--ambient {
+  bottom: -34px;
+  height: 48px;
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.22), transparent 72%);
+  filter: blur(16px);
+}
+
+.landing-emerald .lp-pro-mac__shadow--contact {
+  bottom: -14px;
+  height: 18px;
+  left: 18%;
+  right: 18%;
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.38), transparent 68%);
+  filter: blur(6px);
+}
+
+.landing-emerald .lp-pro-mac__reflection {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: -52px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.2), transparent 75%);
+  filter: blur(10px);
+  opacity: 0.5;
+  transform: scaleY(-1);
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* iPhone Pro — front face only (never show back / cameras) */
+.landing-emerald .lp-pro-phone__rig {
+  position: relative;
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 36px 42px rgba(15, 23, 42, 0.28));
+}
+
+.landing-emerald .lp-pro-phone__frame {
+  position: relative;
+  border-radius: 36px;
+  padding: 8px;
+  aspect-ratio: 9 / 19.5;
+  background:
+    linear-gradient(150deg, #eceff4 0%, #b7c0cb 28%, #87919e 58%, #5c6673 82%, #3f4752 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    inset 1px 0 0 rgba(255, 255, 255, 0.3),
+    inset -1px 0 0 rgba(0, 0, 0, 0.22),
+    0 2px 4px rgba(15, 23, 42, 0.2);
+}
+
+.landing-emerald .lp-pro-phone__titanium {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      125deg,
+      rgba(255, 255, 255, 0.35) 0%,
+      transparent 22%,
+      transparent 55%,
+      rgba(255, 255, 255, 0.1) 78%,
+      transparent 100%
+    );
+  mix-blend-mode: soft-light;
+}
+
+.landing-emerald .lp-pro-phone__screen {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  border-radius: 28px;
+  background: #f8fafc;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+}
+
+.landing-emerald .lp-pro-phone__island {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  z-index: 4;
+  width: 34%;
+  height: 22px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background: #05070b;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.landing-emerald .lp-pro-phone__glass {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      148deg,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.06) 18%,
+      transparent 40%,
+      transparent 68%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+}
+
+.landing-emerald .lp-pro-phone__btn {
+  position: absolute;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #d2d8e0, #8e97a3 55%, #6d7682);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.landing-emerald .lp-pro-phone__btn--silent {
+  left: -2.5px;
+  top: 15%;
+  width: 2.5px;
+  height: 4.5%;
+}
+
+.landing-emerald .lp-pro-phone__btn--vol-up {
+  left: -2.5px;
+  top: 23%;
+  width: 2.5px;
+  height: 7.5%;
+}
+
+.landing-emerald .lp-pro-phone__btn--vol-down {
+  left: -2.5px;
+  top: 33%;
+  width: 2.5px;
+  height: 7.5%;
+}
+
+.landing-emerald .lp-pro-phone__btn--power {
+  right: -2.5px;
+  top: 25%;
+  width: 2.5px;
+  height: 11%;
+}
+
+.landing-emerald .lp-pro-phone__shadow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.landing-emerald .lp-pro-phone__shadow--ambient {
+  bottom: -28px;
+  height: 36px;
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.24), transparent 72%);
+  filter: blur(12px);
+}
+
+.landing-emerald .lp-pro-phone__shadow--contact {
+  bottom: -12px;
+  height: 16px;
+  left: 18%;
+  right: 18%;
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.4), transparent 68%);
+  filter: blur(5px);
+}
+
+/* Reduced motion / static */
+.landing-emerald .lp-pro-stage--static {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1.25rem;
+  perspective: none;
+  min-height: 340px;
+  height: auto;
+  padding-bottom: 2rem;
+}
+
+.landing-emerald .lp-pro-stage--static .lp-pro-mac,
+.landing-emerald .lp-pro-stage--static .lp-pro-phone {
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none !important;
+}
+
+.landing-emerald .lp-pro-stage--static .lp-pro-mac {
+  width: min(70%, 460px);
+}
+
+.landing-emerald .lp-pro-stage--static .lp-pro-phone {
+  width: min(28%, 150px);
+}
+
+.landing-emerald .lp-pro-stage--static .lp-pro-caption {
+  position: absolute;
+  bottom: 0;
+}
+
+@media (max-width: 639px) {
+  .landing-emerald .lp-pro-stage--static {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .landing-emerald .lp-pro-stage--static .lp-pro-mac,
+  .landing-emerald .lp-pro-stage--static .lp-pro-phone {
+    width: min(100%, 320px);
+  }
+}
+
+/* Keep legacy device chrome used by Terrain section */
 .landing-emerald .lp-device-stage {
   position: relative;
   width: 100%;
   min-height: 360px;
   perspective: 1600px;
-  perspective-origin: 50% 45%;
-}
-
-@media (min-width: 640px) {
-  .landing-emerald .lp-device-stage {
-    min-height: 430px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .landing-emerald .lp-device-stage {
-    min-height: 500px;
-  }
-}
-
-.landing-emerald .lp-device-stage__floor {
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  bottom: 8%;
-  height: 28%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(16, 24, 40, 0.1), transparent 70%);
-  filter: blur(8px);
-  pointer-events: none;
-}
-
-.landing-emerald .lp-device-orbit {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: inherit;
-  transform-style: preserve-3d;
-}
-
-.landing-emerald .lp-device {
-  position: absolute;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-
-.landing-emerald .lp-macbook {
-  width: min(100%, 560px);
-  left: 50%;
-  top: 46%;
-}
-
-.landing-emerald .lp-iphone {
-  width: min(42%, 190px);
-  left: 50%;
-  top: 48%;
-}
-
-.landing-emerald .lp-macbook__body {
-  position: relative;
-  border-radius: 14px 14px 8px 8px;
-  background: linear-gradient(160deg, #3a3f46 0%, #1f2937 48%, #111827 100%);
-  padding: 10px 10px 12px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
-    var(--bm-shadow-device);
-}
-
-.landing-emerald .lp-macbook__bezel {
-  position: relative;
-  overflow: hidden;
-  border-radius: 8px;
-  background: #0b1220;
-  aspect-ratio: 16 / 10.2;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-
-.landing-emerald .lp-macbook__camera {
-  position: absolute;
-  top: 5px;
-  left: 50%;
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: #111827;
-  transform: translateX(-50%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
-  z-index: 2;
-}
-
-.landing-emerald .lp-macbook__screen {
-  position: absolute;
-  inset: 14px 10px 10px;
-  overflow: hidden;
-  border-radius: 4px;
-  background: #f8fafc;
-}
-
-.landing-emerald .lp-macbook__base {
-  height: 10px;
-  margin: 0 auto;
-  width: 118%;
-  margin-left: -9%;
-  border-radius: 0 0 12px 12px;
-  background: linear-gradient(180deg, #9ca3af 0%, #6b7280 40%, #4b5563 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    0 10px 24px rgba(16, 24, 40, 0.18);
-}
-
-.landing-emerald .lp-macbook__notch {
-  width: 18%;
-  height: 4px;
-  margin: 0 auto;
-  border-radius: 0 0 4px 4px;
-  background: #374151;
 }
 
 .landing-emerald .lp-iphone__body {
@@ -418,26 +854,6 @@ html:has(.landing-emerald) body {
   border-radius: 999px;
   background: #030712;
   transform: translateX(-50%);
-}
-
-.landing-emerald .lp-iphone__side {
-  position: absolute;
-  background: #4b5563;
-  border-radius: 2px;
-}
-
-.landing-emerald .lp-iphone__side--left {
-  left: -2px;
-  top: 18%;
-  width: 2px;
-  height: 12%;
-}
-
-.landing-emerald .lp-iphone__side--right {
-  right: -2px;
-  top: 24%;
-  width: 2px;
-  height: 8%;
 }
 
 /* Device UIs */
@@ -655,43 +1071,6 @@ html:has(.landing-emerald) body {
 .landing-emerald .lp-ui-mobile__btn--primary {
   background: #10b981;
   color: #fff;
-}
-
-/* Reduced motion: side by side */
-.landing-emerald .lp-device-stage--static {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 1rem;
-  min-height: 320px;
-  perspective: none;
-}
-
-.landing-emerald .lp-device-stage--static .lp-device {
-  position: relative;
-  left: auto;
-  top: auto;
-  transform: none !important;
-}
-
-.landing-emerald .lp-device-stage--static .lp-macbook {
-  width: min(70%, 420px);
-}
-
-.landing-emerald .lp-device-stage--static .lp-iphone {
-  width: min(28%, 140px);
-}
-
-@media (max-width: 639px) {
-  .landing-emerald .lp-device-stage--static {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .landing-emerald .lp-device-stage--static .lp-macbook,
-  .landing-emerald .lp-device-stage--static .lp-iphone {
-    width: min(100%, 320px);
-  }
 }
 
 /* ——— Proofs / features / cards ——— */
