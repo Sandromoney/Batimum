@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Bot, Check } from "lucide-react";
 import { LandingReveal } from "@/components/landing/landing-reveal";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
+import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 
 const BENEFITS = [
   "Moins de saisie",
@@ -42,6 +44,10 @@ const STEPS = [
 export function LandingDevisSection() {
   const reduced = usePrefersReducedMotion();
   const [step, setStep] = useState(0);
+  const signupHref = getPublicSignupHref();
+  const ctaLabel = isPrivateBetaEnabled()
+    ? "Se connecter"
+    : "Créer mon premier devis";
 
   useEffect(() => {
     if (reduced) {
@@ -86,12 +92,24 @@ export function LandingDevisSection() {
                 </li>
               ))}
             </ul>
+            <div className="mt-8">
+              <Link
+                href={signupHref}
+                className="landing-btn-primary landing-btn-interactive group inline-flex items-center justify-center gap-2 no-underline"
+              >
+                {ctaLabel}
+                <ArrowRight
+                  className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
+              </Link>
+            </div>
           </LandingReveal>
 
           <LandingReveal delay={120}>
             <div className="lp-devis-demo" aria-live="polite">
               <div className="lp-devis-demo__header">
-                <Sparkles className="h-4 w-4 text-[#3B82F6]" aria-hidden="true" />
+                <Bot className="h-4 w-4 text-[#3B82F6]" aria-hidden="true" />
                 <span>Démonstration</span>
               </div>
 

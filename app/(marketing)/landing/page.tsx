@@ -3,6 +3,7 @@
 import "./landing-emerald.css";
 import { LandingTop } from "@/components/landing-top";
 import { LandingProofsSection } from "@/components/landing/landing-proofs-section";
+import { LandingJourneySection } from "@/components/landing/landing-journey-section";
 import { LandingDevisSection } from "@/components/landing/landing-devis-section";
 import { LandingVoiceSection } from "@/components/landing/landing-voice-section";
 import { LandingTerrainSection } from "@/components/landing/landing-terrain-section";
@@ -46,6 +47,7 @@ export default function LandingPage() {
     <main className="landing-emerald relative min-h-screen overflow-x-hidden bg-white text-[#111111]">
       <LandingTop />
       <LandingProofsSection />
+      <LandingJourneySection />
       <LandingDevisSection />
       <LandingVoiceSection />
       <LandingTerrainSection />

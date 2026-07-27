@@ -299,7 +299,7 @@ export function LandingPricingSection() {
                 href={checkoutHref}
                 className="landing-pricing-cta landing-btn-primary landing-btn-interactive group mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground no-underline shadow-glow transition-all hover:bg-primary-hover active:scale-[0.98]"
               >
-                Essayer gratuitement
+                Essayer Batimum
                 <ArrowRight
                   className="landing-pricing-cta__arrow h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1"
                   aria-hidden="true"

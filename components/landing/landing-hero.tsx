@@ -9,28 +9,14 @@ import {
   useScroll,
   useTransform,
 } from "framer-motion";
-import { ArrowDown, ArrowRight, CalendarRange, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowDown, ArrowRight } from "lucide-react";
 import {
   HERO_FEATURES,
   HERO_BM_SYMBOL_SRC,
   LandingHeroOrbit,
 } from "@/components/landing/landing-hero-orbit";
+import { heroContent } from "@/lib/landing-hero-content";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
-
-const BENEFITS = [
-  {
-    label: "Devis générés rapidement avec l’IA",
-    Icon: Sparkles,
-  },
-  {
-    label: "Équipes et planning toujours synchronisés",
-    Icon: CalendarRange,
-  },
-  {
-    label: "Rentabilité visible en temps réel",
-    Icon: TrendingUp,
-  },
-] as const;
 
 /** Scroll story only on large desktop (≥1100). Default false avoids SSR 350vh flash. */
 function useDesktopScrollStory(reduced: boolean) {
@@ -71,7 +57,7 @@ export function LandingHero() {
   const signupHref = getPublicSignupHref();
   const primaryLabel = isPrivateBetaEnabled()
     ? "Se connecter"
-    : "Essayer gratuitement";
+    : heroContent.primaryCta;
   const reduced = useReducedMotion() ?? false;
   const enableScrollStory = useDesktopScrollStory(reduced);
   const showOrbit = useShowOrbit(reduced);
@@ -100,30 +86,26 @@ export function LandingHero() {
           <div className="batimumHero__content batimumHero__copy">
             <span className="batimumHero__badge">
               <span className="batimumHero__badgeDot" aria-hidden="true" />
-              Pensé uniquement pour les entreprises du BTP
+              {heroContent.badge}
             </span>
 
             <h1 className="batimumHero__title">
-              La solution tout-en-un pour{" "}
-              <span className="batimumHero__titleAccent">
-                piloter votre entreprise
-              </span>{" "}
-              du BTP.
+              {heroContent.titleBefore}
+              <span className="batimumHero__titleAccent batimumHero__titleAccent--mark">
+                {heroContent.titleHighlight}
+              </span>
+              {heroContent.titleAfter}
             </h1>
 
-            <p className="batimumHero__subtitle">
-              Créez vos devis en quelques minutes, planifiez vos équipes,
-              suivez vos chantiers et pilotez votre rentabilité depuis le
-              bureau comme sur le terrain.
-            </p>
+            <p className="batimumHero__subtitle">{heroContent.subtitle}</p>
 
             <ul className="batimumHero__benefits">
-              {BENEFITS.map(({ label, Icon }) => (
+              {heroContent.benefits.map(({ label, Icon }) => (
                 <li key={label} className="batimumHero__benefit">
                   <Icon
                     className="batimumHero__benefitIcon"
                     size={18}
-                    strokeWidth={1.8}
+                    strokeWidth={1.75}
                     aria-hidden="true"
                   />
                   <span>{label}</span>
@@ -143,16 +125,14 @@ export function LandingHero() {
                 />
               </Link>
               <Link
-                href="/landing#fonctionnalites"
+                href={heroContent.secondaryHref}
                 className="landing-btn-secondary batimumHero__ctaSecondary inline-flex items-center justify-center gap-2 no-underline"
               >
-                Découvrir Batimum
+                {heroContent.secondaryCta}
               </Link>
             </div>
 
-            <p className="batimumHero__trust">
-              Sans engagement · Mise en route rapide · Données sécurisées
-            </p>
+            <p className="batimumHero__trust">{heroContent.trust}</p>
           </div>
 
           <div className="batimumHero__visual">
@@ -225,7 +205,7 @@ export function LandingHero() {
                           }
                           aria-hidden
                         >
-                          <Icon size={16} strokeWidth={1.8} />
+                          <Icon size={16} strokeWidth={1.75} />
                         </span>
                         <span className="batimumHero__bubbleCopy">
                           <span className="batimumHero__bubbleTitle">
@@ -255,7 +235,7 @@ export function LandingHero() {
               strokeWidth={1.8}
               aria-hidden
             />
-            Faites défiler pour découvrir Batimum
+            {heroContent.scrollCue}
           </motion.p>
         ) : null}
       </div>

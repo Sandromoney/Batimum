@@ -68,7 +68,7 @@ export const HERO_FEATURES: HexFeature[] = [
     detail: "Décrivez les travaux, Batimum prépare le devis.",
     panelTitle: "Créez vos devis avec MUM IA",
     panelText:
-      "Décrivez simplement les travaux demandés par votre client. MUM IA vous aide à organiser les lots, détailler les prestations et préparer un devis professionnel en quelques minutes.",
+      "Décrivez les travaux demandés par votre client. MUM IA vous aide à organiser les lots, détailler les prestations et préparer un devis professionnel en quelques minutes.",
     benefit:
       "Vous gagnez du temps dès le rendez-vous client, tout en gardant la main avant l’envoi.",
     ctaLabel: "Découvrir MUM IA",
@@ -86,7 +86,7 @@ export const HERO_FEATURES: HexFeature[] = [
     panelText:
       "Planifiez les interventions, affectez chaque salarié au bon chantier et visualisez les disponibilités de toute l’entreprise dans un planning simple et partagé.",
     benefit:
-      "Moins d’oublis, moins d’appels et une organisation claire pour tout le monde.",
+      "Moins d’oublis, moins d’appels et une organisation claire pour toute l’équipe.",
     ctaLabel: "Découvrir le planning",
     href: "#planning",
     angle: 60,
@@ -116,9 +116,9 @@ export const HERO_FEATURES: HexFeature[] = [
     detail: "Transformez vos devis en factures simplement.",
     panelTitle: "Facturez sans tout ressaisir",
     panelText:
-      "Transformez rapidement vos devis en factures, suivez les règlements et identifiez immédiatement les paiements reçus ou encore en attente.",
+      "Transformez rapidement vos devis en factures, suivez les règlements et identifiez ce qui est encaissé ou encore en attente.",
     benefit:
-      "Une facturation plus fluide et une vision claire de ce qui doit encore être encaissé.",
+      "Une facturation plus fluide et une vision claire de vos encaissements.",
     ctaLabel: "Découvrir la facturation",
     href: "#facturation",
     angle: 180,
@@ -128,11 +128,11 @@ export const HERO_FEATURES: HexFeature[] = [
   {
     id: "clients",
     title: "Gestion client",
-    subtitle: "Chaque information retrouvée",
+    subtitle: "Tout est facile à retrouver",
     detail: "Retrouvez toutes les informations au même endroit.",
     panelTitle: "Toute l’histoire de chaque client au même endroit",
     panelText:
-      "Retrouvez immédiatement ses coordonnées, ses devis, ses factures, ses documents et les chantiers réalisés ou en cours.",
+      "Retrouvez ses coordonnées, ses devis, ses factures, ses documents et les chantiers réalisés ou en cours.",
     benefit:
       "Plus besoin de chercher dans les mails, les dossiers ou les anciens messages.",
     ctaLabel: "Découvrir la gestion client",
@@ -148,9 +148,9 @@ export const HERO_FEATURES: HexFeature[] = [
     detail: "Visualisez vos marges avant qu’il ne soit trop tard.",
     panelTitle: "Prenez vos décisions avec les bons chiffres",
     panelText:
-      "Comparez le prévu au réel, suivez les coûts et visualisez la rentabilité de vos devis et de vos chantiers avant qu’un dépassement ne devienne un problème.",
+      "Comparez le prévu au réel, suivez vos coûts et visualisez la rentabilité de vos devis et de vos chantiers.",
     benefit:
-      "Vous savez où vous gagnez de l’argent et où votre marge doit être protégée.",
+      "Vous savez où votre entreprise gagne de l’argent et où votre marge doit être protégée.",
     ctaLabel: "Découvrir le pilotage",
     href: "#pilotage",
     angle: 300,
@@ -705,8 +705,44 @@ function FeatureVertexCard({
     return 1;
   });
 
-  const scale = isActive ? 1.04 : undefined;
+  const scale = isActive ? 1.025 : undefined;
   const opacity = isActive ? 1 : isDimmed ? 0.4 : undefined;
+
+  const microHint =
+    feature.id === "devis" ? (
+      <span className="batimumHero__microHint batimumHero__microHint--devis" aria-hidden>
+        <span className="batimumHero__microCheck" />
+        Devis prêt
+      </span>
+    ) : feature.id === "planning" ? (
+      <span className="batimumHero__microHint batimumHero__microHint--planning" aria-hidden>
+        <span className="batimumHero__microSwap">
+          <span>À planifier</span>
+          <span>Planifié</span>
+        </span>
+      </span>
+    ) : feature.id === "chantiers" ? (
+      <span className="batimumHero__microHint batimumHero__microHint--chantiers" aria-hidden>
+        <span className="batimumHero__microBar">
+          <span className="batimumHero__microBarFill" />
+        </span>
+      </span>
+    ) : feature.id === "facturation" ? (
+      <span className="batimumHero__microHint batimumHero__microHint--facturation" aria-hidden>
+        <span className="batimumHero__microSwap">
+          <span>À préparer</span>
+          <span>Prête</span>
+        </span>
+      </span>
+    ) : feature.id === "clients" ? (
+      <span className="batimumHero__microHint batimumHero__microHint--clients" aria-hidden>
+        <span className="batimumHero__microDoc" />
+      </span>
+    ) : (
+      <span className="batimumHero__microHint batimumHero__microHint--pilotage" aria-hidden>
+        <span className="batimumHero__microSpark" />
+      </span>
+    );
 
   const card = (
     <button
@@ -736,6 +772,7 @@ function FeatureVertexCard({
           <span className="batimumHero__bubbleTitle">{feature.title}</span>
           <span className="batimumHero__bubbleSub">{feature.subtitle}</span>
         </span>
+        {microHint}
       </span>
     </button>
   );
