@@ -37,7 +37,7 @@ const WITH = [
 export function LandingBeforeAfterSection() {
   return (
     <section
-      className="lp-section lp-section--soft"
+      className="lp-section lp-section--soft lp-section--after-hero"
       aria-labelledby="before-after-title"
       id="avant-apres"
     >
