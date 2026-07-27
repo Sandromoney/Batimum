@@ -63,19 +63,19 @@ function DropdownLink({
       <li>
         <Link
           href={item.href}
-          className="landing-nav-dropdown__link group flex rounded-2xl px-3 py-2.5 no-underline transition-colors hover:bg-[#f8faf8]"
+          className="landing-nav-dropdown__link group flex rounded-2xl px-3 py-2.5 no-underline transition-colors hover:bg-[#f7f7f8]"
           onClick={(event) => {
             if (onNavigate(item.href)) event.preventDefault();
           }}
         >
-          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(15,23,42,0.06)] bg-white text-[#10b981] shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(17,17,17,0.08)] bg-white text-[#111111] shadow-[0_2px_8px_rgba(17,17,17,0.04)]">
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
           <span className="landing-nav-dropdown__link-text min-w-0">
-            <span className="block text-sm font-medium text-[#0f172a] group-hover:text-[#10b981]">
+            <span className="block text-sm font-medium text-[#111111] group-hover:text-[#000000]">
               {item.label}
             </span>
-            <span className="landing-nav-dropdown__desc mt-0.5 block text-xs text-[#64748b]">
+            <span className="landing-nav-dropdown__desc mt-0.5 block text-xs text-[#666666]">
               {item.description}
             </span>
           </span>
@@ -88,19 +88,19 @@ function DropdownLink({
     <li>
       <Link
         href={item.href}
-        className="flex gap-3 rounded-xl px-2 py-2.5 no-underline hover:bg-[#f8faf8]"
+        className="flex gap-3 rounded-xl px-2 py-2.5 no-underline hover:bg-[#f7f7f8]"
         onClick={(event) => {
           if (onNavigate(item.href)) event.preventDefault();
         }}
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f8faf8] text-[#10b981]">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f7f7f8] text-[#111111]">
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
         </span>
         <span>
-          <span className="block text-sm font-medium text-[#0f172a]">
+          <span className="block text-sm font-medium text-[#111111]">
             {item.label}
           </span>
-          <span className="mt-0.5 block text-xs leading-5 text-[#64748b]">
+          <span className="mt-0.5 block text-xs leading-5 text-[#666666]">
             {item.description}
           </span>
         </span>

@@ -43,7 +43,7 @@ const faqs = [
 
 export default function LandingPage() {
   return (
-    <main className="landing-emerald relative min-h-screen overflow-x-hidden bg-white text-[#0F172A]">
+    <main className="landing-emerald relative min-h-screen overflow-x-hidden bg-white text-[#111111]">
       <LandingTop />
       <LandingProofsSection />
       <LandingDevisSection />

@@ -1,37 +1,55 @@
-/* Batimum landing — premium clair (70% blanc / 20% gris / 10% émeraude)
+/* Batimum landing — thème blanc / noir premium (Attio-like)
    Scope : .landing-emerald uniquement — n'affecte pas l'app authentifiée. */
 
 .landing-emerald {
-  --bm-white: #ffffff;
-  --bm-bg: #ffffff;
-  --bm-bg-secondary: #f8fafc;
-  --bm-card: #ffffff;
-  --bm-border: #e2e8f0;
-  --bm-text: #0f172a;
-  --bm-text-secondary: #64748b;
-  --bm-anthracite: #111827;
-  --bm-green: #10b981;
-  --bm-green-dark: #059669;
-  --bm-green-soft: #ecfdf5;
-  --bm-shadow-soft: 0 12px 32px rgba(15, 23, 42, 0.06);
-  --bm-shadow-device: 0 28px 60px rgba(15, 23, 42, 0.14);
+  /* Attio-like B&W theme — scoped to public landing only */
+  --landing-bg: #ffffff;
+  --landing-surface: #f7f7f8;
+  --landing-surface-soft: #fafafa;
+  --landing-text: #111111;
+  --landing-muted: #666666;
+  --landing-subtle: #8a8a8a;
+  --landing-border: #e7e7e7;
+  --landing-border-strong: #d8d8d8;
+  --landing-primary: #171717;
+  --landing-primary-hover: #000000;
+  --landing-dark: #101010;
+  --landing-dark-elevated: #111111;
+  --landing-on-dark: #ffffff;
+  --landing-on-dark-muted: #b8b8b8;
+  --landing-success: #22a06b;
+  --landing-success-soft: rgba(34, 160, 107, 0.12);
 
-  --color-primary: 16 185 129;
-  --color-primary-hover: 5 150 105;
+  --bm-white: var(--landing-bg);
+  --bm-bg: var(--landing-bg);
+  --bm-bg-secondary: var(--landing-surface);
+  --bm-card: #ffffff;
+  --bm-border: var(--landing-border);
+  --bm-text: var(--landing-text);
+  --bm-text-secondary: var(--landing-muted);
+  --bm-anthracite: #111111;
+  --bm-green: var(--landing-success);
+  --bm-green-dark: #2f9e72;
+  --bm-green-soft: var(--landing-success-soft);
+  --bm-shadow-soft: 0 12px 32px rgba(17, 17, 17, 0.05);
+  --bm-shadow-device: 0 28px 60px rgba(17, 17, 17, 0.12);
+
+  --color-primary: 23 23 23;
+  --color-primary-hover: 0 0 0;
   --color-primary-foreground: 255 255 255;
-  --color-foreground: 15 23 42;
-  --color-muted-foreground: 100 116 139;
+  --color-foreground: 17 17 17;
+  --color-muted-foreground: 102 102 102;
   --color-background: 255 255 255;
   --color-card: 255 255 255;
-  --color-card-hover: 248 250 252;
-  --color-border: 226 232 240;
-  --color-muted: 248 250 252;
+  --color-card-hover: 247 247 248;
+  --color-border: 231 231 231;
+  --color-muted: 247 247 248;
   --shadow-glow: none;
-  --shadow-card: 0 8px 24px rgba(15, 23, 42, 0.04);
-  --shadow-card-hover: 0 12px 28px rgba(15, 23, 42, 0.06);
+  --shadow-card: 0 8px 24px rgba(17, 17, 17, 0.04);
+  --shadow-card-hover: 0 12px 28px rgba(17, 17, 17, 0.07);
 
-  background-color: var(--bm-bg);
-  color: var(--bm-text);
+  background-color: var(--landing-bg);
+  color: var(--landing-text);
   scroll-padding-top: 80px;
   width: 100%;
   max-width: 100%;
@@ -50,15 +68,15 @@ html:has(.landing-emerald) body {
 
 /* ——— Header ——— */
 .landing-emerald .landing-header-bar {
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid transparent;
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .landing-emerald .landing-header-bar--scrolled {
-  border-bottom-color: var(--bm-border);
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.04);
+  border-bottom-color: #e7e7e7;
+  box-shadow: 0 8px 24px rgba(17, 17, 17, 0.04);
 }
 
 .landing-emerald .landing-header-btn--secondary {
@@ -73,35 +91,35 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .landing-header-btn--primary,
 .landing-emerald .landing-btn-primary {
-  background: var(--bm-green) !important;
+  background: var(--landing-primary) !important;
   color: #ffffff !important;
-  box-shadow: 0 8px 18px rgba(16, 185, 129, 0.16) !important;
+  box-shadow: 0 6px 16px rgba(17, 17, 17, 0.08) !important;
 }
 
 .landing-emerald .landing-header-btn--primary:hover,
 .landing-emerald .landing-btn-primary:hover {
-  background: var(--bm-green-dark) !important;
+  background: var(--landing-primary-hover) !important;
 }
 
 .landing-emerald .landing-btn-secondary {
   background: #ffffff !important;
-  border: 1px solid var(--bm-border) !important;
-  color: var(--bm-anthracite) !important;
+  border: 1px solid #e2e2e2 !important;
+  color: #111111 !important;
   box-shadow: none !important;
 }
 
 .landing-emerald .landing-btn-secondary:hover {
-  background: var(--bm-bg-secondary) !important;
+  background: #f7f7f7 !important;
 }
 
 .landing-emerald .landing-header-employee-link {
-  color: var(--bm-text-secondary) !important;
+  color: #666666 !important;
   font-size: 0.875rem;
   font-weight: 500;
 }
 
 .landing-emerald .landing-header-employee-link:hover {
-  color: var(--bm-anthracite) !important;
+  color: #111111 !important;
 }
 
 /* ——— Layout helpers ——— */
@@ -110,11 +128,16 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-section--soft {
-  background: var(--bm-bg-secondary);
+  background: var(--landing-surface);
 }
 
 .landing-emerald .lp-section--final {
-  background: var(--bm-anthracite);
+  background: var(--landing-surface);
+}
+
+.landing-emerald .lp-section--dark {
+  background: var(--landing-dark-elevated);
+  color: var(--landing-on-dark);
 }
 
 .landing-emerald .lp-container {
@@ -132,7 +155,7 @@ html:has(.landing-emerald) body {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   background: #fff;
   color: var(--bm-anthracite);
   border-radius: 999px;
@@ -146,7 +169,7 @@ html:has(.landing-emerald) body {
   width: 0.375rem;
   height: 0.375rem;
   border-radius: 999px;
-  background: var(--bm-green);
+  background: var(--landing-text);
 }
 
 .landing-emerald .lp-title {
@@ -158,7 +181,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-title-accent {
-  color: var(--bm-green);
+  color: #404040;
 }
 
 .landing-emerald .lp-subtitle {
@@ -301,7 +324,7 @@ html:has(.landing-emerald) body {
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: #10b981;
+  background: #111111;
   flex: 0 0 auto;
 }
 
@@ -317,7 +340,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .batimumHero__titleAccent {
   display: inline;
-  color: #10b981;
+  color: #404040;
 }
 
 .landing-emerald .batimumHero__subtitle {
@@ -349,7 +372,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .batimumHero__benefitIcon {
   flex: 0 0 auto;
-  color: #34d399;
+  color: #111111;
 }
 
 .landing-emerald .batimumHero__ctas {
@@ -369,7 +392,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .batimumHero__ctaPrimary {
-  box-shadow: 0 10px 22px rgba(16, 185, 129, 0.14) !important;
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.1) !important;
 }
 
 .landing-emerald .batimumHero__ctaPrimary:hover {
@@ -497,7 +520,7 @@ html:has(.landing-emerald) body {
   height: 48%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, transparent 72%);
+  background: radial-gradient(circle, rgba(17, 17, 17, 0.035) 0%, transparent 72%);
   pointer-events: none;
 }
 
@@ -506,7 +529,7 @@ html:has(.landing-emerald) body {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid rgba(17, 17, 17, 0.08);
   border-radius: 50%;
   pointer-events: none;
   box-sizing: border-box;
@@ -603,7 +626,7 @@ html:has(.landing-emerald) body {
   flex: 0 0 auto;
   width: 17px;
   height: 17px;
-  color: var(--card-accent, #34d399);
+  color: var(--card-accent, #111111);
   background: none;
   border: none;
 }
@@ -846,7 +869,7 @@ html:has(.landing-emerald) body {
   width: 100%;
   aspect-ratio: 1;
   border-radius: 8px;
-  background: linear-gradient(145deg, #10b981, #059669);
+  background: linear-gradient(145deg, #2a2a2a, #111111);
   margin-bottom: 4px;
 }
 
@@ -857,7 +880,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-ui-desktop__nav-item.is-active {
-  background: rgba(16, 185, 129, 0.55);
+  background: rgba(17, 17, 17, 0.55);
 }
 
 .landing-emerald .lp-ui-desktop__main {
@@ -904,7 +927,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-ui-desktop__kpi-value.is-green {
-  color: #059669;
+  color: var(--landing-success);
 }
 
 .landing-emerald .lp-ui-desktop__panels {
@@ -932,7 +955,7 @@ html:has(.landing-emerald) body {
 .landing-emerald .lp-ui-desktop__bar > span {
   display: block;
   height: 100%;
-  background: #10b981;
+  background: #111111;
   border-radius: 999px;
 }
 
@@ -977,7 +1000,7 @@ html:has(.landing-emerald) body {
   display: block;
   height: 100%;
   width: 68%;
-  background: #10b981;
+  background: #111111;
 }
 
 .landing-emerald .lp-ui-mobile__steps {
@@ -1000,7 +1023,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-ui-mobile__dot.is-done {
-  background: #10b981;
+  background: #111111;
 }
 
 .landing-emerald .lp-ui-mobile__photos {
@@ -1037,7 +1060,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-ui-mobile__btn--primary {
-  background: #10b981;
+  background: #171717;
   color: #fff;
 }
 
@@ -1072,7 +1095,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-proof {
   background: #fff;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 16px;
   padding: 1.35rem 1.25rem;
   height: 100%;
@@ -1123,7 +1146,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-feature {
   background: #fff;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 16px;
   padding: 1.5rem 1.35rem;
   height: 100%;
@@ -1167,7 +1190,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-lot {
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   background: var(--bm-bg-secondary);
   color: var(--bm-anthracite);
   border-radius: 999px;
@@ -1179,7 +1202,7 @@ html:has(.landing-emerald) body {
 /* ——— Devis demo ——— */
 .landing-emerald .lp-devis-demo {
   background: #fff;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 20px;
   padding: 1.25rem;
   box-shadow: var(--bm-shadow-soft);
@@ -1201,7 +1224,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-devis-card {
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 14px;
   padding: 0.9rem 1rem;
   background: var(--bm-bg-secondary);
@@ -1216,7 +1239,7 @@ html:has(.landing-emerald) body {
 .landing-emerald .lp-devis-card.is-active {
   opacity: 1;
   background: #fff;
-  border-color: rgba(16, 185, 129, 0.35);
+  border-color: rgba(17, 17, 17, 0.28);
   transform: translateY(-2px);
   box-shadow: var(--shadow-card);
 }
@@ -1243,8 +1266,8 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-devis-card.is-active .lp-devis-card__index {
-  background: var(--bm-green-soft);
-  color: var(--bm-green-dark);
+  background: #111111;
+  color: #ffffff;
 }
 
 .landing-emerald .lp-devis-card__body {
@@ -1257,7 +1280,7 @@ html:has(.landing-emerald) body {
 /* ——— Voice / dual / status ——— */
 .landing-emerald .lp-voice-bubble {
   background: #fff;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 20px;
   padding: 1.5rem;
   box-shadow: var(--bm-shadow-soft);
@@ -1269,8 +1292,8 @@ html:has(.landing-emerald) body {
   gap: 0.45rem;
   margin-bottom: 1rem;
   border-radius: 999px;
-  background: var(--bm-green-soft);
-  color: var(--bm-green-dark);
+  background: #f0f0f0;
+  color: #111111;
   padding: 0.35rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 700;
@@ -1308,7 +1331,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-dual__card {
   background: #fff;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 20px;
   padding: 1.5rem;
   height: 100%;
@@ -1377,7 +1400,7 @@ html:has(.landing-emerald) body {
   width: 48px;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #cbd5e1, #10b981, #cbd5e1);
+  background: linear-gradient(90deg, #d8d8d8, #111111, #d8d8d8);
 }
 
 .landing-emerald .lp-dual__message {
@@ -1395,7 +1418,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-status-panel {
   background: #fff;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 16px;
   padding: 1.25rem;
 }
@@ -1448,7 +1471,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-testimonial-filters button {
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   background: #fff;
   color: var(--bm-text-secondary);
   border-radius: 999px;
@@ -1460,7 +1483,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-testimonial-filters button:focus-visible {
-  outline: 2px solid var(--bm-green);
+  outline: 2px solid #111111;
   outline-offset: 2px;
 }
 
@@ -1484,7 +1507,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-theme-card {
   background: #fff;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 16px;
   padding: 1.35rem;
   height: 100%;
@@ -1524,7 +1547,7 @@ html:has(.landing-emerald) body {
   align-items: center;
   gap: 0.75rem;
   background: #fff;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 12px;
   padding: 0.85rem 1rem;
   color: var(--bm-anthracite);
@@ -1589,7 +1612,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-siret-box {
   background: #fff;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 18px;
   padding: 1.5rem;
   box-shadow: var(--bm-shadow-soft);
@@ -1613,7 +1636,7 @@ html:has(.landing-emerald) body {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 10px;
   padding: 0.7rem 0.85rem;
   background: var(--bm-bg-secondary);
@@ -1644,7 +1667,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-roadmap-card {
   background: #fff;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 16px;
   padding: 1.2rem 1.15rem;
   height: 100%;
@@ -1672,7 +1695,7 @@ html:has(.landing-emerald) body {
   display: grid;
   gap: 1.5rem;
   background: #fff;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   border-radius: 20px;
   padding: 1.5rem;
   box-shadow: var(--bm-shadow-soft);
@@ -1692,7 +1715,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-market-tags span {
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
   background: var(--bm-bg-secondary);
   border-radius: 999px;
   padding: 0.35rem 0.75rem;
@@ -1750,13 +1773,13 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-final__title {
-  color: #fff;
+  color: var(--landing-text);
   max-width: 40rem;
   margin-inline: auto;
 }
 
 .landing-emerald .lp-final__sub {
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--landing-muted);
   max-width: 36rem;
   margin: 1.35rem auto 0;
 }
@@ -1769,15 +1792,65 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-final__trust {
   margin-top: 1rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--landing-subtle);
   font-size: 0.875rem;
+}
+
+
+/* ——— Dark premium section ——— */
+.landing-emerald .lp-section--dark .lp-title {
+  color: var(--landing-on-dark);
+}
+
+.landing-emerald .lp-section--dark .lp-subtitle,
+.landing-emerald .lp-section--dark .lp-note {
+  color: var(--landing-on-dark-muted);
+}
+
+.landing-emerald .lp-section--dark .lp-eyebrow {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.landing-emerald .lp-section--dark .lp-eyebrow__dot {
+  background: #ffffff;
+}
+
+.landing-emerald .lp-section--dark .lp-testimonial-filters button {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #b8b8b8;
+}
+
+.landing-emerald .lp-section--dark .lp-testimonial-filters button.is-active {
+  background: #ffffff;
+  color: #111111;
+  border-color: transparent;
+}
+
+.landing-emerald .lp-section--dark .lp-theme-card {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.landing-emerald .lp-section--dark .lp-theme-card p {
+  color: #ffffff;
+}
+
+.landing-emerald .lp-section--dark .lp-theme-card__meta {
+  color: #b8b8b8;
+}
+
+.landing-emerald .lp-footer__logo {
+  filter: invert(1);
 }
 
 /* ——— Footer landing ——— */
 .landing-emerald .lp-footer {
-  background: #0b1220;
-  color: #94a3b8;
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  background: var(--landing-dark);
+  color: #b8b8b8;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .landing-emerald .lp-footer__inner {
@@ -1868,7 +1941,7 @@ html:has(.landing-emerald) body {
 /* Pricing retained styles */
 .landing-emerald .landing-billing-switch {
   background: #f3f4f6;
-  border: 1px solid var(--bm-border);
+  border: 1px solid #ececec;
 }
 
 .landing-emerald .landing-billing-switch__thumb {
@@ -1884,8 +1957,46 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .landing-pricing-card {
   background: #fff !important;
-  border: 1px solid var(--bm-border) !important;
-  color: var(--bm-text) !important;
+  border: 1px solid #ececec !important;
+  color: var(--landing-text) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.landing-emerald .landing-pricing-trial-label {
+  border: 1px solid var(--landing-border) !important;
+  background: #f0f0f0 !important;
+  color: #111111 !important;
+}
+
+.landing-emerald .landing-pricing-savings-badge {
+  border: 1px solid rgba(34, 160, 107, 0.25) !important;
+  background: rgba(34, 160, 107, 0.1) !important;
+  color: #2f9e72 !important;
+}
+
+.landing-emerald .landing-pricing-card--yearly {
+  border-color: #d8d8d8 !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.landing-emerald .landing-pricing-card--glow {
+  animation: none !important;
+  box-shadow: 0 12px 28px rgba(17, 17, 17, 0.08) !important;
+}
+
+.landing-emerald .landing-billing-switch {
+  background: #f3f3f3 !important;
+  border: 1px solid var(--landing-border) !important;
+}
+
+.landing-emerald a.text-primary,
+.landing-emerald .text-primary {
+  color: #111111 !important;
+}
+
+.landing-emerald a.text-primary:hover,
+.landing-emerald .hover\:text-primary-hover:hover {
+  color: #000000 !important;
 }
 
 /* Reveal (reuse) */
@@ -2043,7 +2154,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-header-employee-link:hover {
-  color: #10b981;
+  color: #111111;
 }
 
 .landing-emerald .landing-nav__mobile-toggle {
@@ -2125,7 +2236,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-nav__trigger--open {
-  color: #10b981;
+  color: #111111;
 }
 
 @media (max-width: 1279px) {

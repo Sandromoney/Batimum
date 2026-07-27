@@ -27,7 +27,7 @@ export function LandingTestimonialsSection() {
   return (
     <section
       id="temoignages"
-      className="lp-section"
+      className="lp-section lp-section--dark"
       aria-labelledby="testimonials-title"
     >
       <div className="lp-container">

@@ -53,7 +53,7 @@ export function LandingDesktopScreen() {
             <strong>Planning</strong>
             <div style={{ marginTop: 6, color: "#667085" }}>3 équipes</div>
             <div style={{ marginTop: 6, color: "#667085" }}>2 retards signalés</div>
-            <div style={{ marginTop: 6, color: "#059669" }}>Rentabilité suivie</div>
+            <div style={{ marginTop: 6, color: "#111111" }}>Rentabilité suivie</div>
           </div>
         </div>
       </div>
