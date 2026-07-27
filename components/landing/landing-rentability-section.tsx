@@ -1,7 +1,6 @@
 import {
   AlertTriangle,
   Clock3,
-  LineChart,
   TrendingUp,
   Wallet,
 } from "lucide-react";
