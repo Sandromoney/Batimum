@@ -2,56 +2,57 @@
 
 import "./landing-emerald.css";
 import { LandingTop } from "@/components/landing-top";
+import { LandingProofsSection } from "@/components/landing/landing-proofs-section";
 import { LandingFeaturesSection } from "@/components/landing/landing-features-section";
-import { LandingIaDemoSection } from "@/components/landing/landing-ia-demo";
-import { LandingComparisonSection } from "@/components/landing/landing-comparison";
-import { LandingPilotageSection } from "@/components/landing/landing-pilotage-section";
-import { LandingDiagnosticSection } from "@/components/landing/landing-diagnostic";
+import { LandingVoiceSection } from "@/components/landing/landing-voice-section";
+import { LandingTerrainSection } from "@/components/landing/landing-terrain-section";
 import { LandingTestimonialsSection } from "@/components/landing/landing-testimonials-section";
+import { LandingStepsSection } from "@/components/landing/landing-steps-section";
+import { LandingAccountSection } from "@/components/landing/landing-account-section";
+import { LandingRoadmapSection } from "@/components/landing/landing-roadmap-section";
 import { LandingPricingSection } from "@/components/landing/landing-pricing-section";
 import { LandingFaqSection } from "@/components/landing/landing-faq-section";
+import { LandingFinalCtaSection } from "@/components/landing/landing-final-cta-section";
 import { MarketingFooter } from "@/components/marketing-footer";
 
 const faqs = [
   {
-    question: "Comment fonctionne MUM IA ?",
+    question: "Batimum fonctionne-t-il sur chantier ?",
     answer:
-      "Décrivez votre chantier en quelques phrases. MUM IA structure un devis avec des lignes, quantités et prix. Vous gardez le contrôle total avant chaque envoi.",
+      "Oui. Vous pilotez l’activité depuis un ordinateur au bureau, et vos équipes retrouvent planning, consignes et chantiers depuis un téléphone.",
   },
   {
-    question: "Puis-je gérer plusieurs employés ?",
+    question: "Puis-je gérer devis, factures et clients au même endroit ?",
     answer:
-      "Oui. Chaque employé dispose d'un espace séparé pour consulter son planning et ses chantiers, sans accéder à vos devis, factures ou chiffres.",
+      "Oui. Batimum centralise clients, devis, chantiers, planning et facturation pour limiter la ressaisie.",
   },
   {
     question: "Les données sont-elles sécurisées ?",
     answer:
-      "Vos données sont hébergées en Europe et protégées par authentification sécurisée. Vous restez propriétaire de vos informations.",
+      "Vos données sont protégées par authentification sécurisée. Vous restez propriétaire de vos informations.",
   },
   {
-    question: "Puis-je importer mes anciens devis ?",
+    question: "Comment fonctionne l’essai gratuit ?",
     answer:
-      "Vous pouvez recréer vos devis types dans Batimum et les réutiliser. L'import automatique de fichiers existants arrive prochainement.",
-  },
-  {
-    question: "Comment fonctionne l'essai gratuit ?",
-    answer:
-      "7 jours gratuits, sans engagement. Testez toutes les fonctionnalités. Annulez en un clic si Batimum ne vous convient pas.",
+      "7 jours pour tester Batimum, sans engagement. Vous pouvez annuler simplement si la solution ne vous convient pas.",
   },
 ] as const;
 
 export default function LandingPage() {
   return (
-    <main className="landing-emerald relative min-h-screen overflow-x-hidden bg-[#F8FAF8] text-[#111827]">
+    <main className="landing-emerald relative min-h-screen overflow-x-hidden bg-white text-[#101828]">
       <LandingTop />
+      <LandingProofsSection />
       <LandingFeaturesSection />
-      <LandingIaDemoSection />
-      <LandingComparisonSection />
-      <LandingPilotageSection />
-      <LandingDiagnosticSection />
+      <LandingVoiceSection />
+      <LandingTerrainSection />
       <LandingTestimonialsSection />
+      <LandingStepsSection />
+      <LandingAccountSection />
+      <LandingRoadmapSection />
       <LandingPricingSection />
       <LandingFaqSection faqs={faqs} />
+      <LandingFinalCtaSection />
       <MarketingFooter variant="landing" />
     </main>
   );

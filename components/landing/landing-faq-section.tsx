@@ -21,7 +21,7 @@ type LandingFaqSectionProps = {
 
 export function LandingFaqSection({
   faqs,
-  variant = "dark",
+  variant = "light",
 }: LandingFaqSectionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const isLight = variant === "light";
@@ -30,85 +30,57 @@ export function LandingFaqSection({
     <section
       id="faq"
       className={cn(
-        isLight ? "bg-[#FAFAFA] text-[#111111]" : "bg-[#050505] text-white",
+        "lp-section",
+        isLight ? "lp-section--soft text-[#101828]" : "bg-[#101828] text-white",
       )}
     >
-      <div className="mx-auto w-full max-w-7xl px-6 py-20 sm:px-8 lg:px-10">
-        <LandingReveal variant="title">
+      <div className="lp-container">
+        <LandingReveal>
           <header className="mx-auto mb-10 max-w-2xl text-center">
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h2 className="lp-title text-3xl sm:text-4xl">
               Questions fréquentes
             </h2>
-            <p
-              className={cn(
-                "mt-4 text-sm leading-7 sm:text-base",
-                isLight ? "text-[#555555]" : "text-[#9CA3AF]",
-              )}
-            >
-              Réponses simples, en français.
-            </p>
           </header>
         </LandingReveal>
 
-        <LandingRevealStagger
-          as="ul"
-          className="mx-auto max-w-3xl space-y-3"
-        >
+        <LandingRevealStagger className="mx-auto max-w-3xl space-y-3">
           {faqs.map((faq, index) => {
-            const isOpen = openIndex === index;
-
+            const open = openIndex === index;
             return (
-              <LandingRevealItem key={faq.question} as="li">
+              <LandingRevealItem key={faq.question}>
                 <div
                   className={cn(
-                    "overflow-hidden rounded-xl border",
+                    "overflow-hidden rounded-2xl border",
                     isLight
-                      ? "border-[#E5E7EB] bg-white"
-                      : "border-white/[0.08] bg-[#0D0D0D]",
+                      ? "border-[#E6EAED] bg-white"
+                      : "border-white/10 bg-white/5",
                   )}
                 >
                   <button
                     type="button"
                     className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
-                    aria-expanded={isOpen}
-                    onClick={() =>
-                      setOpenIndex((current) =>
-                        current === index ? null : index,
-                      )
-                    }
+                    aria-expanded={open}
+                    onClick={() => setOpenIndex(open ? null : index)}
                   >
-                    <span className={cn("font-semibold", isLight ? "text-[#111111]" : "text-white")}>
-                      {faq.question}
-                    </span>
-                    <span
+                    <span className="font-semibold">{faq.question}</span>
+                    <Plus
                       className={cn(
-                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-primary",
-                        isLight
-                          ? "border-[#E5E7EB] bg-[rgba(16,185,129,0.08)]"
-                          : "border-white/[0.08] bg-[#111111]",
-                        isOpen && "landing-faq-icon--open",
+                        "h-4 w-4 shrink-0 transition-transform",
+                        open && "rotate-45",
+                      )}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {open ? (
+                    <div
+                      className={cn(
+                        "px-5 pb-4 text-sm leading-6",
+                        isLight ? "text-[#667085]" : "text-white/70",
                       )}
                     >
-                      <Plus className="h-4 w-4" aria-hidden="true" />
-                    </span>
-                  </button>
-                  <div
-                    className={cn(
-                      "grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-                      isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-                    )}
-                  >
-                    <div className="overflow-hidden">
-                      <p
-                        className={cn(
-                          "px-5 pb-4 text-sm leading-7",
-                          isLight ? "text-[#555555]" : "text-[#9CA3AF]",
-                        )}
-                      >
-                        {faq.answer}
-                      </p>
+                      {faq.answer}
                     </div>
-                  </div>
+                  ) : null}
                 </div>
               </LandingRevealItem>
             );
