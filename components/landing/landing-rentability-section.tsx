@@ -16,7 +16,7 @@ const IN_PROGRESS = [
 export function LandingRentabilitySection() {
   return (
     <section
-      id="rentabilite"
+      id="pilotage"
       className="lp-section lp-section--soft"
       aria-labelledby="rentability-title"
     >

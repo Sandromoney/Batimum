@@ -10,36 +10,42 @@ import { LandingReveal } from "@/components/landing/landing-reveal";
 
 const FEATURES = [
   {
+    id: "devis-feature",
     title: "Devis avec IA",
     text: "Créez des devis structurés plus rapidement.",
     icon: FileText,
     accent: "#3B82F6",
   },
   {
+    id: "planning",
     title: "Planning des équipes",
     text: "Gardez chaque équipe au bon endroit, au bon moment.",
     icon: CalendarDays,
     accent: "#2563EB",
   },
   {
+    id: "chantiers",
     title: "Suivi des chantiers",
     text: "Retrouvez les étapes, documents et informations essentielles.",
     icon: FolderKanban,
     accent: "#60A5FA",
   },
   {
+    id: "facturation",
     title: "Facturation simplifiée",
     text: "Transformez vos devis et suivez vos paiements.",
     icon: Receipt,
     accent: "#93C5FD",
   },
   {
+    id: "clients",
     title: "Gestion client",
     text: "Centralisez les coordonnées, documents et échanges.",
     icon: Users,
     accent: "#64748B",
   },
   {
+    id: "pilotage",
     title: "Pilotage et rentabilité",
     text: "Comparez le prévu au réel et surveillez vos marges.",
     icon: BarChart3,
@@ -76,7 +82,7 @@ export function LandingFeaturesSection() {
             const Icon = feature.icon;
             return (
               <LandingReveal key={feature.title} delay={index * 60}>
-                <article className="lp-feature">
+                <article id={feature.id} className="lp-feature">
                   <div
                     className="lp-feature__icon"
                     style={{ color: feature.accent }}
