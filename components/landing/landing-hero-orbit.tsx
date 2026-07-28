@@ -43,6 +43,9 @@ type HexFeature = {
   angle: number;
   accent: string;
   Icon: LucideIcon;
+  /** Mini-stat premium sous la carte active */
+  statIcon: string;
+  statText: string;
 };
 
 type PanelPos = {
@@ -71,6 +74,8 @@ export const HERO_FEATURES: HexFeature[] = [
     angle: 0,
     accent: ICON_ACCENT,
     Icon: Bot,
+    statIcon: "⚡",
+    statText: "Temps de création d’un devis réduit jusqu’à 90 %",
   },
   {
     id: "planning",
@@ -85,6 +90,8 @@ export const HERO_FEATURES: HexFeature[] = [
     angle: 60,
     accent: ICON_ACCENT,
     Icon: Calendar,
+    statIcon: "📅",
+    statText: "Plus de 95 % des interventions planifiées sans oubli",
   },
   {
     id: "chantiers",
@@ -99,6 +106,8 @@ export const HERO_FEATURES: HexFeature[] = [
     angle: 120,
     accent: ICON_ACCENT,
     Icon: HardHat,
+    statIcon: "🏗",
+    statText: "Vision en temps réel de l’avancement des chantiers",
   },
   {
     id: "facturation",
@@ -113,6 +122,8 @@ export const HERO_FEATURES: HexFeature[] = [
     angle: 180,
     accent: ICON_ACCENT,
     Icon: Receipt,
+    statIcon: "💶",
+    statText: "Transformation d’un devis en facture en quelques secondes",
   },
   {
     id: "clients",
@@ -127,6 +138,8 @@ export const HERO_FEATURES: HexFeature[] = [
     angle: 240,
     accent: ICON_ACCENT,
     Icon: Users,
+    statIcon: "👥",
+    statText: "Toutes les informations client centralisées au même endroit",
   },
   {
     id: "pilotage",
@@ -141,14 +154,20 @@ export const HERO_FEATURES: HexFeature[] = [
     angle: 300,
     accent: ICON_ACCENT,
     Icon: LineChart,
+    statIcon: "📈",
+    statText: "Analyse instantanée de la rentabilité chantier par chantier",
   },
 ];
 
 const BASE_SCENE = 840;
 const NUT_SIZE_RATIO = 0.8;
 const NUT_VERTEX_SVG = 188 / 200;
-/** Mise en avant automatique — une carte toutes les ~4 s */
-const AUTO_HIGHLIGHT_MS = 4000;
+/**
+ * Timer principal unique (feature active + stat) :
+ * fade-in 0,6 s → visible ~2 s → fade-out ~0,4 s → suivante
+ */
+const AUTO_CYCLE_MS = 3200;
+const BUBBLE_EXIT_MS = 0.3;
 const FEATURE_IDS: HeroFeatureId[] = [
   "devis",
   "planning",
@@ -482,8 +501,8 @@ function FeaturePanel({
       }
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 6 }}
-      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      exit={{ opacity: 0, y: 8 }}
+      transition={{ duration: BUBBLE_EXIT_MS, ease: [0.22, 1, 0.36, 1] }}
       onMouseEnter={onPanelEnter}
       onMouseLeave={onPanelLeave}
       onPointerEnter={onPanelEnter}
@@ -525,6 +544,8 @@ function FeatureVertexCard({
   radius,
   isActive,
   showBubble,
+  statsEnabled,
+  statEpoch,
   onActivate,
   onHoverStart,
   onHoverEnd,
@@ -535,6 +556,9 @@ function FeatureVertexCard({
   radius: number;
   isActive: boolean;
   showBubble: boolean;
+  statsEnabled: boolean;
+  /** Relance la stat après reprise (même feature) */
+  statEpoch: number;
   onActivate: () => void;
   onHoverStart: () => void;
   onHoverEnd: () => void;
@@ -592,6 +616,17 @@ function FeatureVertexCard({
             </span>
           </span>
         </button>
+
+        {statsEnabled && isActive ? (
+          <span
+            key={`stat-${feature.id}-${statEpoch}`}
+            className="batimumHero__statBadge is-live"
+            aria-hidden="true"
+          >
+            <span className="batimumHero__statBadgeIcon">{feature.statIcon}</span>
+            <span className="batimumHero__statBadgeText">{feature.statText}</span>
+          </span>
+        ) : null}
       </div>
     </div>
   );
@@ -603,11 +638,11 @@ type LandingHeroOrbitProps = {
 
 /**
  * Système hexagonal premium :
- * - rotation CSS continue de l’écrou (~22 s / tour)
+ * - rotation CSS continue de l’écrou (~28,5 s / tour)
  * - cartes accrochées aux sommets + contre-rotation (texte horizontal)
  * - logo BM fixe au centre
- * - mise en avant auto toutes les ~4 s (sans déplacer les cartes)
- * - bulle bénéfice au survol (pause orbit + highlight)
+ * - timer unique : mise en avant + statistique (~3,2 s)
+ * - bulle bénéfice au survol (pause orbit + highlight + stat)
  */
 export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
   const reduced = useReducedMotion() ?? false;
@@ -632,6 +667,8 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
   const [paused, setPaused] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const [panelPos, setPanelPos] = useState<PanelPos | null>(null);
+  /** Incrémente à chaque reprise pour relancer la stat sans second timer */
+  const [cycleToken, setCycleToken] = useState(0);
 
   useEffect(() => setMounted(true), []);
 
@@ -658,7 +695,8 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     }
   };
 
-  const orbiting = mounted && enableOrbit && !reduced && !isMobile;
+  /** Rotation conservée aussi sur mobile (réduit motion exclu) */
+  const orbiting = mounted && enableOrbit && !reduced;
   const staticMode = !orbiting;
 
   const updatePanelPos = useCallback((id: HeroFeatureId) => {
@@ -679,11 +717,11 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
       setPaused(true);
       setShowBubble(withBubble);
       if (pin) setPinned(true);
-      if (withBubble) {
+      if (withBubble && !isMobile) {
         requestAnimationFrame(() => updatePanelPos(id));
       }
     },
-    [updatePanelPos],
+    [isMobile, updatePanelPos],
   );
 
   const closePanel = useCallback(() => {
@@ -691,8 +729,9 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     hoverWithinRef.current = false;
     setPinned(false);
     setShowBubble(false);
-    setPaused(false);
     setPanelPos(null);
+    setPaused(false);
+    setCycleToken((t) => t + 1);
   }, []);
 
   const resumeAuto = useCallback(() => {
@@ -700,11 +739,15 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     setShowBubble(false);
     setPanelPos(null);
     setPaused(false);
+    setCycleToken((t) => t + 1);
   }, []);
 
   const leaveInteractive = useCallback(() => {
     hoverWithinRef.current = false;
     if (pinnedRef.current) return;
+    /* Disparition douce immédiate de la bulle (250–350 ms via AnimatePresence) */
+    setShowBubble(false);
+    setPanelPos(null);
     clearCloseTimer();
     closeTimer.current = setTimeout(() => {
       if (!hoverWithinRef.current && !pinnedRef.current) {
@@ -754,7 +797,10 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     };
   }, [closePanel, pinned, showBubble]);
 
-  /** Mise en avant automatique — indépendante de la rotation continue */
+  /**
+   * Timer principal unique — pilote feature active + statistique.
+   * La stat est animée en CSS sur la durée du même cycle.
+   */
   useEffect(() => {
     if (!orbiting) return;
     if (paused) return;
@@ -766,10 +812,10 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
       const next = (autoIndexRef.current + 1) % FEATURE_IDS.length;
       autoIndexRef.current = next;
       setActiveId(FEATURE_IDS[next]);
-    }, AUTO_HIGHLIGHT_MS);
+    }, AUTO_CYCLE_MS);
 
     return () => window.clearInterval(cycle);
-  }, [orbiting, paused]);
+  }, [orbiting, paused, cycleToken]);
 
   useLayoutEffect(() => {
     if (!showBubble || isMobile) return;
@@ -845,6 +891,8 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
                   radius={radius}
                   isActive={activeId === feature.id}
                   showBubble={showBubble && activeId === feature.id}
+                  statsEnabled={orbiting}
+                  statEpoch={cycleToken}
                   buttonRef={(el) => {
                     cardRefs.current[feature.id] = el;
                   }}
