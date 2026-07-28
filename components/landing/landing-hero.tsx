@@ -59,7 +59,7 @@ export function LandingHero() {
     ? "Se connecter"
     : heroContent.primaryCta;
   const reduced = useReducedMotion() ?? false;
-  const enableScrollStory = useDesktopScrollStory(reduced);
+  const enableScrollStory = false;
   const showOrbit = useShowOrbit(reduced);
 
   const { scrollYProgress } = useScroll({
@@ -74,11 +74,7 @@ export function LandingHero() {
   return (
     <section
       ref={sectionRef}
-      className={
-        enableScrollStory
-          ? "batimumHero batimumHero--scroll"
-          : "batimumHero batimumHero--static"
-      }
+      className="batimumHero batimumHero--static"
       aria-label="Présentation Batimum"
     >
       <div className="batimumHero__sticky">

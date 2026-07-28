@@ -260,9 +260,8 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .batimumHero--scroll {
-  /* Reduce post-animation dead space while preserving sticky story */
-  height: 230svh;
-  min-height: 230svh;
+  height: auto;
+  min-height: max(92vh, calc(100svh - 84px));
 }
 
 .landing-emerald .batimumHero--static {
@@ -284,10 +283,10 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .batimumHero--scroll .batimumHero__sticky {
-  position: sticky;
-  top: 84px;
-  height: calc(100svh - 84px);
-  min-height: calc(100svh - 84px);
+  position: relative;
+  top: auto;
+  height: auto;
+  min-height: max(92vh, calc(100svh - 84px));
 }
 
 .landing-emerald .batimumHero__inner {
@@ -1029,9 +1028,10 @@ html:has(.landing-emerald) body {
   -webkit-backdrop-filter: blur(12px);
   color: #111111;
   transition:
-    transform 220ms ease,
-    box-shadow 220ms ease,
-    border-color 220ms ease;
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 520ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .landing-emerald .batimumHero__featureCard::before,
@@ -1048,7 +1048,7 @@ html:has(.landing-emerald) body {
   pointer-events: none;
   opacity: 0.45;
   z-index: 0;
-  transition: opacity 220ms ease;
+  transition: opacity 520ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .landing-emerald .batimumHero__featureCard > *,
@@ -1082,7 +1082,7 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__featureCard[data-active="true"],
 .landing-emerald .batimumHero__featureButton.is-active .batimumHero__featureCard,
 .landing-emerald .batimumHero__featureAnchor:hover .batimumHero__featureCard {
-  transform: translateY(-2px) scale(1.025);
+  transform: translateY(-1px) scale(1);
   border-color: rgba(59, 130, 246, 0.22);
   box-shadow:
     0 22px 46px rgba(17, 17, 17, 0.09),
@@ -1551,7 +1551,7 @@ html:has(.landing-emerald) body {
 
 @media (max-width: 1439px) {
   .landing-emerald .batimumHero__sceneWrap {
-    width: min(740px, 54vw);
+    width: min(700px, 50vw);
   }
 
   .landing-emerald .batimumHero__featureAnchor,
@@ -1559,8 +1559,8 @@ html:has(.landing-emerald) body {
   .landing-emerald .batimumHero__bubbleWrap,
   .landing-emerald .batimumHero__featureCard,
   .landing-emerald .batimumHero__bubble {
-    width: 164px;
-    flex-basis: 164px;
+    width: 160px;
+    flex-basis: 160px;
   }
 
   .landing-emerald .batimumHero__nut {

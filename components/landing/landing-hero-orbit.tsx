@@ -24,7 +24,6 @@ import {
 import {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -182,8 +181,6 @@ const NUT_VERTEX_SVG = 188 / 200;
 const AUTO_FEATURE_READ_MS = 4000;
 const AUTO_FEATURE_TRANSITION_MS = 550;
 const AUTO_FEATURE_STEP_MS = AUTO_FEATURE_READ_MS + AUTO_FEATURE_TRANSITION_MS;
-const MICRO_CYCLE_MS = 3000;
-const MICRO_VISIBLE_MS = 1600;
 const FEATURE_IDS: HeroFeatureId[] = [
   "devis",
   "planning",
@@ -199,9 +196,8 @@ const BM_SYMBOL_MARK_W = 224;
 const BM_SYMBOL_SRC_H = 210;
 
 function vertexRadiusForScene(sceneSize: number) {
-  // Grand desktop ~840 → ~316px ; desktop ~740 → ~278px
-  const raw = sceneSize * NUT_SIZE_RATIO * 0.5 * NUT_VERTEX_SVG;
-  return Math.min(330, Math.max(250, raw));
+  const raw = sceneSize * NUT_SIZE_RATIO * 0.5 * NUT_VERTEX_SVG - 12;
+  return Math.min(274, Math.max(186, raw));
 }
 
 function useSceneSize(ref: RefObject<HTMLDivElement | null>) {
@@ -645,9 +641,11 @@ function FeaturePanel({
       initial={{ opacity: 0, scale: 0.98, x: enter.x, y: enter.y }}
       animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
       exit={{ opacity: 0, scale: 0.985, x: 0, y: 4 }}
-      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       onMouseEnter={onPanelEnter}
       onMouseLeave={onPanelLeave}
+      onPointerEnter={onPanelEnter}
+      onPointerLeave={onPanelLeave}
       onFocus={onPanelEnter}
     >
       {!mobile ? (
@@ -697,13 +695,11 @@ function FeaturePanel({
 function FeatureVertexCard({
   feature,
   radius,
-  systemRotate,
   scrollProgress,
   staticMode,
   isActive,
   isDimmed,
   pinned,
-  microLive,
   onActivate,
   onHoverStart,
   onHoverEnd,
@@ -712,80 +708,23 @@ function FeatureVertexCard({
 }: {
   feature: HexFeature;
   radius: number;
-  systemRotate: MotionValue<number>;
   scrollProgress: MotionValue<number>;
   staticMode: boolean;
   isActive: boolean;
   isDimmed: boolean;
   pinned: boolean;
-  microLive: boolean;
   onActivate: () => void;
   onHoverStart: () => void;
   onHoverEnd: () => void;
   onBlurCard: (e: FocusEvent<HTMLButtonElement>) => void;
   buttonRef: (el: HTMLButtonElement | null) => void;
 }) {
+  void scrollProgress;
   const Icon = feature.Icon;
   const pt = vertexPoint(feature.angle, radius);
-  const counterRotate = useTransform(systemRotate, (r) => -r);
 
   const scale = isActive ? 1 : 0.985;
   const opacity = isActive ? 1 : isDimmed ? 0.68 : 0.76;
-
-  const microHint =
-    feature.id === "devis" ? (
-      <span
-        className={`batimumHero__microHint batimumHero__microHint--devis${microLive ? " is-live" : ""}`}
-        aria-hidden
-      >
-        <span className="batimumHero__microCheck" />
-        Devis prêt
-      </span>
-    ) : feature.id === "planning" ? (
-      <span
-        className={`batimumHero__microHint batimumHero__microHint--planning${microLive ? " is-live" : ""}`}
-        aria-hidden
-      >
-        <span className="batimumHero__microSwap">
-          <span>À placer</span>
-          <span>Planifié</span>
-        </span>
-      </span>
-    ) : feature.id === "chantiers" ? (
-      <span
-        className={`batimumHero__microHint batimumHero__microHint--chantiers${microLive ? " is-live" : ""}`}
-        aria-hidden
-      >
-        <span className="batimumHero__microBar">
-          <span className="batimumHero__microBarFill" />
-        </span>
-      </span>
-    ) : feature.id === "facturation" ? (
-      <span
-        className={`batimumHero__microHint batimumHero__microHint--facturation${microLive ? " is-live" : ""}`}
-        aria-hidden
-      >
-        <span className="batimumHero__microSwap">
-          <span>À préparer</span>
-          <span>Prête</span>
-        </span>
-      </span>
-    ) : feature.id === "clients" ? (
-      <span
-        className={`batimumHero__microHint batimumHero__microHint--clients${microLive ? " is-live" : ""}`}
-        aria-hidden
-      >
-        <span className="batimumHero__microDoc" />
-        Dossier
-      </span>
-    ) : (
-      <span
-        className={`batimumHero__microHint batimumHero__microHint--pilotage${microLive ? " is-live" : ""}`}
-        aria-hidden
-      >
-        <span className="batimumHero__microSpark" />
-      </span>
-    );
 
   const card = (
     <button
@@ -801,6 +740,8 @@ function FeatureVertexCard({
       }}
       onMouseEnter={onHoverStart}
       onMouseLeave={onHoverEnd}
+      onPointerEnter={onHoverStart}
+      onPointerLeave={onHoverEnd}
       onFocus={onHoverStart}
       onBlur={onBlurCard}
     >
@@ -816,7 +757,6 @@ function FeatureVertexCard({
           <span className="batimumHero__bubbleTitle">{feature.title}</span>
           <span className="batimumHero__bubbleSub">{feature.subtitle}</span>
         </span>
-        {microHint}
       </span>
     </button>
   );
@@ -842,13 +782,12 @@ function FeatureVertexCard({
       style={{
         x: pt.x,
         y: pt.y,
-        rotate: counterRotate,
         scale,
         opacity,
         zIndex: isActive ? 30 : 10,
       }}
-      transformTemplate={({ x: tx, y: ty, rotate: r, scale: s }) =>
-        `translate(-50%, -50%) translate(${tx}, ${ty}) rotate(${r ?? 0}) scale(${s})`
+      transformTemplate={({ x: tx, y: ty, scale: s }) =>
+        `translate(-50%, -50%) translate(${tx}, ${ty}) scale(${s})`
       }
     >
       {card}
@@ -886,46 +825,15 @@ export function LandingHeroOrbit({
   const systemRotate = useMotionValue(0);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoIndexRef = useRef(0);
-  const activeIdRef = useRef<HeroFeatureId | null>(FEATURE_IDS[0]);
+  const activeIdRef = useRef<HeroFeatureId>(FEATURE_IDS[0]);
   const rotationTargetRef = useRef(0);
 
-  const [activeId, setActiveId] = useState<HeroFeatureId | null>(FEATURE_IDS[0]);
+  const [activeId, setActiveId] = useState<HeroFeatureId>(FEATURE_IDS[0]);
   const [pinned, setPinned] = useState(false);
   const [autoPaused, setAutoPaused] = useState(false);
   const [rotationTarget, setRotationTarget] = useState(0);
-  const [microLiveId, setMicroLiveId] = useState<HeroFeatureId | null>(null);
-  const [panelPos, setPanelPos] = useState<{
-    x: number;
-    y: number;
-    arrow: "left" | "right" | "top" | "bottom";
-    enterFrom: { x: number; y: number };
-  } | null>(null);
 
   useEffect(() => setMounted(true), []);
-
-  // Une micro-animation à la fois (~3s), cycle ~18s — pause si carte survolée / active
-  useEffect(() => {
-    if (reduced || !mounted) return;
-    let index = 0;
-    let hideTimer: ReturnType<typeof setTimeout> | null = null;
-    const tick = () => {
-      if (pinned || autoPaused) {
-        setMicroLiveId(null);
-        return;
-      }
-      const id = FEATURE_IDS[index % FEATURE_IDS.length];
-      index += 1;
-      setMicroLiveId(id);
-      if (hideTimer) clearTimeout(hideTimer);
-      hideTimer = setTimeout(() => setMicroLiveId(null), MICRO_VISIBLE_MS);
-    };
-    tick();
-    const cycle = setInterval(tick, MICRO_CYCLE_MS);
-    return () => {
-      clearInterval(cycle);
-      if (hideTimer) clearTimeout(hideTimer);
-    };
-  }, [autoPaused, mounted, pinned, reduced]);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -945,35 +853,6 @@ export function LandingHeroOrbit({
       closeTimer.current = null;
     }
   };
-
-
-  const measurePanel = useCallback((id: HeroFeatureId) => {
-    const wrap = sceneWrapRef.current;
-    const card = cardRefs.current[id];
-    const feature = HERO_FEATURES.find((f) => f.id === id);
-    if (!wrap || !card || !feature) return;
-
-    const wrapRect = wrap.getBoundingClientRect();
-    const cardRect = card.getBoundingClientRect();
-    const panelEl = panelRef.current;
-    const panelWidth = panelEl?.offsetWidth || DESKTOP_PANEL_W;
-    const panelHeight = panelEl?.offsetHeight || 220;
-    const placement = ANGLE_PLACEMENT[feature.angle] ?? "right";
-
-    const pos = computePopoverPosition({
-      placement,
-      cardLeft: cardRect.left - wrapRect.left,
-      cardTop: cardRect.top - wrapRect.top,
-      cardWidth: cardRect.width,
-      cardHeight: cardRect.height,
-      wrapWidth: wrapRect.width,
-      wrapHeight: wrapRect.height,
-      panelWidth,
-      panelHeight,
-    });
-
-    setPanelPos(pos);
-  }, []);
 
   const setFeatureByIndex = useCallback((nextIndex: number, source: "auto" | "manual") => {
     const idx = ((nextIndex % FEATURE_IDS.length) + FEATURE_IDS.length) % FEATURE_IDS.length;
@@ -1023,7 +902,6 @@ export function LandingHeroOrbit({
     clearCloseTimer();
     setPinned(false);
     setAutoPaused(false);
-    setPanelPos(null);
   }, []);
 
   const scheduleClose = useCallback(() => {
@@ -1031,7 +909,6 @@ export function LandingHeroOrbit({
     clearCloseTimer();
     closeTimer.current = setTimeout(() => {
       setAutoPaused(false);
-      setPanelPos(null);
     }, CLOSE_DELAY_MS);
   }, [pinned]);
 
@@ -1039,35 +916,6 @@ export function LandingHeroOrbit({
     clearCloseTimer();
     setAutoPaused(true);
   }, []);
-
-  // Mesure du panneau : à l'ouverture, au resize, après ralentissement
-  useLayoutEffect(() => {
-    if (!activeId || isMobile) {
-      if (!activeId) setPanelPos(null);
-      return;
-    }
-    measurePanel(activeId);
-    // Affine après montage réel du panneau + fin du ralentissement
-    const t1 = window.setTimeout(() => {
-      if (activeIdRef.current === activeId) measurePanel(activeId);
-    }, 50);
-    const t2 = window.setTimeout(() => {
-      if (activeIdRef.current === activeId) measurePanel(activeId);
-    }, 420);
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-    };
-  }, [activeId, isMobile, measurePanel, sceneSize]);
-
-  useEffect(() => {
-    const onResize = () => {
-      if (!activeIdRef.current || isMobile) return;
-      measurePanel(activeIdRef.current);
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [isMobile, measurePanel]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1103,7 +951,6 @@ export function LandingHeroOrbit({
     const cycle = window.setInterval(() => {
       const next = (autoIndexRef.current + 1) % FEATURE_IDS.length;
       setFeatureByIndex(next, "auto");
-      setMicroLiveId(null);
     }, AUTO_FEATURE_STEP_MS);
 
     return () => window.clearInterval(cycle);
@@ -1126,7 +973,7 @@ export function LandingHeroOrbit({
 
   const staticMode = !mounted || reduced || !enableOrbit || isMobile;
   const radius = vertexRadiusForScene(sceneSize);
-  const activeFeature = HERO_FEATURES.find((f) => f.id === activeId) ?? null;
+  const activeFeature = HERO_FEATURES.find((f) => f.id === activeId) ?? HERO_FEATURES[0];
 
   const handleNavigate = () => {
     if (!activeFeature) return;
@@ -1168,37 +1015,35 @@ export function LandingHeroOrbit({
             <div className="batimumHero__nut" aria-hidden="true">
               <HeroNutSvg />
             </div>
-
-            {HERO_FEATURES.map((feature) => (
-              <FeatureVertexCard
-                key={feature.id}
-                feature={feature}
-                radius={radius}
-                systemRotate={systemRotate}
-                scrollProgress={scrollProgress}
-                staticMode={staticMode}
-                isActive={activeId === feature.id}
-                isDimmed={activeId !== null && activeId !== feature.id}
-                pinned={pinned}
-                microLive={microLiveId === feature.id && activeId === null}
-                buttonRef={(el) => {
-                  cardRefs.current[feature.id] = el;
-                }}
-                onActivate={() => openFeature(feature.id, true)}
-                onHoverStart={() => {
-                  if (window.matchMedia("(hover: hover)").matches) {
-                    openFeature(feature.id, false);
-                  }
-                }}
-                onHoverEnd={() => {
-                  if (window.matchMedia("(hover: hover)").matches) {
-                    scheduleClose();
-                  }
-                }}
-                onBlurCard={onBlurCard}
-              />
-            ))}
           </motion.div>
+
+          {HERO_FEATURES.map((feature) => (
+            <FeatureVertexCard
+              key={feature.id}
+              feature={feature}
+              radius={radius}
+              scrollProgress={scrollProgress}
+              staticMode={staticMode}
+              isActive={activeId === feature.id}
+              isDimmed={activeId !== feature.id}
+              pinned={pinned}
+              buttonRef={(el) => {
+                cardRefs.current[feature.id] = el;
+              }}
+              onActivate={() => openFeature(feature.id, true)}
+              onHoverStart={() => {
+                if (window.matchMedia("(hover: hover)").matches) {
+                  openFeature(feature.id, false);
+                }
+              }}
+              onHoverEnd={() => {
+                if (window.matchMedia("(hover: hover)").matches) {
+                  scheduleClose();
+                }
+              }}
+              onBlurCard={onBlurCard}
+            />
+          ))}
 
           <div className="batimumHero__logoCore">
             <div
@@ -1232,13 +1077,18 @@ export function LandingHeroOrbit({
             aria-hidden={!activeFeature}
           >
             <AnimatePresence mode="wait">
-              {activeFeature && panelPos ? (
+              {activeFeature ? (
                 <FeaturePanel
                   key={activeFeature.id}
                   feature={activeFeature}
                   panelRef={panelRef}
                   positioned
-                  pos={panelPos}
+                  pos={{
+                    x: sceneSize + 20,
+                    y: Math.max(20, sceneSize * 0.24),
+                    arrow: "left",
+                    enterFrom: { x: -6, y: 0 },
+                  }}
                   onClose={closePanel}
                   onNavigate={handleNavigate}
                   onPanelEnter={holdOpen}
