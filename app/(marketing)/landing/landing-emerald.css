@@ -915,19 +915,19 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__statBadge {
   position: absolute;
   left: 50%;
-  top: calc(100% + 10px);
+  top: calc(100% + 8px);
   z-index: 6;
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 200px;
-  padding: 6px 10px;
+  align-items: flex-start;
+  gap: 5px;
+  max-width: 176px;
+  padding: 5px 9px;
   border-radius: 999px;
   border: 1px solid rgba(59, 130, 246, 0.14);
   background: rgba(59, 130, 246, 0.07);
-  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.05);
+  box-shadow: 0 8px 18px rgba(17, 17, 17, 0.045);
   color: #3f3f46;
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 600;
   line-height: 1.25;
   letter-spacing: -0.01em;
@@ -935,7 +935,7 @@ html:has(.landing-emerald) body {
   text-align: left;
   pointer-events: none;
   opacity: 0;
-  transform: translate(-50%, 8px) scale(0.98);
+  transform: translate(-50%, 6px) scale(0.98);
   will-change: transform, opacity;
 }
 
