@@ -6,8 +6,6 @@ import {
   useMotionValue,
   animate,
   useReducedMotion,
-  useTransform,
-  type MotionValue,
 } from "framer-motion";
 import {
   ArrowRight,
@@ -159,27 +157,11 @@ export const HERO_FEATURES: HexFeature[] = [
   },
 ];
 
-/** Scroll focus séquentiel des 6 sommets. */
-export const FOCUS_RANGES: {
-  id: HeroFeatureId | null;
-  start: number;
-  end: number;
-}[] = [
-  { id: null, start: 0, end: 0.22 },
-  { id: "devis", start: 0.22, end: 0.34 },
-  { id: "planning", start: 0.34, end: 0.46 },
-  { id: "chantiers", start: 0.46, end: 0.58 },
-  { id: "facturation", start: 0.58, end: 0.7 },
-  { id: "clients", start: 0.7, end: 0.82 },
-  { id: "pilotage", start: 0.82, end: 0.94 },
-  { id: null, start: 0.94, end: 1 },
-];
-
 const BASE_SCENE = 840;
 const NUT_SIZE_RATIO = 0.8;
 const NUT_VERTEX_SVG = 188 / 200;
-const AUTO_FEATURE_READ_MS = 4000;
-const AUTO_FEATURE_TRANSITION_MS = 550;
+const AUTO_FEATURE_READ_MS = 5000;
+const AUTO_FEATURE_TRANSITION_MS = 650;
 const AUTO_FEATURE_STEP_MS = AUTO_FEATURE_READ_MS + AUTO_FEATURE_TRANSITION_MS;
 const FEATURE_IDS: HeroFeatureId[] = [
   "devis",
@@ -234,155 +216,7 @@ function scrollToAnchor(href: string) {
   el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-type Placement =
-  | "right"
-  | "top-right"
-  | "top-left"
-  | "left"
-  | "bottom-left"
-  | "bottom-right";
-
-const ANGLE_PLACEMENT: Record<number, Placement> = {
-  0: "right",
-  60: "top-right",
-  120: "top-left",
-  180: "left",
-  240: "bottom-left",
-  300: "bottom-right",
-};
-
-const PANEL_GAP = 16;
-const EDGE_PAD = 16;
 const CLOSE_DELAY_MS = 700;
-const DESKTOP_PANEL_W = 310;
-
-function clamp(n: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, n));
-}
-
-function computePopoverPosition(args: {
-  placement: Placement;
-  cardLeft: number;
-  cardTop: number;
-  cardWidth: number;
-  cardHeight: number;
-  wrapWidth: number;
-  wrapHeight: number;
-  panelWidth: number;
-  panelHeight: number;
-}) {
-  const {
-    placement: raw,
-    cardLeft,
-    cardTop,
-    cardWidth,
-    cardHeight,
-    wrapWidth,
-    wrapHeight,
-    panelWidth,
-    panelHeight,
-  } = args;
-
-  const cardCx = cardLeft + cardWidth / 2;
-  const cardCy = cardTop + cardHeight / 2;
-
-  let placement = raw;
-  if (placement === "right" && cardCx > wrapWidth * 0.72) placement = "left";
-  if (placement === "left" && cardCx < wrapWidth * 0.28) placement = "right";
-  if (
-    (placement === "top-right" || placement === "top-left") &&
-    cardCy < wrapHeight * 0.28
-  ) {
-    placement = placement === "top-right" ? "bottom-right" : "bottom-left";
-  }
-  if (
-    (placement === "bottom-right" || placement === "bottom-left") &&
-    cardCy > wrapHeight * 0.72
-  ) {
-    placement = placement === "bottom-right" ? "top-right" : "top-left";
-  }
-
-  let x = 0;
-  let y = 0;
-  let arrow: "left" | "right" | "top" | "bottom" = "left";
-
-  switch (placement) {
-    case "right":
-      x = cardLeft + cardWidth + PANEL_GAP;
-      y = cardCy - panelHeight / 2;
-      arrow = "left";
-      break;
-    case "left":
-      x = cardLeft - PANEL_GAP - panelWidth;
-      y = cardCy - panelHeight / 2;
-      arrow = "right";
-      break;
-    case "top-right":
-      x = cardLeft + cardWidth + PANEL_GAP * 0.35;
-      y = cardTop - PANEL_GAP - panelHeight;
-      arrow = "bottom";
-      break;
-    case "top-left":
-      x = cardLeft - PANEL_GAP * 0.35 - panelWidth;
-      y = cardTop - PANEL_GAP - panelHeight;
-      arrow = "bottom";
-      break;
-    case "bottom-right":
-      x = cardLeft + cardWidth + PANEL_GAP * 0.35;
-      y = cardTop + cardHeight + PANEL_GAP;
-      arrow = "top";
-      break;
-    case "bottom-left":
-      x = cardLeft - PANEL_GAP * 0.35 - panelWidth;
-      y = cardTop + cardHeight + PANEL_GAP;
-      arrow = "top";
-      break;
-  }
-
-  if (
-    x + panelWidth > wrapWidth - EDGE_PAD &&
-    (placement === "right" || placement.includes("right"))
-  ) {
-    x = cardLeft - PANEL_GAP - panelWidth;
-    if (placement === "right") arrow = "right";
-  }
-  if (
-    x < EDGE_PAD &&
-    (placement === "left" || placement.includes("left"))
-  ) {
-    x = cardLeft + cardWidth + PANEL_GAP;
-    if (placement === "left") arrow = "left";
-  }
-  if (y < EDGE_PAD && (placement === "top-right" || placement === "top-left")) {
-    y = cardTop + cardHeight + PANEL_GAP;
-    arrow = "top";
-  }
-  if (
-    y + panelHeight > wrapHeight - EDGE_PAD &&
-    (placement === "bottom-right" || placement === "bottom-left")
-  ) {
-    y = cardTop - PANEL_GAP - panelHeight;
-    arrow = "bottom";
-  }
-
-  x = clamp(x, EDGE_PAD, Math.max(EDGE_PAD, wrapWidth - panelWidth - EDGE_PAD));
-  y = clamp(
-    y,
-    EDGE_PAD,
-    Math.max(EDGE_PAD, wrapHeight - panelHeight - EDGE_PAD),
-  );
-
-  const enterFrom =
-    arrow === "left"
-      ? { x: -6, y: 0 }
-      : arrow === "right"
-        ? { x: 6, y: 0 }
-        : arrow === "top"
-          ? { x: 0, y: -6 }
-          : { x: 0, y: 6 };
-
-  return { x, y, arrow, enterFrom };
-}
 
 /**
  * Écrou hexagonal mécanique — blanc translucide, fin, identifiable.
@@ -695,7 +529,6 @@ function FeaturePanel({
 function FeatureVertexCard({
   feature,
   radius,
-  scrollProgress,
   staticMode,
   isActive,
   isDimmed,
@@ -708,7 +541,6 @@ function FeatureVertexCard({
 }: {
   feature: HexFeature;
   radius: number;
-  scrollProgress: MotionValue<number>;
   staticMode: boolean;
   isActive: boolean;
   isDimmed: boolean;
@@ -719,7 +551,6 @@ function FeatureVertexCard({
   onBlurCard: (e: FocusEvent<HTMLButtonElement>) => void;
   buttonRef: (el: HTMLButtonElement | null) => void;
 }) {
-  void scrollProgress;
   const Icon = feature.Icon;
   const pt = vertexPoint(feature.angle, radius);
 
@@ -796,7 +627,6 @@ function FeatureVertexCard({
 }
 
 type LandingHeroOrbitProps = {
-  scrollProgress: MotionValue<number>;
   enableOrbit: boolean;
 };
 
@@ -808,12 +638,10 @@ type LandingHeroOrbitProps = {
  * - panneau hors flux (aucun reflow du Hero)
  */
 export function LandingHeroOrbit({
-  scrollProgress,
   enableOrbit,
 }: LandingHeroOrbitProps) {
   const reduced = useReducedMotion() ?? false;
   const sceneRef = useRef<HTMLDivElement>(null);
-  const sceneWrapRef = useRef<HTMLDivElement>(null);
   const interactRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Partial<Record<HeroFeatureId, HTMLButtonElement | null>>>(
@@ -824,8 +652,10 @@ export function LandingHeroOrbit({
   const [isMobile, setIsMobile] = useState(false);
   const systemRotate = useMotionValue(0);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverWithinRef = useRef(false);
+  const pinnedRef = useRef(false);
+  const autoPausedRef = useRef(false);
   const autoIndexRef = useRef(0);
-  const activeIdRef = useRef<HeroFeatureId>(FEATURE_IDS[0]);
   const rotationTargetRef = useRef(0);
 
   const [activeId, setActiveId] = useState<HeroFeatureId>(FEATURE_IDS[0]);
@@ -844,8 +674,12 @@ export function LandingHeroOrbit({
   }, []);
 
   useEffect(() => {
-    activeIdRef.current = activeId;
-  }, [activeId]);
+    pinnedRef.current = pinned;
+  }, [pinned]);
+
+  useEffect(() => {
+    autoPausedRef.current = autoPaused;
+  }, [autoPaused]);
 
   const clearCloseTimer = () => {
     if (closeTimer.current) {
@@ -900,19 +734,24 @@ export function LandingHeroOrbit({
 
   const closePanel = useCallback(() => {
     clearCloseTimer();
+    hoverWithinRef.current = false;
     setPinned(false);
     setAutoPaused(false);
   }, []);
 
-  const scheduleClose = useCallback(() => {
+  const leaveInteractive = useCallback(() => {
+    hoverWithinRef.current = false;
     if (pinned) return;
     clearCloseTimer();
     closeTimer.current = setTimeout(() => {
-      setAutoPaused(false);
+      if (!hoverWithinRef.current) {
+        setAutoPaused(false);
+      }
     }, CLOSE_DELAY_MS);
   }, [pinned]);
 
   const holdOpen = useCallback(() => {
+    hoverWithinRef.current = true;
     clearCloseTimer();
     setAutoPaused(true);
   }, []);
@@ -949,6 +788,9 @@ export function LandingHeroOrbit({
     if (pinned || autoPaused) return;
 
     const cycle = window.setInterval(() => {
+      if (pinnedRef.current || autoPausedRef.current || hoverWithinRef.current) {
+        return;
+      }
       const next = (autoIndexRef.current + 1) % FEATURE_IDS.length;
       setFeatureByIndex(next, "auto");
     }, AUTO_FEATURE_STEP_MS);
@@ -995,12 +837,12 @@ export function LandingHeroOrbit({
       if (isOtherCard) return;
     }
     if (pinned) return;
-    scheduleClose();
+    leaveInteractive();
   };
 
   return (
     <div className="batimumHero__orbitRoot" ref={interactRef}>
-      <div ref={sceneWrapRef} className="batimumHero__sceneWrap">
+      <div className="batimumHero__sceneWrap">
         <div ref={sceneRef} className="batimumHero__scene">
           <div className="batimumHero__center" aria-hidden />
           <div className="batimumHero__glow" aria-hidden />
@@ -1022,7 +864,6 @@ export function LandingHeroOrbit({
               key={feature.id}
               feature={feature}
               radius={radius}
-              scrollProgress={scrollProgress}
               staticMode={staticMode}
               isActive={activeId === feature.id}
               isDimmed={activeId !== feature.id}
@@ -1034,11 +875,12 @@ export function LandingHeroOrbit({
               onHoverStart={() => {
                 if (window.matchMedia("(hover: hover)").matches) {
                   openFeature(feature.id, false);
+                  holdOpen();
                 }
               }}
               onHoverEnd={() => {
                 if (window.matchMedia("(hover: hover)").matches) {
-                  scheduleClose();
+                  leaveInteractive();
                 }
               }}
               onBlurCard={onBlurCard}
@@ -1092,7 +934,7 @@ export function LandingHeroOrbit({
                   onClose={closePanel}
                   onNavigate={handleNavigate}
                   onPanelEnter={holdOpen}
-                  onPanelLeave={() => scheduleClose()}
+                  onPanelLeave={leaveInteractive}
                 />
               ) : null}
             </AnimatePresence>

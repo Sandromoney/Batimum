@@ -137,7 +137,7 @@ html:has(.landing-emerald) body {
 
 /* Première section juste après le Hero : transition directe */
 .landing-emerald .lp-section--after-hero {
-  padding-top: clamp(0.5rem, 1.4vw, 1.5rem);
+  padding-top: 0;
 }
 
 .landing-emerald .lp-section--soft {
@@ -259,11 +259,6 @@ html:has(.landing-emerald) body {
   overflow-x: clip;
 }
 
-.landing-emerald .batimumHero--scroll {
-  height: auto;
-  min-height: max(92vh, calc(100svh - 84px));
-}
-
 .landing-emerald .batimumHero--static {
   min-height: max(92vh, calc(100svh - 84px));
 }
@@ -282,13 +277,6 @@ html:has(.landing-emerald) body {
   background: transparent;
 }
 
-.landing-emerald .batimumHero--scroll .batimumHero__sticky {
-  position: relative;
-  top: auto;
-  height: auto;
-  min-height: max(92vh, calc(100svh - 84px));
-}
-
 .landing-emerald .batimumHero__inner {
   width: 100%;
   max-width: none;
@@ -305,11 +293,6 @@ html:has(.landing-emerald) body {
   border-radius: 0;
   box-shadow: none;
   background: transparent;
-}
-
-.landing-emerald .batimumHero--scroll .batimumHero__inner {
-  min-height: 0;
-  height: 100%;
 }
 
 .landing-emerald .batimumHero__content,
@@ -528,34 +511,6 @@ html:has(.landing-emerald) body {
   overflow: visible;
 }
 
-.landing-emerald .batimumHero__scrollCue,
-.landing-emerald .batimumHero__scrollHint {
-  position: absolute;
-  left: 50%;
-  bottom: 1rem;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0;
-  transform: translateX(-50%);
-  color: var(--batimum-hero-black);
-  font-size: 13px;
-  pointer-events: none;
-  white-space: nowrap;
-  opacity: 1;
-}
-
-.landing-emerald .batimumHero__scrollArrow {
-  color: #3b82f6;
-  animation: batimumHero-cue-bob 2.6s ease-in-out infinite;
-}
-
-@keyframes batimumHero-cue-bob {
-  0%, 100% { transform: translateY(0); opacity: 0.8; }
-  50% { transform: translateY(4px); opacity: 1; }
-}
-
 @media (max-width: 639px) {
   .landing-emerald .batimumHero__ctas a {
     width: 100%;
@@ -564,8 +519,7 @@ html:has(.landing-emerald) body {
 
 
 .landing-emerald .batimumHero__benefitIcon,
-.landing-emerald .batimumHero__bubbleIcon,
-.landing-emerald .batimumHero__scrollArrow {
+.landing-emerald .batimumHero__bubbleIcon {
   color: #3b82f6;
 }
 
@@ -603,8 +557,6 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__subtitle,
 .landing-emerald .batimumHero__trust,
 .landing-emerald .batimumHero__focus,
-.landing-emerald .batimumHero__scrollCue,
-.landing-emerald .batimumHero__scrollHint,
 .landing-emerald .batimumHero__stackItem,
 .landing-emerald .batimumHero__stackItem span {
   color: var(--batimum-hero-black) !important;
@@ -614,8 +566,7 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__benefitIcon,
 .landing-emerald .batimumHero__bubbleIcon,
 .landing-emerald .batimumHero__bubbleIcon *,
-.landing-emerald .batimumHero__scrollArrow,
-.landing-emerald .batimumHero__scrollArrow * {
+.landing-emerald .batimumHero__bubbleIcon * {
   color: #3b82f6 !important;
 }
 
@@ -1603,18 +1554,6 @@ html:has(.landing-emerald) body {
     max-width: 300px;
   }
 
-  .landing-emerald .batimumHero--scroll {
-    height: auto;
-    min-height: 0;
-  }
-
-  .landing-emerald .batimumHero--scroll .batimumHero__sticky {
-    position: relative;
-    top: auto;
-    height: auto;
-    min-height: 0;
-  }
-
   .landing-emerald .batimumHero__inner {
     grid-template-columns: 1fr;
     gap: 2.5rem;
@@ -1668,10 +1607,6 @@ html:has(.landing-emerald) body {
     width: 72%;
   }
 
-  .landing-emerald .batimumHero__scrollCue,
-  .landing-emerald .batimumHero__scrollHint {
-    display: none;
-  }
 }
 
 @media (max-width: 639px) {
@@ -1709,10 +1644,6 @@ html:has(.landing-emerald) body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-emerald .batimumHero__scrollArrow {
-    animation: none;
-  }
-
   .landing-emerald .batimumHero__nut {
     animation: none;
   }
@@ -1735,16 +1666,6 @@ html:has(.landing-emerald) body {
     animation: none;
   }
 
-  .landing-emerald .batimumHero--scroll {
-    height: auto;
-    min-height: 0;
-  }
-
-  .landing-emerald .batimumHero--scroll .batimumHero__sticky {
-    position: relative;
-    top: auto;
-    height: auto;
-  }
 }
 
 /* Shared helpers still used by other landing sections */

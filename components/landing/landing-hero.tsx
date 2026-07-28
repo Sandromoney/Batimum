@@ -2,14 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import {
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
-import { ArrowDown, ArrowRight } from "lucide-react";
+import { useReducedMotion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import {
   HERO_FEATURES,
   HERO_BM_SYMBOL_SRC,
@@ -17,23 +11,6 @@ import {
 } from "@/components/landing/landing-hero-orbit";
 import { heroContent } from "@/lib/landing-hero-content";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
-
-/** Scroll story only on large desktop (≥1100). Default false avoids SSR 350vh flash. */
-function useDesktopScrollStory(reduced: boolean) {
-  const [enabled, setEnabled] = useState(false);
-  useEffect(() => {
-    if (reduced) {
-      setEnabled(false);
-      return;
-    }
-    const mq = window.matchMedia("(min-width: 1100px)");
-    const apply = () => setEnabled(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, [reduced]);
-  return enabled;
-}
 
 /** Orbit visual between tablet and desktop when scroll story is off. */
 function useShowOrbit(reduced: boolean) {
@@ -59,17 +36,7 @@ export function LandingHero() {
     ? "Se connecter"
     : heroContent.primaryCta;
   const reduced = useReducedMotion() ?? false;
-  const enableScrollStory = false;
   const showOrbit = useShowOrbit(reduced);
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-
-  const idleProgress = useMotionValue(0);
-  const progress = enableScrollStory ? scrollYProgress : idleProgress;
-  const cueOpacity = useTransform(progress, [0, 0.08], [1, 0]);
 
   return (
     <section
@@ -136,10 +103,7 @@ export function LandingHero() {
 
           <div className="batimumHero__visual">
             {showOrbit ? (
-              <LandingHeroOrbit
-                scrollProgress={progress}
-                enableOrbit={!reduced}
-              />
+              <LandingHeroOrbit enableOrbit={!reduced} />
             ) : (
               <div className="batimumHero__mobileStack">
                 <div className="batimumHero__mobileScene">
@@ -247,20 +211,6 @@ export function LandingHero() {
           </div>
         </div>
 
-        {enableScrollStory ? (
-          <motion.p
-            className="batimumHero__scrollCue batimumHero__scrollHint"
-            style={{ opacity: cueOpacity }}
-          >
-            <ArrowDown
-              className="batimumHero__scrollArrow"
-              size={14}
-              strokeWidth={1.8}
-              aria-hidden
-            />
-            {heroContent.scrollCue}
-          </motion.p>
-        ) : null}
       </div>
     </section>
   );
