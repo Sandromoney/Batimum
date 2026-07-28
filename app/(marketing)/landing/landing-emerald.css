@@ -3414,7 +3414,9 @@ html:has(.landing-emerald) body {
   .landing-emerald .lp-feature:hover,
   .landing-emerald .lp-dual__card:hover,
   .landing-emerald .lp-theme-card:hover,
-  .landing-emerald .lp-roadmap-card:hover {
+  .landing-emerald .lp-roadmap-card:hover,
+  .landing-emerald .lp-pain__card:hover,
+  .landing-emerald .lp-pain__card:hover .lp-pain__icon {
     transform: none;
   }
 }
@@ -3680,6 +3682,169 @@ html:has(.landing-emerald) body {
   height: 1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
+}
+
+/* ——— Pain / recognition (first after Hero) ——— */
+.landing-emerald .lp-pain {
+  background: #fafafa;
+  padding-top: clamp(4.5rem, 9vw, 7.5rem);
+  padding-bottom: clamp(4.5rem, 9vw, 8rem);
+  scroll-margin-top: 88px;
+}
+
+.landing-emerald .lp-pain__inner {
+  max-width: 1120px;
+}
+
+.landing-emerald .lp-pain__head {
+  max-width: 42rem;
+  margin-bottom: clamp(2.75rem, 5vw, 4rem);
+}
+
+.landing-emerald .lp-pain__title {
+  color: var(--landing-text);
+  font-size: clamp(2.35rem, 4.6vw, 3.75rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  margin: 0;
+}
+
+.landing-emerald .lp-pain__titleLine {
+  display: block;
+}
+
+.landing-emerald .lp-pain__swap {
+  position: relative;
+  display: inline-grid;
+  vertical-align: baseline;
+  justify-items: start;
+}
+
+.landing-emerald .lp-pain__swapGhost {
+  grid-area: 1 / 1;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.landing-emerald .lp-pain__swapWord {
+  grid-area: 1 / 1;
+  display: inline-block;
+  white-space: nowrap;
+  color: var(--landing-text);
+}
+
+.landing-emerald .lp-pain__subtitle {
+  margin-top: clamp(1.35rem, 2.5vw, 1.85rem);
+  max-width: 34rem;
+  color: var(--landing-muted);
+  font-size: clamp(1.05rem, 1.35vw, 1.2rem);
+  line-height: 1.65;
+  font-weight: 500;
+}
+
+.landing-emerald .lp-pain__subtitle p {
+  margin: 0;
+}
+
+.landing-emerald .lp-pain__subtitle p + p {
+  margin-top: 0.85rem;
+}
+
+.landing-emerald .lp-pain__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(1rem, 2vw, 1.25rem);
+  align-items: stretch;
+}
+
+@media (min-width: 768px) {
+  .landing-emerald .lp-pain__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+.landing-emerald .lp-pain__cardReveal {
+  height: 100%;
+}
+
+.landing-emerald .lp-pain__card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: clamp(1.35rem, 2.4vw, 1.75rem);
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.05);
+  box-shadow: 0 8px 24px rgba(17, 17, 17, 0.03);
+  transition:
+    transform 250ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 250ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .landing-emerald .lp-pain__card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 34px rgba(17, 17, 17, 0.06);
+    border-color: rgba(17, 17, 17, 0.08);
+  }
+
+  .landing-emerald .lp-pain__card:hover .lp-pain__icon {
+    transform: translateY(-2px) rotate(2deg);
+    color: #111111;
+    background: rgba(59, 130, 246, 0.08);
+  }
+}
+
+.landing-emerald .lp-pain__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 14px;
+  background: rgba(17, 17, 17, 0.035);
+  color: #1f2937;
+  transition:
+    transform 250ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 250ms ease,
+    background-color 250ms ease;
+}
+
+.landing-emerald .lp-pain__cardTitle {
+  margin: 0;
+  color: var(--landing-text);
+  font-size: clamp(1.125rem, 1.4vw, 1.3rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.landing-emerald .lp-pain__cardText {
+  margin: 0;
+  color: var(--landing-muted);
+  font-size: 0.98rem;
+  line-height: 1.6;
+  flex: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-emerald .lp-pain__card,
+  .landing-emerald .lp-pain__icon {
+    transition: none;
+  }
+
+  .landing-emerald .lp-pain__card:hover,
+  .landing-emerald .lp-pain__card:hover .lp-pain__icon {
+    transform: none;
+  }
 }
 
 .landing-emerald .lp-ba {
