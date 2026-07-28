@@ -211,11 +211,18 @@ export const ORBIT_SPIN_SECONDS = 37;
 
 /**
  * Timer principal unique (feature active + stat) :
- * apparition + compteur → visible ~2 s → fade-out → suivante
+ * fade-in 400 ms → hold 3,5 s → fade-out 400 ms → respiration → suivante
+ * Stat visible ~4,3 s ; feature active ~5,8 s
  */
-export const AUTO_CYCLE_MS = 3400;
+export const STAT_FADE_IN_MS = 400;
+export const STAT_HOLD_MS = 3500;
+export const STAT_FADE_OUT_MS = 400;
+export const STAT_VISIBLE_MS =
+  STAT_FADE_IN_MS + STAT_HOLD_MS + STAT_FADE_OUT_MS; // 4300
+export const AUTO_CYCLE_MS = 5800; // ~5,8 s avec respiration après la stat
 export const COUNTER_MS = 800;
 const BUBBLE_EXIT_S = 0.3;
+const HOVER_GRACE_MS = 120;
 const CLOSE_DELAY_MS = 700;
 const PANEL_WIDTH = 312;
 const PANEL_EST_HEIGHT = 280;
@@ -277,6 +284,32 @@ function computePanelPos(card: HTMLElement, wrap: HTMLElement): PanelPos {
   x = Math.min(Math.max(8, x), Math.max(8, wr.width - PANEL_WIDTH - 8));
   y = Math.min(Math.max(8, y), Math.max(8, wr.height - PANEL_EST_HEIGHT - 8));
   return { x, y, arrow: placeRight ? "left" : "right" };
+}
+
+function computeBridgeStyle(
+  card: HTMLElement,
+  wrap: HTMLElement,
+  panel: PanelPos,
+): CSSProperties {
+  const cr = card.getBoundingClientRect();
+  const wr = wrap.getBoundingClientRect();
+  const cardCx = cr.left + cr.width / 2 - wr.left;
+  const cardCy = cr.top + cr.height / 2 - wr.top;
+  const panelCx = panel.x + PANEL_WIDTH / 2;
+  const panelCy = panel.y + 80;
+  const left = Math.min(cardCx, panelCx) - 28;
+  const top = Math.min(cardCy, panelCy) - 28;
+  const width = Math.abs(panelCx - cardCx) + 56;
+  const height = Math.abs(panelCy - cardCy) + 56;
+  return {
+    position: "absolute",
+    left,
+    top,
+    width: Math.max(width, 48),
+    height: Math.max(height, 48),
+    zIndex: 55,
+    pointerEvents: "auto",
+  };
 }
 
 function easeOutCubic(t: number) {
@@ -652,8 +685,8 @@ function FeatureVertexCard({
   reduced,
   statEpoch,
   onActivate,
-  onHoverStart,
-  onHoverEnd,
+  onCardEnter,
+  onCardLeave,
   onBlurCard,
   buttonRef,
 }: {
@@ -666,8 +699,8 @@ function FeatureVertexCard({
   reduced: boolean;
   statEpoch: number;
   onActivate: () => void;
-  onHoverStart: () => void;
-  onHoverEnd: () => void;
+  onCardEnter: () => void;
+  onCardLeave: () => void;
   onBlurCard: (e: FocusEvent<HTMLButtonElement>) => void;
   buttonRef: (el: HTMLButtonElement | null) => void;
 }) {
@@ -687,6 +720,10 @@ function FeatureVertexCard({
         transform: `translate(-50%, -50%) translate(${pt.x}px, ${pt.y}px)`,
         zIndex: showBubble ? 40 : isActive ? 24 : 10,
       }}
+      onMouseEnter={onCardEnter}
+      onMouseLeave={onCardLeave}
+      onPointerEnter={onCardEnter}
+      onPointerLeave={onCardLeave}
     >
       <div className="batimumHero__featureCounter">
         <button
@@ -700,11 +737,7 @@ function FeatureVertexCard({
             e.stopPropagation();
             onActivate();
           }}
-          onMouseEnter={onHoverStart}
-          onMouseLeave={onHoverEnd}
-          onPointerEnter={onHoverStart}
-          onPointerLeave={onHoverEnd}
-          onFocus={onHoverStart}
+          onFocus={onCardEnter}
           onBlur={onBlurCard}
         >
           <span
@@ -746,7 +779,7 @@ type LandingHeroOrbitProps = {
  * - contre-rotation des cartes
  * - logo BM fixe
  * - 1 timer pour feature active + statistique / compteur
- * - hover carte ↔ bulle sans clignotement
+ * - zone hover commune carte ↔ pont ↔ bulle
  */
 export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
   const reduced = useReducedMotion() ?? false;
@@ -763,17 +796,25 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
   const [isNarrow, setIsNarrow] = useState(false);
 
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hoverWithinRef = useRef(false);
+  const graceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pinnedRef = useRef(false);
   const pausedRef = useRef(false);
   const autoIndexRef = useRef(0);
+  const isCardHoveredRef = useRef(false);
+  const isTooltipHoveredRef = useRef(false);
+  const isBridgeHoveredRef = useRef(false);
 
   const [activeId, setActiveId] = useState<HeroFeatureId>(FEATURE_IDS[0]);
   const [pinned, setPinned] = useState(false);
   const [paused, setPaused] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const [panelPos, setPanelPos] = useState<PanelPos | null>(null);
+  const [bridgeStyle, setBridgeStyle] = useState<CSSProperties | null>(null);
   const [statEpoch, setStatEpoch] = useState(0);
+  const [isCardHovered, setIsCardHovered] = useState(false);
+  const [isTooltipHovered, setIsTooltipHovered] = useState(false);
+  const [isInteractionZoneHovered, setIsInteractionZoneHovered] =
+    useState(false);
 
   useEffect(() => setMounted(true), []);
 
@@ -793,6 +834,18 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     pausedRef.current = paused;
   }, [paused]);
 
+  useEffect(() => {
+    isCardHoveredRef.current = isCardHovered;
+  }, [isCardHovered]);
+
+  useEffect(() => {
+    isTooltipHoveredRef.current = isTooltipHovered;
+  }, [isTooltipHovered]);
+
+  useEffect(() => {
+    isBridgeHoveredRef.current = isInteractionZoneHovered;
+  }, [isInteractionZoneHovered]);
+
   const clearCloseTimer = () => {
     if (closeTimer.current) {
       clearTimeout(closeTimer.current);
@@ -800,14 +853,26 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     }
   };
 
+  const clearGraceTimer = () => {
+    if (graceTimer.current) {
+      clearTimeout(graceTimer.current);
+      graceTimer.current = null;
+    }
+  };
+
   const orbiting = mounted && enableOrbit && !reduced;
   const staticMode = !orbiting;
+
+  const shouldKeepTooltipOpen =
+    isCardHovered || isTooltipHovered || isInteractionZoneHovered || pinned;
 
   const updatePanelPos = useCallback((id: HeroFeatureId) => {
     const card = cardRefs.current[id];
     const wrap = sceneWrapRef.current;
     if (!card || !wrap) return;
-    setPanelPos(computePanelPos(card, wrap));
+    const pos = computePanelPos(card, wrap);
+    setPanelPos(pos);
+    setBridgeStyle(computeBridgeStyle(card, wrap, pos));
   }, []);
 
   const bumpStat = useCallback(() => {
@@ -817,6 +882,7 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
   const openFeature = useCallback(
     (id: HeroFeatureId, pin: boolean, withBubble: boolean) => {
       clearCloseTimer();
+      clearGraceTimer();
       const idx = FEATURE_IDS.indexOf(id);
       const changed = idx >= 0 && FEATURE_IDS[idx] !== activeId;
       if (idx >= 0) {
@@ -835,46 +901,85 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
   );
 
   const resumeAuto = useCallback(() => {
-    hoverWithinRef.current = false;
+    setIsCardHovered(false);
+    setIsTooltipHovered(false);
+    setIsInteractionZoneHovered(false);
     setShowBubble(false);
     setPanelPos(null);
+    setBridgeStyle(null);
     setPaused(false);
     bumpStat();
   }, [bumpStat]);
 
   const closePanel = useCallback(() => {
     clearCloseTimer();
-    hoverWithinRef.current = false;
+    clearGraceTimer();
     setPinned(false);
+    setIsCardHovered(false);
+    setIsTooltipHovered(false);
+    setIsInteractionZoneHovered(false);
     setShowBubble(false);
     setPanelPos(null);
+    setBridgeStyle(null);
     setPaused(false);
     bumpStat();
   }, [bumpStat]);
 
-  const leaveInteractive = useCallback(() => {
-    hoverWithinRef.current = false;
+  /** Ne ferme la bulle que si toute la zone commune est quittée */
+  const scheduleLeaveCheck = useCallback(() => {
     if (pinnedRef.current) return;
-    setShowBubble(false);
-    setPanelPos(null);
-    clearCloseTimer();
-    closeTimer.current = setTimeout(() => {
-      if (!hoverWithinRef.current && !pinnedRef.current) {
-        resumeAuto();
-      }
-    }, CLOSE_DELAY_MS);
+    clearGraceTimer();
+    graceTimer.current = setTimeout(() => {
+      const keep =
+        isCardHoveredRef.current ||
+        isTooltipHoveredRef.current ||
+        isBridgeHoveredRef.current ||
+        pinnedRef.current;
+      if (keep) return;
+
+      setShowBubble(false);
+      setPanelPos(null);
+      setBridgeStyle(null);
+      clearCloseTimer();
+      closeTimer.current = setTimeout(() => {
+        const stillKeep =
+          isCardHoveredRef.current ||
+          isTooltipHoveredRef.current ||
+          isBridgeHoveredRef.current ||
+          pinnedRef.current;
+        if (!stillKeep) resumeAuto();
+      }, CLOSE_DELAY_MS);
+    }, HOVER_GRACE_MS);
   }, [resumeAuto]);
 
   const holdOpen = useCallback(() => {
-    hoverWithinRef.current = true;
     clearCloseTimer();
+    clearGraceTimer();
     setPaused(true);
   }, []);
+
+  useEffect(() => {
+    if (shouldKeepTooltipOpen) {
+      clearCloseTimer();
+      clearGraceTimer();
+      setPaused(true);
+      if (!isNarrow && (isCardHovered || isTooltipHovered || isInteractionZoneHovered)) {
+        setShowBubble(true);
+      }
+    }
+  }, [
+    shouldKeepTooltipOpen,
+    isCardHovered,
+    isTooltipHovered,
+    isInteractionZoneHovered,
+    isNarrow,
+  ]);
 
   useEffect(() => {
     if (!paused && !pinned) {
       setShowBubble(false);
       setPanelPos(null);
+      setBridgeStyle(null);
     }
   }, [paused, pinned]);
 
@@ -906,12 +1011,18 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     };
   }, [closePanel, isNarrow, pinned, showBubble]);
 
-  /** Unique timer — feature active + stats (pas de timers parallèles) */
+  /** Unique timer — feature active + stats */
   useEffect(() => {
     if (!orbiting || paused) return;
 
     const id = window.setInterval(() => {
-      if (pinnedRef.current || pausedRef.current || hoverWithinRef.current) {
+      if (
+        pinnedRef.current ||
+        pausedRef.current ||
+        isCardHoveredRef.current ||
+        isTooltipHoveredRef.current ||
+        isBridgeHoveredRef.current
+      ) {
         return;
       }
       const next = (autoIndexRef.current + 1) % FEATURE_IDS.length;
@@ -935,7 +1046,13 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     return () => window.removeEventListener("resize", onResize);
   }, [activeId, isNarrow, showBubble, updatePanelPos]);
 
-  useEffect(() => () => clearCloseTimer(), []);
+  useEffect(
+    () => () => {
+      clearCloseTimer();
+      clearGraceTimer();
+    },
+    [],
+  );
 
   const radius = vertexRadiusForScene(sceneSize);
   const activeFeature =
@@ -948,9 +1065,47 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     requestAnimationFrame(() => scrollToAnchor(href));
   };
 
+  const canHover = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(hover: hover)").matches;
+
+  const onCardEnter = (id: HeroFeatureId) => {
+    if (!canHover()) return;
+    setIsCardHovered(true);
+    openFeature(id, false, true);
+    holdOpen();
+  };
+
+  const onCardLeave = () => {
+    if (!canHover()) return;
+    setIsCardHovered(false);
+    scheduleLeaveCheck();
+  };
+
+  const onTooltipEnter = () => {
+    setIsTooltipHovered(true);
+    holdOpen();
+  };
+
+  const onTooltipLeave = () => {
+    setIsTooltipHovered(false);
+    scheduleLeaveCheck();
+  };
+
+  const onBridgeEnter = () => {
+    setIsInteractionZoneHovered(true);
+    holdOpen();
+  };
+
+  const onBridgeLeave = () => {
+    setIsInteractionZoneHovered(false);
+    scheduleLeaveCheck();
+  };
+
   const onBlurCard = (e: FocusEvent<HTMLButtonElement>) => {
     const next = e.relatedTarget as Node | null;
     if (panelRef.current?.contains(next)) {
+      setIsTooltipHovered(true);
       holdOpen();
       return;
     }
@@ -961,12 +1116,9 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
       if (isOtherCard) return;
     }
     if (pinned) return;
-    leaveInteractive();
+    setIsCardHovered(false);
+    scheduleLeaveCheck();
   };
-
-  const canHover = () =>
-    typeof window !== "undefined" &&
-    window.matchMedia("(hover: hover)").matches;
 
   return (
     <div className="batimumHero__orbitRoot" ref={interactRef}>
@@ -1006,15 +1158,8 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
                       cardRefs.current[feature.id] = el;
                     }}
                     onActivate={() => openFeature(feature.id, true, true)}
-                    onHoverStart={() => {
-                      if (canHover()) {
-                        openFeature(feature.id, false, true);
-                        holdOpen();
-                      }
-                    }}
-                    onHoverEnd={() => {
-                      if (canHover()) leaveInteractive();
-                    }}
+                    onCardEnter={() => onCardEnter(feature.id)}
+                    onCardLeave={onCardLeave}
                     onBlurCard={onBlurCard}
                   />
                 );
@@ -1045,6 +1190,17 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
             className="batimumHero__interactiveZone"
             aria-hidden={!showBubble}
           >
+            {showBubble && bridgeStyle ? (
+              <div
+                className="batimumHero__hoverBridge"
+                style={bridgeStyle}
+                aria-hidden="true"
+                onMouseEnter={onBridgeEnter}
+                onMouseLeave={onBridgeLeave}
+                onPointerEnter={onBridgeEnter}
+                onPointerLeave={onBridgeLeave}
+              />
+            ) : null}
             <AnimatePresence mode="wait">
               {showBubble && activeFeature && panelPos ? (
                 <FeaturePanel
@@ -1055,8 +1211,8 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
                   pos={panelPos}
                   onClose={closePanel}
                   onNavigate={handleNavigate}
-                  onPanelEnter={holdOpen}
-                  onPanelLeave={leaveInteractive}
+                  onPanelEnter={onTooltipEnter}
+                  onPanelLeave={onTooltipLeave}
                 />
               ) : null}
             </AnimatePresence>

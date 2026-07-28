@@ -625,6 +625,12 @@ html:has(.landing-emerald) body {
   overflow: visible;
 }
 
+/* Pont hover invisible carte ↔ bulle (pas de trou pointer) */
+.landing-emerald .batimumHero__hoverBridge {
+  pointer-events: auto;
+  background: transparent;
+}
+
 .landing-emerald .batimumHero__featurePopover,
 .landing-emerald .batimumHero__featurePanel {
   position: absolute;
@@ -832,17 +838,19 @@ html:has(.landing-emerald) body {
   }
 }
 
-/* Stat auto : fade-in → hold ~2 s → fade-out (aligné AUTO_CYCLE_MS 3,4 s) */
+/* Stat auto : fade-in 400ms → hold 3,5s → fade-out 400ms (total 4,3s) */
 @keyframes batimum-stat-cycle {
   0% {
     opacity: 0;
     transform: translate(-50%, 10px) scale(0.98);
   }
-  14% {
+  9.3% {
+    /* ~400 / 4300 */
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
   }
-  78% {
+  90.7% {
+    /* ~(400+3500) / 4300 */
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
   }
@@ -943,7 +951,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .batimumHero__statBadge--auto {
-  animation: batimum-stat-cycle 3.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: batimum-stat-cycle 4.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .landing-emerald .batimumHero__statBadge--held {
