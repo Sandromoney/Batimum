@@ -695,24 +695,37 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     setPanelPos(null);
   }, []);
 
+  const resumeAuto = useCallback(() => {
+    hoverWithinRef.current = false;
+    setShowBubble(false);
+    setPanelPos(null);
+    setPaused(false);
+  }, []);
+
   const leaveInteractive = useCallback(() => {
     hoverWithinRef.current = false;
-    if (pinned) return;
+    if (pinnedRef.current) return;
     clearCloseTimer();
     closeTimer.current = setTimeout(() => {
       if (!hoverWithinRef.current && !pinnedRef.current) {
-        setShowBubble(false);
-        setPaused(false);
-        setPanelPos(null);
+        resumeAuto();
       }
     }, CLOSE_DELAY_MS);
-  }, [pinned]);
+  }, [resumeAuto]);
 
   const holdOpen = useCallback(() => {
     hoverWithinRef.current = true;
     clearCloseTimer();
     setPaused(true);
   }, []);
+
+  /** Filet de sécurité : jamais de bulle ouverte pendant la rotation auto */
+  useEffect(() => {
+    if (!paused && !pinned) {
+      setShowBubble(false);
+      setPanelPos(null);
+    }
+  }, [paused, pinned]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
