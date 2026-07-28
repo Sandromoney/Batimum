@@ -260,8 +260,9 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .batimumHero--scroll {
-  height: 350vh;
-  min-height: 350vh;
+  /* Reduce post-animation dead space while preserving sticky story */
+  height: 230svh;
+  min-height: 230svh;
 }
 
 .landing-emerald .batimumHero--static {
