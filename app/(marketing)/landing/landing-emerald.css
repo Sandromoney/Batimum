@@ -887,32 +887,32 @@ html:has(.landing-emerald) body {
   }
 }
 
-/* Stat auto : fade-in 400ms → hold 3,5s → fade-out 400ms (total 4,3s) */
+/* Stat auto : fade-in 250ms → hold 4s → fade-out 200ms (total 4,45s) — pas de plage invisible */
 @keyframes batimum-stat-cycle {
   0% {
     opacity: 0;
-    transform: translate(-50%, 10px) scale(0.98);
+    transform: translate(-50%, 6px) scale(0.98);
   }
-  9.3% {
-    /* ~400 / 4300 */
+  5.6% {
+    /* ~250 / 4450 */
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
   }
-  90.7% {
-    /* ~(400+3500) / 4300 */
+  95.5% {
+    /* ~(250+4000) / 4450 */
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, 6px) scale(0.99);
+    transform: translate(-50%, -4px) scale(0.99);
   }
 }
 
 @keyframes batimum-stat-enter {
   from {
     opacity: 0;
-    transform: translate(-50%, 10px) scale(0.98);
+    transform: translate(-50%, 6px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -1000,11 +1000,13 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .batimumHero__statBadge--auto {
-  animation: batimum-stat-cycle 4.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: batimum-stat-cycle var(--batimum-stat-cycle, 4.45s)
+    cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .landing-emerald .batimumHero__statBadge--held {
-  animation: batimum-stat-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: batimum-stat-enter var(--batimum-stat-enter, 0.25s)
+    cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .landing-emerald .batimumHero__nutSystemSpin.is-paused .batimumHero__statBadge--auto {

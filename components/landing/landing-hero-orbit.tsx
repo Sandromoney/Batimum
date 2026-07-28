@@ -210,16 +210,16 @@ const NUT_VERTEX_SVG = 188 / 200;
 export const ORBIT_SPIN_SECONDS = 37;
 
 /**
- * Timer principal unique (feature active + stat) :
- * fade-in 400 ms → hold 3,5 s → fade-out 400 ms → respiration → suivante
- * Stat visible ~4,3 s ; feature active ~5,8 s
+ * Timer principal unique (feature active + stat) — une seule source de vérité.
+ * fade-in 250 ms → hold 4 s → fade-out 200 ms → suivante immédiatement (0 ms de vide).
+ * AUTO_CYCLE = durée exacte de l’animation CSS : pas de respiration / temps mort.
  */
-export const STAT_FADE_IN_MS = 400;
-export const STAT_HOLD_MS = 3500;
-export const STAT_FADE_OUT_MS = 400;
+export const STAT_FADE_IN_MS = 250;
+export const STAT_HOLD_MS = 4000;
+export const STAT_FADE_OUT_MS = 200;
 export const STAT_VISIBLE_MS =
-  STAT_FADE_IN_MS + STAT_HOLD_MS + STAT_FADE_OUT_MS; // 4300
-export const AUTO_CYCLE_MS = 5800; // ~5,8 s avec respiration après la stat
+  STAT_FADE_IN_MS + STAT_HOLD_MS + STAT_FADE_OUT_MS; // 4450
+export const AUTO_CYCLE_MS = STAT_VISIBLE_MS;
 export const COUNTER_MS = 800;
 const BUBBLE_EXIT_S = 0.3;
 const HOVER_GRACE_MS = 120;
@@ -570,6 +570,12 @@ function FeatureStatBadge({
   return (
     <span
       className={`batimumHero__statBadge batimumHero__statBadge--${mode}`}
+      style={
+        {
+          "--batimum-stat-cycle": `${STAT_VISIBLE_MS}ms`,
+          "--batimum-stat-enter": `${STAT_FADE_IN_MS}ms`,
+        } as CSSProperties
+      }
       aria-hidden="true"
     >
       <span className="batimumHero__statBadgeMain">
