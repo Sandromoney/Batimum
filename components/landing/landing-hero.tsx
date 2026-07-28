@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import {
@@ -11,36 +10,22 @@ import {
 } from "@/components/landing/landing-hero-orbit";
 import { heroContent } from "@/lib/landing-hero-content";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
+import type { CSSProperties } from "react";
 
-/** Orbit visual between tablet and desktop when scroll story is off. */
-function useShowOrbit(reduced: boolean) {
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    if (reduced) {
-      setShow(false);
-      return;
-    }
-    const mq = window.matchMedia("(min-width: 900px)");
-    const apply = () => setShow(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, [reduced]);
-  return show;
-}
-
+/**
+ * Hero landing — une seule voie visuelle :
+ * - motion OK → LandingHeroOrbit (spin + stats + bulles)
+ * - prefers-reduced-motion → stack statique accessible
+ */
 export function LandingHero() {
-  const sectionRef = useRef<HTMLElement>(null);
   const signupHref = getPublicSignupHref();
   const primaryLabel = isPrivateBetaEnabled()
     ? "Se connecter"
     : heroContent.primaryCta;
   const reduced = useReducedMotion() ?? false;
-  const showOrbit = useShowOrbit(reduced);
 
   return (
     <section
-      ref={sectionRef}
       className="batimumHero batimumHero--static"
       aria-label="Présentation Batimum"
     >
@@ -102,12 +87,15 @@ export function LandingHero() {
           </div>
 
           <div className="batimumHero__visual">
-            {showOrbit ? (
-              <LandingHeroOrbit enableOrbit={!reduced} />
+            {!reduced ? (
+              <LandingHeroOrbit enableOrbit />
             ) : (
               <div className="batimumHero__mobileStack">
                 <div className="batimumHero__mobileScene">
-                  <div className="batimumHero__nut batimumHero__nut--static" aria-hidden>
+                  <div
+                    className="batimumHero__nut batimumHero__nut--static"
+                    aria-hidden
+                  >
                     <svg
                       className="batimumHero__nutSvg"
                       viewBox="0 0 400 400"
@@ -123,38 +111,22 @@ export function LandingHero() {
                           y2="340"
                           gradientUnits="userSpaceOnUse"
                         >
-                          <stop offset="0%" stopColor="rgba(255,255,255,0.45)" />
-                          <stop offset="100%" stopColor="rgba(255,255,255,0.10)" />
+                          <stop
+                            offset="0%"
+                            stopColor="rgba(255,255,255,0.45)"
+                          />
+                          <stop
+                            offset="100%"
+                            stopColor="rgba(255,255,255,0.10)"
+                          />
                         </linearGradient>
                       </defs>
-                      <polygon
-                        points="392.5,205.5 298.5,367.5 110.5,367.5 16.5,205.5 110.5,43.5 298.5,43.5"
-                        fill="rgba(248,250,252,0.22)"
-                        stroke="rgba(17,17,17,0.055)"
-                        strokeWidth="1.05"
-                        strokeLinejoin="round"
-                      />
                       <polygon
                         points="388,200 294,362 106,362 12,200 106,38 294,38"
                         fill="url(#batimumNutFaceMobile)"
                         stroke="rgba(17,17,17,0.14)"
                         strokeWidth="1.25"
                         strokeLinejoin="round"
-                      />
-                      <polygon
-                        points="372,200 286,350 114,350 28,200 114,50 286,50"
-                        fill="rgba(255,255,255,0.08)"
-                        stroke="rgba(17,17,17,0.08)"
-                        strokeWidth="1.05"
-                        strokeLinejoin="round"
-                      />
-                      <circle
-                        cx="200"
-                        cy="200"
-                        r="68"
-                        stroke="rgba(59,130,246,0.12)"
-                        strokeWidth="1.1"
-                        fill="rgba(255,255,255,0.05)"
                       />
                       <circle
                         cx="200"
@@ -210,7 +182,6 @@ export function LandingHero() {
             )}
           </div>
         </div>
-
       </div>
     </section>
   );

@@ -31,11 +31,24 @@ export type HeroFeatureId =
   | "clients"
   | "pilotage";
 
+type StatFormat = "percent" | "multiplier";
+
+type HeroStat = {
+  /** Prefixe avant le chiffre ("Jusqu’à", etc.) — vide si pure valeur */
+  prefix: string;
+  /** Mot d’ouverture optionnel ("Facturez") */
+  lead: string;
+  value: number;
+  format: StatFormat;
+  /** Suite après la valeur ("de temps gagné", "plus vite", …) */
+  headline: string;
+  subtext: string;
+};
+
 type HexFeature = {
   id: HeroFeatureId;
   title: string;
   subtitle: string;
-  detail: string;
   panelTitle: string;
   panelText: string;
   ctaLabel: string;
@@ -43,9 +56,7 @@ type HexFeature = {
   angle: number;
   accent: string;
   Icon: LucideIcon;
-  /** Mini-stat premium sous la carte active */
-  statIcon: string;
-  statText: string;
+  stat: HeroStat;
 };
 
 type PanelPos = {
@@ -57,16 +68,15 @@ type PanelPos = {
 const ICON_ACCENT = "#3B82F6";
 
 /**
- * Une fonctionnalité par sommet (flat-top, tous les 60°).
- * Contenu panneau orienté bénéfices / résultats.
+ * Contenu Hero orbit — bénéfices marketing illustratifs (jamais présentés
+ * comme résultats mesurés “clients / utilisateurs”).
  */
 export const HERO_FEATURES: HexFeature[] = [
   {
     id: "devis",
     title: "Devis avec MUM IA",
     subtitle: "Prêts en quelques minutes",
-    detail: "Décrivez les travaux, Batimum prépare le devis.",
-    panelTitle: "✨ Devis IA ultra rapide",
+    panelTitle: "Devis IA ultra rapide",
     panelText:
       "Fini de passer des heures à rédiger vos devis. Décrivez simplement les travaux à réaliser et MUM IA génère un devis personnalisé en quelques secondes. Vous gardez toujours la main pour modifier les quantités, les prix et les prestations avant l’envoi au client.",
     ctaLabel: "Découvrir MUM IA",
@@ -74,15 +84,20 @@ export const HERO_FEATURES: HexFeature[] = [
     angle: 0,
     accent: ICON_ACCENT,
     Icon: Bot,
-    statIcon: "⚡",
-    statText: "Temps de création d’un devis réduit jusqu’à 90 %",
+    stat: {
+      lead: "",
+      prefix: "Jusqu’à",
+      value: 90,
+      format: "percent",
+      headline: "de temps gagné",
+      subtext: "Créez vos devis en quelques secondes avec MUM IA",
+    },
   },
   {
     id: "planning",
     title: "Planning des équipes",
     subtitle: "Tout le monde au bon endroit",
-    detail: "Organisez vos équipes en quelques clics.",
-    panelTitle: "📅 Organisez vos équipes en quelques clics",
+    panelTitle: "Organisez vos équipes en quelques clics",
     panelText:
       "Attribuez vos salariés aux chantiers, visualisez les disponibilités et évitez les oublis. Toute votre équipe sait où aller, quand intervenir et quelles sont les informations importantes.",
     ctaLabel: "Découvrir le planning",
@@ -90,15 +105,20 @@ export const HERO_FEATURES: HexFeature[] = [
     angle: 60,
     accent: ICON_ACCENT,
     Icon: Calendar,
-    statIcon: "📅",
-    statText: "Plus de 95 % des interventions planifiées sans oubli",
+    stat: {
+      lead: "",
+      prefix: "Jusqu’à",
+      value: 70,
+      format: "percent",
+      headline: "d’échanges en moins",
+      subtext: "Toutes vos équipes et interventions dans un seul planning",
+    },
   },
   {
     id: "chantiers",
     title: "Suivi des chantiers",
     subtitle: "Gardez toujours le contrôle",
-    detail: "Suivez l’avancement depuis le bureau ou le terrain.",
-    panelTitle: "🏗 Gardez le contrôle de tous vos chantiers",
+    panelTitle: "Gardez le contrôle de tous vos chantiers",
     panelText:
       "Suivez chaque étape de vos chantiers en temps réel. Photos, avancement, documents et informations restent centralisés pour ne plus rien oublier.",
     ctaLabel: "Découvrir le suivi chantier",
@@ -106,15 +126,20 @@ export const HERO_FEATURES: HexFeature[] = [
     angle: 120,
     accent: ICON_ACCENT,
     Icon: HardHat,
-    statIcon: "🏗",
-    statText: "Vision en temps réel de l’avancement des chantiers",
+    stat: {
+      lead: "",
+      prefix: "",
+      value: 100,
+      format: "percent",
+      headline: "de vos chantiers visibles",
+      subtext: "Avancement, documents, photos et informations en temps réel",
+    },
   },
   {
     id: "facturation",
     title: "Facturation simplifiée",
     subtitle: "Du devis au paiement",
-    detail: "Transformez vos devis en factures simplement.",
-    panelTitle: "💶 Facturez plus vite",
+    panelTitle: "Facturez plus vite",
     panelText:
       "Transformez vos devis en factures en quelques secondes. Suivez facilement les règlements et gardez une vision claire des paiements en attente.",
     ctaLabel: "Découvrir la facturation",
@@ -122,15 +147,20 @@ export const HERO_FEATURES: HexFeature[] = [
     angle: 180,
     accent: ICON_ACCENT,
     Icon: Receipt,
-    statIcon: "💶",
-    statText: "Transformation d’un devis en facture en quelques secondes",
+    stat: {
+      lead: "Facturez",
+      prefix: "jusqu’à",
+      value: 10,
+      format: "multiplier",
+      headline: "plus vite",
+      subtext: "Transformez un devis en facture sans aucune ressaisie",
+    },
   },
   {
     id: "clients",
     title: "Gestion client",
     subtitle: "Tout est facile à retrouver",
-    detail: "Retrouvez toutes les informations au même endroit.",
-    panelTitle: "👥 Toutes vos informations au même endroit",
+    panelTitle: "Toutes vos informations au même endroit",
     panelText:
       "Retrouvez instantanément les coordonnées, devis, factures, documents et historique de chaque client. Fini les recherches interminables.",
     ctaLabel: "Découvrir la gestion client",
@@ -138,15 +168,20 @@ export const HERO_FEATURES: HexFeature[] = [
     angle: 240,
     accent: ICON_ACCENT,
     Icon: Users,
-    statIcon: "👥",
-    statText: "Toutes les informations client centralisées au même endroit",
+    stat: {
+      lead: "",
+      prefix: "",
+      value: 100,
+      format: "percent",
+      headline: "des informations centralisées",
+      subtext: "Devis, factures, coordonnées et documents toujours accessibles",
+    },
   },
   {
     id: "pilotage",
     title: "Pilotage et rentabilité",
     subtitle: "Vos marges sous contrôle",
-    detail: "Visualisez vos marges avant qu’il ne soit trop tard.",
-    panelTitle: "📈 Analysez réellement vos marges",
+    panelTitle: "Analysez réellement vos marges",
     panelText:
       "Visualisez la rentabilité de chaque chantier, comparez le prévu au réalisé et identifiez rapidement les projets les plus rentables. Prenez de meilleures décisions grâce à des données claires.",
     ctaLabel: "Découvrir le pilotage",
@@ -154,41 +189,44 @@ export const HERO_FEATURES: HexFeature[] = [
     angle: 300,
     accent: ICON_ACCENT,
     Icon: LineChart,
-    statIcon: "📈",
-    statText: "Analyse instantanée de la rentabilité chantier par chantier",
+    stat: {
+      lead: "",
+      prefix: "",
+      value: 100,
+      format: "percent",
+      headline: "de visibilité sur vos marges",
+      subtext: "Analysez la rentabilité réelle de chaque chantier",
+    },
   },
 ];
+
+const FEATURE_IDS: HeroFeatureId[] = HERO_FEATURES.map((f) => f.id);
 
 const BASE_SCENE = 840;
 const NUT_SIZE_RATIO = 0.8;
 const NUT_VERTEX_SVG = 188 / 200;
+
+/** Rotation continue GPU — ~30 % plus lente que 28,5 s */
+export const ORBIT_SPIN_SECONDS = 37;
+
 /**
  * Timer principal unique (feature active + stat) :
- * fade-in 0,6 s → visible ~2 s → fade-out ~0,4 s → suivante
+ * apparition + compteur → visible ~2 s → fade-out → suivante
  */
-const AUTO_CYCLE_MS = 3200;
-const BUBBLE_EXIT_MS = 0.3;
-const FEATURE_IDS: HeroFeatureId[] = [
-  "devis",
-  "planning",
-  "chantiers",
-  "facturation",
-  "clients",
-  "pilotage",
-];
+export const AUTO_CYCLE_MS = 3400;
+export const COUNTER_MS = 800;
+const BUBBLE_EXIT_S = 0.3;
+const CLOSE_DELAY_MS = 700;
+const PANEL_WIDTH = 312;
+const PANEL_EST_HEIGHT = 280;
 
 export const HERO_BM_SYMBOL_SRC = "/logo-batimum.png";
 const BM_SYMBOL_SRC_W = 829;
-const BM_SYMBOL_MARK_W = 224;
 const BM_SYMBOL_SRC_H = 210;
-
-const CLOSE_DELAY_MS = 700;
-const PANEL_WIDTH = 312;
-const PANEL_EST_HEIGHT = 260;
 
 function vertexRadiusForScene(sceneSize: number) {
   const raw = sceneSize * NUT_SIZE_RATIO * 0.5 * NUT_VERTEX_SVG - 12;
-  return Math.min(274, Math.max(186, raw));
+  return Math.min(274, Math.max(168, raw));
 }
 
 function useSceneSize(ref: RefObject<HTMLDivElement | null>) {
@@ -225,33 +263,60 @@ function scrollToAnchor(href: string) {
   el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function computePanelPos(
-  card: HTMLElement,
-  wrap: HTMLElement,
-): PanelPos {
+function computePanelPos(card: HTMLElement, wrap: HTMLElement): PanelPos {
   const cr = card.getBoundingClientRect();
   const wr = wrap.getBoundingClientRect();
   const cardCx = cr.left + cr.width / 2 - wr.left;
   const cardCy = cr.top + cr.height / 2 - wr.top;
-  const gap = 16;
+  const gap = 14;
   const placeRight = cardCx < wr.width * 0.52;
   let x = placeRight
     ? cr.right - wr.left + gap
     : cr.left - wr.left - PANEL_WIDTH - gap;
-  let y = cardCy - PANEL_EST_HEIGHT * 0.38;
+  let y = cardCy - PANEL_EST_HEIGHT * 0.36;
   x = Math.min(Math.max(8, x), Math.max(8, wr.width - PANEL_WIDTH - 8));
   y = Math.min(Math.max(8, y), Math.max(8, wr.height - PANEL_EST_HEIGHT - 8));
-  return {
-    x,
-    y,
-    arrow: placeRight ? "left" : "right",
-  };
+  return { x, y, arrow: placeRight ? "left" : "right" };
 }
 
-/**
- * Écrou hexagonal mécanique — blanc translucide, fin, identifiable.
- * Flat-top, centre = logo BM. Épaisseur via face arrière décalée.
- */
+function easeOutCubic(t: number) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+/** Compteur 0 → valeur (700–900 ms), respect reduced-motion */
+function useCountUp(
+  target: number,
+  durationMs: number,
+  play: boolean,
+  reduced: boolean,
+  epoch: number,
+) {
+  const [value, setValue] = useState(reduced || !play ? target : 0);
+
+  useEffect(() => {
+    if (reduced || !play) {
+      setValue(target);
+      return;
+    }
+    setValue(0);
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / durationMs);
+      setValue(Math.round(target * easeOutCubic(t)));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, durationMs, play, reduced, epoch]);
+
+  return value;
+}
+
+function formatUnit(format: StatFormat) {
+  return format === "multiplier" ? "×" : "%";
+}
+
 function HeroNutSvg() {
   const cx = 200;
   const cy = 200;
@@ -454,6 +519,44 @@ function HeroNutSvg() {
   );
 }
 
+function FeatureStatBadge({
+  stat,
+  mode,
+  reduced,
+  epoch,
+}: {
+  stat: HeroStat;
+  /** auto = cycle fade ; held = figé au survol */
+  mode: "auto" | "held";
+  reduced: boolean;
+  epoch: number;
+}) {
+  const count = useCountUp(stat.value, COUNTER_MS, true, reduced, epoch);
+  const unit = formatUnit(stat.format);
+
+  return (
+    <span
+      className={`batimumHero__statBadge batimumHero__statBadge--${mode}`}
+      aria-hidden="true"
+    >
+      <span className="batimumHero__statBadgeMain">
+        {stat.lead ? (
+          <span className="batimumHero__statBadgeLead">{stat.lead}</span>
+        ) : null}
+        {stat.prefix ? (
+          <span className="batimumHero__statBadgePrefix">{stat.prefix}</span>
+        ) : null}
+        <span className="batimumHero__statBadgeValue">
+          <span className="batimumHero__statBadgeNumber">{count}</span>
+          <span className="batimumHero__statBadgeUnit">{unit}</span>
+        </span>
+        <span className="batimumHero__statBadgeHeadline">{stat.headline}</span>
+      </span>
+      <span className="batimumHero__statBadgeSub">{stat.subtext}</span>
+    </span>
+  );
+}
+
 function FeaturePanel({
   feature,
   onClose,
@@ -502,7 +605,7 @@ function FeaturePanel({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
-      transition={{ duration: BUBBLE_EXIT_MS, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: BUBBLE_EXIT_S, ease: [0.22, 1, 0.36, 1] }}
       onMouseEnter={onPanelEnter}
       onMouseLeave={onPanelLeave}
       onPointerEnter={onPanelEnter}
@@ -544,7 +647,9 @@ function FeatureVertexCard({
   radius,
   isActive,
   showBubble,
-  statsEnabled,
+  showStat,
+  statMode,
+  reduced,
   statEpoch,
   onActivate,
   onHoverStart,
@@ -556,8 +661,9 @@ function FeatureVertexCard({
   radius: number;
   isActive: boolean;
   showBubble: boolean;
-  statsEnabled: boolean;
-  /** Relance la stat après reprise (même feature) */
+  showStat: boolean;
+  statMode: "auto" | "held";
+  reduced: boolean;
   statEpoch: number;
   onActivate: () => void;
   onHoverStart: () => void;
@@ -574,7 +680,6 @@ function FeatureVertexCard({
         "batimumHero__featureAnchor",
         "batimumHero__nutVertex",
         isActive ? "is-active" : "is-dimmed",
-        showBubble ? "is-open" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -617,15 +722,14 @@ function FeatureVertexCard({
           </span>
         </button>
 
-        {statsEnabled && isActive ? (
-          <span
-            key={`stat-${feature.id}-${statEpoch}`}
-            className="batimumHero__statBadge is-live"
-            aria-hidden="true"
-          >
-            <span className="batimumHero__statBadgeIcon">{feature.statIcon}</span>
-            <span className="batimumHero__statBadgeText">{feature.statText}</span>
-          </span>
+        {showStat ? (
+          <FeatureStatBadge
+            key={`${feature.id}-${statEpoch}`}
+            stat={feature.stat}
+            mode={statMode}
+            reduced={reduced}
+            epoch={statEpoch}
+          />
         ) : null}
       </div>
     </div>
@@ -637,12 +741,12 @@ type LandingHeroOrbitProps = {
 };
 
 /**
- * Système hexagonal premium :
- * - rotation CSS continue de l’écrou (~28,5 s / tour)
- * - cartes accrochées aux sommets + contre-rotation (texte horizontal)
- * - logo BM fixe au centre
- * - timer unique : mise en avant + statistique (~3,2 s)
- * - bulle bénéfice au survol (pause orbit + highlight + stat)
+ * Orbit Hero premium — source unique :
+ * - spin CSS continu (play-state pour pause, jamais transform:none)
+ * - contre-rotation des cartes
+ * - logo BM fixe
+ * - 1 timer pour feature active + statistique / compteur
+ * - hover carte ↔ bulle sans clignotement
  */
 export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
   const reduced = useReducedMotion() ?? false;
@@ -654,8 +758,10 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     {},
   );
   const sceneSize = useSceneSize(sceneRef);
+
   const [mounted, setMounted] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isNarrow, setIsNarrow] = useState(false);
+
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hoverWithinRef = useRef(false);
   const pinnedRef = useRef(false);
@@ -667,14 +773,13 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
   const [paused, setPaused] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const [panelPos, setPanelPos] = useState<PanelPos | null>(null);
-  /** Incrémente à chaque reprise pour relancer la stat sans second timer */
-  const [cycleToken, setCycleToken] = useState(0);
+  const [statEpoch, setStatEpoch] = useState(0);
 
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
-    const sync = () => setIsMobile(mq.matches);
+    const sync = () => setIsNarrow(mq.matches);
     sync();
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
@@ -695,7 +800,6 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     }
   };
 
-  /** Rotation conservée aussi sur mobile (réduit motion exclu) */
   const orbiting = mounted && enableOrbit && !reduced;
   const staticMode = !orbiting;
 
@@ -706,10 +810,15 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     setPanelPos(computePanelPos(card, wrap));
   }, []);
 
+  const bumpStat = useCallback(() => {
+    setStatEpoch((n) => n + 1);
+  }, []);
+
   const openFeature = useCallback(
     (id: HeroFeatureId, pin: boolean, withBubble: boolean) => {
       clearCloseTimer();
       const idx = FEATURE_IDS.indexOf(id);
+      const changed = idx >= 0 && FEATURE_IDS[idx] !== activeId;
       if (idx >= 0) {
         autoIndexRef.current = idx;
         setActiveId(id);
@@ -717,12 +826,21 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
       setPaused(true);
       setShowBubble(withBubble);
       if (pin) setPinned(true);
-      if (withBubble && !isMobile) {
+      if (changed || withBubble) bumpStat();
+      if (withBubble && !isNarrow) {
         requestAnimationFrame(() => updatePanelPos(id));
       }
     },
-    [isMobile, updatePanelPos],
+    [activeId, bumpStat, isNarrow, updatePanelPos],
   );
+
+  const resumeAuto = useCallback(() => {
+    hoverWithinRef.current = false;
+    setShowBubble(false);
+    setPanelPos(null);
+    setPaused(false);
+    bumpStat();
+  }, [bumpStat]);
 
   const closePanel = useCallback(() => {
     clearCloseTimer();
@@ -731,21 +849,12 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     setShowBubble(false);
     setPanelPos(null);
     setPaused(false);
-    setCycleToken((t) => t + 1);
-  }, []);
-
-  const resumeAuto = useCallback(() => {
-    hoverWithinRef.current = false;
-    setShowBubble(false);
-    setPanelPos(null);
-    setPaused(false);
-    setCycleToken((t) => t + 1);
-  }, []);
+    bumpStat();
+  }, [bumpStat]);
 
   const leaveInteractive = useCallback(() => {
     hoverWithinRef.current = false;
     if (pinnedRef.current) return;
-    /* Disparition douce immédiate de la bulle (250–350 ms via AnimatePresence) */
     setShowBubble(false);
     setPanelPos(null);
     clearCloseTimer();
@@ -762,7 +871,6 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     setPaused(true);
   }, []);
 
-  /** Filet de sécurité : jamais de bulle ouverte pendant la rotation auto */
   useEffect(() => {
     if (!paused && !pinned) {
       setShowBubble(false);
@@ -783,7 +891,8 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
 
   useEffect(() => {
     const onPointer = (e: MouseEvent | TouchEvent) => {
-      if (!showBubble || !interactRef.current || !pinned) return;
+      if (!showBubble || !interactRef.current) return;
+      if (!pinned && !isNarrow) return;
       const target = e.target as Node | null;
       if (target && !interactRef.current.contains(target)) {
         closePanel();
@@ -795,52 +904,45 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
       document.removeEventListener("mousedown", onPointer);
       document.removeEventListener("touchstart", onPointer);
     };
-  }, [closePanel, pinned, showBubble]);
+  }, [closePanel, isNarrow, pinned, showBubble]);
 
-  /**
-   * Timer principal unique — pilote feature active + statistique.
-   * La stat est animée en CSS sur la durée du même cycle.
-   */
+  /** Unique timer — feature active + stats (pas de timers parallèles) */
   useEffect(() => {
-    if (!orbiting) return;
-    if (paused) return;
+    if (!orbiting || paused) return;
 
-    const cycle = window.setInterval(() => {
+    const id = window.setInterval(() => {
       if (pinnedRef.current || pausedRef.current || hoverWithinRef.current) {
         return;
       }
       const next = (autoIndexRef.current + 1) % FEATURE_IDS.length;
       autoIndexRef.current = next;
       setActiveId(FEATURE_IDS[next]);
+      setStatEpoch((n) => n + 1);
     }, AUTO_CYCLE_MS);
 
-    return () => window.clearInterval(cycle);
-  }, [orbiting, paused, cycleToken]);
+    return () => window.clearInterval(id);
+  }, [orbiting, paused]);
 
   useLayoutEffect(() => {
-    if (!showBubble || isMobile) return;
+    if (!showBubble || isNarrow) return;
     updatePanelPos(activeId);
-  }, [activeId, isMobile, showBubble, updatePanelPos, sceneSize]);
+  }, [activeId, isNarrow, showBubble, updatePanelPos, sceneSize]);
 
   useEffect(() => {
-    if (!showBubble || isMobile) return;
+    if (!showBubble || isNarrow) return;
     const onResize = () => updatePanelPos(activeId);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [activeId, isMobile, showBubble, updatePanelPos]);
+  }, [activeId, isNarrow, showBubble, updatePanelPos]);
 
-  useEffect(() => {
-    return () => {
-      clearCloseTimer();
-    };
-  }, []);
+  useEffect(() => () => clearCloseTimer(), []);
 
   const radius = vertexRadiusForScene(sceneSize);
   const activeFeature =
     HERO_FEATURES.find((f) => f.id === activeId) ?? HERO_FEATURES[0];
+  const statMode: "auto" | "held" = paused ? "held" : "auto";
 
   const handleNavigate = () => {
-    if (!activeFeature) return;
     const href = activeFeature.href;
     closePanel();
     requestAnimationFrame(() => scrollToAnchor(href));
@@ -862,6 +964,10 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     leaveInteractive();
   };
 
+  const canHover = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(hover: hover)").matches;
+
   return (
     <div className="batimumHero__orbitRoot" ref={interactRef}>
       <div className="batimumHero__sceneWrap" ref={sceneWrapRef}>
@@ -873,7 +979,6 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
             <div
               className={[
                 "batimumHero__nutSystemSpin",
-                "batimumHero__rotatingNutSystem",
                 staticMode ? "is-static" : "",
                 paused && !staticMode ? "is-paused" : "",
               ]
@@ -884,33 +989,36 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
                 <HeroNutSvg />
               </div>
 
-              {HERO_FEATURES.map((feature) => (
-                <FeatureVertexCard
-                  key={feature.id}
-                  feature={feature}
-                  radius={radius}
-                  isActive={activeId === feature.id}
-                  showBubble={showBubble && activeId === feature.id}
-                  statsEnabled={orbiting}
-                  statEpoch={cycleToken}
-                  buttonRef={(el) => {
-                    cardRefs.current[feature.id] = el;
-                  }}
-                  onActivate={() => openFeature(feature.id, true, true)}
-                  onHoverStart={() => {
-                    if (window.matchMedia("(hover: hover)").matches) {
-                      openFeature(feature.id, false, true);
-                      holdOpen();
-                    }
-                  }}
-                  onHoverEnd={() => {
-                    if (window.matchMedia("(hover: hover)").matches) {
-                      leaveInteractive();
-                    }
-                  }}
-                  onBlurCard={onBlurCard}
-                />
-              ))}
+              {HERO_FEATURES.map((feature) => {
+                const isActive = activeId === feature.id;
+                return (
+                  <FeatureVertexCard
+                    key={feature.id}
+                    feature={feature}
+                    radius={radius}
+                    isActive={isActive}
+                    showBubble={showBubble && isActive}
+                    showStat={isActive && (orbiting || reduced)}
+                    statMode={statMode}
+                    reduced={reduced}
+                    statEpoch={statEpoch}
+                    buttonRef={(el) => {
+                      cardRefs.current[feature.id] = el;
+                    }}
+                    onActivate={() => openFeature(feature.id, true, true)}
+                    onHoverStart={() => {
+                      if (canHover()) {
+                        openFeature(feature.id, false, true);
+                        holdOpen();
+                      }
+                    }}
+                    onHoverEnd={() => {
+                      if (canHover()) leaveInteractive();
+                    }}
+                    onBlurCard={onBlurCard}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -927,19 +1035,12 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
                 width={BM_SYMBOL_SRC_W}
                 height={BM_SYMBOL_SRC_H}
                 decoding="async"
-                style={
-                  {
-                    ["--bm-src-w" as string]: BM_SYMBOL_SRC_W,
-                    ["--bm-mark-w" as string]: BM_SYMBOL_MARK_W,
-                    ["--bm-src-h" as string]: BM_SYMBOL_SRC_H,
-                  } as CSSProperties
-                }
               />
             </div>
           </div>
         </div>
 
-        {!isMobile ? (
+        {!isNarrow ? (
           <div
             className="batimumHero__interactiveZone"
             aria-hidden={!showBubble}
@@ -963,7 +1064,7 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
         ) : null}
       </div>
 
-      {isMobile ? (
+      {isNarrow ? (
         <div className="batimumHero__mobilePanelSlot">
           <AnimatePresence mode="wait">
             {showBubble && activeFeature ? (
