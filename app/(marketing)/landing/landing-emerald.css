@@ -286,7 +286,7 @@ html:has(.landing-emerald) body {
   padding-right: clamp(16px, 3vw, 48px);
   display: grid;
   grid-template-columns: minmax(0, 0.43fr) minmax(0, 0.57fr);
-  gap: clamp(56px, 6vw, 96px);
+  gap: clamp(48px, 5.2vw, 84px);
   align-items: center;
   box-sizing: border-box;
   border: none;
@@ -302,43 +302,26 @@ html:has(.landing-emerald) body {
   z-index: 2;
   width: 100%;
   min-width: 0;
-  max-width: 650px;
+  max-width: 620px;
   transform: none;
   will-change: auto;
 }
 
-.landing-emerald .batimumHero__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 8px 13px;
-  border-radius: 999px;
-  border: none;
-  box-shadow: none;
-  background: #f6f7f9;
-  color: var(--batimum-hero-black);
-  font-size: 13px;
-  font-weight: 500;
-}
-
+/* Pastille retirée — aucun espace réservé */
+.landing-emerald .batimumHero__badge,
 .landing-emerald .batimumHero__badgeDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: #3b82f6;
-  flex: 0 0 auto;
+  display: none !important;
 }
 
 .landing-emerald .batimumHero__title {
-  margin: 1.25rem 0 0;
+  margin: 0;
   max-width: 640px;
-  color: var(--batimum-hero-black);
-  font-size: clamp(3.25rem, 4.4vw, 4.6rem);
+  color: #111111;
+  font-size: clamp(3.1rem, 4.2vw, 4.5rem);
   font-weight: 700;
   letter-spacing: -0.035em;
   line-height: 1.02;
 }
-
 
 .landing-emerald .batimumHero__title > span {
   display: block;
@@ -346,10 +329,10 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .batimumHero__titleAccent {
   display: inline;
-  color: var(--batimum-hero-black);
+  color: #111111;
 }
 
-/* Surlignage marqueur — uniquement derrière le mot, aucun trait */
+/* Marqueur digital — uniquement sous « tout-en-un » */
 .landing-emerald .batimumHero__highlightWord {
   position: relative;
   display: inline-block;
@@ -360,26 +343,22 @@ html:has(.landing-emerald) body {
   text-decoration: none !important;
   border-bottom: none !important;
   box-shadow: none !important;
+  padding: 0 0.02em;
 }
 
 .landing-emerald .batimumHero__highlightWord::before {
   content: "";
   position: absolute;
-  left: -0.06em;
-  right: -0.06em;
-  bottom: 0.08em;
-  height: 0.32em;
-  border-radius: 0.18em;
-  background: linear-gradient(
-    90deg,
-    rgba(59, 130, 246, 0.12),
-    rgba(59, 130, 246, 0.19),
-    rgba(59, 130, 246, 0.12)
-  );
-  transform: scaleX(0) rotate(-0.8deg) skewX(-3deg);
+  left: -0.02em;
+  right: -0.02em;
+  bottom: 0.06em;
+  height: 0.26em;
+  border-radius: 0.55em 0.35em 0.7em 0.4em / 0.65em 0.45em 0.7em 0.5em;
+  background: rgba(59, 130, 246, 0.18);
+  transform: scaleX(0) rotate(-0.6deg);
   transform-origin: left center;
   z-index: -1;
-  animation: batimumHero-hl-fill 0.72s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards;
+  animation: batimumHero-hl-fill 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards;
   pointer-events: none;
 }
 
@@ -390,64 +369,102 @@ html:has(.landing-emerald) body {
 
 @keyframes batimumHero-hl-fill {
   from {
-    transform: scaleX(0) rotate(-0.8deg) skewX(-3deg);
+    transform: scaleX(0) rotate(-0.6deg);
   }
   to {
-    transform: scaleX(1) rotate(-0.8deg) skewX(-3deg);
+    transform: scaleX(1) rotate(-0.6deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .landing-emerald .batimumHero__highlightWord::before {
     animation: none;
-    transform: scaleX(1) rotate(-0.8deg) skewX(-3deg);
+    transform: scaleX(1) rotate(-0.6deg);
   }
 }
 
-.landing-emerald .batimumHero__subtitle {
-  margin: 1.35rem 0 0;
-  max-width: 560px;
-  color: var(--batimum-hero-black);
-  font-size: clamp(1.125rem, 1.35vw, 1.25rem);
-  line-height: 1.6;
-  opacity: 1;
+/* Phrase forte sous le H1 */
+.landing-emerald .batimumHero__lead {
+  margin: 1rem 0 0;
+  max-width: 540px;
+  color: #18181b;
+  font-size: clamp(1.25rem, 1.55vw, 1.5625rem); /* ~20–25px */
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.28;
+}
+
+.landing-emerald .batimumHero__support {
+  margin: 0.7rem 0 0;
+  max-width: 580px;
+  color: #3f3f46;
+  font-size: clamp(1.0625rem, 1.15vw, 1.125rem); /* ~17–18px */
+  font-weight: 450;
+  line-height: 1.55;
 }
 
 .landing-emerald .batimumHero__benefits {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  margin: 1.35rem 0 1.5rem;
+  gap: 0.85rem;
+  margin: 1.15rem 0 1.2rem;
   padding: 0;
   list-style: none;
 }
 
 .landing-emerald .batimumHero__benefit {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--batimum-hero-black);
-  font-size: clamp(0.9375rem, 1.1vw, 1rem);
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  color: #18181b;
+  font-size: clamp(0.9375rem, 1.05vw, 1.015rem);
   font-weight: 500;
-  line-height: 1.35;
+  line-height: 1.4;
   opacity: 1;
 }
 
 .landing-emerald .batimumHero__benefitIcon {
+  display: grid;
+  place-items: center;
   flex: 0 0 auto;
-  color: #3b82f6;
+  width: 28px;
+  height: 28px;
+  margin-top: 1px;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+}
+
+.landing-emerald .batimumHero__benefitText {
+  min-width: 0;
+  color: #18181b;
+}
+
+.landing-emerald .batimumHero__benefitHighlight {
+  display: inline;
+  color: #1d4ed8;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  padding: 0.08em 0.28em;
+  margin-inline: -0.08em;
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.1);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .landing-emerald .batimumHero__ctas {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  align-items: center;
 }
 
 .landing-emerald .batimumHero__ctaPrimary,
 .landing-emerald .batimumHero__ctaSecondary {
-  height: 54px;
-  padding-inline: 26px;
+  height: 52px;
+  min-height: 52px;
+  padding-inline: 24px;
   border-radius: 12px;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -468,6 +485,7 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__ctaPrimary:hover {
   background: #000000 !important;
   transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(17, 17, 17, 0.14) !important;
 }
 
 .landing-emerald .batimumHero__ctaArrow {
@@ -481,22 +499,30 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .batimumHero__ctaSecondary {
   background: #ffffff !important;
-  color: var(--batimum-hero-black) !important;
-  border: 1px solid #e5e5e5 !important;
+  color: #111111 !important;
+  border: 1px solid #e4e4e7 !important;
   box-shadow: none !important;
 }
 
 .landing-emerald .batimumHero__ctaSecondary:hover {
-  background: #f8f8f8 !important;
-  border-color: #d6d6d6 !important;
+  background: #f4f4f5 !important;
+  border-color: #d4d4d8 !important;
   transform: translateY(-1px);
 }
 
 .landing-emerald .batimumHero__trust {
-  margin: 0.95rem 0 0;
-  color: var(--batimum-hero-black);
-  font-size: 0.75rem;
+  margin: 0.85rem 0 0;
+  color: #71717a;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
   opacity: 1;
+}
+
+/* Ancien sous-titre unique — neutralisé si présent */
+.landing-emerald .batimumHero__subtitle {
+  display: none;
 }
 
 .landing-emerald .batimumHero__visual {
@@ -511,7 +537,13 @@ html:has(.landing-emerald) body {
   overflow: visible;
 }
 
-@media (max-width: 639px) {
+@media (max-width: 480px) {
+  .landing-emerald .batimumHero__ctas {
+    flex-direction: column;
+  }
+
+  .landing-emerald .batimumHero__ctaPrimary,
+  .landing-emerald .batimumHero__ctaSecondary,
   .landing-emerald .batimumHero__ctas a {
     width: 100%;
   }
@@ -568,6 +600,23 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__bubbleIcon *,
 .landing-emerald .batimumHero__bubbleIcon * {
   color: #3b82f6 !important;
+}
+
+/* Accents commerciaux colonne gauche */
+.landing-emerald .batimumHero__benefitHighlight {
+  color: #1d4ed8 !important;
+}
+
+.landing-emerald .batimumHero__support {
+  color: #3f3f46 !important;
+}
+
+.landing-emerald .batimumHero__trust {
+  color: #71717a !important;
+}
+
+.landing-emerald .batimumHero__lead {
+  color: #18181b !important;
 }
 
 /* CTA primaire : texte blanc (seule exception texte) */
@@ -1761,23 +1810,30 @@ html:has(.landing-emerald) body {
     margin-inline: auto;
   }
 
-  .landing-emerald .batimumHero__badge,
   .landing-emerald .batimumHero__benefits,
   .landing-emerald .batimumHero__ctas {
     justify-content: center;
   }
 
   .landing-emerald .batimumHero__benefits {
-    align-items: center;
+    align-items: flex-start;
+    max-width: 520px;
+    margin-inline: auto;
+    text-align: left;
   }
 
-  .landing-emerald .batimumHero__subtitle,
+  .landing-emerald .batimumHero__lead,
+  .landing-emerald .batimumHero__support,
   .landing-emerald .batimumHero__trust {
     margin-inline: auto;
   }
 
   .landing-emerald .batimumHero__title {
-    font-size: clamp(2.75rem, 6vw, 3.5rem);
+    font-size: clamp(2.65rem, 5.8vw, 3.4rem);
+  }
+
+  .landing-emerald .batimumHero__lead {
+    font-size: clamp(1.2rem, 2.4vw, 1.4rem);
   }
 
   .landing-emerald .batimumHero__sceneWrap {
@@ -1814,6 +1870,19 @@ html:has(.landing-emerald) body {
 
   .landing-emerald .batimumHero__ctas {
     flex-direction: column;
+  }
+
+  .landing-emerald .batimumHero__ctaPrimary,
+  .landing-emerald .batimumHero__ctaSecondary {
+    width: 100%;
+  }
+
+  .landing-emerald .batimumHero__lead {
+    font-size: 1.2rem;
+  }
+
+  .landing-emerald .batimumHero__support {
+    font-size: 1.015rem;
   }
 
   .landing-emerald .batimumHero__logoSymbol {

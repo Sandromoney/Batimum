@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import {
   HERO_FEATURES,
@@ -12,10 +12,25 @@ import { heroContent } from "@/lib/landing-hero-content";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 import type { CSSProperties } from "react";
 
+const enterEase = [0.22, 1, 0.36, 1] as const;
+
+function enterProps(reduced: boolean, delay: number) {
+  if (reduced) {
+    return {
+      initial: false as const,
+      animate: { opacity: 1, y: 0 },
+    };
+  }
+  return {
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.45, delay, ease: enterEase },
+  };
+}
+
 /**
- * Hero landing — une seule voie visuelle :
- * - motion OK → LandingHeroOrbit (spin + stats + bulles)
- * - prefers-reduced-motion → stack statique accessible
+ * Hero landing — colonne gauche premium + orbit à droite.
+ * Ne pas modifier l’orbit ici (LandingHeroOrbit).
  */
 export function LandingHero() {
   const signupHref = getPublicSignupHref();
@@ -32,39 +47,73 @@ export function LandingHero() {
       <div className="batimumHero__sticky">
         <div className="batimumHero__inner">
           <div className="batimumHero__content batimumHero__copy">
-            <span className="batimumHero__badge">
-              <span className="batimumHero__badgeDot" aria-hidden="true" />
-              {heroContent.badge}
-            </span>
-
-            <h1 className="batimumHero__title">
+            <motion.h1
+              className="batimumHero__title"
+              {...enterProps(reduced, 0)}
+            >
               <span>La solution</span>
               <span>
-                <span className="batimumHero__highlightWord">tout-en-un</span>{" "}
-                pour
+                <span className="batimumHero__highlightWord">tout-en-un</span>
+                {" "}pour
               </span>
               <span>piloter votre</span>
-              <span>entreprise du</span>
-              <span>BTP.</span>
-            </h1>
+              <span>entreprise du BTP.</span>
+            </motion.h1>
 
-            <p className="batimumHero__subtitle">{heroContent.subtitle}</p>
+            <motion.p
+              className="batimumHero__lead"
+              {...enterProps(reduced, 0.12)}
+            >
+              {heroContent.lead}
+            </motion.p>
+
+            <motion.p
+              className="batimumHero__support"
+              {...enterProps(reduced, 0.22)}
+            >
+              {heroContent.support}
+            </motion.p>
 
             <ul className="batimumHero__benefits">
-              {heroContent.benefits.map(({ label, Icon }) => (
-                <li key={label} className="batimumHero__benefit">
-                  <Icon
-                    className="batimumHero__benefitIcon"
-                    size={18}
-                    strokeWidth={1.75}
-                    aria-hidden="true"
-                  />
-                  <span>{label}</span>
-                </li>
-              ))}
+              {heroContent.benefits.map((item, index) => {
+                const Icon = item.Icon;
+                const restBefore =
+                  "restBefore" in item ? item.restBefore : undefined;
+                return (
+                  <motion.li
+                    key={item.highlight}
+                    className="batimumHero__benefit"
+                    {...enterProps(reduced, 0.32 + index * 0.08)}
+                  >
+                    <span className="batimumHero__benefitIcon" aria-hidden>
+                      <Icon size={18} strokeWidth={1.75} />
+                    </span>
+                    <span className="batimumHero__benefitText">
+                      {restBefore ? (
+                        <>
+                          {restBefore}
+                          <span className="batimumHero__benefitHighlight">
+                            {item.highlight}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="batimumHero__benefitHighlight">
+                            {item.highlight}
+                          </span>
+                          {item.rest}
+                        </>
+                      )}
+                    </span>
+                  </motion.li>
+                );
+              })}
             </ul>
 
-            <div className="batimumHero__ctas">
+            <motion.div
+              className="batimumHero__ctas"
+              {...enterProps(reduced, 0.58)}
+            >
               <Link
                 href={signupHref}
                 className="landing-btn-primary batimumHero__ctaPrimary group inline-flex items-center justify-center gap-2 no-underline"
@@ -81,9 +130,14 @@ export function LandingHero() {
               >
                 {heroContent.secondaryCta}
               </Link>
-            </div>
+            </motion.div>
 
-            <p className="batimumHero__trust">{heroContent.trust}</p>
+            <motion.p
+              className="batimumHero__trust"
+              {...enterProps(reduced, 0.68)}
+            >
+              {heroContent.trust}
+            </motion.p>
           </div>
 
           <div className="batimumHero__visual">
