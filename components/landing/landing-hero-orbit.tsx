@@ -4,6 +4,7 @@ import {
   AnimatePresence,
   motion,
   useMotionValue,
+  animate,
   useReducedMotion,
   useTransform,
   type MotionValue,
@@ -178,7 +179,9 @@ export const FOCUS_RANGES: {
 const BASE_SCENE = 840;
 const NUT_SIZE_RATIO = 0.8;
 const NUT_VERTEX_SVG = 188 / 200;
-const SYSTEM_DURATION = 82;
+const AUTO_FEATURE_READ_MS = 4000;
+const AUTO_FEATURE_TRANSITION_MS = 550;
+const AUTO_FEATURE_STEP_MS = AUTO_FEATURE_READ_MS + AUTO_FEATURE_TRANSITION_MS;
 const MICRO_CYCLE_MS = 3000;
 const MICRO_VISIBLE_MS = 1600;
 const FEATURE_IDS: HeroFeatureId[] = [
@@ -214,23 +217,6 @@ function useSceneSize(ref: RefObject<HTMLDivElement | null>) {
     return () => ro.disconnect();
   }, [ref]);
   return size;
-}
-
-function activeFeatureAt(progress: number): HeroFeatureId | null {
-  for (const range of FOCUS_RANGES) {
-    if (progress >= range.start && progress < range.end) return range.id;
-  }
-  return null;
-}
-
-function focusStrength(progress: number, id: HeroFeatureId): number {
-  const range = FOCUS_RANGES.find((r) => r.id === id);
-  if (!range) return 0;
-  const mid = (range.start + range.end) / 2;
-  const half = (range.end - range.start) / 2;
-  const d = Math.abs(progress - mid);
-  if (d >= half) return 0;
-  return 1 - d / half;
 }
 
 function vertexPoint(angleDeg: number, radius: number) {
@@ -271,7 +257,7 @@ const ANGLE_PLACEMENT: Record<number, Placement> = {
 
 const PANEL_GAP = 16;
 const EDGE_PAD = 16;
-const CLOSE_DELAY_MS = 300;
+const CLOSE_DELAY_MS = 700;
 const DESKTOP_PANEL_W = 310;
 
 function clamp(n: number, min: number, max: number) {
@@ -743,23 +729,8 @@ function FeatureVertexCard({
   const pt = vertexPoint(feature.angle, radius);
   const counterRotate = useTransform(systemRotate, (r) => -r);
 
-  const scrollScale = useTransform(scrollProgress, (p) => {
-    if (pinned || isActive) return 1;
-    const t = focusStrength(p, feature.id);
-    return t > 0 ? 1 + 0.08 * t : 1;
-  });
-  const scrollOpacity = useTransform(scrollProgress, (p) => {
-    if (isActive) return 1;
-    if (isDimmed) return 0.4;
-    const t = focusStrength(p, feature.id);
-    const any = activeFeatureAt(p) !== null;
-    if (t > 0) return 1;
-    if (any) return 0.38;
-    return 1;
-  });
-
-  const scale = isActive ? 1.025 : undefined;
-  const opacity = isActive ? 1 : isDimmed ? 0.4 : undefined;
+  const scale = isActive ? 1 : 0.985;
+  const opacity = isActive ? 1 : isDimmed ? 0.68 : 0.76;
 
   const microHint =
     feature.id === "devis" ? (
@@ -872,8 +843,8 @@ function FeatureVertexCard({
         x: pt.x,
         y: pt.y,
         rotate: counterRotate,
-        scale: scale ?? scrollScale,
-        opacity: opacity ?? scrollOpacity,
+        scale,
+        opacity,
         zIndex: isActive ? 30 : 10,
       }}
       transformTemplate={({ x: tx, y: ty, rotate: r, scale: s }) =>
@@ -913,13 +884,15 @@ export function LandingHeroOrbit({
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const systemRotate = useMotionValue(0);
-  const speedFactor = useRef(1);
-  const targetSpeed = useRef(1);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeIdRef = useRef<HeroFeatureId | null>(null);
+  const autoIndexRef = useRef(0);
+  const activeIdRef = useRef<HeroFeatureId | null>(FEATURE_IDS[0]);
+  const rotationTargetRef = useRef(0);
 
-  const [activeId, setActiveId] = useState<HeroFeatureId | null>(null);
+  const [activeId, setActiveId] = useState<HeroFeatureId | null>(FEATURE_IDS[0]);
   const [pinned, setPinned] = useState(false);
+  const [autoPaused, setAutoPaused] = useState(false);
+  const [rotationTarget, setRotationTarget] = useState(0);
   const [microLiveId, setMicroLiveId] = useState<HeroFeatureId | null>(null);
   const [panelPos, setPanelPos] = useState<{
     x: number;
@@ -936,7 +909,7 @@ export function LandingHeroOrbit({
     let index = 0;
     let hideTimer: ReturnType<typeof setTimeout> | null = null;
     const tick = () => {
-      if (activeIdRef.current) {
+      if (pinned || autoPaused) {
         setMicroLiveId(null);
         return;
       }
@@ -952,11 +925,7 @@ export function LandingHeroOrbit({
       clearInterval(cycle);
       if (hideTimer) clearTimeout(hideTimer);
     };
-  }, [mounted, reduced]);
-
-  useEffect(() => {
-    if (activeId) setMicroLiveId(null);
-  }, [activeId]);
+  }, [autoPaused, mounted, pinned, reduced]);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -977,9 +946,6 @@ export function LandingHeroOrbit({
     }
   };
 
-  const softStop = useCallback(() => {
-    targetSpeed.current = 0;
-  }, []);
 
   const measurePanel = useCallback((id: HeroFeatureId) => {
     const wrap = sceneWrapRef.current;
@@ -1009,38 +975,70 @@ export function LandingHeroOrbit({
     setPanelPos(pos);
   }, []);
 
-  const openFeature = useCallback(
-    (id: HeroFeatureId, pin: boolean) => {
-      clearCloseTimer();
-      softStop();
-      setActiveId(id);
-      if (pin) setPinned(true);
-    },
-    [softStop],
-  );
+  const setFeatureByIndex = useCallback((nextIndex: number, source: "auto" | "manual") => {
+    const idx = ((nextIndex % FEATURE_IDS.length) + FEATURE_IDS.length) % FEATURE_IDS.length;
+    const id = FEATURE_IDS[idx];
+    autoIndexRef.current = idx;
+    setActiveId(id);
+
+    const desiredBase = idx * 60;
+    const current = rotationTargetRef.current;
+    if (source === "auto") {
+      const nextTarget = current + 60;
+      rotationTargetRef.current = nextTarget;
+      setRotationTarget(nextTarget);
+      return;
+    }
+
+    const cycle = 360;
+    const wrapped = ((current % cycle) + cycle) % cycle;
+    let target = current + (desiredBase - wrapped);
+    if (target < current) target += cycle;
+    rotationTargetRef.current = target;
+    setRotationTarget(target);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (reduced || isMobile || !enableOrbit) {
+      setActiveId(FEATURE_IDS[0]);
+      setAutoPaused(false);
+      autoIndexRef.current = 0;
+      rotationTargetRef.current = 0;
+      setRotationTarget(0);
+      return;
+    }
+    setFeatureByIndex(autoIndexRef.current, "manual");
+  }, [enableOrbit, isMobile, mounted, reduced, setFeatureByIndex]);
+
+  const openFeature = useCallback((id: HeroFeatureId, pin: boolean) => {
+    clearCloseTimer();
+    setAutoPaused(true);
+    const idx = FEATURE_IDS.indexOf(id);
+    if (idx >= 0) setFeatureByIndex(idx, "manual");
+    if (pin) setPinned(true);
+  }, [setFeatureByIndex]);
 
   const closePanel = useCallback(() => {
     clearCloseTimer();
-    setActiveId(null);
     setPinned(false);
+    setAutoPaused(false);
     setPanelPos(null);
-    targetSpeed.current = 1;
   }, []);
 
   const scheduleClose = useCallback(() => {
     if (pinned) return;
     clearCloseTimer();
     closeTimer.current = setTimeout(() => {
-      setActiveId(null);
+      setAutoPaused(false);
       setPanelPos(null);
-      targetSpeed.current = 1;
     }, CLOSE_DELAY_MS);
   }, [pinned]);
 
   const holdOpen = useCallback(() => {
     clearCloseTimer();
-    softStop();
-  }, [softStop]);
+    setAutoPaused(true);
+  }, []);
 
   // Mesure du panneau : à l'ouverture, au resize, après ralentissement
   useLayoutEffect(() => {
@@ -1080,11 +1078,11 @@ export function LandingHeroOrbit({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeId, closePanel]);
+  }, [activeId, closePanel, pinned]);
 
   useEffect(() => {
     const onPointer = (e: MouseEvent | TouchEvent) => {
-      if (!activeId || !interactRef.current) return;
+      if (!activeId || !interactRef.current || !pinned) return;
       const target = e.target as Node | null;
       if (target && !interactRef.current.contains(target)) {
         closePanel();
@@ -1096,58 +1094,37 @@ export function LandingHeroOrbit({
       document.removeEventListener("mousedown", onPointer);
       document.removeEventListener("touchstart", onPointer);
     };
-  }, [activeId, closePanel]);
+  }, [activeId, closePanel, pinned]);
 
   useEffect(() => {
-    if (!enableOrbit || reduced || !mounted) return;
-    let frame = 0;
-    let last = performance.now();
-    const tick = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      const p = scrollProgress.get();
+    if (!enableOrbit || reduced || !mounted || isMobile) return;
+    if (pinned || autoPaused) return;
 
-      // Scroll story speed (sauf si interaction active)
-      let scrollSpeed = 1;
-      if (p >= 0.1 && p < 0.22) scrollSpeed = 1 - (p - 0.1) / 0.12;
-      else if (p >= 0.22 && p < 0.94) scrollSpeed = 0;
-      else if (p >= 0.94) scrollSpeed = 0.35;
+    const cycle = window.setInterval(() => {
+      const next = (autoIndexRef.current + 1) % FEATURE_IDS.length;
+      setFeatureByIndex(next, "auto");
+      setMicroLiveId(null);
+    }, AUTO_FEATURE_STEP_MS);
 
-      const desired =
-        activeId !== null || pinned
-          ? 0
-          : targetSpeed.current * scrollSpeed;
-
-      // Ralentissement / reprise douce ~400ms
-      const lerp = 1 - Math.exp(-dt / 0.38);
-      speedFactor.current += (desired - speedFactor.current) * lerp;
-
-      if (speedFactor.current > 0.001) {
-        systemRotate.set(
-          (systemRotate.get() +
-            (360 / SYSTEM_DURATION) * dt * speedFactor.current) %
-            360,
-        );
-      }
-      frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [
-    activeId,
-    enableOrbit,
-    mounted,
-    pinned,
-    reduced,
-    scrollProgress,
-    systemRotate,
-  ]);
+    return () => window.clearInterval(cycle);
+  }, [autoPaused, enableOrbit, isMobile, mounted, pinned, reduced, setFeatureByIndex]);
 
   useEffect(() => {
-    return () => clearCloseTimer();
+    if (!enableOrbit || reduced || !mounted || isMobile) return;
+    const controls = animate(systemRotate, rotationTarget, {
+      duration: AUTO_FEATURE_TRANSITION_MS / 1000,
+      ease: [0.22, 1, 0.36, 1],
+    });
+    return () => controls.stop();
+  }, [enableOrbit, isMobile, mounted, reduced, rotationTarget, systemRotate]);
+
+  useEffect(() => {
+    return () => {
+      clearCloseTimer();
+      };
   }, []);
 
-  const staticMode = !mounted || reduced || !enableOrbit;
+  const staticMode = !mounted || reduced || !enableOrbit || isMobile;
   const radius = vertexRadiusForScene(sceneSize);
   const activeFeature = HERO_FEATURES.find((f) => f.id === activeId) ?? null;
 
