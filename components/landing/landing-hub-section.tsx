@@ -584,8 +584,7 @@ export function LandingHubSection() {
       if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
       const ms = overrideMs ?? SCENE_LOCK_MS[sceneIndex] ?? 1200;
       lockTimerRef.current = setTimeout(() => {
-        // Films démo / signature : unlock géré par onComplete
-        if (DEMO_UNLOCK_SCENES.has(sceneIndex)) return;
+        // Filet de sécurité : même les films démo doivent pouvoir débloquer
         unlockScroll();
       }, ms);
     },

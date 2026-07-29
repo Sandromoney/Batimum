@@ -322,16 +322,28 @@ export function MumFilmPanel({
     "ready" | "envoye" | "consulte" | "signe" | "commande" | null
   >(null);
   const finishedRef = useRef(false);
+  const signScheduledRef = useRef(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const signTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const clearTimers = () => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
   };
 
+  const clearSignTimers = () => {
+    signTimersRef.current.forEach(clearTimeout);
+    signTimersRef.current = [];
+  };
+
   const later = (fn: () => void, ms: number) => {
     const id = setTimeout(fn, ms);
     timersRef.current.push(id);
+  };
+
+  const signLater = (fn: () => void, ms: number) => {
+    const id = setTimeout(fn, ms);
+    signTimersRef.current.push(id);
   };
 
   const finish = useCallback(() => {
@@ -344,7 +356,9 @@ export function MumFilmPanel({
 
   useEffect(() => {
     clearTimers();
+    clearSignTimers();
     finishedRef.current = false;
+    signScheduledRef.current = false;
     setBeat("empty");
     setTyped("");
     setAnalyseDone(0);
@@ -434,45 +448,51 @@ export function MumFilmPanel({
 
   useEffect(() => {
     if (beat !== "total" || reduced) return;
-    later(() => {
+    const id = setTimeout(() => {
       setBeat("ready");
       setShowReady(true);
       setDevisStatut("ready");
-      // Signature électronique — rythme très lisible (~28 s lecture + signature)
-      later(() => {
-        setBeat("signflow");
-        setSignBeat("send");
-      }, 900);
-      later(() => {
-        setSignBeat("sending");
-        setDevisStatut("envoye");
-      }, 2200);
-      later(() => setSignBeat("mail"), 3600);
-      later(() => setSignBeat("openMail"), 5200);
-      later(() => setSignBeat("consult"), 7000);
-      later(() => {
-        setSignBeat("page");
-        setDevisStatut("consulte");
-      }, 8800);
-      // Lecture du devis — temps réel pour lire quelques lignes
-      later(() => setSignBeat("scroll"), 11200);
-      later(() => setSignBeat("hoverSign"), 15600);
-      later(() => setSignBeat("signModal"), 17400);
-      later(() => setSignBeat("draw"), 19200);
-      later(() => setSignBeat("validate"), 21800);
-      later(() => setSignBeat("validating"), 23200);
-      later(() => {
-        setSignBeat("pipeline");
-        setDevisStatut("signe");
-      }, 24800);
-      later(() => {
-        setSignBeat("commande");
-        setDevisStatut("commande");
-      }, 26800);
-      later(() => setSignBeat("back"), 28600);
-      later(finish, 30600);
     }, 700);
-  }, [beat, reduced, finish]);
+    return () => clearTimeout(id);
+  }, [beat, reduced]);
+
+  // Signature — planifiée une seule fois après ready (timers stables)
+  useEffect(() => {
+    if (!active || reduced || !showReady || signScheduledRef.current) return;
+    signScheduledRef.current = true;
+
+    signLater(() => {
+      setBeat("signflow");
+      setSignBeat("send");
+    }, 900);
+    signLater(() => {
+      setSignBeat("sending");
+      setDevisStatut("envoye");
+    }, 2200);
+    signLater(() => setSignBeat("mail"), 3600);
+    signLater(() => setSignBeat("openMail"), 5200);
+    signLater(() => setSignBeat("consult"), 7000);
+    signLater(() => {
+      setSignBeat("page");
+      setDevisStatut("consulte");
+    }, 8800);
+    signLater(() => setSignBeat("scroll"), 11200);
+    signLater(() => setSignBeat("hoverSign"), 15600);
+    signLater(() => setSignBeat("signModal"), 17400);
+    signLater(() => setSignBeat("draw"), 19200);
+    signLater(() => setSignBeat("validate"), 21800);
+    signLater(() => setSignBeat("validating"), 23200);
+    signLater(() => {
+      setSignBeat("pipeline");
+      setDevisStatut("signe");
+    }, 24800);
+    signLater(() => {
+      setSignBeat("commande");
+      setDevisStatut("commande");
+    }, 26800);
+    signLater(() => setSignBeat("back"), 28600);
+    signLater(finish, 30600);
+  }, [active, reduced, showReady, finish]);
 
   const signing = [
     "mail",
