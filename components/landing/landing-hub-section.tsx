@@ -17,6 +17,15 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
+import {
+  MumFilmPanel,
+  MumFilmShell,
+  MUM_DEMO_SAFETY_MS,
+  MUM_ENTER_MS,
+  MUM_HIGHLIGHT_MS,
+  MUM_RETURN_MS,
+  type MumFilmPhase,
+} from "@/components/landing/landing-hub-mum-film";
 
 const BM_SRC = "/logo-batimum.png";
 const BM_SRC_W = 829;
@@ -26,7 +35,6 @@ type HubModule = {
   id: string;
   title: string;
   Icon: LucideIcon;
-  /** Position organique autour du centre, en % du stage */
   x: number;
   y: number;
   floatDelay: number;
@@ -91,11 +99,11 @@ const HUB_MODULES: HubModule[] = [
 ];
 
 /**
- * Scènes discrètes — le scroll déclenche, l’animation se joue seule.
- * 0 breath → 1 logo → 2 ecosystem → 3 mumApproach → exit
+ * 0 breath → 1 logo → 2 ecosystem → 3 mumFilm → 4 returnHub → exit
+ * Scènes 0–2 inchangées. 3 = film MUM (auto). 4 = retour hub.
  */
-const LAST_SCENE = 3;
-const SCENE_LOCK_MS = [900, 1100, 2200, 2400] as const;
+const LAST_SCENE = 4;
+const SCENE_LOCK_MS = [900, 1100, 2200, MUM_DEMO_SAFETY_MS, MUM_RETURN_MS] as const;
 const WHEEL_THRESHOLD = 44;
 const TOUCH_THRESHOLD = 54;
 const WHEEL_SETTLE_MS = 160;
@@ -105,7 +113,10 @@ type PinMode = "before" | "pin";
 
 function BmMark({ className }: { className?: string }) {
   return (
-    <div className={["lp-hub__bm", className].filter(Boolean).join(" ")} aria-hidden="true">
+    <div
+      className={["lp-hub__bm", className].filter(Boolean).join(" ")}
+      aria-hidden="true"
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={BM_SRC}
@@ -122,134 +133,167 @@ function BmMark({ className }: { className?: string }) {
 
 function HubStage({
   scene,
+  filmPhase,
   reduced,
 }: {
   scene: number;
+  filmPhase: MumFilmPhase;
   reduced: boolean | null;
 }) {
   const showLogo = scene >= 1;
   const showModules = scene >= 2;
-  const mumFocus = scene >= 3;
-  const floatOn = showModules && !mumFocus && !reduced;
+  const inFilm = scene === 3 || scene === 4;
+  const highlight =
+    filmPhase === "highlight" ||
+    (scene === 3 && filmPhase === "idle");
+  const deep =
+    filmPhase === "enter" ||
+    filmPhase === "demo" ||
+    filmPhase === "hold";
+  const returning = filmPhase === "returning" || scene === 4;
+  const floatOn =
+    showModules &&
+    !reduced &&
+    (scene === 2 || highlight || (scene === 4 && filmPhase === "idle"));
   const logoAwake = scene >= 2;
+
+  const hubVisible = !deep;
+  const mumHierarchy = highlight || deep || returning;
 
   return (
     <div
       className={[
         "lp-hub__stage",
-        mumFocus ? "lp-hub__stage--mumFocus" : "",
+        highlight ? "lp-hub__stage--highlight" : "",
+        deep ? "lp-hub__stage--deep" : "",
+        returning && !deep ? "lp-hub__stage--return" : "",
         floatOn ? "lp-hub__stage--float" : "",
       ]
         .filter(Boolean)
         .join(" ")}
       data-hub-scene={scene}
+      data-film-phase={filmPhase}
     >
-      <div className="lp-hub__core">
-        <motion.div
-          className={[
-            "lp-hub__logoWrap",
-            logoAwake ? "lp-hub__logoWrap--awake" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          initial={false}
-          animate={
-            showLogo
-              ? {
-                  opacity: mumFocus ? 0.55 : 1,
-                  scale: logoAwake ? (mumFocus ? 1.02 : 1.06) : 1,
-                }
-              : { opacity: 0, scale: 0.95 }
-          }
-          transition={{
-            duration: reduced ? 0.01 : showLogo && scene === 1 ? 0.85 : 0.7,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        >
-          <span
+      <div
+        className={[
+          "lp-hub__world",
+          hubVisible ? "is-visible" : "is-faded",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <div className="lp-hub__core">
+          <motion.div
             className={[
-              "lp-hub__halo",
-              logoAwake && !mumFocus ? "is-on" : "",
+              "lp-hub__logoWrap",
+              logoAwake ? "lp-hub__logoWrap--awake" : "",
             ]
               .filter(Boolean)
               .join(" ")}
-            aria-hidden="true"
-          />
-          <BmMark />
-        </motion.div>
-      </div>
-
-      <ul className="lp-hub__orbit" role="list" aria-hidden={showModules ? undefined : true}>
-        {HUB_MODULES.map((mod, index) => {
-          const Icon = mod.Icon;
-          const isMum = mod.id === "mum";
-          const active = mumFocus && isMum;
-          const dimmed = mumFocus && !isMum;
-
-          return (
-            <li
-              key={mod.id}
+            initial={false}
+            animate={
+              showLogo
+                ? {
+                    opacity: mumHierarchy ? 0.72 : 1,
+                    scale: logoAwake ? (highlight ? 1.04 : 1.06) : 1,
+                  }
+                : { opacity: 0, scale: 0.95 }
+            }
+            transition={{
+              duration: reduced ? 0.01 : showLogo && scene === 1 ? 0.85 : 0.7,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            <span
               className={[
-                "lp-hub__mod",
-                isMum ? "lp-hub__mod--mum" : "",
-                active ? "is-active" : "",
-                dimmed ? "is-dimmed" : "",
+                "lp-hub__halo",
+                logoAwake && !mumHierarchy ? "is-on" : "",
+                highlight ? "is-soft" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
-              style={
-                {
-                  "--hub-x": `${mod.x}%`,
-                  "--hub-y": `${mod.y}%`,
-                } as CSSProperties
-              }
-            >
-              <motion.div
-                className="lp-hub__modMotion"
-                initial={false}
-                animate={
-                  showModules
-                    ? {
-                        opacity: dimmed ? 0.34 : 1,
-                        scale: active ? 1.14 : dimmed ? 0.92 : 1,
-                      }
-                    : { opacity: 0, scale: 0.92 }
+              aria-hidden="true"
+            />
+            <BmMark />
+          </motion.div>
+        </div>
+
+        <ul
+          className="lp-hub__orbit"
+          role="list"
+          aria-hidden={showModules ? undefined : true}
+        >
+          {HUB_MODULES.map((mod, index) => {
+            const Icon = mod.Icon;
+            const isMum = mod.id === "mum";
+            const active = mumHierarchy && isMum;
+            const dimmed = mumHierarchy && !isMum;
+
+            return (
+              <li
+                key={mod.id}
+                className={[
+                  "lp-hub__mod",
+                  isMum ? "lp-hub__mod--mum" : "",
+                  active ? "is-active" : "",
+                  dimmed ? "is-dimmed" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                style={
+                  {
+                    "--hub-x": `${mod.x}%`,
+                    "--hub-y": `${mod.y}%`,
+                  } as CSSProperties
                 }
-                transition={{
-                  duration: reduced ? 0.01 : mumFocus ? 1.35 : 0.75,
-                  delay:
-                    reduced || mumFocus || !showModules
-                      ? 0
-                      : 0.12 + index * 0.1,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
               >
-                <div
-                  className={[
-                    "lp-hub__modFloat",
-                    floatOn ? "is-floating" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  style={
-                    {
-                      "--hub-float-delay": `${mod.floatDelay}s`,
-                      "--hub-float-dur": `${mod.floatDuration}s`,
-                    } as CSSProperties
+                <motion.div
+                  className="lp-hub__modMotion"
+                  initial={false}
+                  animate={
+                    showModules
+                      ? {
+                          opacity: dimmed ? 0.7 : 1,
+                          scale: active ? 1.08 : dimmed ? 0.97 : 1,
+                        }
+                      : { opacity: 0, scale: 0.92 }
                   }
+                  transition={{
+                    duration: reduced ? 0.01 : highlight ? 1.1 : 0.75,
+                    delay:
+                      reduced || inFilm || !showModules
+                        ? 0
+                        : 0.12 + index * 0.1,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
                 >
-                  <article className="lp-hub__card">
-                    <span className="lp-hub__icon" aria-hidden="true">
-                      <Icon size={20} strokeWidth={1.7} />
-                    </span>
-                    <h3 className="lp-hub__cardTitle">{mod.title}</h3>
-                  </article>
-                </div>
-              </motion.div>
-            </li>
-          );
-        })}
-      </ul>
+                  <div
+                    className={[
+                      "lp-hub__modFloat",
+                      floatOn ? "is-floating" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    style={
+                      {
+                        "--hub-float-delay": `${mod.floatDelay}s`,
+                        "--hub-float-dur": `${mod.floatDuration}s`,
+                      } as CSSProperties
+                    }
+                  >
+                    <article className="lp-hub__card">
+                      <span className="lp-hub__icon" aria-hidden="true">
+                        <Icon size={20} strokeWidth={1.7} />
+                      </span>
+                      <h3 className="lp-hub__cardTitle">{mod.title}</h3>
+                    </article>
+                  </div>
+                </motion.div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -303,6 +347,10 @@ export function LandingHubSection() {
   const [done, setDone] = useState(false);
   const doneRef = useRef(false);
 
+  const [filmPhase, setFilmPhase] = useState<MumFilmPhase>("idle");
+  const filmPhaseRef = useRef<MumFilmPhase>("idle");
+  const filmTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
   const [pinMode, setPinMode] = useState<PinMode>("before");
   const pinModeRef = useRef<PinMode>("before");
 
@@ -316,6 +364,21 @@ export function LandingHubSection() {
 
   const active = !reduced && !done;
 
+  const clearFilmTimers = useCallback(() => {
+    filmTimersRef.current.forEach(clearTimeout);
+    filmTimersRef.current = [];
+  }, []);
+
+  const filmLater = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(fn, ms);
+    filmTimersRef.current.push(id);
+  }, []);
+
+  const setFilm = useCallback((phase: MumFilmPhase) => {
+    filmPhaseRef.current = phase;
+    setFilmPhase(phase);
+  }, []);
+
   const armWheelAfterSettle = useCallback(() => {
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     settleTimerRef.current = setTimeout(() => {
@@ -325,20 +388,26 @@ export function LandingHubSection() {
     }, WHEEL_SETTLE_MS);
   }, []);
 
+  const unlockScroll = useCallback(() => {
+    isPlayingRef.current = false;
+    armWheelAfterSettle();
+  }, [armWheelAfterSettle]);
+
   const startSceneLock = useCallback(
-    (sceneIndex: number) => {
+    (sceneIndex: number, overrideMs?: number) => {
       isPlayingRef.current = true;
       wheelArmedRef.current = false;
       deltaAccumRef.current = 0;
       if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
       if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
-      const ms = SCENE_LOCK_MS[sceneIndex] ?? 1200;
+      const ms = overrideMs ?? SCENE_LOCK_MS[sceneIndex] ?? 1200;
       lockTimerRef.current = setTimeout(() => {
-        isPlayingRef.current = false;
-        armWheelAfterSettle();
+        // Scène 3 : déverrouillage géré par la fin de démo
+        if (sceneIndex === 3) return;
+        unlockScroll();
       }, ms);
     },
-    [armWheelAfterSettle],
+    [unlockScroll],
   );
 
   const exitHub = useCallback(() => {
@@ -347,7 +416,41 @@ export function LandingHubSection() {
     setDone(true);
     pinModeRef.current = "before";
     setPinMode("before");
-  }, []);
+    setFilm("idle");
+  }, [setFilm]);
+
+  const onMumDemoComplete = useCallback(() => {
+    if (sceneRef.current !== 3) return;
+    setFilm("hold");
+    // Silence court, puis rendu du scroll pour le retour hub
+    filmLater(() => {
+      unlockScroll();
+    }, 500);
+  }, [setFilm, filmLater, unlockScroll]);
+
+  const startMumFilm = useCallback(() => {
+    clearFilmTimers();
+    setFilm("highlight");
+    startSceneLock(3);
+
+    filmLater(() => {
+      setFilm("enter");
+    }, MUM_HIGHLIGHT_MS);
+
+    filmLater(() => {
+      setFilm("demo");
+    }, MUM_HIGHLIGHT_MS + MUM_ENTER_MS);
+  }, [clearFilmTimers, setFilm, startSceneLock, filmLater]);
+
+  const startMumReturn = useCallback(() => {
+    clearFilmTimers();
+    setFilm("returning");
+    startSceneLock(4, MUM_RETURN_MS);
+
+    filmLater(() => {
+      setFilm("idle");
+    }, MUM_RETURN_MS);
+  }, [clearFilmTimers, setFilm, startSceneLock, filmLater]);
 
   const applyIntent = useCallback(
     (direction: 1 | -1): "handled" | "exit" | "pass" => {
@@ -363,14 +466,26 @@ export function LandingHubSection() {
           const next = current + 1;
           sceneRef.current = next;
           setScene(next);
-          startSceneLock(next);
+          if (next === 3) startMumFilm();
+          else if (next === 4) startMumReturn();
+          else startSceneLock(next);
           return "handled";
         }
         exitHub();
         return "exit";
       }
 
+      // Remonter : depuis return/hold → pas de rejoue du film au milieu
       if (current > 0) {
+        if (current === 4 || current === 3) {
+          // Revenir à l’écosystème hub
+          clearFilmTimers();
+          setFilm("idle");
+          sceneRef.current = 2;
+          setScene(2);
+          startSceneLock(2);
+          return "handled";
+        }
         const prev = current - 1;
         sceneRef.current = prev;
         setScene(prev);
@@ -380,7 +495,15 @@ export function LandingHubSection() {
 
       return "pass";
     },
-    [active, startSceneLock, exitHub],
+    [
+      active,
+      startSceneLock,
+      startMumFilm,
+      startMumReturn,
+      exitHub,
+      clearFilmTimers,
+      setFilm,
+    ],
   );
 
   useEffect(() => {
@@ -405,10 +528,7 @@ export function LandingHubSection() {
         engageAtRef.current = Date.now() + ENGAGE_GRACE_MS;
         deltaAccumRef.current = 0;
         wheelArmedRef.current = true;
-        // Première entrée : silence — pas de lock long
-        if (sceneRef.current === 0) {
-          startSceneLock(0);
-        }
+        if (sceneRef.current === 0) startSceneLock(0);
       }
       pinModeRef.current = "pin";
       setPinMode("pin");
@@ -543,10 +663,10 @@ export function LandingHubSection() {
     return () => {
       if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
       if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+      clearFilmTimers();
     };
-  }, []);
+  }, [clearFilmTimers]);
 
-  /** Fondu lent du texte final de la narration quand le hub approche */
   useEffect(() => {
     const compact = document.querySelector(
       ".lp-story--compact .lp-story__compact",
@@ -558,7 +678,6 @@ export function LandingHubSection() {
       if (!hub) return;
       const hubTop = hub.getBoundingClientRect().top;
       const vh = window.innerHeight;
-      // Dès que le hub entre dans le bas du viewport, fondu très lent
       if (hubTop < vh * 0.92) {
         const t = Math.min(1, Math.max(0, (vh * 0.92 - hubTop) / (vh * 0.55)));
         compact.style.opacity = String(1 - t);
@@ -577,6 +696,9 @@ export function LandingHubSection() {
     };
   }, []);
 
+  const demoActive = filmPhase === "demo" || filmPhase === "hold";
+  const restingScene = 2;
+
   return (
     <section
       className={[
@@ -590,6 +712,7 @@ export function LandingHubSection() {
       aria-labelledby="hub-title"
       data-hub-scene={scene}
       data-hub-done={done ? "true" : "false"}
+      data-film-phase={filmPhase}
     >
       <h2 id="hub-title" className="sr-only">
         L’écosystème Batimum : MUM IA, Planning, Clients, Chantiers,
@@ -600,7 +723,11 @@ export function LandingHubSection() {
         <HubStatic />
       ) : done ? (
         <div className="lp-hub__resting">
-          <HubStage scene={LAST_SCENE} reduced={reduced} />
+          <HubStage
+            scene={restingScene}
+            filmPhase="idle"
+            reduced={reduced}
+          />
         </div>
       ) : (
         <div className="lp-hub__pinTrack" ref={pinRef}>
@@ -613,7 +740,18 @@ export function LandingHubSection() {
               .filter(Boolean)
               .join(" ")}
           >
-            <HubStage scene={scene} reduced={reduced} />
+            <HubStage
+              scene={scene}
+              filmPhase={filmPhase}
+              reduced={reduced}
+            />
+            <MumFilmShell phase={filmPhase}>
+              <MumFilmPanel
+                active={demoActive}
+                reduced={!!reduced}
+                onDemoComplete={onMumDemoComplete}
+              />
+            </MumFilmShell>
           </div>
         </div>
       )}
