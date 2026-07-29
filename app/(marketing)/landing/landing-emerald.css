@@ -4848,6 +4848,546 @@ html:has(.landing-emerald) body {
   color: #ffffff;
 }
 
+.landing-emerald .lp-hubMum__stage {
+  position: relative;
+  min-width: 0;
+  align-self: stretch;
+}
+
+.landing-emerald .lp-hubMum__statut {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.landing-emerald .lp-hubMum__statut.is-envoye {
+  background: rgba(17, 17, 17, 0.06);
+  color: #444444;
+}
+
+.landing-emerald .lp-hubMum__statut.is-signe {
+  background: #111111;
+  color: #ffffff;
+}
+
+.landing-emerald .lp-hubMum__panel.is-signing .lp-hubMum__ui {
+  filter: blur(1.5px);
+  opacity: 0.42;
+  transform: scale(0.985);
+  transition:
+    opacity 520ms ease,
+    filter 520ms ease,
+    transform 640ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubMum__panel.is-signedBack .lp-hubMum__ui {
+  filter: none;
+  opacity: 1;
+  transform: none;
+}
+
+/* ——— Signature électronique (suite MUM) ——— */
+.landing-emerald .lp-hubMumSign {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0.85rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 420ms ease;
+}
+
+.landing-emerald .lp-hubMumSign.is-on {
+  opacity: 1;
+}
+
+.landing-emerald .lp-hubMumSign.is-back {
+  opacity: 0;
+  transition: opacity 480ms ease;
+}
+
+.landing-emerald .lp-hubMumSign__statusRail {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.95rem;
+  z-index: 6;
+}
+
+.landing-emerald .lp-hubMumSign__statut {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 650;
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.08);
+}
+
+.landing-emerald .lp-hubMumSign__statut.is-envoye {
+  background: #ffffff;
+  color: #333333;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+}
+
+.landing-emerald .lp-hubMumSign__statut.is-signe {
+  background: #111111;
+  color: #ffffff;
+}
+
+.landing-emerald .lp-hubMumSign__sendLayer {
+  position: absolute;
+  left: 50%;
+  bottom: 1.35rem;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  z-index: 5;
+}
+
+.landing-emerald .lp-hubMumSign__sendBtn {
+  min-width: 10.5rem;
+  padding: 0.62rem 1.2rem;
+  border: none;
+  border-radius: 12px;
+  background: #111111;
+  color: #ffffff;
+  font-size: 0.84rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+  transition:
+    opacity 380ms ease,
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 280ms ease;
+  box-shadow: 0 10px 22px rgba(17, 17, 17, 0.14);
+  cursor: default;
+}
+
+.landing-emerald .lp-hubMumSign__sendBtn.is-on {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.landing-emerald .lp-hubMumSign__sendBtn.is-pressed {
+  opacity: 1;
+  transform: scale(0.96);
+  background: #1f1f1f;
+}
+
+.landing-emerald .lp-hubMumSign__sendTrail {
+  width: min(220px, 55vw);
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3b82f6, rgba(17, 17, 17, 0.04));
+  transform-origin: left center;
+  animation: lp-hub-mum-send 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lp-hub-mum-send {
+  from {
+    transform: scaleX(0.12);
+    opacity: 0.35;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+.landing-emerald .lp-hubMumSign__mail,
+.landing-emerald .lp-hubMumSign__page {
+  position: absolute;
+  inset: 0.55rem;
+  border-radius: 1.15rem;
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.07);
+  box-shadow:
+    0 18px 40px rgba(17, 17, 17, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  transition:
+    opacity 420ms ease,
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubMumSign__mail.is-on,
+.landing-emerald .lp-hubMumSign__mail.is-open,
+.landing-emerald .lp-hubMumSign__page.is-on,
+.landing-emerald .lp-hubMumSign__page.is-done {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.landing-emerald .lp-hubMumSign__mailHead {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.06);
+  color: #111111;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.landing-emerald .lp-hubMumSign__inbox {
+  list-style: none;
+  margin: 0;
+  padding: 0.45rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.landing-emerald .lp-hubMumSign__inbox li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 10px;
+  background: #f7f8fa;
+  opacity: 0.55;
+}
+
+.landing-emerald .lp-hubMumSign__inbox li.is-new {
+  opacity: 1;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(17, 17, 17, 0.08);
+}
+
+.landing-emerald .lp-hubMumSign__inbox li.is-focus {
+  box-shadow: 0 0 0 1.5px rgba(17, 17, 17, 0.16);
+}
+
+.landing-emerald .lp-hubMumSign__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  background: #3b82f6;
+  flex-shrink: 0;
+}
+
+.landing-emerald .lp-hubMumSign__from {
+  margin: 0;
+  color: #111111;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.landing-emerald .lp-hubMumSign__subject {
+  margin: 0.12rem 0 0;
+  color: #222222;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.landing-emerald .lp-hubMumSign__preview {
+  margin: 0.15rem 0 0;
+  color: #777777;
+  font-size: 0.7rem;
+}
+
+.landing-emerald .lp-hubMumSign__mailBody {
+  margin: 0 0.55rem 0.55rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 10px;
+  background: #f7f8fa;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 360ms ease,
+    transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubMumSign__mailBody.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-emerald .lp-hubMumSign__mailGreeting {
+  margin: 0;
+  color: #111111;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.landing-emerald .lp-hubMumSign__mailText {
+  margin: 0.35rem 0 0.65rem;
+  color: #555555;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.landing-emerald .lp-hubMumSign__mailCta {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.85rem;
+  border-radius: 10px;
+  background: #111111;
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.landing-emerald .lp-hubMumSign__mailCta.is-focus {
+  box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.1);
+}
+
+.landing-emerald .lp-hubMumSign__page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.75rem 0.8rem 0.85rem;
+  overflow: auto;
+  background:
+    radial-gradient(700px 280px at 100% 0%, rgba(17, 17, 17, 0.03), transparent 55%),
+    #fafafa;
+}
+
+.landing-emerald .lp-hubMumSign__pageHead h4 {
+  margin: 0.2rem 0 0;
+  color: #111111;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.landing-emerald .lp-hubMumSign__pageHead p {
+  margin: 0.2rem 0 0;
+  color: #666666;
+  font-size: 0.72rem;
+}
+
+.landing-emerald .lp-hubMumSign__eyebrow {
+  margin: 0 !important;
+  color: #888888 !important;
+  font-size: 0.62rem !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.landing-emerald .lp-hubMumSign__card {
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.07);
+}
+
+.landing-emerald .lp-hubMumSign__metaRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.landing-emerald .lp-hubMumSign__metaRow span {
+  display: block;
+  color: #888888;
+  font-size: 0.6rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing-emerald .lp-hubMumSign__metaRow strong {
+  display: block;
+  margin-top: 0.15rem;
+  color: #111111;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.landing-emerald .lp-hubMumSign__detailLabel {
+  margin: 0.55rem 0 0.3rem;
+  color: #555555;
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing-emerald .lp-hubMumSign__detail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.landing-emerald .lp-hubMumSign__detail li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.32rem 0;
+  border-top: 1px solid rgba(17, 17, 17, 0.05);
+  color: #222222;
+  font-size: 0.72rem;
+}
+
+.landing-emerald .lp-hubMumSign__detail li:first-child {
+  border-top: none;
+}
+
+.landing-emerald .lp-hubMumSign__detail em {
+  color: #777777;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-emerald .lp-hubMumSign__detail b {
+  color: #9ca3af;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+}
+
+.landing-emerald .lp-hubMumSign__signHead {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.landing-emerald .lp-hubMumSign__signHead strong {
+  display: block;
+  color: #111111;
+  font-size: 0.82rem;
+}
+
+.landing-emerald .lp-hubMumSign__signHead p {
+  margin: 0.15rem 0 0;
+  color: #666666;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.landing-emerald .lp-hubMumSign__pad {
+  margin-top: 0.55rem;
+  height: 3.4rem;
+  border-radius: 10px;
+  border: 1px dashed rgba(17, 17, 17, 0.16);
+  background: #fbfbfc;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.landing-emerald .lp-hubMumSign__ink {
+  width: 88%;
+  height: auto;
+}
+
+.landing-emerald .lp-hubMumSign__ink path {
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+}
+
+.landing-emerald .lp-hubMumSign__ink.is-drawing path {
+  animation: lp-hub-mum-sign-draw 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.landing-emerald .lp-hubMumSign__ink.is-drawing path:nth-child(2) {
+  animation-delay: 0.28s;
+}
+
+@keyframes lp-hub-mum-sign-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.landing-emerald .lp-hubMumSign__validate {
+  margin-top: 0.55rem;
+  width: 100%;
+  padding: 0.55rem 0.9rem;
+  border: none;
+  border-radius: 10px;
+  background: #111111;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 650;
+  opacity: 0.35;
+  transform: scale(0.99);
+  transition:
+    opacity 320ms ease,
+    transform 280ms ease;
+  cursor: default;
+}
+
+.landing-emerald .lp-hubMumSign__validate.is-on {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.landing-emerald .lp-hubMumSign__validate.is-pressed {
+  opacity: 1;
+  transform: scale(0.97);
+  background: #1f1f1f;
+}
+
+.landing-emerald .lp-hubMumSign__success {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  color: #111111;
+}
+
+.landing-emerald .lp-hubMumSign__success p {
+  margin: 0.35rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.landing-emerald .lp-hubMumSign__success span {
+  color: #666666;
+  font-size: 0.78rem;
+}
+
+.landing-emerald .lp-hubMumSign__cursor {
+  position: absolute;
+  z-index: 8;
+  color: #111111;
+  filter: drop-shadow(0 2px 4px rgba(17, 17, 17, 0.18));
+  transition:
+    left 480ms cubic-bezier(0.22, 1, 0.36, 1),
+    top 480ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 280ms ease;
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+.landing-emerald .lp-hubMumSign__cursor.is-mail {
+  left: 42%;
+  top: 28%;
+}
+
+.landing-emerald .lp-hubMumSign__cursor.is-cta {
+  left: 28%;
+  top: 62%;
+}
+
+.landing-emerald .lp-hubMumSign__cursor.is-pad {
+  left: 55%;
+  top: 72%;
+  opacity: 0;
+}
+
 @media (max-width: 899px) {
   .landing-emerald .lp-hubMum__panel {
     grid-template-columns: 1fr;
@@ -6707,9 +7247,15 @@ html:has(.landing-emerald) body {
 
   .landing-emerald .lp-hubMum__caret,
   .landing-emerald .lp-hubMum__micWaves.is-on span,
-  .landing-emerald .lp-hubFin__sendTrail {
+  .landing-emerald .lp-hubFin__sendTrail,
+  .landing-emerald .lp-hubMumSign__sendTrail,
+  .landing-emerald .lp-hubMumSign__ink path {
     animation: none;
     opacity: 1;
+  }
+
+  .landing-emerald .lp-hubMumSign__ink path {
+    stroke-dashoffset: 0;
   }
 
   .landing-emerald .lp-hubFin__curveLine {

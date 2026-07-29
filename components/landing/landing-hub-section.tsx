@@ -148,9 +148,9 @@ const HUB_MODULES: HubModule[] = [
  */
 const LAST_SCENE = 14;
 const SCENE_LOCK_MS = [
-  900,
-  1100,
-  2200,
+  800,
+  1000,
+  1800,
   MUM_DEMO_SAFETY_MS,
   MUM_RETURN_MS,
   CLIENTS_DEMO_SAFETY_MS,
@@ -1057,7 +1057,7 @@ export function LandingHubSection() {
       data-signature={signatureSealed ? "sealed" : signatureActive ? "playing" : ""}
     >
       <h2 id="hub-title" className="sr-only">
-        L’écosystème Batimum : MUM IA, Planning, Clients, Chantiers,
+        Le cœur de Batimum : MUM IA, Clients, Planning, Chantiers,
         Facturation et Pilotage.
       </h2>
 

@@ -8,6 +8,10 @@ import {
   type ReactNode,
 } from "react";
 import { Bot, Check, Mic, Sparkles } from "lucide-react";
+import {
+  MumSignJourney,
+  type MumSignBeat,
+} from "@/components/landing/landing-hub-mum-sign-overlay";
 
 const PROMPT =
   "Création d'une salle de bain complète de 18 m² avec remplacement de la douche existante par une douche à l'italienne 120 × 90 cm, meuble double vasque de 120 cm, faïence murale 30 × 60 sur 42 m², carrelage au sol 18 m², création des alimentations PER, remplacement des évacuations PVC, pose d'un sèche-serviettes et peinture du plafond.";
@@ -51,7 +55,8 @@ type DemoBeat =
   | "analyse"
   | "lines"
   | "total"
-  | "ready";
+  | "ready"
+  | "signflow";
 
 function MicWaves({ active }: { active: boolean }) {
   return (
@@ -78,6 +83,7 @@ function MumInterface({
   linesVisible,
   showReady,
   listening,
+  devisStatut,
 }: {
   beat: DemoBeat;
   typed: string;
@@ -85,6 +91,7 @@ function MumInterface({
   linesVisible: number;
   showReady: boolean;
   listening: boolean;
+  devisStatut: "ready" | "envoye" | "signe" | null;
 }) {
   const showAnalyse =
     beat === "analyse" ||
@@ -104,7 +111,16 @@ function MumInterface({
           <Sparkles size={13} strokeWidth={1.9} />
           MUM IA
         </span>
-        <span className="lp-hubMum__uiHeadMeta">Préparation du devis</span>
+        {devisStatut === "signe" ? (
+          <span className="lp-hubMum__statut is-signe">
+            Signé
+            <Check size={11} strokeWidth={2.6} />
+          </span>
+        ) : devisStatut === "envoye" ? (
+          <span className="lp-hubMum__statut is-envoye">Envoyé</span>
+        ) : (
+          <span className="lp-hubMum__uiHeadMeta">Préparation du devis</span>
+        )}
       </div>
 
       <div className="lp-hubMum__composer">
@@ -223,7 +239,7 @@ function MumInterface({
   );
 }
 
-function MumFilmCopy() {
+function MumFilmCopy({ signing }: { signing: boolean }) {
   return (
     <div className="lp-hubMum__copy">
       <span className="lp-eyebrow">
@@ -231,14 +247,34 @@ function MumFilmCopy() {
         MUM IA
       </span>
       <h3 className="lp-hubMum__title">
-        Créez un devis professionnel
-        <br />
-        en quelques minutes.
+        {signing ? (
+          <>
+            Envoyez.
+            <br />
+            Le client signe.
+          </>
+        ) : (
+          <>
+            Créez un devis professionnel
+            <br />
+            en quelques minutes.
+          </>
+        )}
       </h3>
       <p className="lp-hubMum__subtitle">
-        Décrivez les travaux. Ou dictez-les.
-        <br />
-        MUM IA structure le devis.
+        {signing ? (
+          <>
+            Signature électronique.
+            <br />
+            Le statut se met à jour seul.
+          </>
+        ) : (
+          <>
+            Décrivez les travaux. Ou dictez-les.
+            <br />
+            MUM IA structure le devis.
+          </>
+        )}
       </p>
     </div>
   );
@@ -258,6 +294,10 @@ export function MumFilmPanel({
   const [analyseDone, setAnalyseDone] = useState(0);
   const [linesVisible, setLinesVisible] = useState(0);
   const [showReady, setShowReady] = useState(false);
+  const [signBeat, setSignBeat] = useState<MumSignBeat>("idle");
+  const [devisStatut, setDevisStatut] = useState<
+    "ready" | "envoye" | "signe" | null
+  >(null);
   const finishedRef = useRef(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -287,6 +327,8 @@ export function MumFilmPanel({
     setAnalyseDone(0);
     setLinesVisible(0);
     setShowReady(false);
+    setSignBeat("idle");
+    setDevisStatut(null);
 
     if (!active) return;
 
@@ -296,6 +338,8 @@ export function MumFilmPanel({
       setLinesVisible(LINES.length);
       setBeat("ready");
       setShowReady(true);
+      setDevisStatut("signe");
+      setSignBeat("back");
       later(finish, 500);
       return clearTimers;
     }
@@ -370,21 +414,59 @@ export function MumFilmPanel({
     later(() => {
       setBeat("ready");
       setShowReady(true);
-      later(finish, 950);
-    }, 700);
+      setDevisStatut("ready");
+      // Signature électronique — ~6,5 s, fidèle au parcours réel
+      later(() => {
+        setBeat("signflow");
+        setSignBeat("send");
+      }, 420);
+      later(() => {
+        setSignBeat("sending");
+        setDevisStatut("envoye");
+      }, 900);
+      later(() => setSignBeat("mail"), 1450);
+      later(() => setSignBeat("click"), 2050);
+      later(() => setSignBeat("page"), 2650);
+      later(() => setSignBeat("draw"), 3450);
+      later(() => setSignBeat("validate"), 4300);
+      later(() => {
+        setSignBeat("signed");
+        setDevisStatut("signe");
+      }, 4750);
+      later(() => setSignBeat("back"), 5450);
+      later(finish, 6400);
+    }, 650);
   }, [beat, reduced, finish]);
 
+  const signing = ["mail", "click", "page", "draw", "validate", "signed"].includes(
+    signBeat,
+  );
+  const copySigning =
+    signing || signBeat === "send" || signBeat === "sending" || signBeat === "back";
+
   return (
-    <div className="lp-hubMum__panel">
-      <MumFilmCopy />
-      <MumInterface
-        beat={beat}
-        typed={typed}
-        analyseDone={analyseDone}
-        linesVisible={linesVisible}
-        showReady={showReady}
-        listening={listening}
-      />
+    <div
+      className={[
+        "lp-hubMum__panel",
+        signing ? "is-signing" : "",
+        signBeat === "back" ? "is-signedBack" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <MumFilmCopy signing={copySigning} />
+      <div className="lp-hubMum__stage">
+        <MumInterface
+          beat={beat === "signflow" ? "ready" : beat}
+          typed={typed}
+          analyseDone={analyseDone}
+          linesVisible={linesVisible}
+          showReady={showReady}
+          listening={listening}
+          devisStatut={devisStatut}
+        />
+        <MumSignJourney beat={signBeat} />
+      </div>
     </div>
   );
 }
@@ -420,8 +502,8 @@ export function MumFilmShell({
   );
 }
 
-export const MUM_HIGHLIGHT_MS = 1100;
+export const MUM_HIGHLIGHT_MS = 900;
 export const MUM_ENTER_MS = 1600;
-export const MUM_RETURN_MS = 1800;
+export const MUM_RETURN_MS = 1500;
 /** Plafond de sécurité si la démo ne signale pas la fin */
-export const MUM_DEMO_SAFETY_MS = 38000;
+export const MUM_DEMO_SAFETY_MS = 46000;

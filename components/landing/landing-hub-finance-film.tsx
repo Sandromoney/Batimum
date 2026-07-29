@@ -11,10 +11,10 @@ import {
 import { Check, LineChart, Receipt } from "lucide-react";
 import { animate, useMotionValue } from "framer-motion";
 
-export const FIN_HIGHLIGHT_MS = 1100;
+export const FIN_HIGHLIGHT_MS = 900;
 export const FIN_ENTER_MS = 1600;
-export const FIN_RETURN_MS = 1800;
-export const FIN_CONVERGE_MS = 2200;
+export const FIN_RETURN_MS = 1500;
+export const FIN_CONVERGE_MS = 1800;
 export const FIN_DEMO_SAFETY_MS = 45000;
 
 const DEVIS_TOTAL = 9845;
@@ -253,7 +253,7 @@ function FinanceBoard({
         <div className="lp-hubFin__row">
           <div>
             <p className="lp-hubFin__label">Devis MUM IA</p>
-            <p className="lp-hubFin__name">Salle de bain — 6 m²</p>
+            <p className="lp-hubFin__name">Salle de bain — 18 m²</p>
           </div>
           <div className="lp-hubFin__pill is-ok">
             Signé

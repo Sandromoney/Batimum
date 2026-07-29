@@ -394,10 +394,10 @@ export function HubSignaturePanel({
         >
           <p className="lp-hubSig__brand">BATIMUM</p>
           <p className="lp-hubSig__lead">
-            La solution tout-en-un pour piloter votre entreprise du BTP.
+            Les piliers pour piloter votre entreprise du BTP.
           </p>
           <p className="lp-hubSig__sub">
-            De votre premier devis à votre rentabilité.
+            Ce qui fait avancer votre activité, au même endroit.
           </p>
         </div>
 

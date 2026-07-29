@@ -48,9 +48,9 @@ const JOBS = [
   },
 ] as const;
 
-export const PLAN_HIGHLIGHT_MS = 1100;
+export const PLAN_HIGHLIGHT_MS = 900;
 export const PLAN_ENTER_MS = 1600;
-export const PLAN_RETURN_MS = 1800;
+export const PLAN_RETURN_MS = 1500;
 export const PLAN_DEMO_SAFETY_MS = 32000;
 export const PLAN_TEASE_MS = 1600;
 export const PLAN_BREATH_MS = 900;
