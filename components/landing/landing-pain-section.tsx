@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import {
   FileCheck2,
   Users,
@@ -63,11 +71,17 @@ const MICRO_LINES = [
 /** Progress où le dernier texte est pleinement visible */
 const STORY_COMPLETE_AT = 0.92;
 
+/**
+ * playing         → pin + hauteur narrative + étapes
+ * finishedPinned  → dernière phrase verrouillée, pin encore actif jusqu’à sortie
+ * compact         → section normale, plus de pin / hauteur artificielle
+ */
+type StoryPhase = "playing" | "finishedPinned" | "compact";
+
 function clamp01(n: number) {
   return Math.min(1, Math.max(0, n));
 }
 
-/** Soft opacity envelope via function (avoids WAAPI keyframe offset issues). */
 function useEnvelope(
   progress: MotionValue<number>,
   fadeIn: number,
@@ -137,7 +151,6 @@ function StoryFinalLocked() {
 }
 
 function StoryPinnedLive({ progress }: { progress: MotionValue<number> }) {
-  /* Étape 1 — titre immersif (visible dès le pin) */
   const titleOpacity = useTransform(progress, (raw) => {
     const p = clamp01(raw);
     if (p <= 0.54) return 1;
@@ -151,7 +164,6 @@ function StoryPinnedLive({ progress }: { progress: MotionValue<number> }) {
     return ((p - 0.54) / 0.06) * -10;
   });
 
-  /* Étapes 2–6 — micro lignes qui se remplacent */
   const microWindows = useMemo(
     () =>
       MICRO_LINES.map((_, i) => {
@@ -251,7 +263,6 @@ function StoryPinnedLive({ progress }: { progress: MotionValue<number> }) {
   const microOps = [micro0O, micro1O, micro2O, micro3O, micro4O];
   const microYs = [micro0Y, micro1Y, micro2Y, micro3Y, micro4Y];
 
-  /* Étape 7–8 — « Ce temps… reste perdu. » → « pour toujours. » */
   const lostOpacity = useEnvelope(progress, 0.62, 0.66, 0.86, 0.9);
   const lostY = useSoftY(progress, 0.62, 0.66, 0.86, 0.9, 16, -8);
 
@@ -259,7 +270,6 @@ function StoryPinnedLive({ progress }: { progress: MotionValue<number> }) {
   const foreverOpacity = useEnvelope(progress, 0.75, 0.79, 0.86, 0.9);
   const foreverY = useSoftY(progress, 0.75, 0.79, 0.86, 0.9, 8, -6);
 
-  /* Étape 9 — question finale (reste visible jusqu’à la fin du pin) */
   const finalOpacity = useEnvelope(progress, 0.88, 0.92, 1.0, 1.05);
   const finalY = useSoftY(progress, 0.88, 0.92, 1.0, 1.05, 20, 0);
 
@@ -317,17 +327,6 @@ function StoryPinnedLive({ progress }: { progress: MotionValue<number> }) {
   );
 }
 
-function StoryPinned({
-  progress,
-  completed,
-}: {
-  progress: MotionValue<number>;
-  completed: boolean;
-}) {
-  if (completed) return <StoryFinalLocked />;
-  return <StoryPinnedLive progress={progress} />;
-}
-
 function StoryStatic() {
   return (
     <div className="lp-story__stage lp-story__stage--static">
@@ -373,10 +372,15 @@ function SolutionsGrid() {
 
 type PinMode = "before" | "pin" | "after";
 
-function usePinMode(trackRef: RefObject<HTMLDivElement | null>): PinMode {
+function usePinMode(
+  trackRef: RefObject<HTMLDivElement | null>,
+  enabled: boolean,
+): PinMode {
   const [mode, setMode] = useState<PinMode>("before");
 
   useEffect(() => {
+    if (!enabled) return;
+
     const update = () => {
       const el = trackRef.current;
       if (!el) return;
@@ -398,48 +402,115 @@ function usePinMode(trackRef: RefObject<HTMLDivElement | null>): PinMode {
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, [trackRef]);
+  }, [trackRef, enabled]);
 
   return mode;
+}
+
+function StoryCompactFinal({
+  compactRef,
+}: {
+  compactRef: RefObject<HTMLDivElement | null>;
+}) {
+  return (
+    <div ref={compactRef} className="lp-story__compact">
+      <div className="lp-story__compactInner" aria-hidden="true">
+        <FinalCopy />
+      </div>
+    </div>
+  );
 }
 
 export function LandingPainSection() {
   const reduced = useReducedMotion();
   const pinRef = useRef<HTMLDivElement>(null);
-  const pinMode = usePinMode(pinRef);
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const compactRef = useRef<HTMLDivElement>(null);
+  const pendingCompactTop = useRef<number | null>(null);
+
+  /**
+   * Source de vérité unique pour la narration (mémoire page uniquement).
+   * false tant que playing ; true une fois la dernière phrase atteinte.
+   */
+  const [storyCompleted, setStoryCompleted] = useState(false);
+  const storyCompletedRef = useRef(false);
+  /** Compact = pin/hauteur retirés après sortie de la zone épinglée */
+  const [storyCompact, setStoryCompact] = useState(false);
+
+  const narrativeActive = !reduced && !storyCompact;
+  const pinMode = usePinMode(pinRef, narrativeActive);
+
   const { scrollYProgress } = useScroll({
     target: pinRef,
     offset: ["start start", "end end"],
   });
 
-  /**
-   * Source de vérité unique : la narration ne se joue qu’une fois
-   * par chargement de page (pas de localStorage / cookies).
-   */
-  const [storyCompleted, setStoryCompleted] = useState(false);
-  const storyCompletedRef = useRef(false);
-
-  const markCompleted = () => {
+  const markCompleted = useCallback(() => {
     if (storyCompletedRef.current) return;
     storyCompletedRef.current = true;
     setStoryCompleted(true);
-  };
+  }, []);
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (storyCompletedRef.current) return;
+    if (!narrativeActive || storyCompletedRef.current) return;
     if (latest >= STORY_COMPLETE_AT) markCompleted();
   });
 
-  /** Filet de sécurité si le scroll saute la fin du pin */
+  /** Filet si le scroll saute la fin du pin */
   useEffect(() => {
+    if (!narrativeActive) return;
     if (pinMode === "after") markCompleted();
-  }, [pinMode]);
+  }, [pinMode, narrativeActive, markCompleted]);
+
+  /**
+   * Une fois la narration terminée, attendre que le visiteur quitte
+   * la zone épinglée (before | after) avant de passer en compact —
+   * puis compenser le scroll pour éviter un saut.
+   */
+  useEffect(() => {
+    if (!storyCompleted || storyCompact || reduced) return;
+    if (pinMode === "pin") return;
+
+    const sticky = stickyRef.current;
+    pendingCompactTop.current = sticky
+      ? sticky.getBoundingClientRect().top
+      : null;
+    setStoryCompact(true);
+  }, [storyCompleted, storyCompact, pinMode, reduced]);
+
+  useLayoutEffect(() => {
+    if (!storyCompact) return;
+    const keepTop = pendingCompactTop.current;
+    pendingCompactTop.current = null;
+    if (keepTop == null) return;
+
+    const compact = compactRef.current;
+    if (!compact) return;
+    const newTop = compact.getBoundingClientRect().top;
+    const delta = newTop - keepTop;
+    if (Math.abs(delta) > 1) {
+      window.scrollBy(0, delta);
+    }
+  }, [storyCompact]);
+
+  const phase: StoryPhase = storyCompact
+    ? "compact"
+    : storyCompleted
+      ? "finishedPinned"
+      : "playing";
 
   return (
     <section
-      className="lp-story lp-section--after-hero"
+      className={[
+        "lp-story",
+        "lp-section--after-hero",
+        phase === "compact" ? "lp-story--compact" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       aria-labelledby="pain-title"
       id="quotidien"
+      data-story-phase={phase}
     >
       <h2 id="pain-title" className="sr-only">
         Votre entreprise perd du temps. Ce temps reste perdu pour toujours. Et
@@ -450,9 +521,12 @@ export function LandingPainSection() {
         <div className="lp-story__staticWrap">
           <StoryStatic />
         </div>
+      ) : storyCompact ? (
+        <StoryCompactFinal compactRef={compactRef} />
       ) : (
         <div className="lp-story__pinTrack" ref={pinRef}>
           <div
+            ref={stickyRef}
             className={[
               "lp-story__sticky",
               pinMode === "pin" ? "is-pinned" : "",
@@ -461,10 +535,11 @@ export function LandingPainSection() {
               .filter(Boolean)
               .join(" ")}
           >
-            <StoryPinned
-              progress={scrollYProgress}
-              completed={storyCompleted}
-            />
+            {storyCompleted ? (
+              <StoryFinalLocked />
+            ) : (
+              <StoryPinnedLive progress={scrollYProgress} />
+            )}
           </div>
         </div>
       )}

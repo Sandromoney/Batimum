@@ -3743,6 +3743,25 @@ html:has(.landing-emerald) body {
   background: #ffffff;
 }
 
+/* État B — narration terminée : section normale, sans pin ni hauteur artificielle */
+.landing-emerald .lp-story--compact .lp-story__compact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(4.5rem, 9vw, 7.5rem) clamp(1.25rem, 4vw, 3rem);
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.landing-emerald .lp-story--compact .lp-story__compactInner {
+  width: min(920px, 100%);
+  text-align: center;
+}
+
+.landing-emerald .lp-story--compact .lp-story__final {
+  margin: 0;
+}
+
 .landing-emerald .lp-story__stage {
   position: relative;
   width: min(920px, 100%);
