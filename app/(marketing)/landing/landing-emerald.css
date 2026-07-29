@@ -3923,12 +3923,24 @@ html:has(.landing-emerald) body {
   transition: transform 1.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.landing-emerald .lp-hub__stage--highlight {
+.landing-emerald .lp-hub__stage--highlightMum {
   transform: scale(1.06) translate(2%, 3%);
 }
 
-.landing-emerald .lp-hub__stage--deep {
+.landing-emerald .lp-hub__stage--highlightPlan {
+  transform: scale(1.06) translate(-2%, 3%);
+}
+
+.landing-emerald .lp-hub__stage--deepMum {
   transform: scale(1.18) translate(5%, 6%);
+}
+
+.landing-emerald .lp-hub__stage--deepPlan {
+  transform: scale(1.18) translate(-5%, 5%);
+}
+
+.landing-emerald .lp-hub__stage--teaseFact {
+  transform: scale(1.05) translate(3%, -2%);
 }
 
 .landing-emerald .lp-hub__stage--return {
@@ -4070,9 +4082,19 @@ html:has(.landing-emerald) body {
   z-index: 1;
 }
 
-.landing-emerald .lp-hub__stage--highlight .lp-hub__mod--mum {
+.landing-emerald .lp-hub__stage--highlightMum .lp-hub__mod--mum {
   top: 38%;
   left: 40%;
+}
+
+.landing-emerald .lp-hub__stage--highlightPlan .lp-hub__mod--planning {
+  top: 38%;
+  left: 58%;
+}
+
+.landing-emerald .lp-hub__stage--teaseFact .lp-hub__mod--facturation {
+  top: 58%;
+  left: 42%;
 }
 
 @keyframes lp-hub-float {
@@ -4468,6 +4490,386 @@ html:has(.landing-emerald) body {
   }
 }
 
+/* ——— Film Planning ——— */
+.landing-emerald .lp-hubPlan {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 3vh, 2rem) clamp(1rem, 3vw, 2rem);
+  box-sizing: border-box;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.42);
+  transform-origin: 62% 28%;
+  transition:
+    opacity 1.15s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubPlan.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.landing-emerald .lp-hubPlan.is-entering,
+.landing-emerald .lp-hubPlan.is-inside {
+  transform: scale(1);
+}
+
+.landing-emerald .lp-hubPlan.is-returning {
+  opacity: 0;
+  transform: scale(0.55);
+  transition:
+    opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubPlan__frame {
+  width: min(1120px, 100%);
+  height: min(720px, 88svh);
+  border-radius: 28px;
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.06);
+  box-shadow:
+    0 28px 64px rgba(17, 17, 17, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  overflow: hidden;
+}
+
+.landing-emerald .lp-hubPlan__panel {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(240px, 0.85fr) minmax(0, 1.3fr);
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  padding: clamp(1.35rem, 3vw, 2.35rem);
+  box-sizing: border-box;
+  background:
+    radial-gradient(900px 420px at 88% 10%, rgba(59, 130, 246, 0.05), transparent 55%),
+    #fafafa;
+}
+
+.landing-emerald .lp-hubPlan__copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.landing-emerald .lp-hubPlan__title {
+  margin: 1.15rem 0 0;
+  color: #111111;
+  font-size: clamp(1.75rem, 3.2vw, 2.85rem);
+  font-weight: 700;
+  letter-spacing: -0.038em;
+  line-height: 1.12;
+}
+
+.landing-emerald .lp-hubPlan__subtitle {
+  margin: 1rem 0 0;
+  max-width: 30ch;
+  color: #666666;
+  font-size: clamp(0.98rem, 1.3vw, 1.08rem);
+  line-height: 1.55;
+}
+
+.landing-emerald .lp-hubPlan__ui {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.1rem 1.15rem 1.2rem;
+  border-radius: 22px;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  box-shadow: var(--bm-shadow-soft);
+  overflow: auto;
+  min-height: 0;
+  position: relative;
+}
+
+.landing-emerald .lp-hubPlan__uiHead {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #111111;
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.landing-emerald .lp-hubPlan__uiHead svg {
+  color: #3b82f6;
+}
+
+.landing-emerald .lp-hubPlan__days {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.landing-emerald .lp-hubPlan__day {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubPlan__day.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-emerald .lp-hubPlan__dayName {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #666666;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.landing-emerald .lp-hubPlan__daySlot {
+  height: 4.5rem;
+  border-radius: 12px;
+  background: #f7f8fa;
+  border: 1px dashed rgba(17, 17, 17, 0.08);
+}
+
+.landing-emerald .lp-hubPlan__board {
+  position: relative;
+  display: grid;
+  gap: 0.55rem;
+  min-height: 12rem;
+}
+
+.landing-emerald .lp-hubPlan__job {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  background: #f7f8fa;
+  border: 1px solid transparent;
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 480ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 480ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 400ms ease,
+    border-color 400ms ease,
+    box-shadow 400ms ease;
+}
+
+.landing-emerald .lp-hubPlan__job.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-emerald .lp-hubPlan__job.is-moved {
+  transform: translateY(0) scale(1.01);
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.05);
+}
+
+.landing-emerald .lp-hubPlan__job.is-conflict {
+  background: #fff8f4;
+  border-color: rgba(181, 106, 74, 0.28);
+}
+
+.landing-emerald .lp-hubPlan__job.is-resolved {
+  background: #f4fbf7;
+  border-color: rgba(34, 160, 107, 0.2);
+}
+
+.landing-emerald .lp-hubPlan__jobTitle {
+  margin: 0;
+  color: #111111;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.landing-emerald .lp-hubPlan__jobClient {
+  margin: 0.15rem 0 0;
+  color: #666666;
+  font-size: 0.78rem;
+}
+
+.landing-emerald .lp-hubPlan__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  justify-self: end;
+  align-self: start;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(17, 17, 17, 0.05);
+  color: #666666;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  transition:
+    background 350ms ease,
+    color 350ms ease;
+}
+
+.landing-emerald .lp-hubPlan__status.is-progress {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.landing-emerald .lp-hubPlan__status.is-done {
+  background: var(--bm-green-soft);
+  color: var(--bm-green-dark);
+}
+
+.landing-emerald .lp-hubPlan__emp {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+  color: #111111;
+  font-size: 0.78rem;
+  font-weight: 550;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition:
+    opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+}
+
+.landing-emerald .lp-hubPlan__emp.is-on {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.landing-emerald .lp-hubPlan__empDot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: #3b82f6;
+}
+
+.landing-emerald .lp-hubPlan__link {
+  position: absolute;
+  left: 1.4rem;
+  right: 0.5rem;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.35), transparent);
+  opacity: 0;
+  transform: scaleX(0.4);
+  transform-origin: left center;
+  transition:
+    opacity 450ms ease,
+    transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubPlan__link.is-on {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.landing-emerald .lp-hubPlan__alert {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  background: #fff8f4;
+  border: 1px solid rgba(181, 106, 74, 0.22);
+  color: #8a4f38;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 420ms ease,
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 400ms ease,
+    border-color 400ms ease,
+    color 400ms ease;
+}
+
+.landing-emerald .lp-hubPlan__alert.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-emerald .lp-hubPlan__alert.is-out {
+  background: #f4fbf7;
+  border-color: rgba(34, 160, 107, 0.22);
+  color: var(--bm-green-dark);
+}
+
+.landing-emerald .lp-hubPlan__alertTitle {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.landing-emerald .lp-hubPlan__alertText {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  opacity: 0.9;
+}
+
+.landing-emerald .lp-hubPlan__route {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  align-self: flex-start;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+  font-size: 0.8rem;
+  font-weight: 650;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 450ms ease,
+    transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubPlan__route.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-emerald .lp-hubPlan__routeLine {
+  width: 2.5rem;
+  height: 1px;
+  background: linear-gradient(90deg, #3b82f6, rgba(59, 130, 246, 0.15));
+}
+
+.landing-emerald .lp-hubPlan__calm {
+  margin: 0.15rem 0 0;
+  color: #666666;
+  font-size: 0.82rem;
+  font-weight: 550;
+}
+
+@media (max-width: 899px) {
+  .landing-emerald .lp-hubPlan__panel {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+
+  .landing-emerald .lp-hubPlan__title {
+    font-size: clamp(1.5rem, 6vw, 2.05rem);
+  }
+
+  .landing-emerald .lp-hubPlan__frame {
+    height: min(820px, 92svh);
+  }
+
+  .landing-emerald .lp-hubPlan__days {
+    gap: 0.3rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-emerald .lp-hub__modFloat.is-floating {
     animation: none;
@@ -4478,8 +4880,14 @@ html:has(.landing-emerald) body {
   .landing-emerald .lp-hub__mod,
   .landing-emerald .lp-hub__world,
   .landing-emerald .lp-hubMum,
+  .landing-emerald .lp-hubPlan,
   .landing-emerald .lp-hubMum__lines li,
-  .landing-emerald .lp-hubMum__ready {
+  .landing-emerald .lp-hubMum__ready,
+  .landing-emerald .lp-hubPlan__day,
+  .landing-emerald .lp-hubPlan__job,
+  .landing-emerald .lp-hubPlan__emp,
+  .landing-emerald .lp-hubPlan__alert,
+  .landing-emerald .lp-hubPlan__route {
     transition: none;
   }
 
