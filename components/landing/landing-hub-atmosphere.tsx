@@ -93,18 +93,18 @@ function createParticles(w: number, h: number, count: number): Particle[] {
   const list: Particle[] = [];
   for (let i = 0; i < count; i++) {
     const z = Math.random();
-    const baseOpacity = 0.08 + z * 0.22 + Math.random() * 0.06;
+    const baseOpacity = 0.035 + z * 0.12 + Math.random() * 0.04;
     list.push({
       x: Math.random() * w,
       y: Math.random() * h,
       z,
-      r: 0.45 + z * 1.15 + Math.random() * 0.35,
-      ox: (Math.random() - 0.5) * 0.12,
-      oy: (Math.random() - 0.5) * 0.1,
-      vx: (Math.random() - 0.5) * 0.035,
-      vy: (Math.random() - 0.5) * 0.03,
+      r: 0.28 + z * 0.55 + Math.random() * 0.22,
+      ox: (Math.random() - 0.5) * 0.09,
+      oy: (Math.random() - 0.5) * 0.08,
+      vx: (Math.random() - 0.5) * 0.022,
+      vy: (Math.random() - 0.5) * 0.018,
       life: Math.random(),
-      lifeSpeed: 0.00008 + Math.random() * 0.00018,
+      lifeSpeed: 0.00005 + Math.random() * 0.00012,
       phase: Math.random() * Math.PI * 2,
       opacity: baseOpacity,
       baseOpacity,
@@ -169,7 +169,10 @@ export function HubAtmosphere({
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = w < 700 ? 70 : w < 1100 ? 110 : 140;
+      // Densité « milliers de micro-points » — très fins, presque imperceptibles
+      const area = w * h;
+      const density = area < 500_000 ? 0.0016 : area < 1_000_000 ? 0.0019 : 0.0022;
+      const count = Math.min(2800, Math.max(900, Math.floor(area * density)));
       particles = createParticles(w, h, count);
       clusters = [];
     };
@@ -213,96 +216,60 @@ export function HubAtmosphere({
 
       ctx.clearRect(0, 0, w, h);
 
-      // Texture blanche très légère (grain)
-      ctx.globalAlpha = 0.018;
-      ctx.fillStyle = "#e8eaed";
-      for (let i = 0; i < 28; i++) {
-        const gx = ((now * 0.004 + i * 97) % w);
-        const gy = ((now * 0.003 + i * 53) % h);
-        ctx.fillRect(gx, gy, 1, 1);
-      }
-      ctx.globalAlpha = 1;
-
       for (const cluster of clusters) {
         cluster.life += 16;
         const t = cluster.life / cluster.maxLife;
         cluster.strength =
           t < 0.25 ? t / 0.25 : t > 0.7 ? Math.max(0, (1 - t) / 0.3) : 1;
-        cluster.angle += 0.00035;
+        cluster.angle += 0.00028;
       }
       clusters = clusters.filter((c) => c.life < c.maxLife);
 
-      // Connexions discrètes (réseau fugace)
-      for (const cluster of clusters) {
-        if (cluster.strength < 0.15) continue;
-        const members: Particle[] = [];
-        for (const p of particles) {
-          const dx = p.x - cluster.cx;
-          const dy = p.y - cluster.cy;
-          if (dx * dx + dy * dy < cluster.radius * cluster.radius * 2.2) {
-            members.push(p);
-          }
-        }
-        members.sort((a, b) => a.phase - b.phase);
-        ctx.strokeStyle = `rgba(148, 155, 164, ${0.045 * cluster.strength * mood.energy})`;
-        ctx.lineWidth = 0.6;
-        ctx.beginPath();
-        for (let i = 0; i < members.length - 1 && i < 7; i++) {
-          const a = members[i];
-          const b = members[i + 1];
-          const pz = 0.35 + a.z * 0.65;
-          const parx = mx * (3.5 + a.z * 5);
-          const pary = my * (2.5 + a.z * 4);
-          const bx = mx * (3.5 + b.z * 5);
-          const by = my * (2.5 + b.z * 4);
-          if (i === 0) ctx.moveTo(a.x + parx, a.y + pary);
-          ctx.lineTo(b.x + bx, b.y + by);
-          void pz;
-        }
-        ctx.stroke();
-      }
+      // Pas de traits : uniquement un alignement fugace des points (flux discret)
 
       for (const p of particles) {
-        p.phase += 0.004 + p.z * 0.003;
+        p.phase += 0.0028 + p.z * 0.0022;
         p.life += p.lifeSpeed;
         if (p.life > 1) p.life = 0;
 
-        // Respiration d’opacité
-        const breathe = 0.55 + 0.45 * Math.sin(p.phase);
+        // Respiration d’opacité — presque imperceptible
+        const breathe = 0.72 + 0.28 * Math.sin(p.phase);
         const fade =
-          p.life < 0.12
-            ? p.life / 0.12
-            : p.life > 0.88
-              ? (1 - p.life) / 0.12
+          p.life < 0.1
+            ? p.life / 0.1
+            : p.life > 0.9
+              ? (1 - p.life) / 0.1
               : 1;
-        p.opacity = p.baseOpacity * breathe * fade * mood.energy;
+        p.opacity = p.baseOpacity * breathe * fade * (0.75 + mood.energy * 0.25);
 
-        // Dérive organique
-        p.x += p.vx + p.ox * Math.sin(p.phase * 0.7) * 0.15;
-        p.y += p.vy + p.oy * Math.cos(p.phase * 0.55) * 0.15;
+        // Dérive organique (quelques pixels)
+        p.x += p.vx + p.ox * Math.sin(p.phase * 0.55) * 0.1;
+        p.y += p.vy + p.oy * Math.cos(p.phase * 0.42) * 0.1;
 
         // Attraction centre (logo)
         if (mood.attract > 0.01) {
-          p.x += (cx - p.x) * 0.00035 * mood.attract * (0.4 + p.z);
-          p.y += (cy - p.y) * 0.00035 * mood.attract * (0.4 + p.z);
+          p.x += (cx - p.x) * 0.00028 * mood.attract * (0.4 + p.z);
+          p.y += (cy - p.y) * 0.00028 * mood.attract * (0.4 + p.z);
         }
 
         // Drift caméra
-        p.x += mood.driftX * (0.04 + p.z * 0.08);
-        p.y += mood.driftY * (0.04 + p.z * 0.08);
+        p.x += mood.driftX * (0.03 + p.z * 0.06);
+        p.y += mood.driftY * (0.03 + p.z * 0.06);
 
-        // Clusters : légère alignement
+        // Clusters : légère alignement / flux
         for (const cluster of clusters) {
           if (cluster.strength < 0.1) continue;
           const dx = p.x - cluster.cx;
           const dy = p.y - cluster.cy;
           const dist = Math.hypot(dx, dy) || 1;
-          if (dist < cluster.radius * 1.6) {
-            const targetAngle = cluster.angle + p.phase * 0.4;
-            const tx = cluster.cx + Math.cos(targetAngle) * cluster.radius * 0.55;
-            const ty = cluster.cy + Math.sin(targetAngle) * cluster.radius * 0.55;
-            p.x += (tx - p.x) * 0.012 * cluster.strength;
-            p.y += (ty - p.y) * 0.012 * cluster.strength;
+          if (dist < cluster.radius * 1.5) {
+            const targetAngle = cluster.angle + p.phase * 0.35;
+            const tx =
+              cluster.cx + Math.cos(targetAngle) * cluster.radius * 0.5;
+            const ty =
+              cluster.cy + Math.sin(targetAngle) * cluster.radius * 0.5;
+            p.x += (tx - p.x) * 0.008 * cluster.strength;
+            p.y += (ty - p.y) * 0.008 * cluster.strength;
           }
         }
 
@@ -312,15 +279,14 @@ export function HubAtmosphere({
         if (p.y < -8) p.y = h + 8;
         if (p.y > h + 8) p.y = -8;
 
-        const parx = mx * (3.2 + p.z * 6.5);
-        const pary = my * (2.4 + p.z * 5);
-        const alpha = Math.min(0.34, p.opacity);
-        if (alpha < 0.02) continue;
+        const parx = mx * (2.4 + p.z * 4.5);
+        const pary = my * (1.8 + p.z * 3.5);
+        const alpha = Math.min(0.22, p.opacity);
+        if (alpha < 0.015) continue;
 
-        // Gris froid uniquement
-        const gray = 168 + Math.floor(p.z * 42);
+        const gray = 175 + Math.floor(p.z * 35);
         ctx.beginPath();
-        ctx.fillStyle = `rgba(${gray}, ${gray + 2}, ${gray + 4}, ${alpha})`;
+        ctx.fillStyle = `rgba(${gray}, ${gray + 1}, ${gray + 3}, ${alpha})`;
         ctx.arc(p.x + parx, p.y + pary, p.r, 0, Math.PI * 2);
         ctx.fill();
       }

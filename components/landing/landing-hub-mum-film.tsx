@@ -7,25 +7,26 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Bot, Check } from "lucide-react";
-import { animate, useMotionValue, useTransform } from "framer-motion";
+import { Bot, Check, Mic, Sparkles } from "lucide-react";
 
 const PROMPT =
-  "Création d'une salle de bain complète de 6 m² avec remplacement douche, meuble vasque, faïence, plomberie.";
+  "Création d'une salle de bain complète avec douche italienne, meuble vasque, faïence et plomberie…";
 
-const ANALYSIS = ["Quantités", "Matériaux", "Temps", "Prix"] as const;
+const PROMPT_WORDS = PROMPT.split(/(\s+)/).filter(Boolean);
+
+const ANALYSIS = ["Quantités", "Matériaux", "Temps", "Structure"] as const;
 
 const LINES = [
-  { label: "Protection chantier", amount: 180 },
-  { label: "Dépose", amount: 620 },
-  { label: "Plomberie", amount: 2140 },
-  { label: "Faïence", amount: 1680 },
-  { label: "Carrelage", amount: 1320 },
-  { label: "Main d’œuvre", amount: 2460 },
-  { label: "Fournitures", amount: 1445 },
+  { label: "Protection chantier", qty: "1 forfait" },
+  { label: "Dépose existant", qty: "1 forfait" },
+  { label: "Plomberie", qty: "1 forfait" },
+  { label: "Faïence murale", qty: "18 m²" },
+  { label: "Carrelage sol", qty: "6 m²" },
+  { label: "Main d’œuvre", qty: "1 forfait" },
+  { label: "Fournitures", qty: "1 forfait" },
 ] as const;
 
-const TOTAL_STEPS = [0, 1500, 3900, 6120, 9845] as const;
+const PRICE_MASK = "···";
 
 export type MumFilmPhase =
   | "idle"
@@ -41,89 +42,30 @@ export type MumFilmPhase =
 
 type DemoBeat =
   | "empty"
-  | "typing"
+  | "listen"
+  | "speak"
   | "pause"
   | "analyse"
   | "lines"
   | "total"
   | "ready";
 
-function formatEuro(n: number) {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
-
-function TotalCounter({
-  active,
-  reduced,
-  onDone,
-}: {
-  active: boolean;
-  reduced: boolean;
-  onDone: () => void;
-}) {
-  const mv = useMotionValue(0);
-  const display = useTransform(mv, (v) => {
-    const n = Math.round(v);
-    const suffix = n >= TOTAL_STEPS[TOTAL_STEPS.length - 1] ? " HT" : "";
-    return `${formatEuro(n)}${suffix}`;
-  });
-  const [label, setLabel] = useState("0 €");
-  const doneRef = useRef(false);
-
-  useEffect(() => display.on("change", (v) => setLabel(v)), [display]);
-
-  useEffect(() => {
-    doneRef.current = false;
-    if (!active) {
-      mv.set(0);
-      setLabel("0 €");
-      return;
-    }
-
-    if (reduced) {
-      const final = TOTAL_STEPS[TOTAL_STEPS.length - 1];
-      mv.set(final);
-      setLabel(`${formatEuro(final)} HT`);
-      doneRef.current = true;
-      onDone();
-      return;
-    }
-
-    let cancelled = false;
-
-    const run = async () => {
-      for (let step = 0; step < TOTAL_STEPS.length; step++) {
-        if (cancelled) return;
-        const target = TOTAL_STEPS[step];
-        await new Promise<void>((resolve) => {
-          const controls = animate(mv, target, {
-            duration: step === 0 ? 0.15 : 0.55,
-            ease: [0.22, 1, 0.36, 1],
-            onComplete: () => resolve(),
-          });
-          if (cancelled) controls.stop();
-        });
-        if (step < TOTAL_STEPS.length - 1) {
-          await new Promise((r) => setTimeout(r, 160));
-        }
-      }
-      if (!cancelled && !doneRef.current) {
-        doneRef.current = true;
-        onDone();
-      }
-    };
-
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [active, reduced, mv, onDone]);
-
-  return <span className="lp-hubMum__totalValue">{label}</span>;
+function MicWaves({ active }: { active: boolean }) {
+  return (
+    <span
+      className={[
+        "lp-hubMum__micWaves",
+        active ? "is-on" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-hidden="true"
+    >
+      <span />
+      <span />
+      <span />
+    </span>
+  );
 }
 
 function MumInterface({
@@ -132,18 +74,14 @@ function MumInterface({
   analyseDone,
   linesVisible,
   showReady,
-  caretOn,
-  reduced,
-  onTotalDone,
+  listening,
 }: {
   beat: DemoBeat;
   typed: string;
   analyseDone: number;
   linesVisible: number;
   showReady: boolean;
-  caretOn: boolean;
-  reduced: boolean;
-  onTotalDone: () => void;
+  listening: boolean;
 }) {
   const showAnalyse =
     beat === "analyse" ||
@@ -153,79 +91,129 @@ function MumInterface({
   const showLines =
     beat === "lines" || beat === "total" || beat === "ready";
   const showTotal = beat === "total" || beat === "ready";
+  const showPreview =
+    showAnalyse || showLines || showTotal || showReady;
 
   return (
     <div className="lp-hubMum__ui" aria-hidden="true">
       <div className="lp-hubMum__uiHead">
-        <Bot size={15} strokeWidth={1.75} />
-        <span>MUM IA · préparation du devis</span>
+        <span className="lp-hubMum__uiBadge">
+          <Sparkles size={13} strokeWidth={1.9} />
+          MUM IA
+        </span>
+        <span className="lp-hubMum__uiHeadMeta">Préparation du devis</span>
       </div>
 
       <div className="lp-hubMum__composer">
-        <p className="lp-hubMum__composerLabel">Demande client</p>
-        <div className="lp-hubMum__composerBox">
-          <p className="lp-hubMum__composerText">
-            {typed}
-            {caretOn ? <span className="lp-hubMum__caret" /> : null}
-          </p>
+        <p className="lp-hubMum__composerLabel">Décrivez votre chantier</p>
+        <div
+          className={[
+            "lp-hubMum__composerRow",
+            listening ? "is-listening" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <div className="lp-hubMum__composerBox">
+            <p
+              className={[
+                "lp-hubMum__composerText",
+                !typed && listening ? "is-placeholder" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {typed || (listening ? "Écoute…" : "")}
+            </p>
+          </div>
+
+          <div className="lp-hubMum__micWrap">
+            <MicWaves active={listening} />
+            <button
+              type="button"
+              className={[
+                "lp-hubMum__mic",
+                listening ? "is-active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              tabIndex={-1}
+              aria-hidden="true"
+            >
+              <Mic size={16} strokeWidth={1.9} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {showAnalyse ? (
-        <div className="lp-hubMum__analyse">
-          <p className="lp-hubMum__composerLabel">Analyse</p>
-          <ul className="lp-hubMum__analyseList">
-            {ANALYSIS.map((item, i) => {
-              const done = i < analyseDone;
-              return (
-                <li key={item} className={done ? "is-done" : undefined}>
-                  <span className="lp-hubMum__analyseMark" aria-hidden="true">
-                    {done ? <Check size={13} strokeWidth={2.4} /> : null}
-                  </span>
-                  <span>{item}</span>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ) : null}
+      {showPreview ? (
+        <div className="lp-hubMum__preview">
+          <div className="lp-hubMum__previewHead">
+            <Bot size={14} strokeWidth={1.8} />
+            <span>Prévisualisation</span>
+          </div>
 
-      {showLines ? (
-        <div className="lp-hubMum__devis">
-          <p className="lp-hubMum__composerLabel">Devis</p>
-          <ul className="lp-hubMum__lines">
-            {LINES.map((line, i) => (
-              <li
-                key={line.label}
-                className={i < linesVisible ? "is-on" : undefined}
-              >
-                <span>{line.label}</span>
-                <span className="lp-hubMum__lineAmt">
-                  {formatEuro(line.amount)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+          {showAnalyse ? (
+            <div className="lp-hubMum__analyse">
+              <ul className="lp-hubMum__analyseList">
+                {ANALYSIS.map((item, i) => {
+                  const done = i < analyseDone;
+                  return (
+                    <li key={item} className={done ? "is-done" : undefined}>
+                      <span
+                        className="lp-hubMum__analyseMark"
+                        aria-hidden="true"
+                      >
+                        {done ? <Check size={12} strokeWidth={2.4} /> : null}
+                      </span>
+                      <span>{item}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
 
-      {showTotal ? (
-        <div className="lp-hubMum__total">
-          <span className="lp-hubMum__totalLabel">Total</span>
-          <TotalCounter
-            active={beat === "total" || beat === "ready"}
-            reduced={reduced}
-            onDone={onTotalDone}
-          />
-        </div>
-      ) : null}
+          {showLines ? (
+            <div className="lp-hubMum__devis">
+              <p className="lp-hubMum__sectionTitle">Salle de bain</p>
+              <ul className="lp-hubMum__lines">
+                {LINES.map((line, i) => (
+                  <li
+                    key={line.label}
+                    className={i < linesVisible ? "is-on" : undefined}
+                  >
+                    <div className="lp-hubMum__lineMain">
+                      <span className="lp-hubMum__lineLabel">{line.label}</span>
+                      <span className="lp-hubMum__lineQty">{line.qty}</span>
+                    </div>
+                    <span className="lp-hubMum__lineAmt" aria-hidden="true">
+                      {PRICE_MASK}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
-      {showReady ? (
-        <div className="lp-hubMum__ready is-on">
-          <span className="lp-hubMum__readyCheck" aria-hidden="true">
-            <Check size={14} strokeWidth={2.4} />
-          </span>
-          <span>Votre devis est prêt.</span>
+          {showTotal ? (
+            <div className="lp-hubMum__total is-on">
+              <span className="lp-hubMum__totalLabel">Total général estimé</span>
+              <span className="lp-hubMum__totalValue" aria-hidden="true">
+                {PRICE_MASK}
+                <span className="lp-hubMum__totalUnit"> HT</span>
+              </span>
+            </div>
+          ) : null}
+
+          {showReady ? (
+            <div className="lp-hubMum__ready is-on">
+              <span className="lp-hubMum__readyCheck" aria-hidden="true">
+                <Check size={14} strokeWidth={2.4} />
+              </span>
+              <span>Votre devis est prêt.</span>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -245,9 +233,9 @@ function MumFilmCopy() {
         en quelques minutes.
       </h3>
       <p className="lp-hubMum__subtitle">
-        Décrivez les travaux. MUM IA structure le devis.
+        Décrivez les travaux. Ou dictez-les.
         <br />
-        Vous vérifiez. Vous envoyez.
+        MUM IA structure le devis.
       </p>
     </div>
   );
@@ -286,6 +274,8 @@ export function MumFilmPanel({
     onDemoComplete();
   }, [onDemoComplete]);
 
+  const listening = beat === "listen" || beat === "speak";
+
   useEffect(() => {
     clearTimers();
     finishedRef.current = false;
@@ -307,37 +297,43 @@ export function MumFilmPanel({
       return clearTimers;
     }
 
-    // Curseur seul, puis frappe
-    later(() => setBeat("typing"), 400);
+    // Micro s’active, puis transcription vocale
+    later(() => setBeat("listen"), 350);
+    later(() => setBeat("speak"), 900);
 
     return clearTimers;
   }, [active, reduced, finish]);
 
-  // Typewriter
+  // Transcription mot à mot (reconnaissance vocale simulée)
   useEffect(() => {
-    if (beat !== "typing" || reduced) return;
+    if (beat !== "speak" || reduced) return;
     let i = 0;
     let timer: ReturnType<typeof setTimeout>;
+    let acc = "";
 
     const tick = () => {
-      i += 1;
-      setTyped(PROMPT.slice(0, i));
-      if (i >= PROMPT.length) {
+      if (i >= PROMPT_WORDS.length) {
         setBeat("pause");
-        later(() => setBeat("analyse"), 560);
+        later(() => setBeat("analyse"), 520);
         return;
       }
-      const ch = PROMPT[i - 1];
-      const delay =
-        ch === " " ? 26 : ch === "," || ch === "." ? 85 : 20 + Math.random() * 16;
+      const token = PROMPT_WORDS[i];
+      acc += token;
+      setTyped(acc);
+      i += 1;
+      const isSpace = /^\s+$/.test(token);
+      const delay = isSpace
+        ? 40 + Math.random() * 30
+        : token.length > 7
+          ? 110 + Math.random() * 50
+          : 70 + Math.random() * 55;
       timer = setTimeout(tick, delay);
     };
 
-    timer = setTimeout(tick, 120);
+    timer = setTimeout(tick, 180);
     return () => clearTimeout(timer);
   }, [beat, reduced]);
 
-  // Analyse lines
   useEffect(() => {
     if (beat !== "analyse" || reduced) return;
     let n = 0;
@@ -346,13 +342,12 @@ export function MumFilmPanel({
       setAnalyseDone(n);
       if (n >= ANALYSIS.length) {
         clearInterval(id);
-        later(() => setBeat("lines"), 480);
+        later(() => setBeat("lines"), 420);
       }
-    }, 500);
+    }, 480);
     return () => clearInterval(id);
   }, [beat, reduced]);
 
-  // Devis lines
   useEffect(() => {
     if (beat !== "lines" || reduced) return;
     let n = 0;
@@ -361,17 +356,20 @@ export function MumFilmPanel({
       setLinesVisible(n);
       if (n >= LINES.length) {
         clearInterval(id);
-        later(() => setBeat("total"), 420);
+        later(() => setBeat("total"), 380);
       }
-    }, 360);
+    }, 320);
     return () => clearInterval(id);
   }, [beat, reduced]);
 
-  const onTotalDone = useCallback(() => {
-    setBeat("ready");
-    setShowReady(true);
-    later(finish, 900);
-  }, [finish]);
+  useEffect(() => {
+    if (beat !== "total" || reduced) return;
+    later(() => {
+      setBeat("ready");
+      setShowReady(true);
+      later(finish, 950);
+    }, 700);
+  }, [beat, reduced, finish]);
 
   return (
     <div className="lp-hubMum__panel">
@@ -382,9 +380,7 @@ export function MumFilmPanel({
         analyseDone={analyseDone}
         linesVisible={linesVisible}
         showReady={showReady}
-        caretOn={beat === "empty" || beat === "typing"}
-        reduced={!!reduced}
-        onTotalDone={onTotalDone}
+        listening={listening}
       />
     </div>
   );
@@ -421,9 +417,8 @@ export function MumFilmShell({
   );
 }
 
-/** Durées de la scène film MUM (ms) — hors frappe/devis gérés en interne */
 export const MUM_HIGHLIGHT_MS = 1100;
 export const MUM_ENTER_MS = 1600;
 export const MUM_RETURN_MS = 1800;
 /** Plafond de sécurité si la démo ne signale pas la fin */
-export const MUM_DEMO_SAFETY_MS = 28000;
+export const MUM_DEMO_SAFETY_MS = 32000;
