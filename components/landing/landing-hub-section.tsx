@@ -37,6 +37,7 @@ import {
 import {
   FinanceFilmPanel,
   FinanceFilmShell,
+  FIN_CONVERGE_MS,
   FIN_DEMO_SAFETY_MS,
   FIN_ENTER_MS,
   FIN_HIGHLIGHT_MS,
@@ -119,9 +120,10 @@ const HUB_MODULES: HubModule[] = [
  * → 3 mumFilm → 4 mumReturn
  * → 5 planFilm → 6 planReturn
  * → 7 financeFilm → 8 financeReturn
+ * → 9 converge (modules → logo, sans fusion)
  * → exit (hub prêt pour le final)
  */
-const LAST_SCENE = 8;
+const LAST_SCENE = 9;
 const SCENE_LOCK_MS = [
   900,
   1100,
@@ -132,6 +134,7 @@ const SCENE_LOCK_MS = [
   PLAN_RETURN_MS,
   FIN_DEMO_SAFETY_MS,
   FIN_RETURN_MS,
+  FIN_CONVERGE_MS,
 ] as const;
 
 const WHEEL_THRESHOLD = 44;
@@ -176,6 +179,7 @@ function HubStage({
 }) {
   const showLogo = scene >= 1;
   const showModules = scene >= 2;
+  const converging = filmPhase === "converge" || scene === 9;
   const highlight =
     filmPhase === "highlight" ||
     ((scene === 3 || scene === 5 || scene === 7) && filmPhase === "idle");
@@ -188,6 +192,7 @@ function HubStage({
   const floatOn =
     showModules &&
     !reduced &&
+    !converging &&
     (scene === 2 ||
       filmPhase === "highlight" ||
       filmPhase === "idle" ||
@@ -220,6 +225,7 @@ function HubStage({
         deep && focusId === "planning" ? "lp-hub__stage--deepPlan" : "",
         deep && focusId === "finance" ? "lp-hub__stage--deepFin" : "",
         returning && !deep ? "lp-hub__stage--return" : "",
+        converging ? "lp-hub__stage--converge" : "",
         floatOn ? "lp-hub__stage--float" : "",
       ]
         .filter(Boolean)
@@ -295,8 +301,8 @@ function HubStage({
                   .join(" ")}
                 style={
                   {
-                    "--hub-x": `${mod.x}%`,
-                    "--hub-y": `${mod.y}%`,
+                    "--hub-x": mod.x,
+                    "--hub-y": mod.y,
                   } as CSSProperties
                 }
               >
@@ -306,8 +312,14 @@ function HubStage({
                   animate={
                     showModules
                       ? {
-                          opacity: dimmed ? 0.7 : 1,
-                          scale: active ? 1.08 : dimmed ? 0.97 : 1,
+                          opacity: dimmed ? 0.7 : converging ? 0.92 : 1,
+                          scale: active
+                            ? 1.08
+                            : converging
+                              ? 0.94
+                              : dimmed
+                                ? 0.97
+                                : 1,
                         }
                       : { opacity: 0, scale: 0.92 }
                   }
@@ -370,8 +382,8 @@ function HubStatic() {
                 className="lp-hub__mod"
                 style={
                   {
-                    "--hub-x": `${mod.x}%`,
-                    "--hub-y": `${mod.y}%`,
+                    "--hub-x": mod.x,
+                    "--hub-y": mod.y,
                   } as CSSProperties
                 }
               >
@@ -586,6 +598,14 @@ export function LandingHubSection() {
     }, FIN_RETURN_MS);
   }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater]);
 
+  const startConverge = useCallback(() => {
+    clearFilmTimers();
+    setFilmKind(null);
+    setFocus(null);
+    setFilm("converge");
+    startSceneLock(9, FIN_CONVERGE_MS);
+  }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock]);
+
   const applyIntent = useCallback(
     (direction: 1 | -1): "handled" | "exit" | "pass" => {
       if (!active) return "pass";
@@ -606,6 +626,7 @@ export function LandingHubSection() {
           else if (next === 6) startPlanReturn();
           else if (next === 7) startFinFilm();
           else if (next === 8) startFinReturn();
+          else if (next === 9) startConverge();
           else startSceneLock(next);
           return "handled";
         }
@@ -639,6 +660,7 @@ export function LandingHubSection() {
       startPlanReturn,
       startFinFilm,
       startFinReturn,
+      startConverge,
       exitHub,
       resetToEcosystem,
     ],
@@ -870,8 +892,8 @@ export function LandingHubSection() {
       ) : done ? (
         <div className="lp-hub__resting">
           <HubStage
-            scene={2}
-            filmPhase="idle"
+            scene={9}
+            filmPhase="converge"
             focusId={null}
             reduced={reduced}
           />

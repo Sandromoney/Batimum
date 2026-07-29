@@ -34,7 +34,8 @@ export type MumFilmPhase =
   | "demo"
   | "hold"
   | "returning"
-  | "tease";
+  | "tease"
+  | "converge";
 
 type DemoBeat =
   | "empty"
