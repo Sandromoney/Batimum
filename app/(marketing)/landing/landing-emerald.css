@@ -4085,6 +4085,22 @@ html:has(.landing-emerald) body {
   transform: scale(1);
 }
 
+.landing-emerald .lp-hub__stage--merge .lp-hub__mod {
+  top: 50%;
+  left: 50%;
+  transition:
+    top 1.75s cubic-bezier(0.22, 1, 0.36, 1),
+    left 1.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hub__stage--merge {
+  transform: scale(1);
+}
+
+.landing-emerald .lp-hub--signature .lp-hub__sticky {
+  background: #fafafa;
+}
+
 .landing-emerald .lp-hub__modMotion {
   will-change: transform, opacity;
 }
@@ -5484,6 +5500,352 @@ html:has(.landing-emerald) body {
   .landing-emerald .lp-story__lostLine,
   .landing-emerald .lp-story__final {
     will-change: auto;
+  }
+}
+
+/* ——— Signature Batimum (sceau final) ——— */
+.landing-emerald .lp-hubSig {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.25rem, 4vh, 2.5rem) clamp(1rem, 3vw, 2rem);
+  box-sizing: border-box;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(720px 420px at 50% 42%, rgba(59, 130, 246, 0.035), transparent 62%),
+    #fafafa;
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubSig.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.landing-emerald .lp-hubSig__stage {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.landing-emerald .lp-hubSig__mark {
+  position: relative;
+  width: min(280px, 64vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  transform-origin: center center;
+}
+
+.landing-emerald .lp-hubSig__mark.is-breath-once {
+  animation: lp-hub-sig-breath-once 2s cubic-bezier(0.45, 0, 0.2, 1) both;
+}
+
+.landing-emerald .lp-hubSig__mark.is-breath-idle .lp-hubSig__bm.is-breathing {
+  animation: lp-hub-sig-breath-idle 7s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.landing-emerald .lp-hubSig__mark.is-pulse .lp-hubSig__bm {
+  animation: lp-hub-sig-pulse 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lp-hub-sig-breath-once {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes lp-hub-sig-breath-idle {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.012);
+  }
+}
+
+@keyframes lp-hub-sig-pulse {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.018);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.landing-emerald .lp-hubSig__halo {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(59, 130, 246, 0.1) 0%,
+    rgba(59, 130, 246, 0.03) 42%,
+    rgba(59, 130, 246, 0) 70%
+  );
+  opacity: 0.55;
+  transform: scale(0.96);
+  pointer-events: none;
+  transition:
+    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubSig__halo.is-soft {
+  opacity: 0.7;
+  transform: scale(1);
+}
+
+.landing-emerald .lp-hubSig__halo.is-pulse {
+  animation: lp-hub-sig-halo-pulse 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lp-hub-sig-halo-pulse {
+  0% {
+    opacity: 0.45;
+    transform: scale(0.96);
+  }
+  40% {
+    opacity: 0.85;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+}
+
+.landing-emerald .lp-hubSig__bm {
+  --sig-bm-h: 88px;
+  position: relative;
+  z-index: 3;
+  width: calc(var(--sig-bm-h) * 224 / 210);
+  height: var(--sig-bm-h);
+  overflow: hidden;
+  display: grid;
+  place-items: start center;
+  filter: drop-shadow(0 10px 22px rgba(17, 17, 17, 0.07));
+  opacity: 0;
+  transform: scale(0.98);
+  transition:
+    opacity 1.1s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubSig.is-merge .lp-hubSig__bm,
+.landing-emerald .lp-hubSig.is-breath .lp-hubSig__bm,
+.landing-emerald .lp-hubSig.is-approach .lp-hubSig__bm,
+.landing-emerald .lp-hubSig.is-screw .lp-hubSig__bm,
+.landing-emerald .lp-hubSig.is-pulse .lp-hubSig__bm,
+.landing-emerald .lp-hubSig.is-copy .lp-hubSig__bm,
+.landing-emerald .lp-hubSig.is-cta .lp-hubSig__bm,
+.landing-emerald .lp-hubSig.is-sealed .lp-hubSig__bm {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.landing-emerald .lp-hubSig.is-merge .lp-hubSig__bm {
+  transition-delay: 0.55s;
+}
+
+@media (max-width: 767px) {
+  .landing-emerald .lp-hubSig__bm {
+    --sig-bm-h: 72px;
+  }
+
+  .landing-emerald .lp-hubSig__mark {
+    width: min(240px, 70vw);
+  }
+}
+
+.landing-emerald .lp-hubSig__bmImg {
+  display: block;
+  height: var(--sig-bm-h);
+  width: auto;
+  max-width: none;
+  margin: 0;
+  object-fit: cover;
+  object-position: left center;
+  min-width: calc(var(--sig-bm-h) * 829 / 210);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.landing-emerald .lp-hubSig__nut {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: translate3d(18%, -22%, 0) scale(0.92) rotate(-18deg);
+  filter: drop-shadow(0 14px 28px rgba(17, 17, 17, 0.06));
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.landing-emerald .lp-hubSig__nut.is-on {
+  opacity: 1;
+}
+
+.landing-emerald .lp-hubSig__nut.is-approach {
+  animation: lp-hub-sig-approach 2.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.landing-emerald .lp-hubSig__nut.is-screw {
+  animation: lp-hub-sig-screw 3.2s cubic-bezier(0.33, 0.1, 0.2, 1) both;
+}
+
+.landing-emerald .lp-hubSig__nut.is-seated {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1) rotate(360deg);
+}
+
+@keyframes lp-hub-sig-approach {
+  0% {
+    opacity: 0;
+    transform: translate3d(22%, -28%, 0) scale(0.9) rotate(-22deg);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes lp-hub-sig-screw {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(360deg);
+  }
+}
+
+.landing-emerald .lp-hubSig__nutSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.landing-emerald .lp-hubSig__copy {
+  margin-top: clamp(1.6rem, 3.5vh, 2.4rem);
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubSig__copy.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-emerald .lp-hubSig__brand {
+  margin: 0;
+  color: #111111;
+  font-size: clamp(2.1rem, 5.5vw, 3.4rem);
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  line-height: 1;
+}
+
+.landing-emerald .lp-hubSig__lead {
+  margin: 1.05rem 0 0;
+  color: #111111;
+  font-size: clamp(1.02rem, 1.7vw, 1.2rem);
+  font-weight: 550;
+  letter-spacing: -0.02em;
+  line-height: 1.45;
+  max-width: 28ch;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0;
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.18s;
+}
+
+.landing-emerald .lp-hubSig__sub {
+  margin: 0.65rem 0 0;
+  color: #666666;
+  font-size: clamp(0.92rem, 1.3vw, 1.02rem);
+  line-height: 1.5;
+  opacity: 0;
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.38s;
+}
+
+.landing-emerald .lp-hubSig__copy.is-on .lp-hubSig__lead,
+.landing-emerald .lp-hubSig__copy.is-on .lp-hubSig__sub {
+  opacity: 1;
+}
+
+.landing-emerald .lp-hubSig__cta {
+  margin-top: clamp(1.35rem, 3vh, 2rem);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition:
+    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubSig__cta.is-on {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.landing-emerald .lp-hub__resting--signature {
+  min-height: min(100svh, 860px);
+  display: grid;
+  place-items: center;
+  background: #fafafa;
+  position: relative;
+}
+
+.landing-emerald .lp-hub__resting--signature .lp-hubSig {
+  position: relative;
+  inset: auto;
+  min-height: min(100svh, 860px);
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-emerald .lp-hubSig__mark.is-breath-once,
+  .landing-emerald .lp-hubSig__mark.is-breath-idle .lp-hubSig__bm.is-breathing,
+  .landing-emerald .lp-hubSig__mark.is-pulse .lp-hubSig__bm,
+  .landing-emerald .lp-hubSig__halo.is-pulse,
+  .landing-emerald .lp-hubSig__nut.is-approach,
+  .landing-emerald .lp-hubSig__nut.is-screw {
+    animation: none;
+  }
+
+  .landing-emerald .lp-hubSig__nut.is-seated,
+  .landing-emerald .lp-hubSig__nut.is-on {
+    transform: none;
+    opacity: 1;
   }
 }
 

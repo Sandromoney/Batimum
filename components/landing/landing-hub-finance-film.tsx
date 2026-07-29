@@ -580,7 +580,9 @@ export function FinanceFilmShell({
     | "hold"
     | "returning"
     | "tease"
-    | "converge";
+    | "converge"
+    | "signature"
+    | "sealed";
   children: ReactNode;
 }) {
   const open =

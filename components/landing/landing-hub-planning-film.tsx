@@ -18,7 +18,9 @@ export type HubFilmPhase =
   | "hold"
   | "returning"
   | "tease"
-  | "converge";
+  | "converge"
+  | "signature"
+  | "sealed";
 
 const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"] as const;
 

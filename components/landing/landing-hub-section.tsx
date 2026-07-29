@@ -43,6 +43,10 @@ import {
   FIN_HIGHLIGHT_MS,
   FIN_RETURN_MS,
 } from "@/components/landing/landing-hub-finance-film";
+import {
+  HubSignaturePanel,
+  SIG_DEMO_SAFETY_MS,
+} from "@/components/landing/landing-hub-signature";
 
 const BM_SRC = "/logo-batimum.png";
 const BM_SRC_W = 829;
@@ -120,10 +124,11 @@ const HUB_MODULES: HubModule[] = [
  * → 3 mumFilm → 4 mumReturn
  * → 5 planFilm → 6 planReturn
  * → 7 financeFilm → 8 financeReturn
- * → 9 converge (modules → logo, sans fusion)
- * → exit (hub prêt pour le final)
+ * → 9 converge (modules → logo)
+ * → 10 signature (fusion + écrou + sceau Batimum)
+ * → exit
  */
-const LAST_SCENE = 9;
+const LAST_SCENE = 10;
 const SCENE_LOCK_MS = [
   900,
   1100,
@@ -135,6 +140,7 @@ const SCENE_LOCK_MS = [
   FIN_DEMO_SAFETY_MS,
   FIN_RETURN_MS,
   FIN_CONVERGE_MS,
+  SIG_DEMO_SAFETY_MS,
 ] as const;
 
 const WHEEL_THRESHOLD = 44;
@@ -171,15 +177,22 @@ function HubStage({
   filmPhase,
   focusId,
   reduced,
+  signatureMode = false,
 }: {
   scene: number;
   filmPhase: MumFilmPhase;
   focusId: FocusId;
   reduced: boolean | null;
+  /** Scène 10 : modules fusionnent puis le monde hub s’efface. */
+  signatureMode?: boolean;
 }) {
-  const showLogo = scene >= 1;
-  const showModules = scene >= 2;
-  const converging = filmPhase === "converge" || scene === 9;
+  const sealed =
+    signatureMode && (filmPhase === "sealed" || filmPhase === "idle");
+  const merging = signatureMode && filmPhase === "signature";
+  const showLogo = scene >= 1 && !sealed;
+  const showModules = scene >= 2 && !sealed;
+  const converging =
+    !signatureMode && (filmPhase === "converge" || scene === 9);
   const highlight =
     filmPhase === "highlight" ||
     ((scene === 3 || scene === 5 || scene === 7) && filmPhase === "idle");
@@ -193,13 +206,14 @@ function HubStage({
     showModules &&
     !reduced &&
     !converging &&
+    !merging &&
     (scene === 2 ||
       filmPhase === "highlight" ||
       filmPhase === "idle" ||
       (returning && !deep));
 
   const logoAwake = scene >= 2;
-  const hubVisible = !deep;
+  const hubVisible = !deep && !sealed;
   const hierarchy = Boolean(focusId) && (highlight || deep || returning);
 
   const isModActive = (id: string) => {
@@ -226,6 +240,7 @@ function HubStage({
         deep && focusId === "finance" ? "lp-hub__stage--deepFin" : "",
         returning && !deep ? "lp-hub__stage--return" : "",
         converging ? "lp-hub__stage--converge" : "",
+        merging ? "lp-hub__stage--merge" : "",
         floatOn ? "lp-hub__stage--float" : "",
       ]
         .filter(Boolean)
@@ -254,13 +269,25 @@ function HubStage({
             animate={
               showLogo
                 ? {
-                    opacity: hierarchy ? 0.72 : 1,
-                    scale: logoAwake ? (highlight ? 1.04 : 1.06) : 1,
+                    opacity: merging ? 0 : hierarchy ? 0.72 : 1,
+                    scale: merging
+                      ? 0.96
+                      : logoAwake
+                        ? highlight
+                          ? 1.04
+                          : 1.06
+                        : 1,
                   }
                 : { opacity: 0, scale: 0.95 }
             }
             transition={{
-              duration: reduced ? 0.01 : showLogo && scene === 1 ? 0.85 : 0.7,
+              duration: reduced
+                ? 0.01
+                : merging
+                  ? 1.6
+                  : showLogo && scene === 1
+                    ? 0.85
+                    : 0.7,
               ease: [0.22, 1, 0.36, 1],
             }}
           >
@@ -312,21 +339,35 @@ function HubStage({
                   animate={
                     showModules
                       ? {
-                          opacity: dimmed ? 0.7 : converging ? 0.92 : 1,
-                          scale: active
-                            ? 1.08
-                            : converging
-                              ? 0.94
-                              : dimmed
-                                ? 0.97
+                          opacity: merging
+                            ? 0
+                            : dimmed
+                              ? 0.7
+                              : converging
+                                ? 0.92
                                 : 1,
+                          scale: merging
+                            ? 0.55
+                            : active
+                              ? 1.08
+                              : converging
+                                ? 0.94
+                                : dimmed
+                                  ? 0.97
+                                  : 1,
                         }
                       : { opacity: 0, scale: 0.92 }
                   }
                   transition={{
-                    duration: reduced ? 0.01 : highlight ? 1.1 : 0.75,
+                    duration: reduced
+                      ? 0.01
+                      : merging
+                        ? 1.75
+                        : highlight
+                          ? 1.1
+                          : 0.75,
                     delay:
-                      reduced || hierarchy || !showModules
+                      reduced || hierarchy || !showModules || merging
                         ? 0
                         : 0.12 + index * 0.1,
                     ease: [0.22, 1, 0.36, 1],
@@ -419,6 +460,9 @@ export function LandingHubSection() {
   const [activeFilm, setActiveFilm] = useState<ActiveFilm>(null);
   const activeFilmRef = useRef<ActiveFilm>(null);
   const filmTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  /** Signature jouée une seule fois par chargement de page. */
+  const signaturePlayedRef = useRef(false);
+  const [signatureSealed, setSignatureSealed] = useState(false);
 
   const [pinMode, setPinMode] = useState<PinMode>("before");
   const pinModeRef = useRef<PinMode>("before");
@@ -481,8 +525,14 @@ export function LandingHubSection() {
       if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
       const ms = overrideMs ?? SCENE_LOCK_MS[sceneIndex] ?? 1200;
       lockTimerRef.current = setTimeout(() => {
-        // Films démo : unlock géré par onDemoComplete
-        if (sceneIndex === 3 || sceneIndex === 5 || sceneIndex === 7) return;
+        // Films démo / signature : unlock géré par onComplete
+        if (
+          sceneIndex === 3 ||
+          sceneIndex === 5 ||
+          sceneIndex === 7 ||
+          sceneIndex === 10
+        )
+          return;
         unlockScroll();
       }, ms);
     },
@@ -606,6 +656,39 @@ export function LandingHubSection() {
     startSceneLock(9, FIN_CONVERGE_MS);
   }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock]);
 
+  const onSignatureComplete = useCallback(() => {
+    if (sceneRef.current !== 10) return;
+    signaturePlayedRef.current = true;
+    setSignatureSealed(true);
+    setFilm("sealed");
+    filmLater(() => unlockScroll(), 400);
+  }, [setFilm, filmLater, unlockScroll]);
+
+  const startSignature = useCallback(() => {
+    clearFilmTimers();
+    setFilmKind(null);
+    setFocus(null);
+
+    if (signaturePlayedRef.current) {
+      setSignatureSealed(true);
+      setFilm("sealed");
+      startSceneLock(10, 600);
+      filmLater(() => unlockScroll(), 500);
+      return;
+    }
+
+    setFilm("signature");
+    startSceneLock(10, SIG_DEMO_SAFETY_MS);
+  }, [
+    clearFilmTimers,
+    setFilmKind,
+    setFocus,
+    setFilm,
+    startSceneLock,
+    filmLater,
+    unlockScroll,
+  ]);
+
   const applyIntent = useCallback(
     (direction: 1 | -1): "handled" | "exit" | "pass" => {
       if (!active) return "pass";
@@ -627,6 +710,7 @@ export function LandingHubSection() {
           else if (next === 7) startFinFilm();
           else if (next === 8) startFinReturn();
           else if (next === 9) startConverge();
+          else if (next === 10) startSignature();
           else startSceneLock(next);
           return "handled";
         }
@@ -661,6 +745,7 @@ export function LandingHubSection() {
       startFinFilm,
       startFinReturn,
       startConverge,
+      startSignature,
       exitHub,
       resetToEcosystem,
     ],
@@ -865,12 +950,21 @@ export function LandingHubSection() {
     activeFilm === "finance" &&
     (filmPhase === "demo" || filmPhase === "hold");
 
+  const signatureActive =
+    scene === 10 && filmPhase === "signature" && !signatureSealed;
+  const signatureVisible =
+    scene === 10 ||
+    (done && signatureSealed) ||
+    filmPhase === "sealed" ||
+    filmPhase === "signature";
+
   return (
     <section
       className={[
         "lp-hub",
         done ? "lp-hub--done" : "",
         pinMode === "pin" ? "lp-hub--pinned" : "",
+        signatureVisible ? "lp-hub--signature" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -881,6 +975,7 @@ export function LandingHubSection() {
       data-film-phase={filmPhase}
       data-focus={focusId ?? ""}
       data-active-film={activeFilm ?? ""}
+      data-signature={signatureSealed ? "sealed" : signatureActive ? "playing" : ""}
     >
       <h2 id="hub-title" className="sr-only">
         L’écosystème Batimum : MUM IA, Planning, Clients, Chantiers,
@@ -888,14 +983,21 @@ export function LandingHubSection() {
       </h2>
 
       {reduced ? (
-        <HubStatic />
+        <div className="lp-hub__resting lp-hub__resting--signature">
+          <HubSignaturePanel
+            active={false}
+            sealed
+            reduced
+            onComplete={() => {}}
+          />
+        </div>
       ) : done ? (
-        <div className="lp-hub__resting">
-          <HubStage
-            scene={9}
-            filmPhase="converge"
-            focusId={null}
-            reduced={reduced}
+        <div className="lp-hub__resting lp-hub__resting--signature">
+          <HubSignaturePanel
+            active={false}
+            sealed
+            reduced={false}
+            onComplete={() => {}}
           />
         </div>
       ) : (
@@ -914,6 +1016,7 @@ export function LandingHubSection() {
               filmPhase={filmPhase}
               focusId={focusId}
               reduced={reduced}
+              signatureMode={scene === 10}
             />
 
             <MumFilmShell phase={activeFilm === "mum" ? filmPhase : "idle"}>
@@ -944,6 +1047,15 @@ export function LandingHubSection() {
                 onDemoComplete={onFinDemoComplete}
               />
             </FinanceFilmShell>
+
+            {scene === 10 ? (
+              <HubSignaturePanel
+                active={signatureActive}
+                sealed={signatureSealed || filmPhase === "sealed"}
+                reduced={!!reduced}
+                onComplete={onSignatureComplete}
+              />
+            ) : null}
           </div>
         </div>
       )}
