@@ -4995,32 +4995,34 @@ html:has(.landing-emerald) body {
   left: 50%;
   z-index: 7;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
-  gap: 0.3rem;
-  max-width: calc(100% - 1.4rem);
+  gap: 0.22rem;
+  max-width: calc(100% - 1.2rem);
   transform: translateX(-50%);
   pointer-events: none;
+  overflow: hidden;
 }
 
 .landing-emerald .lp-hubMumSign__pipeline > span {
   display: inline-flex;
   align-items: center;
-  gap: 0.22rem;
-  padding: 0.22rem 0.5rem;
+  gap: 0.18rem;
+  padding: 0.2rem 0.42rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(17, 17, 17, 0.06);
   color: #999999;
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 650;
-  opacity: 0.45;
+  white-space: nowrap;
+  opacity: 0.4;
   transition:
-    opacity 520ms ease,
-    background 520ms ease,
-    color 520ms ease,
-    border-color 520ms ease,
-    box-shadow 520ms ease;
+    opacity 560ms ease,
+    background 560ms ease,
+    color 560ms ease,
+    border-color 560ms ease,
+    box-shadow 560ms ease;
 }
 
 .landing-emerald .lp-hubMumSign__pipeline > span.is-on {
