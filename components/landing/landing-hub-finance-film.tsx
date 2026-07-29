@@ -12,8 +12,8 @@ import { Check, LineChart, Receipt } from "lucide-react";
 import { animate, useMotionValue } from "framer-motion";
 
 export const FIN_HIGHLIGHT_MS = 900;
-export const FIN_ENTER_MS = 1600;
-export const FIN_RETURN_MS = 1500;
+export const FIN_ENTER_MS = 1750;
+export const FIN_RETURN_MS = 1700;
 export const FIN_CONVERGE_MS = 1800;
 export const FIN_DEMO_SAFETY_MS = 45000;
 

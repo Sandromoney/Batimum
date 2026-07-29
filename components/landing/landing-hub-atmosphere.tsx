@@ -127,8 +127,8 @@ function createParticles(w: number, h: number, count: number): Particle[] {
 }
 
 /**
- * Fond vivant du Hub — pointillisme froid, discret, jamais spatial.
- * Blanc / gris uniquement. Pas de vert, pas de bleu visible.
+ * Fond vivant du Hub — micro-points sur crème.
+ * Discret, technologique, jamais spatial / science-fiction.
  */
 export function HubAtmosphere({
   containerRef,
@@ -181,10 +181,10 @@ export function HubAtmosphere({
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      // Densité « milliers de micro-points » — très fins, presque imperceptibles
+      // Densité premium — milliers de micro-points sur fond crème
       const area = w * h;
-      const density = area < 500_000 ? 0.0016 : area < 1_000_000 ? 0.0019 : 0.0022;
-      const count = Math.min(2800, Math.max(900, Math.floor(area * density)));
+      const density = area < 500_000 ? 0.0021 : area < 1_000_000 ? 0.0025 : 0.0029;
+      const count = Math.min(3600, Math.max(1200, Math.floor(area * density)));
       particles = createParticles(w, h, count);
       clusters = [];
     };
@@ -198,14 +198,14 @@ export function HubAtmosphere({
 
     const spawnCluster = (now: number) => {
       if (clusters.length >= 2) return;
-      if (now - lastClusterAt < 5200 + Math.random() * 4000) return;
+      if (now - lastClusterAt < 6400 + Math.random() * 5200) return;
       lastClusterAt = now;
-      const maxLife = 2800 + Math.random() * 2200;
+      const maxLife = 3400 + Math.random() * 2800;
       clusters.push({
         cx: w * (0.28 + Math.random() * 0.44),
         cy: h * (0.25 + Math.random() * 0.5),
         angle: Math.random() * Math.PI * 2,
-        radius: 36 + Math.random() * 54,
+        radius: 42 + Math.random() * 68,
         strength: 0,
         life: 0,
         maxLife,
@@ -293,13 +293,14 @@ export function HubAtmosphere({
 
         const parx = mx * (2.4 + p.z * 4.5);
         const pary = my * (1.8 + p.z * 3.5);
-        const alpha = Math.min(0.22, p.opacity);
-        if (alpha < 0.015) continue;
+        const alpha = Math.min(0.2, p.opacity * 0.92);
+        if (alpha < 0.012) continue;
 
-        const gray = 175 + Math.floor(p.z * 35);
+        // Gris chaud discret sur crème — jamais froid / spatial
+        const g = 148 + Math.floor(p.z * 28);
         ctx.beginPath();
-        ctx.fillStyle = `rgba(${gray}, ${gray + 1}, ${gray + 3}, ${alpha})`;
-        ctx.arc(p.x + parx, p.y + pary, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${g}, ${g - 1}, ${g - 4}, ${alpha})`;
+        ctx.arc(p.x + parx, p.y + pary, p.r * 0.92, 0, Math.PI * 2);
         ctx.fill();
       }
 

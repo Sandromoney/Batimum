@@ -21,14 +21,18 @@ const MICRO_LINES = [
 /** Index discret : 0 = titre, 1–5 = micros, 6 = perdu, 7 = pour toujours, 8 = final */
 const LAST_STEP = 8;
 
-const TRANSITION_S = 0.42;
-const LOCK_MS = 820;
-const WHEEL_THRESHOLD = 42;
+const TRANSITION_S = 0.55;
+/** Seuil d’une intention molette (un geste, une étape). */
+const WHEEL_THRESHOLD = 40;
 const TOUCH_THRESHOLD = 52;
 const ENGAGE_GRACE_MS = 280;
-/** Fin d’inertie trackpad avant la prochaine intention molette */
-const WHEEL_SETTLE_MS = 160;
-const WHEEL_SETTLE_DELTA = 3.5;
+/**
+ * Réarmement uniquement après silence molette — jamais sur chronomètre.
+ * Empêche l’inertie trackpad de compter comme un second geste.
+ */
+const WHEEL_QUIET_MS = 200;
+/** Verrou visuel pendant la transition Framer (pas un auto-avance). */
+const VISUAL_LOCK_MS = Math.round(TRANSITION_S * 1000) + 120;
 
 const STEP_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -232,13 +236,18 @@ export function LandingPainSection() {
     setActiveStep(clamped);
   }, []);
 
-  const armWheelAfterSettle = useCallback(() => {
+  /** Réarme la molette seulement après silence + fin de transition visuelle. */
+  const scheduleWheelRearm = useCallback(() => {
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     settleTimerRef.current = setTimeout(() => {
+      if (isTransitioningRef.current) {
+        scheduleWheelRearm();
+        return;
+      }
       wheelArmedRef.current = true;
       deltaAccumRef.current = 0;
       settleTimerRef.current = null;
-    }, WHEEL_SETTLE_MS);
+    }, WHEEL_QUIET_MS);
   }, []);
 
   const startLock = useCallback(() => {
@@ -249,10 +258,10 @@ export function LandingPainSection() {
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     lockTimerRef.current = setTimeout(() => {
       isTransitioningRef.current = false;
-      // La molette ne se réarme qu’après fin d’inertie (voir onWheel)
-      armWheelAfterSettle();
-    }, LOCK_MS);
-  }, [armWheelAfterSettle]);
+      // Pas d’auto-réarmement temporel : attendre le silence du geste
+      scheduleWheelRearm();
+    }, VISUAL_LOCK_MS);
+  }, [scheduleWheelRearm]);
 
   const exitToCompact = useCallback(() => {
     if (storyCompletedRef.current) return;
@@ -336,7 +345,7 @@ export function LandingPainSection() {
     };
   }, [playing]);
 
-  /** Molette / trackpad : une intention = une étape */
+  /** Molette / trackpad : une intention = une étape (jamais multi-saut). */
   useEffect(() => {
     if (!playing) return;
 
@@ -349,18 +358,11 @@ export function LandingPainSection() {
         return;
       }
 
-      // Verrou lecture + inertie : une seule étape par geste
+      // Geste déjà consommé ou transition visuelle : absorber l’inertie
       if (isTransitioningRef.current || !wheelArmedRef.current) {
         event.preventDefault();
         deltaAccumRef.current = 0;
-        if (!isTransitioningRef.current) {
-          // Après le verrou temporel, attendre la fin réelle du geste / inertie
-          if (Math.abs(event.deltaY) > WHEEL_SETTLE_DELTA) {
-            armWheelAfterSettle();
-          } else {
-            armWheelAfterSettle();
-          }
-        }
+        scheduleWheelRearm();
         return;
       }
 
@@ -382,14 +384,18 @@ export function LandingPainSection() {
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [playing, applyIntent, armWheelAfterSettle]);
+  }, [playing, applyIntent, scheduleWheelRearm]);
 
-  /** Clavier */
+  /** Clavier : une touche = une étape (ignorer les répétitions auto). */
   useEffect(() => {
     if (!playing) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (pinModeRef.current !== "pin") return;
+      if (event.repeat) {
+        event.preventDefault();
+        return;
+      }
       const key = event.key;
       let direction: 1 | -1 | null = null;
 
@@ -406,7 +412,6 @@ export function LandingPainSection() {
 
       if (!direction) return;
 
-      // Éviter de voler Space hors contexte de page
       if (
         (key === " " || key === "Spacebar") &&
         event.target instanceof HTMLElement &&

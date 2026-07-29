@@ -1,10 +1,9 @@
 "use client";
 
 /**
- * Parcours signature post-devis — fidèle au logiciel réel :
- * « Envoyer au client » → email « Votre devis - Batimum »
- * → page /signature → « Signer le devis » → « Valider ma signature »
- * → statut Envoyé → Signé (pas de statut « Consulté » dans Batimum).
+ * Parcours signature post-devis — rythme lent, lisible.
+ * Libellés film : Consulter mon devis / Signer électroniquement
+ * Statuts narratifs : Envoyé → Consulté → Signé → Commande confirmée
  */
 
 import { Check, FileText, Mail, MousePointer2 } from "lucide-react";
@@ -14,23 +13,39 @@ export type MumSignBeat =
   | "send"
   | "sending"
   | "mail"
-  | "click"
+  | "openMail"
+  | "consult"
   | "page"
+  | "scroll"
+  | "hoverSign"
+  | "signModal"
   | "draw"
   | "validate"
-  | "signed"
+  | "validating"
+  | "pipeline"
   | "back";
 
 const SIGN_LINES = [
+  { label: "Dépose douche existante", qty: "1" },
   { label: "Douche à l'italienne 120 × 90 cm", qty: "1" },
   { label: "Meuble double vasque 120 cm", qty: "1" },
   { label: "Faïence murale 30 × 60", qty: "42" },
   { label: "Carrelage sol", qty: "18" },
+  { label: "Alimentations PER", qty: "1" },
+  { label: "Évacuations PVC", qty: "1" },
+  { label: "Sèche-serviettes", qty: "1" },
+  { label: "Peinture plafond", qty: "18" },
 ] as const;
 
-const PRICE_MASK = "···";
+const PRICE_MASK = "•••";
 
-/** Signature manuscrite générique (aucune personne réelle). */
+const PIPELINE = [
+  "Envoyé",
+  "Consulté",
+  "Signé",
+  "Commande confirmée",
+] as const;
+
 function GenericSignature({ drawing }: { drawing: boolean }) {
   return (
     <svg
@@ -62,25 +77,63 @@ function GenericSignature({ drawing }: { drawing: boolean }) {
   );
 }
 
+function pipelineIndex(beat: MumSignBeat): number {
+  if (beat === "back") return 3;
+  if (beat === "pipeline") return 3;
+  if (
+    beat === "page" ||
+    beat === "scroll" ||
+    beat === "hoverSign" ||
+    beat === "signModal" ||
+    beat === "draw" ||
+    beat === "validate" ||
+    beat === "validating"
+  ) {
+    return 1; // Consulté
+  }
+  if (beat === "sending" || beat === "mail" || beat === "openMail" || beat === "consult") {
+    return 0; // Envoyé
+  }
+  return -1;
+}
+
 export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
   if (beat === "idle") return null;
 
   const showMail =
     beat === "mail" ||
-    beat === "click" ||
-    beat === "page" ||
-    beat === "draw" ||
-    beat === "validate" ||
-    beat === "signed";
+    beat === "openMail" ||
+    beat === "consult";
   const showPage =
     beat === "page" ||
+    beat === "scroll" ||
+    beat === "hoverSign" ||
+    beat === "signModal" ||
     beat === "draw" ||
     beat === "validate" ||
-    beat === "signed";
-  const drawing = beat === "draw" || beat === "validate" || beat === "signed";
-  const validated = beat === "validate" || beat === "signed";
-  const done = beat === "signed" || beat === "back";
-  const showCursor = beat === "click" || beat === "page" || beat === "draw";
+    beat === "validating" ||
+    beat === "pipeline";
+  const showModal =
+    beat === "signModal" ||
+    beat === "draw" ||
+    beat === "validate" ||
+    beat === "validating" ||
+    beat === "pipeline";
+  const drawing =
+    beat === "draw" ||
+    beat === "validate" ||
+    beat === "validating" ||
+    beat === "pipeline";
+  const validated =
+    beat === "validate" || beat === "validating" || beat === "pipeline";
+  const pipeIdx = pipelineIndex(beat);
+  const showCursor =
+    beat === "openMail" ||
+    beat === "consult" ||
+    beat === "scroll" ||
+    beat === "hoverSign" ||
+    beat === "signModal" ||
+    beat === "draw";
 
   return (
     <div
@@ -88,24 +141,34 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
         "lp-hubMumSign",
         "is-on",
         beat === "back" ? "is-back" : "",
+        beat === "scroll" ? "is-scrolling" : "",
       ]
         .filter(Boolean)
         .join(" ")}
       aria-hidden="true"
     >
-      {(beat === "sending" || beat === "back") && (
-        <div className="lp-hubMumSign__statusRail">
-          <span
-            className={[
-              "lp-hubMumSign__statut",
-              beat === "back" ? "is-signe" : "is-envoye",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-          >
-            {beat === "back" ? "Signé" : "Envoyé"}
-            {beat === "back" ? <Check size={11} strokeWidth={2.6} /> : null}
-          </span>
+      {(beat === "sending" ||
+        beat === "mail" ||
+        beat === "openMail" ||
+        beat === "consult" ||
+        showPage ||
+        beat === "back") && (
+        <div className="lp-hubMumSign__pipeline">
+          {PIPELINE.map((label, i) => (
+            <span
+              key={label}
+              className={[
+                i <= pipeIdx ? "is-on" : "",
+                i === pipeIdx ? "is-current" : "",
+                i < pipeIdx ? "is-done" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {i < pipeIdx ? <Check size={10} strokeWidth={2.6} /> : null}
+              {label}
+            </span>
+          ))}
         </div>
       )}
 
@@ -129,11 +192,11 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
         </div>
       )}
 
-      {showMail && !showPage ? (
+      {showMail ? (
         <div
           className={[
             "lp-hubMumSign__mail",
-            beat === "click" ? "is-open" : "is-on",
+            beat === "openMail" || beat === "consult" ? "is-open" : "is-on",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -143,13 +206,20 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
             <span>Boîte de réception</span>
           </div>
           <ul className="lp-hubMumSign__inbox">
-            <li className="is-new is-focus">
+            <li
+              className={[
+                "is-new",
+                beat === "openMail" || beat === "consult" ? "is-focus" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
               <span className="lp-hubMumSign__dot" />
               <div>
                 <p className="lp-hubMumSign__from">Batimum</p>
                 <p className="lp-hubMumSign__subject">Votre devis - Batimum</p>
                 <p className="lp-hubMumSign__preview">
-                  Signez votre devis en ligne — Salle de bain · 18 m²
+                  Salle de bain · 18 m² — consultez et signez en ligne
                 </p>
               </div>
             </li>
@@ -160,19 +230,27 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
               </div>
             </li>
           </ul>
-          {beat === "click" ? (
+          {(beat === "openMail" || beat === "consult") && (
             <div className="lp-hubMumSign__mailBody is-on">
               <p className="lp-hubMumSign__mailGreeting">
                 Bonjour Famille Martin,
               </p>
               <p className="lp-hubMumSign__mailText">
-                Veuillez trouver ci-joint le devis pour Salle de bain · 18 m².
+                Votre devis pour la salle de bain · 18 m² est prêt. Consultez
+                le détail, puis signez électroniquement.
               </p>
-              <span className="lp-hubMumSign__mailCta is-focus">
-                Signer le devis
+              <span
+                className={[
+                  "lp-hubMumSign__mailCta",
+                  beat === "consult" ? "is-focus" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                Consulter mon devis
               </span>
             </div>
-          ) : null}
+          )}
         </div>
       ) : null}
 
@@ -180,26 +258,35 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
         <div
           className={[
             "lp-hubMumSign__page",
-            done ? "is-done" : "is-on",
+            "is-on",
+            beat === "pipeline" ? "is-done" : "",
           ]
             .filter(Boolean)
             .join(" ")}
         >
-          {done ? (
+          {beat === "pipeline" ? (
             <div className="lp-hubMumSign__success">
               <Check size={22} strokeWidth={2.2} />
-              <p>Devis signé</p>
-              <span>Le statut est mis à jour automatiquement.</span>
+              <p>Commande confirmée</p>
+              <span>Le devis est mis à jour dans Batimum.</span>
             </div>
           ) : (
             <>
               <header className="lp-hubMumSign__pageHead">
-                <p className="lp-hubMumSign__eyebrow">Signature électronique</p>
+                <p className="lp-hubMumSign__eyebrow">Consultation du devis</p>
                 <h4>Devis DEV-2026-0142</h4>
                 <p>Émis par Batimum — Famille Martin</p>
               </header>
 
-              <div className="lp-hubMumSign__card">
+              <div
+                className={[
+                  "lp-hubMumSign__card",
+                  "lp-hubMumSign__scrollArea",
+                  beat === "scroll" ? "is-scrolled" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
                 <div className="lp-hubMumSign__metaRow">
                   <div>
                     <span>Client</span>
@@ -220,36 +307,70 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
                     </li>
                   ))}
                 </ul>
-              </div>
-
-              <div className="lp-hubMumSign__card lp-hubMumSign__signCard">
-                <div className="lp-hubMumSign__signHead">
-                  <FileText size={14} strokeWidth={1.8} />
+                <div className="lp-hubMumSign__pageTotals">
                   <div>
-                    <strong>Signer le devis</strong>
-                    <p>
-                      Dessinez votre signature ci-dessous pour accepter ce devis.
-                    </p>
+                    <span>Sous-total HT</span>
+                    <b>{PRICE_MASK}</b>
+                  </div>
+                  <div>
+                    <span>TVA</span>
+                    <b>{PRICE_MASK}</b>
+                  </div>
+                  <div className="is-grand">
+                    <span>Total TTC</span>
+                    <b>{PRICE_MASK}</b>
                   </div>
                 </div>
-                <div className="lp-hubMumSign__pad">
-                  <GenericSignature drawing={drawing} />
-                </div>
-                <button
-                  type="button"
-                  className={[
-                    "lp-hubMumSign__validate",
-                    validated ? "is-pressed" : drawing ? "is-on" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  tabIndex={-1}
-                >
-                  Valider ma signature
-                </button>
               </div>
+
+              <button
+                type="button"
+                className={[
+                  "lp-hubMumSign__signCta",
+                  beat === "hoverSign" || showModal ? "is-focus" : "",
+                  showModal ? "is-pressed" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                tabIndex={-1}
+              >
+                Signer électroniquement
+              </button>
             </>
           )}
+        </div>
+      ) : null}
+
+      {showModal && beat !== "pipeline" ? (
+        <div className="lp-hubMumSign__modal is-on">
+          <div className="lp-hubMumSign__modalCard">
+            <div className="lp-hubMumSign__signHead">
+              <FileText size={14} strokeWidth={1.8} />
+              <div>
+                <strong>Signer le devis</strong>
+                <p>
+                  Dessinez votre signature ci-dessous pour accepter ce devis.
+                </p>
+              </div>
+            </div>
+            <div className="lp-hubMumSign__pad">
+              <GenericSignature drawing={drawing} />
+            </div>
+            <button
+              type="button"
+              className={[
+                "lp-hubMumSign__validate",
+                drawing ? "is-on" : "",
+                validated ? "is-pressed" : "",
+                beat === "validating" ? "is-busy" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              tabIndex={-1}
+            >
+              {beat === "validating" ? "Validation…" : "Valider ma signature"}
+            </button>
+          </div>
         </div>
       ) : null}
 
@@ -257,9 +378,11 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
         <span
           className={[
             "lp-hubMumSign__cursor",
-            beat === "click" ? "is-mail" : "",
-            beat === "page" ? "is-cta" : "",
-            beat === "draw" ? "is-pad" : "",
+            beat === "openMail" ? "is-mail" : "",
+            beat === "consult" ? "is-cta" : "",
+            beat === "scroll" ? "is-scroll" : "",
+            beat === "hoverSign" ? "is-signCta" : "",
+            beat === "signModal" || beat === "draw" ? "is-pad" : "",
           ]
             .filter(Boolean)
             .join(" ")}

@@ -167,7 +167,8 @@ const SCENE_LOCK_MS = [
 
 const WHEEL_THRESHOLD = 44;
 const TOUCH_THRESHOLD = 54;
-const WHEEL_SETTLE_MS = 160;
+/** Réarmement uniquement après silence molette (anti multi-saut inertie). */
+const WHEEL_QUIET_MS = 200;
 const ENGAGE_GRACE_MS = 280;
 
 type PinMode = "before" | "pin";
@@ -556,19 +557,23 @@ export function LandingHubSection() {
     setActiveFilm(kind);
   }, []);
 
-  const armWheelAfterSettle = useCallback(() => {
+  const scheduleWheelRearm = useCallback(() => {
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     settleTimerRef.current = setTimeout(() => {
+      if (isPlayingRef.current) {
+        scheduleWheelRearm();
+        return;
+      }
       wheelArmedRef.current = true;
       deltaAccumRef.current = 0;
       settleTimerRef.current = null;
-    }, WHEEL_SETTLE_MS);
+    }, WHEEL_QUIET_MS);
   }, []);
 
   const unlockScroll = useCallback(() => {
     isPlayingRef.current = false;
-    armWheelAfterSettle();
-  }, [armWheelAfterSettle]);
+    scheduleWheelRearm();
+  }, [scheduleWheelRearm]);
 
   const startSceneLock = useCallback(
     (sceneIndex: number, overrideMs?: number) => {
@@ -876,7 +881,7 @@ export function LandingHubSection() {
       if (isPlayingRef.current || !wheelArmedRef.current) {
         event.preventDefault();
         deltaAccumRef.current = 0;
-        if (!isPlayingRef.current) armWheelAfterSettle();
+        if (!isPlayingRef.current) scheduleWheelRearm();
         return;
       }
 
@@ -896,7 +901,7 @@ export function LandingHubSection() {
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [active, applyIntent, armWheelAfterSettle]);
+  }, [active, applyIntent, scheduleWheelRearm]);
 
   useEffect(() => {
     if (!active) return;
@@ -999,7 +1004,7 @@ export function LandingHubSection() {
       if (hubTop < vh * 0.92) {
         const t = Math.min(1, Math.max(0, (vh * 0.92 - hubTop) / (vh * 0.55)));
         compact.style.opacity = String(1 - t);
-        compact.style.transition = "opacity 0.05s linear";
+        compact.style.transition = "opacity 0.35s ease";
       } else {
         compact.style.opacity = "1";
       }

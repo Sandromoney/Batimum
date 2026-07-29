@@ -22,8 +22,8 @@ import {
 } from "lucide-react";
 
 export const CLIENTS_HIGHLIGHT_MS = 900;
-export const CLIENTS_ENTER_MS = 1600;
-export const CLIENTS_RETURN_MS = 1500;
+export const CLIENTS_ENTER_MS = 1750;
+export const CLIENTS_RETURN_MS = 1700;
 export const CLIENTS_DEMO_SAFETY_MS = 28000;
 
 type ClientsBeat =

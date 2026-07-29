@@ -9,8 +9,8 @@ import {
 import { Calendar, Check, HardHat, MapPin, User } from "lucide-react";
 
 export const CHANTIER_HIGHLIGHT_MS = 900;
-export const CHANTIER_ENTER_MS = 1600;
-export const CHANTIER_RETURN_MS = 1500;
+export const CHANTIER_ENTER_MS = 1750;
+export const CHANTIER_RETURN_MS = 1700;
 export const CHANTIER_DEMO_SAFETY_MS = 32000;
 
 type ChantierBeat =
