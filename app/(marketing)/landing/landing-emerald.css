@@ -3897,9 +3897,9 @@ html:has(.landing-emerald) body {
   justify-content: center;
   padding: clamp(4.5rem, 9vh, 6.5rem) clamp(1rem, 3vw, 2.5rem);
   box-sizing: border-box;
+  /* Léger wash seulement — laisser respirer les micro-points */
   background:
-    radial-gradient(980px 560px at 50% 40%, rgba(255, 255, 255, 0.7), transparent 68%),
-    radial-gradient(720px 420px at 78% 18%, rgba(232, 228, 220, 0.5), transparent 60%),
+    radial-gradient(900px 520px at 50% 42%, rgba(255, 255, 255, 0.18), transparent 70%),
     var(--hub-cream);
   z-index: 2;
   overflow: hidden;
@@ -3924,10 +3924,12 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-hub__atmosphere--static {
   background-image:
-    radial-gradient(circle at 18% 24%, rgba(17, 17, 17, 0.02) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 72% 38%, rgba(17, 17, 17, 0.015) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 44% 78%, rgba(17, 17, 17, 0.018) 0 1px, transparent 1.5px);
-  background-size: 120px 120px, 160px 160px, 200px 200px;
+    radial-gradient(circle, rgba(55, 48, 40, 0.14) 0 0.7px, transparent 1.1px),
+    radial-gradient(circle, rgba(55, 48, 40, 0.09) 0 0.55px, transparent 0.95px),
+    radial-gradient(circle, rgba(55, 48, 40, 0.07) 0 0.45px, transparent 0.85px);
+  background-size: 14px 14px, 22px 22px, 34px 34px;
+  background-position: 0 0, 7px 11px, 15px 4px;
+  opacity: 0.85;
 }
 
 .landing-emerald .lp-hub__resting,
@@ -4412,7 +4414,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-hubMum.is-entering,
 .landing-emerald .lp-hubMum.is-inside {
-  transform: scale(1);
+  transform: scale(1.035) translate(0.4%, 0.6%);
 }
 
 .landing-emerald .lp-hubMum.is-returning {
@@ -4483,8 +4485,9 @@ html:has(.landing-emerald) body {
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.03),
     0 2px 8px -4px rgba(15, 23, 42, 0.05);
-  overflow: auto;
+  overflow: hidden;
   min-height: 0;
+  position: relative;
 }
 
 .landing-emerald .lp-hubMum__uiHead {
@@ -5057,12 +5060,12 @@ html:has(.landing-emerald) body {
 .landing-emerald .lp-hubMumSign__scrollArea .lp-hubMumSign__detail,
 .landing-emerald .lp-hubMumSign__scrollArea .lp-hubMumSign__pageTotals {
   transform: translateY(0);
-  transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 2.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .landing-emerald .lp-hubMumSign.is-scrolling .lp-hubMumSign__scrollArea .lp-hubMumSign__detail,
 .landing-emerald .lp-hubMumSign.is-scrolling .lp-hubMumSign__scrollArea .lp-hubMumSign__pageTotals {
-  transform: translateY(-2.4rem);
+  transform: translateY(-4.2rem);
 }
 
 .landing-emerald .lp-hubMumSign__pageTotals {
@@ -5641,6 +5644,94 @@ html:has(.landing-emerald) body {
   opacity: 0.35;
 }
 
+.landing-emerald .lp-hubMumSign__cursor.is-send {
+  left: 62%;
+  top: 78%;
+}
+
+.landing-emerald .lp-hubMumSign__cursor.is-validate {
+  left: 58%;
+  top: 78%;
+  opacity: 0.92;
+}
+
+.landing-emerald .lp-hubMumSign__cursor.is-click {
+  transform: scale(0.88);
+  transition:
+    left 480ms cubic-bezier(0.22, 1, 0.36, 1),
+    top 480ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 280ms ease,
+    transform 160ms ease;
+}
+
+/* Curseur film partagé (Planning / Clients / Chantiers / Finance) */
+.landing-emerald .lp-hubFilm__cursor {
+  position: absolute;
+  z-index: 9;
+  left: 48%;
+  top: 42%;
+  color: #111111;
+  filter: drop-shadow(0 2px 4px rgba(17, 17, 17, 0.18));
+  transition:
+    left 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    top 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 280ms ease,
+    transform 180ms ease;
+  opacity: 0.92;
+  pointer-events: none;
+  display: inline-flex;
+}
+
+.landing-emerald .lp-hubFilm__cursor.is-planAssign {
+  left: 18%;
+  top: 52%;
+}
+
+.landing-emerald .lp-hubFilm__cursor.is-planAlert {
+  left: 42%;
+  top: 78%;
+}
+
+.landing-emerald .lp-hubFilm__cursor.is-planResolve {
+  left: 22%;
+  top: 54%;
+}
+
+.landing-emerald .lp-hubFilm__cursor.is-planStatus {
+  left: 20%;
+  top: 58%;
+}
+
+.landing-emerald .lp-hubFilm__cursor.is-clientsRow {
+  left: 28%;
+  top: 38%;
+}
+
+.landing-emerald .lp-hubFilm__cursor.is-clientsFiche {
+  left: 55%;
+  top: 36%;
+}
+
+.landing-emerald .lp-hubFilm__cursor.is-chantierStep {
+  left: 62%;
+  top: 58%;
+}
+
+.landing-emerald .lp-hubFilm__cursor.is-finPay {
+  left: 68%;
+  top: 48%;
+}
+
+.landing-emerald .lp-hubFilm__cursor.is-mumMic {
+  left: 78%;
+  top: 28%;
+}
+
+.landing-emerald .lp-hubFilm__cursor.is-mumReady {
+  left: 52%;
+  top: 86%;
+}
+
 @media (max-width: 899px) {
   .landing-emerald .lp-hubMum__panel {
     grid-template-columns: 1fr;
@@ -5839,7 +5930,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-hubPlan.is-entering,
 .landing-emerald .lp-hubPlan.is-inside {
-  transform: scale(1);
+  transform: scale(1.03) translate(-0.5%, 0.5%);
 }
 
 .landing-emerald .lp-hubPlan.is-returning {
@@ -5909,7 +6000,7 @@ html:has(.landing-emerald) body {
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.03),
     0 2px 8px -4px rgba(15, 23, 42, 0.05);
-  overflow: auto;
+  overflow: hidden;
   min-height: 0;
   position: relative;
 }
@@ -5963,29 +6054,189 @@ html:has(.landing-emerald) body {
   border: 1px dashed rgba(17, 17, 17, 0.08);
 }
 
-.landing-emerald .lp-hubPlan__board {
-  position: relative;
+.landing-emerald .lp-hubPlan__team {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.4rem;
+  margin-bottom: 0.1rem;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 480ms ease,
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubPlan__team.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-emerald .lp-hubPlan__teamLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #888888;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.landing-emerald .lp-hubPlan__team ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.landing-emerald .lp-hubPlan__team li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.38rem 0.55rem;
+  border-radius: 999px;
+  background: #f4f5f7;
+  border: 1px solid rgba(17, 17, 17, 0.06);
+  transition:
+    background 320ms ease,
+    border-color 320ms ease,
+    box-shadow 320ms ease;
+}
+
+.landing-emerald .lp-hubPlan__team li.is-focus {
+  background: #ffffff;
+  border-color: rgba(17, 17, 17, 0.16);
+  box-shadow: 0 0 0 1px rgba(17, 17, 17, 0.04);
+}
+
+.landing-emerald .lp-hubPlan__team li.is-off.is-focus {
+  background: #fff6f1;
+  border-color: rgba(181, 106, 74, 0.28);
+}
+
+.landing-emerald .lp-hubPlan__teamDot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #171717;
+  flex-shrink: 0;
+}
+
+.landing-emerald .lp-hubPlan__team li.is-off .lp-hubPlan__teamDot {
+  background: #b56a4a;
+}
+
+.landing-emerald .lp-hubPlan__team li.is-busy .lp-hubPlan__teamDot {
+  background: #888888;
+}
+
+.landing-emerald .lp-hubPlan__team li strong {
+  color: #111111;
+  font-size: 0.74rem;
+  font-weight: 650;
+}
+
+.landing-emerald .lp-hubPlan__team li em {
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  background: rgba(17, 17, 17, 0.06);
+  color: #222222;
+}
+
+.landing-emerald .lp-hubPlan__team li.is-busy em {
+  background: rgba(17, 17, 17, 0.05);
+  color: #666666;
+}
+
+.landing-emerald .lp-hubPlan__team li.is-off em {
+  background: rgba(181, 106, 74, 0.12);
+  color: #8a4f38;
+}
+
+.landing-emerald .lp-hubPlan__week {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.4rem;
   min-height: 12rem;
+  padding: 0.45rem;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f7f8fa 0%, #f3f4f6 100%);
+  border: 1px solid rgba(17, 17, 17, 0.06);
+}
+
+.landing-emerald .lp-hubPlan__col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 11rem;
+  padding: 0.4rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(17, 17, 17, 0.04);
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 480ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubPlan__col.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-emerald .lp-hubPlan__colHead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.1rem 0.15rem 0.25rem;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.05);
+}
+
+.landing-emerald .lp-hubPlan__colHead span {
+  color: #888888;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.landing-emerald .lp-hubPlan__colHead em {
+  color: #111111;
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.landing-emerald .lp-hubPlan__colBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
 }
 
 .landing-emerald .lp-hubPlan__job {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.35rem 0.75rem;
-  padding: 0.7rem 0.85rem;
-  border-radius: 14px;
-  background: #f7f8fa;
-  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 9px;
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.06);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
   opacity: 0;
-  transform: translateY(12px);
+  transform: translateY(8px);
   transition:
     opacity 480ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 480ms cubic-bezier(0.22, 1, 0.36, 1),
-    background 400ms ease,
-    border-color 400ms ease,
-    box-shadow 400ms ease;
+    border-color 350ms ease,
+    background 350ms ease,
+    box-shadow 350ms ease;
 }
 
 .landing-emerald .lp-hubPlan__job.is-on {
@@ -5993,50 +6244,48 @@ html:has(.landing-emerald) body {
   transform: translateY(0);
 }
 
-.landing-emerald .lp-hubPlan__job.is-moved {
-  transform: translateY(0) scale(1.01);
-  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.05);
-}
-
 .landing-emerald .lp-hubPlan__job.is-conflict {
   background: #fff8f4;
-  border-color: rgba(181, 106, 74, 0.28);
+  border-color: rgba(181, 106, 74, 0.3);
 }
 
 .landing-emerald .lp-hubPlan__job.is-resolved {
-  background: #f6f7f9;
+  background: #f7f8fa;
   border-color: rgba(17, 17, 17, 0.1);
+  box-shadow: 0 4px 12px rgba(17, 17, 17, 0.04);
+}
+
+.landing-emerald .lp-hubPlan__jobSlot {
+  margin: 0;
+  color: #888888;
+  font-size: 0.62rem;
+  font-weight: 650;
 }
 
 .landing-emerald .lp-hubPlan__jobTitle {
   margin: 0;
   color: #111111;
-  font-size: 0.9rem;
-  font-weight: 650;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .landing-emerald .lp-hubPlan__jobClient {
-  margin: 0.15rem 0 0;
-  color: #666666;
-  font-size: 0.78rem;
+  margin: 0;
+  color: #777777;
+  font-size: 0.62rem;
 }
 
 .landing-emerald .lp-hubPlan__status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  justify-self: end;
-  align-self: start;
-  padding: 0.28rem 0.55rem;
+  align-self: flex-start;
+  margin-top: 0.2rem;
+  padding: 0.12rem 0.4rem;
   border-radius: 999px;
   background: rgba(17, 17, 17, 0.05);
   color: #666666;
-  font-size: 0.68rem;
-  font-weight: 650;
-  letter-spacing: 0.02em;
-  transition:
-    background 350ms ease,
-    color 350ms ease;
+  font-size: 0.58rem;
+  font-weight: 700;
+  transition: background 350ms ease, color 350ms ease;
 }
 
 .landing-emerald .lp-hubPlan__status.is-progress {
@@ -6044,58 +6293,40 @@ html:has(.landing-emerald) body {
   color: #111111;
 }
 
-.landing-emerald .lp-hubPlan__status.is-done {
-  background: rgba(17, 17, 17, 0.05);
-  color: #111111;
-}
-
 .landing-emerald .lp-hubPlan__emp {
-  grid-column: 1 / -1;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.3rem;
   margin-top: 0.15rem;
-  color: #111111;
-  font-size: 0.78rem;
-  font-weight: 550;
+  color: #222222;
+  font-size: 0.64rem;
+  font-weight: 650;
   opacity: 0;
-  transform: translateX(-10px);
+  transform: translateY(4px);
   transition:
-    opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
-  position: relative;
+    opacity 400ms ease,
+    transform 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 300ms ease;
 }
 
 .landing-emerald .lp-hubPlan__emp.is-on {
   opacity: 1;
-  transform: translateX(0);
+  transform: translateY(0);
+}
+
+.landing-emerald .lp-hubPlan__emp.is-bad {
+  color: #8a4f38;
+}
+
+.landing-emerald .lp-hubPlan__emp.is-ok {
+  color: #111111;
 }
 
 .landing-emerald .lp-hubPlan__empDot {
-  width: 0.55rem;
-  height: 0.55rem;
+  width: 0.4rem;
+  height: 0.4rem;
   border-radius: 999px;
-  background: #171717;
-}
-
-.landing-emerald .lp-hubPlan__link {
-  position: absolute;
-  left: 1.4rem;
-  right: 0.5rem;
-  top: 50%;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(17, 17, 17, 0.18), transparent);
-  opacity: 0;
-  transform: scaleX(0.4);
-  transform-origin: left center;
-  transition:
-    opacity 450ms ease,
-    transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.landing-emerald .lp-hubPlan__link.is-on {
-  opacity: 1;
-  transform: scaleX(1);
+  background: currentColor;
 }
 
 .landing-emerald .lp-hubPlan__alert {
@@ -6221,7 +6452,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-hubClients.is-entering,
 .landing-emerald .lp-hubClients.is-inside {
-  transform: scale(1);
+  transform: scale(1.03) translate(0.3%, 0.4%);
 }
 
 .landing-emerald .lp-hubClients.is-returning {
@@ -6291,7 +6522,8 @@ html:has(.landing-emerald) body {
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.03),
     0 8px 24px -12px rgba(15, 23, 42, 0.08);
-  overflow: auto;
+  overflow: hidden;
+  position: relative;
 }
 
 .landing-emerald .lp-hubClients__uiHead {
@@ -6553,7 +6785,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-hubChantier.is-entering,
 .landing-emerald .lp-hubChantier.is-inside {
-  transform: scale(1);
+  transform: scale(1.035) translate(-0.2%, 0.55%);
 }
 
 .landing-emerald .lp-hubChantier.is-returning {
@@ -6623,7 +6855,8 @@ html:has(.landing-emerald) body {
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.03),
     0 8px 24px -12px rgba(15, 23, 42, 0.08);
-  overflow: auto;
+  overflow: hidden;
+  position: relative;
 }
 
 .landing-emerald .lp-hubChantier__uiHead {
@@ -6703,22 +6936,51 @@ html:has(.landing-emerald) body {
   gap: 0.4rem;
 }
 
-.landing-emerald .lp-hubChantier__photos span {
-  display: block;
+.landing-emerald .lp-hubChantier__photo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   aspect-ratio: 4 / 3;
   border-radius: 10px;
-  background:
-    linear-gradient(145deg, #e8eaee 0%, #d5d9e0 55%, #cfd4dc 100%);
+  overflow: hidden;
+  border: 1px solid rgba(17, 17, 17, 0.06);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.landing-emerald .lp-hubChantier__photos span:nth-child(2) {
-  background:
-    linear-gradient(160deg, #dde2e8 0%, #c9cfd8 60%, #bfc5cf 100%);
+.landing-emerald .lp-hubChantier__photo span {
+  position: relative;
+  z-index: 1;
+  padding: 0.35rem 0.45rem;
+  color: #ffffff;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(transparent, rgba(17, 17, 17, 0.55));
 }
 
-.landing-emerald .lp-hubChantier__photos span:nth-child(3) {
+.landing-emerald .lp-hubChantier__photo--prep {
   background:
-    linear-gradient(175deg, #e4e7ec 0%, #d0d5dd 50%, #c4cad3 100%);
+    linear-gradient(160deg, rgba(40, 36, 32, 0.15), transparent 45%),
+    linear-gradient(25deg, #c8b8a4 0%, #a8927a 40%, #8a7660 100%);
+}
+
+.landing-emerald .lp-hubChantier__photo--plomb {
+  background:
+    linear-gradient(200deg, rgba(30, 40, 48, 0.2), transparent 50%),
+    linear-gradient(140deg, #9aa8b4 0%, #7a8a96 45%, #5e6c78 100%);
+}
+
+.landing-emerald .lp-hubChantier__photo--faience {
+  background:
+    linear-gradient(180deg, rgba(20, 24, 28, 0.12), transparent 40%),
+    repeating-linear-gradient(
+      90deg,
+      #e8ebe8 0 10px,
+      #d4d8d4 10px 11px
+    ),
+    linear-gradient(145deg, #b8c0bc, #8e9892);
 }
 
 .landing-emerald .lp-hubChantier__progress {
@@ -6942,7 +7204,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-hubFin.is-entering,
 .landing-emerald .lp-hubFin.is-inside {
-  transform: scale(1);
+  transform: scale(1.03) translate(0.45%, -0.2%);
 }
 
 .landing-emerald .lp-hubFin.is-returning {
@@ -7013,6 +7275,8 @@ html:has(.landing-emerald) body {
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.03),
     0 2px 8px -4px rgba(15, 23, 42, 0.05);
+  position: relative;
+  overflow: hidden;
   transition:
     box-shadow 700ms ease,
     transform 700ms cubic-bezier(0.22, 1, 0.36, 1);

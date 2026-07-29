@@ -7,11 +7,12 @@ import {
   useState,
 } from "react";
 import { Calendar, Check, HardHat, MapPin, User } from "lucide-react";
+import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
 
 export const CHANTIER_HIGHLIGHT_MS = 900;
 export const CHANTIER_ENTER_MS = 1750;
 export const CHANTIER_RETURN_MS = 1700;
-export const CHANTIER_DEMO_SAFETY_MS = 32000;
+export const CHANTIER_DEMO_SAFETY_MS = 42000;
 
 type ChantierBeat =
   | "fiche"
@@ -119,7 +120,13 @@ function ChantiersBoard({
   percent: number;
 }) {
   const showSteps = beat !== "fiche";
-  const highlightFaïence = beat === "faïence" || beat === "bump" || beat === "alive" || beat === "done";
+  const highlightFaïence =
+    beat === "faïence" ||
+    beat === "bump" ||
+    beat === "alive" ||
+    beat === "done";
+  const showCursor =
+    beat === "faïence" || beat === "bump" || beat === "alive";
 
   return (
     <div className="lp-hubChantier__ui" aria-hidden="true">
@@ -140,7 +147,7 @@ function ChantiersBoard({
         <ul className="lp-hubChantier__meta">
           <li>
             <MapPin size={13} strokeWidth={1.8} />
-            24 rue Garibaldi, Lyon 3e
+            24 rue Garibaldi, 69003 Lyon
           </li>
           <li>
             <User size={13} strokeWidth={1.8} />
@@ -153,9 +160,15 @@ function ChantiersBoard({
         </ul>
 
         <div className="lp-hubChantier__photos" aria-hidden="true">
-          <span />
-          <span />
-          <span />
+          <div className="lp-hubChantier__photo lp-hubChantier__photo--prep">
+            <span>Avant · 12 juil.</span>
+          </div>
+          <div className="lp-hubChantier__photo lp-hubChantier__photo--plomb">
+            <span>Plomberie · 16 juil.</span>
+          </div>
+          <div className="lp-hubChantier__photo lp-hubChantier__photo--faience">
+            <span>Faïence · 28 juil.</span>
+          </div>
         </div>
 
         <div
@@ -239,6 +252,11 @@ function ChantiersBoard({
           Faïence terminée · avancement recalculé.
         </p>
       ) : null}
+
+      <FilmCursor
+        visible={showCursor}
+        className="is-chantierStep"
+      />
     </div>
   );
 }
@@ -293,7 +311,11 @@ export function ChantiersFilmPanel({
     if (!active) return;
 
     if (reduced) {
-      const done = { ...base, faience: "done" as const, peint: "active" as const };
+      const done = {
+        ...base,
+        faience: "done" as const,
+        peint: "active" as const,
+      };
       setStates(done);
       setPercent(weightedProgress(done));
       setBeat("done");
@@ -301,18 +323,22 @@ export function ChantiersFilmPanel({
       return clearTimers;
     }
 
-    later(() => setBeat("steps"), 700);
-    later(() => setBeat("progress"), 1600);
-    later(() => setBeat("faïence"), 2800);
+    // Rythme ralenti — lisible à l’export vidéo
+    later(() => setBeat("steps"), 1100);
+    later(() => setBeat("progress"), 2600);
+    later(() => setBeat("faïence"), 4400);
     later(() => {
       setBeat("bump");
       setStates((prev) => {
-        const next = { ...prev, faience: "done" as const, peint: "active" as const };
+        const next = {
+          ...prev,
+          faience: "done" as const,
+          peint: "active" as const,
+        };
         const target = weightedProgress(next);
-        // Animate percent smoothly
         const from = weightedProgress(prev);
         const start = performance.now();
-        const dur = 900;
+        const dur = 1200;
         const step = (now: number) => {
           const t = Math.min(1, (now - start) / dur);
           const eased = 1 - Math.pow(1 - t, 3);
@@ -322,10 +348,10 @@ export function ChantiersFilmPanel({
         requestAnimationFrame(step);
         return next;
       });
-    }, 4200);
-    later(() => setBeat("alive"), 5600);
-    later(() => setBeat("done"), 7200);
-    later(finish, 8600);
+    }, 6800);
+    later(() => setBeat("alive"), 8800);
+    later(() => setBeat("done"), 11200);
+    later(finish, 13200);
 
     return clearTimers;
   }, [active, reduced, finish]);

@@ -105,16 +105,22 @@ function createParticles(w: number, h: number, count: number): Particle[] {
   const list: Particle[] = [];
   for (let i = 0; i < count; i++) {
     const z = Math.random();
-    const baseOpacity = 0.035 + z * 0.12 + Math.random() * 0.04;
+    // Visible on cream: darker + larger + brighter outliers
+    const spark = Math.random() < 0.1;
+    const baseOpacity = spark
+      ? 0.28 + z * 0.22 + Math.random() * 0.12
+      : 0.14 + z * 0.18 + Math.random() * 0.08;
     list.push({
       x: Math.random() * w,
       y: Math.random() * h,
       z,
-      r: 0.28 + z * 0.55 + Math.random() * 0.22,
+      r: spark
+        ? 1.05 + z * 1.15 + Math.random() * 0.45
+        : 0.65 + z * 0.95 + Math.random() * 0.4,
       ox: (Math.random() - 0.5) * 0.09,
       oy: (Math.random() - 0.5) * 0.08,
-      vx: (Math.random() - 0.5) * 0.022,
-      vy: (Math.random() - 0.5) * 0.018,
+      vx: (Math.random() - 0.5) * 0.018,
+      vy: (Math.random() - 0.5) * 0.014,
       life: Math.random(),
       lifeSpeed: 0.00005 + Math.random() * 0.00012,
       phase: Math.random() * Math.PI * 2,
@@ -183,8 +189,8 @@ export function HubAtmosphere({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       // Densité premium — milliers de micro-points sur fond crème
       const area = w * h;
-      const density = area < 500_000 ? 0.0021 : area < 1_000_000 ? 0.0025 : 0.0029;
-      const count = Math.min(3600, Math.max(1200, Math.floor(area * density)));
+      const density = area < 500_000 ? 0.0032 : area < 1_000_000 ? 0.0038 : 0.0044;
+      const count = Math.min(5600, Math.max(2200, Math.floor(area * density)));
       particles = createParticles(w, h, count);
       clusters = [];
     };
@@ -293,14 +299,14 @@ export function HubAtmosphere({
 
         const parx = mx * (2.4 + p.z * 4.5);
         const pary = my * (1.8 + p.z * 3.5);
-        const alpha = Math.min(0.2, p.opacity * 0.92);
-        if (alpha < 0.012) continue;
+        const alpha = Math.min(0.5, p.opacity * 1.15);
+        if (alpha < 0.04) continue;
 
-        // Gris chaud discret sur crème — jamais froid / spatial
-        const g = 148 + Math.floor(p.z * 28);
+        // Gris chaud contrasté sur crème — technologique, jamais spatial
+        const g = 58 + Math.floor(p.z * 40);
         ctx.beginPath();
-        ctx.fillStyle = `rgba(${g}, ${g - 1}, ${g - 4}, ${alpha})`;
-        ctx.arc(p.x + parx, p.y + pary, p.r * 0.92, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${g}, ${g - 2}, ${g - 8}, ${alpha})`;
+        ctx.arc(p.x + parx, p.y + pary, p.r, 0, Math.PI * 2);
         ctx.fill();
       }
 

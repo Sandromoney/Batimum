@@ -8,7 +8,14 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { AlertTriangle, Calendar, Check, MapPin } from "lucide-react";
+import {
+  AlertTriangle,
+  Calendar,
+  Check,
+  MapPin,
+  UserRound,
+} from "lucide-react";
+import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
 
 export type HubFilmPhase =
   | "idle"
@@ -22,14 +29,30 @@ export type HubFilmPhase =
   | "signature"
   | "sealed";
 
-const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"] as const;
+const DAYS = [
+  { name: "Lun", date: "14" },
+  { name: "Mar", date: "15" },
+  { name: "Mer", date: "16" },
+  { name: "Jeu", date: "17" },
+  { name: "Ven", date: "18" },
+] as const;
+
+const TEAM = [
+  { id: "anthony", name: "Anthony", status: "Congé", kind: "off" as const },
+  { id: "lucas", name: "Lucas", status: "Disponible", kind: "ok" as const },
+  { id: "thomas", name: "Thomas", status: "Formation", kind: "busy" as const },
+  { id: "sarah", name: "Sarah", status: "Disponible", kind: "ok" as const },
+  { id: "marc", name: "Marc", status: "Occupé", kind: "busy" as const },
+  { id: "lea", name: "Léa", status: "Arrêt maladie", kind: "off" as const },
+] as const;
 
 const JOBS = [
   {
     id: "martin",
-    title: "Salle de bain",
+    title: "Salle de bain · 18 m²",
     client: "Famille Martin",
     day: 0,
+    slot: "08:30",
     employee: "Anthony",
   },
   {
@@ -37,30 +60,32 @@ const JOBS = [
     title: "Cuisine",
     client: "M. Bernard",
     day: 2,
+    slot: "09:00",
     employee: "Lucas",
   },
   {
     id: "plomberie",
-    title: "Plomberie maison neuve",
+    title: "Plomberie",
     client: "Résidence Horizon",
     day: 4,
-    employee: "Thomas",
+    slot: "10:15",
+    employee: "Sarah",
   },
 ] as const;
 
 export const PLAN_HIGHLIGHT_MS = 900;
 export const PLAN_ENTER_MS = 1750;
 export const PLAN_RETURN_MS = 1700;
-export const PLAN_DEMO_SAFETY_MS = 32000;
+export const PLAN_DEMO_SAFETY_MS = 48000;
 export const PLAN_TEASE_MS = 1600;
 export const PLAN_BREATH_MS = 900;
 
 type PlanBeat =
   | "empty"
   | "days"
+  | "team"
   | "jobs"
   | "people"
-  | "reorder"
   | "conflict"
   | "resolve"
   | "route"
@@ -80,9 +105,9 @@ function PlanningCopy() {
         en quelques secondes.
       </h3>
       <p className="lp-hubPlan__subtitle">
-        Chantiers, équipes et trajets se synchronisent.
+        Disponibilités, chantiers et trajets.
         <br />
-        Batimum garde le rythme pour vous.
+        Batimum propose la bonne affectation.
       </p>
     </div>
   );
@@ -91,9 +116,9 @@ function PlanningCopy() {
 function PlanningBoard({
   beat,
   daysOn,
+  teamOn,
   jobsOn,
   peopleOn,
-  reordered,
   conflict,
   resolved,
   routeOn,
@@ -101,147 +126,187 @@ function PlanningBoard({
 }: {
   beat: PlanBeat;
   daysOn: number;
+  teamOn: boolean;
   jobsOn: number;
   peopleOn: number;
-  reordered: boolean;
   conflict: boolean;
   resolved: boolean;
   routeOn: boolean;
   statusStep: number;
 }) {
-  const jobOrder = reordered
-    ? [JOBS[1], JOBS[0], JOBS[2]]
-    : [JOBS[0], JOBS[1], JOBS[2]];
-
   const statusLabel =
-    statusStep >= 2 ? "Terminé" : statusStep >= 1 ? "En cours" : "Prévu";
+    statusStep >= 1 ? "En cours" : "Prévu";
+
+  const showCursor =
+    beat === "people" ||
+    beat === "conflict" ||
+    beat === "resolve" ||
+    beat === "status";
 
   return (
     <div className="lp-hubPlan__ui" aria-hidden="true">
       <div className="lp-hubPlan__uiHead">
         <Calendar size={15} strokeWidth={1.75} />
-        <span>Planning · semaine en cours</span>
+        <span>Planning · semaine du 14 juil.</span>
       </div>
 
-      <div className="lp-hubPlan__days">
-        {DAYS.map((day, i) => (
-          <div
-            key={day}
-            className={[
-              "lp-hubPlan__day",
-              i < daysOn ? "is-on" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-          >
-            <span className="lp-hubPlan__dayName">{day}</span>
-            <div className="lp-hubPlan__daySlot" />
-          </div>
-        ))}
-      </div>
-
-      <div className="lp-hubPlan__board">
-        {jobOrder.map((job, index) => {
-          const visible = index < jobsOn;
-          const isMartin = job.id === "martin";
-          const empVisible = peopleOn > index;
-          const showConflict = conflict && !resolved && isMartin;
-          const assigned =
-            resolved && isMartin ? "Lucas" : job.employee;
-
-          return (
-            <article
-              key={job.id}
+      <div
+        className={[
+          "lp-hubPlan__team",
+          teamOn ? "is-on" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <span className="lp-hubPlan__teamLabel">
+          <UserRound size={12} strokeWidth={1.9} />
+          Équipe
+        </span>
+        <ul>
+          {TEAM.map((member) => (
+            <li
+              key={member.id}
               className={[
-                "lp-hubPlan__job",
-                visible ? "is-on" : "",
-                showConflict ? "is-conflict" : "",
-                resolved && isMartin ? "is-resolved" : "",
-                reordered && isMartin ? "is-moved" : "",
-                `is-day-${job.day}`,
+                `is-${member.kind}`,
+                conflict && !resolved && member.id === "anthony"
+                  ? "is-focus"
+                  : "",
+                resolved && member.id === "lucas" ? "is-focus" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
-              style={{ "--job-i": index } as CSSProperties}
             >
-              <div className="lp-hubPlan__jobMain">
-                <p className="lp-hubPlan__jobTitle">{job.title}</p>
-                <p className="lp-hubPlan__jobClient">{job.client}</p>
-              </div>
-
-              <div
-                className={[
-                  "lp-hubPlan__status",
-                  statusStep >= 2 && isMartin ? "is-done" : "",
-                  statusStep >= 1 && isMartin ? "is-progress" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              >
-                {isMartin ? statusLabel : "Prévu"}
-                {statusStep >= 2 && isMartin ? (
-                  <Check size={12} strokeWidth={2.4} />
-                ) : null}
-              </div>
-
-              <div
-                className={[
-                  "lp-hubPlan__emp",
-                  empVisible ? "is-on" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              >
-                <span className="lp-hubPlan__empDot" />
-                <span>{assigned}</span>
-                <span
-                  className={[
-                    "lp-hubPlan__link",
-                    empVisible ? "is-on" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  aria-hidden="true"
-                />
-              </div>
-            </article>
-          );
-        })}
-
-        {conflict ? (
-          <div
-            className={[
-              "lp-hubPlan__alert",
-              conflict ? "is-on" : "",
-              resolved ? "is-out" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-          >
-            <AlertTriangle size={14} strokeWidth={1.9} />
-            <div>
-              <p className="lp-hubPlan__alertTitle">Conflit détecté</p>
-              <p className="lp-hubPlan__alertText">
-                {resolved
-                  ? "Réaffecté automatiquement à Lucas."
-                  : "Anthony est déjà occupé."}
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        {routeOn ? (
-          <div className="lp-hubPlan__route is-on">
-            <MapPin size={13} strokeWidth={1.9} />
-            <span className="lp-hubPlan__routeLine" aria-hidden="true" />
-            <span>−18 min de trajet</span>
-          </div>
-        ) : null}
+              <span className="lp-hubPlan__teamDot" />
+              <strong>{member.name}</strong>
+              <em>{member.status}</em>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {beat === "done" ? (
-        <p className="lp-hubPlan__calm">Entreprise synchronisée.</p>
+      <div className="lp-hubPlan__week">
+        {DAYS.map((day, dayIndex) => {
+          const dayJobs = JOBS.filter((j) => j.day === dayIndex);
+          return (
+            <div
+              key={day.name}
+              className={[
+                "lp-hubPlan__col",
+                dayIndex < daysOn ? "is-on" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              <div className="lp-hubPlan__colHead">
+                <span>{day.name}</span>
+                <em>{day.date}</em>
+              </div>
+              <div className="lp-hubPlan__colBody">
+                {dayJobs.map((job) => {
+                  const jobIndex = JOBS.findIndex((j) => j.id === job.id);
+                  const visible = jobIndex < jobsOn;
+                  const isMartin = job.id === "martin";
+                  const empVisible = peopleOn > jobIndex;
+                  const showConflict = conflict && !resolved && isMartin;
+                  const assigned =
+                    resolved && isMartin ? "Lucas" : job.employee;
+
+                  return (
+                    <article
+                      key={job.id}
+                      className={[
+                        "lp-hubPlan__job",
+                        visible ? "is-on" : "",
+                        showConflict ? "is-conflict" : "",
+                        resolved && isMartin ? "is-resolved" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      style={{ "--job-i": jobIndex } as CSSProperties}
+                    >
+                      <p className="lp-hubPlan__jobSlot">{job.slot}</p>
+                      <p className="lp-hubPlan__jobTitle">{job.title}</p>
+                      <p className="lp-hubPlan__jobClient">{job.client}</p>
+                      <div
+                        className={[
+                          "lp-hubPlan__status",
+                          statusStep >= 1 && isMartin ? "is-progress" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        {isMartin ? statusLabel : "Prévu"}
+                      </div>
+                      <div
+                        className={[
+                          "lp-hubPlan__emp",
+                          empVisible ? "is-on" : "",
+                          showConflict ? "is-bad" : "",
+                          resolved && isMartin ? "is-ok" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        <span className="lp-hubPlan__empDot" />
+                        <span>{assigned}</span>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {conflict ? (
+        <div
+          className={[
+            "lp-hubPlan__alert",
+            "is-on",
+            resolved ? "is-out" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <AlertTriangle size={14} strokeWidth={1.9} />
+          <div>
+            <p className="lp-hubPlan__alertTitle">
+              {resolved ? "Affectation corrigée" : "Indisponibilité détectée"}
+            </p>
+            <p className="lp-hubPlan__alertText">
+              {resolved
+                ? "Lucas est disponible. Affectation proposée automatiquement."
+                : "Anthony est en congé. Impossible d’affecter ce créneau."}
+            </p>
+          </div>
+          {resolved ? <Check size={14} strokeWidth={2.4} /> : null}
+        </div>
       ) : null}
+
+      {routeOn ? (
+        <div className="lp-hubPlan__route is-on">
+          <MapPin size={13} strokeWidth={1.9} />
+          <span className="lp-hubPlan__routeLine" aria-hidden="true" />
+          <span>Trajet optimisé · −18 min</span>
+        </div>
+      ) : null}
+
+      {beat === "done" ? (
+        <p className="lp-hubPlan__calm">Planning synchronisé avec les disponibilités.</p>
+      ) : null}
+
+      <FilmCursor
+        visible={showCursor}
+        className={[
+          beat === "people" ? "is-planAssign" : "",
+          beat === "conflict" ? "is-planAlert" : "",
+          beat === "resolve" ? "is-planResolve" : "",
+          beat === "status" ? "is-planStatus" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      />
     </div>
   );
 }
@@ -257,9 +322,9 @@ export function PlanningFilmPanel({
 }) {
   const [beat, setBeat] = useState<PlanBeat>("empty");
   const [daysOn, setDaysOn] = useState(0);
+  const [teamOn, setTeamOn] = useState(false);
   const [jobsOn, setJobsOn] = useState(0);
   const [peopleOn, setPeopleOn] = useState(0);
-  const [reordered, setReordered] = useState(false);
   const [conflict, setConflict] = useState(false);
   const [resolved, setResolved] = useState(false);
   const [routeOn, setRouteOn] = useState(false);
@@ -288,9 +353,9 @@ export function PlanningFilmPanel({
     finishedRef.current = false;
     setBeat("empty");
     setDaysOn(0);
+    setTeamOn(false);
     setJobsOn(0);
     setPeopleOn(0);
-    setReordered(false);
     setConflict(false);
     setResolved(false);
     setRouteOn(false);
@@ -300,68 +365,68 @@ export function PlanningFilmPanel({
 
     if (reduced) {
       setDaysOn(5);
+      setTeamOn(true);
       setJobsOn(3);
       setPeopleOn(3);
-      setReordered(true);
       setResolved(true);
+      setConflict(true);
       setRouteOn(true);
-      setStatusStep(2);
+      setStatusStep(1);
       setBeat("done");
       later(finish, 500);
       return clearTimers;
     }
 
-    // Scène 1 — jours
-    later(() => setBeat("days"), 350);
+    // Jours (lent)
+    later(() => setBeat("days"), 400);
     DAYS.forEach((_, i) => {
-      later(() => setDaysOn(i + 1), 450 + i * 220);
+      later(() => setDaysOn(i + 1), 500 + i * 360);
     });
 
-    // Scène 2 — cartes chantier
-    later(() => setBeat("jobs"), 450 + 5 * 220 + 280);
-    JOBS.forEach((_, i) => {
-      later(() => setJobsOn(i + 1), 450 + 5 * 220 + 450 + i * 420);
-    });
-
-    // Scène 3 — employés
-    const peopleStart = 450 + 5 * 220 + 450 + 3 * 420 + 350;
-    later(() => setBeat("people"), peopleStart);
-    JOBS.forEach((_, i) => {
-      later(() => setPeopleOn(i + 1), peopleStart + 280 + i * 380);
-    });
-
-    // Scène 4 — déplacement
-    const reorderAt = peopleStart + 280 + 3 * 380 + 500;
+    // Disponibilités équipe
+    const teamAt = 500 + 5 * 360 + 500;
     later(() => {
-      setBeat("reorder");
-      setReordered(true);
-    }, reorderAt);
+      setBeat("team");
+      setTeamOn(true);
+    }, teamAt);
 
-    // Scène 5 — conflit + résolution
-    const conflictAt = reorderAt + 900;
+    // Cartes dans le calendrier
+    const jobsAt = teamAt + 1400;
+    later(() => setBeat("jobs"), jobsAt);
+    JOBS.forEach((_, i) => {
+      later(() => setJobsOn(i + 1), jobsAt + 500 + i * 700);
+    });
+
+    // Affectations (Anthony en congé → conflit)
+    const peopleAt = jobsAt + 500 + 3 * 700 + 600;
+    later(() => setBeat("people"), peopleAt);
+    JOBS.forEach((_, i) => {
+      later(() => setPeopleOn(i + 1), peopleAt + 400 + i * 650);
+    });
+
+    const conflictAt = peopleAt + 400 + 3 * 650 + 800;
     later(() => {
       setBeat("conflict");
       setConflict(true);
     }, conflictAt);
+
     later(() => {
       setBeat("resolve");
       setResolved(true);
-    }, conflictAt + 1100);
+    }, conflictAt + 2200);
 
-    // Scène 6 — trajet
-    const routeAt = conflictAt + 1100 + 700;
+    const routeAt = conflictAt + 2200 + 1200;
     later(() => {
       setBeat("route");
       setRouteOn(true);
     }, routeAt);
 
-    // Scène 7 — statuts
-    const statusAt = routeAt + 900;
+    // Statut → En cours (cohérent avec film Chantiers)
+    const statusAt = routeAt + 1400;
     later(() => setBeat("status"), statusAt);
-    later(() => setStatusStep(1), statusAt + 450);
-    later(() => setStatusStep(2), statusAt + 950);
-    later(() => setBeat("done"), statusAt + 1400);
-    later(finish, statusAt + 2200);
+    later(() => setStatusStep(1), statusAt + 900);
+    later(() => setBeat("done"), statusAt + 2200);
+    later(finish, statusAt + 3600);
 
     return clearTimers;
   }, [active, reduced, finish]);
@@ -372,9 +437,9 @@ export function PlanningFilmPanel({
       <PlanningBoard
         beat={beat}
         daysOn={daysOn}
+        teamOn={teamOn}
         jobsOn={jobsOn}
         peopleOn={peopleOn}
-        reordered={reordered}
         conflict={conflict}
         resolved={resolved}
         routeOn={routeOn}

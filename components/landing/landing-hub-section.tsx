@@ -1101,7 +1101,7 @@ export function LandingHubSection() {
               filmPhase={filmPhase}
               focusId={focusId}
               reduced={reduced}
-              enabled={scene < 14 || filmPhase === "signature"}
+              enabled={true}
             />
             <HubStage
               scene={scene}

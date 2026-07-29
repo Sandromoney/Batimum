@@ -10,6 +10,7 @@ import {
 } from "react";
 import { Check, LineChart, Receipt } from "lucide-react";
 import { animate, useMotionValue } from "framer-motion";
+import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
 
 export const FIN_HIGHLIGHT_MS = 900;
 export const FIN_ENTER_MS = 1750;
@@ -375,7 +376,7 @@ function FinanceBoard({
               </p>
             </article>
             <article className="lp-hubFin__kpi is-on">
-              <p className="lp-hubFin__kpiLabel">Chantiers terminés</p>
+              <p className="lp-hubFin__kpiLabel">Chantiers actifs</p>
               <p className="lp-hubFin__kpiValue">
                 <CountUp active={dashOn} from={7} to={8} reduced={reduced} />
               </p>
@@ -445,6 +446,11 @@ function FinanceBoard({
       {beat === "alive" || beat === "done" ? (
         <p className="lp-hubFin__calm">Votre entreprise, en un coup d’œil.</p>
       ) : null}
+
+      <FilmCursor
+        visible={beat === "send" || beat === "pay"}
+        className="is-finPay"
+      />
     </div>
   );
 }

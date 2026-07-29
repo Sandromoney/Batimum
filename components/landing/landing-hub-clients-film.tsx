@@ -20,6 +20,7 @@ import {
   User,
   Users,
 } from "lucide-react";
+import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
 
 export const CLIENTS_HIGHLIGHT_MS = 900;
 export const CLIENTS_ENTER_MS = 1750;
@@ -92,6 +93,7 @@ function ClientsBoard({
   const showDocs =
     beat === "docs" || beat === "notes" || beat === "done";
   const showNotes = beat === "notes" || beat === "done";
+  const showCursor = beat === "list" || beat === "open" || beat === "identity";
 
   return (
     <div className="lp-hubClients__ui" aria-hidden="true">
@@ -184,7 +186,7 @@ function ClientsBoard({
                 <li className="is-on">
                   <Receipt size={13} strokeWidth={1.8} />
                   <span>Facture FAC-2026-0142</span>
-                  <span className="lp-hubClients__pill">Payée</span>
+                  <span className="lp-hubClients__pill">Acompte</span>
                 </li>
                 <li className="is-on">
                   <HardHat size={13} strokeWidth={1.8} />
@@ -193,7 +195,7 @@ function ClientsBoard({
                 </li>
                 <li className="is-on">
                   <Receipt size={13} strokeWidth={1.8} />
-                  <span>Paiement reçu — 29 juil.</span>
+                  <span>Acompte reçu — 29 juil.</span>
                   <Check size={12} strokeWidth={2.4} className="is-ok" />
                 </li>
               </ul>
@@ -233,6 +235,13 @@ function ClientsBoard({
           ) : null}
         </div>
       )}
+
+      <FilmCursor
+        visible={showCursor}
+        className={
+          beat === "list" ? "is-clientsRow" : "is-clientsFiche"
+        }
+      />
     </div>
   );
 }

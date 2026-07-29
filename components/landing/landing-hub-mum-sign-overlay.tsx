@@ -23,18 +23,19 @@ export type MumSignBeat =
   | "validate"
   | "validating"
   | "pipeline"
+  | "commande"
   | "back";
 
 const SIGN_LINES = [
-  { label: "Dépose douche existante", qty: "1" },
-  { label: "Douche à l'italienne 120 × 90 cm", qty: "1" },
-  { label: "Meuble double vasque 120 cm", qty: "1" },
-  { label: "Faïence murale 30 × 60", qty: "42" },
-  { label: "Carrelage sol", qty: "18" },
-  { label: "Alimentations PER", qty: "1" },
-  { label: "Évacuations PVC", qty: "1" },
-  { label: "Sèche-serviettes", qty: "1" },
-  { label: "Peinture plafond", qty: "18" },
+  { label: "Dépose douche existante", qty: "1 u." },
+  { label: "Douche à l'italienne 120 × 90 cm", qty: "1 u." },
+  { label: "Meuble double vasque 120 cm", qty: "1 u." },
+  { label: "Faïence murale 30 × 60", qty: "42 m²" },
+  { label: "Carrelage sol", qty: "18 m²" },
+  { label: "Alimentations PER", qty: "1 u." },
+  { label: "Évacuations PVC", qty: "1 u." },
+  { label: "Sèche-serviettes", qty: "1 u." },
+  { label: "Peinture plafond", qty: "18 m²" },
 ] as const;
 
 const PRICE_MASK = "•••";
@@ -78,8 +79,8 @@ function GenericSignature({ drawing }: { drawing: boolean }) {
 }
 
 function pipelineIndex(beat: MumSignBeat): number {
-  if (beat === "back") return 3;
-  if (beat === "pipeline") return 3;
+  if (beat === "back" || beat === "commande") return 3;
+  if (beat === "pipeline") return 2; // Signé
   if (
     beat === "page" ||
     beat === "scroll" ||
@@ -112,28 +113,31 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
     beat === "draw" ||
     beat === "validate" ||
     beat === "validating" ||
-    beat === "pipeline";
+    beat === "pipeline" ||
+    beat === "commande";
   const showModal =
     beat === "signModal" ||
     beat === "draw" ||
     beat === "validate" ||
-    beat === "validating" ||
-    beat === "pipeline";
-  const drawing =
-    beat === "draw" ||
-    beat === "validate" ||
-    beat === "validating" ||
-    beat === "pipeline";
-  const validated =
-    beat === "validate" || beat === "validating" || beat === "pipeline";
+    beat === "validating";
+  const drawing = beat === "draw" || beat === "validate" || beat === "validating";
+  const validated = beat === "validate" || beat === "validating";
   const pipeIdx = pipelineIndex(beat);
   const showCursor =
+    beat === "send" ||
+    beat === "sending" ||
     beat === "openMail" ||
     beat === "consult" ||
     beat === "scroll" ||
     beat === "hoverSign" ||
     beat === "signModal" ||
-    beat === "draw";
+    beat === "draw" ||
+    beat === "validate";
+  const cursorClick =
+    beat === "sending" ||
+    beat === "consult" ||
+    beat === "hoverSign" ||
+    beat === "validate";
 
   return (
     <div
@@ -264,11 +268,19 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
             .filter(Boolean)
             .join(" ")}
         >
-          {beat === "pipeline" ? (
+          {beat === "pipeline" || beat === "commande" ? (
             <div className="lp-hubMumSign__success">
               <Check size={22} strokeWidth={2.2} />
-              <p>Commande confirmée</p>
-              <span>Le devis est mis à jour dans Batimum.</span>
+              <p>
+                {beat === "commande"
+                  ? "Commande confirmée"
+                  : "Devis signé"}
+              </p>
+              <span>
+                {beat === "commande"
+                  ? "Le devis est mis à jour dans Batimum."
+                  : "Signature électronique enregistrée."}
+              </span>
             </div>
           ) : (
             <>
@@ -341,7 +353,7 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
         </div>
       ) : null}
 
-      {showModal && beat !== "pipeline" ? (
+      {showModal ? (
         <div className="lp-hubMumSign__modal is-on">
           <div className="lp-hubMumSign__modalCard">
             <div className="lp-hubMumSign__signHead">
@@ -368,7 +380,7 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
                 .join(" ")}
               tabIndex={-1}
             >
-              {beat === "validating" ? "Validation…" : "Valider ma signature"}
+              {beat === "validating" ? "Validation…" : "Valider"}
             </button>
           </div>
         </div>
@@ -378,11 +390,14 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
         <span
           className={[
             "lp-hubMumSign__cursor",
+            beat === "send" || beat === "sending" ? "is-send" : "",
             beat === "openMail" ? "is-mail" : "",
             beat === "consult" ? "is-cta" : "",
             beat === "scroll" ? "is-scroll" : "",
             beat === "hoverSign" ? "is-signCta" : "",
             beat === "signModal" || beat === "draw" ? "is-pad" : "",
+            beat === "validate" ? "is-validate" : "",
+            cursorClick ? "is-click" : "",
           ]
             .filter(Boolean)
             .join(" ")}

@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { Bot, Check, Mic, Sparkles } from "lucide-react";
+import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
 import {
   MumSignJourney,
   type MumSignBeat,
@@ -252,6 +253,11 @@ function MumInterface({
           ) : null}
         </div>
       ) : null}
+
+      <FilmCursor
+        visible={listening || beat === "ready"}
+        className={listening ? "is-mumMic" : "is-mumReady"}
+      />
     </div>
   );
 }
@@ -432,35 +438,39 @@ export function MumFilmPanel({
       setBeat("ready");
       setShowReady(true);
       setDevisStatut("ready");
-      // Signature électronique — rythme lent, parcours lisible (~19 s)
+      // Signature électronique — rythme très lisible (~28 s lecture + signature)
       later(() => {
         setBeat("signflow");
         setSignBeat("send");
-      }, 700);
+      }, 900);
       later(() => {
         setSignBeat("sending");
         setDevisStatut("envoye");
-      }, 1600);
-      later(() => setSignBeat("mail"), 2600);
-      later(() => setSignBeat("openMail"), 3800);
-      later(() => setSignBeat("consult"), 5000);
+      }, 2200);
+      later(() => setSignBeat("mail"), 3600);
+      later(() => setSignBeat("openMail"), 5200);
+      later(() => setSignBeat("consult"), 7000);
       later(() => {
         setSignBeat("page");
         setDevisStatut("consulte");
-      }, 6200);
-      later(() => setSignBeat("scroll"), 7600);
-      later(() => setSignBeat("hoverSign"), 10400);
-      later(() => setSignBeat("signModal"), 11600);
-      later(() => setSignBeat("draw"), 12800);
-      later(() => setSignBeat("validate"), 14600);
-      later(() => setSignBeat("validating"), 15600);
+      }, 8800);
+      // Lecture du devis — temps réel pour lire quelques lignes
+      later(() => setSignBeat("scroll"), 11200);
+      later(() => setSignBeat("hoverSign"), 15600);
+      later(() => setSignBeat("signModal"), 17400);
+      later(() => setSignBeat("draw"), 19200);
+      later(() => setSignBeat("validate"), 21800);
+      later(() => setSignBeat("validating"), 23200);
       later(() => {
         setSignBeat("pipeline");
         setDevisStatut("signe");
-      }, 16600);
-      later(() => setDevisStatut("commande"), 17800);
-      later(() => setSignBeat("back"), 19000);
-      later(finish, 20400);
+      }, 24800);
+      later(() => {
+        setSignBeat("commande");
+        setDevisStatut("commande");
+      }, 26800);
+      later(() => setSignBeat("back"), 28600);
+      later(finish, 30600);
     }, 700);
   }, [beat, reduced, finish]);
 
@@ -476,6 +486,7 @@ export function MumFilmPanel({
     "validate",
     "validating",
     "pipeline",
+    "commande",
   ].includes(signBeat);
   const copySigning =
     signing ||
@@ -545,4 +556,4 @@ export const MUM_HIGHLIGHT_MS = 900;
 export const MUM_ENTER_MS = 1750;
 export const MUM_RETURN_MS = 1700;
 /** Plafond de sécurité si la démo ne signale pas la fin */
-export const MUM_DEMO_SAFETY_MS = 62000;
+export const MUM_DEMO_SAFETY_MS = 78000;
