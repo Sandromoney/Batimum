@@ -7,7 +7,13 @@ import {
 } from "react";
 import type { MumFilmPhase } from "@/components/landing/landing-hub-mum-film";
 
-type FocusId = "mum" | "planning" | "finance" | null;
+type FocusId =
+  | "mum"
+  | "clients"
+  | "planning"
+  | "chantiers"
+  | "finance"
+  | null;
 
 type AtmosphereMood = {
   /** Attraction douce vers le centre (apparition logo). */
@@ -63,9 +69,15 @@ function moodFromScene(
     if (focusId === "mum") {
       driftX = deep ? 0.35 : 0.12;
       driftY = deep ? 0.28 : 0.1;
+    } else if (focusId === "clients") {
+      driftX = deep ? -0.36 : -0.14;
+      driftY = deep ? 0.08 : 0.03;
     } else if (focusId === "planning") {
       driftX = deep ? -0.32 : -0.12;
       driftY = deep ? 0.22 : 0.08;
+    } else if (focusId === "chantiers") {
+      driftX = deep ? -0.18 : -0.08;
+      driftY = deep ? 0.34 : 0.12;
     } else if (focusId === "finance") {
       driftX = deep ? 0.28 : 0.1;
       driftY = deep ? -0.24 : -0.08;

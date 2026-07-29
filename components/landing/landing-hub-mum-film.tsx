@@ -10,20 +10,23 @@ import {
 import { Bot, Check, Mic, Sparkles } from "lucide-react";
 
 const PROMPT =
-  "Création d'une salle de bain complète avec douche italienne, meuble vasque, faïence et plomberie…";
+  "Création d'une salle de bain complète de 18 m² avec remplacement de la douche existante par une douche à l'italienne 120 × 90 cm, meuble double vasque de 120 cm, faïence murale 30 × 60 sur 42 m², carrelage au sol 18 m², création des alimentations PER, remplacement des évacuations PVC, pose d'un sèche-serviettes et peinture du plafond.";
 
 const PROMPT_WORDS = PROMPT.split(/(\s+)/).filter(Boolean);
 
 const ANALYSIS = ["Quantités", "Matériaux", "Temps", "Structure"] as const;
 
+/** Lignes dérivées strictement de la dictée — aucune donnée inventée. */
 const LINES = [
-  { label: "Protection chantier", qty: "1 forfait" },
-  { label: "Dépose existant", qty: "1 forfait" },
-  { label: "Plomberie", qty: "1 forfait" },
-  { label: "Faïence murale", qty: "18 m²" },
-  { label: "Carrelage sol", qty: "6 m²" },
-  { label: "Main d’œuvre", qty: "1 forfait" },
-  { label: "Fournitures", qty: "1 forfait" },
+  { label: "Dépose douche existante", qty: "1 u." },
+  { label: "Douche à l'italienne 120 × 90 cm", qty: "1 u." },
+  { label: "Meuble double vasque 120 cm", qty: "1 u." },
+  { label: "Faïence murale 30 × 60", qty: "42 m²" },
+  { label: "Carrelage sol", qty: "18 m²" },
+  { label: "Alimentations PER", qty: "1 forfait" },
+  { label: "Évacuations PVC", qty: "1 forfait" },
+  { label: "Sèche-serviettes", qty: "1 u." },
+  { label: "Peinture plafond", qty: "18 m²" },
 ] as const;
 
 const PRICE_MASK = "···";
@@ -176,7 +179,7 @@ function MumInterface({
 
           {showLines ? (
             <div className="lp-hubMum__devis">
-              <p className="lp-hubMum__sectionTitle">Salle de bain</p>
+              <p className="lp-hubMum__sectionTitle">Salle de bain · 18 m²</p>
               <ul className="lp-hubMum__lines">
                 {LINES.map((line, i) => (
                   <li
@@ -421,4 +424,4 @@ export const MUM_HIGHLIGHT_MS = 1100;
 export const MUM_ENTER_MS = 1600;
 export const MUM_RETURN_MS = 1800;
 /** Plafond de sécurité si la démo ne signale pas la fin */
-export const MUM_DEMO_SAFETY_MS = 32000;
+export const MUM_DEMO_SAFETY_MS = 38000;

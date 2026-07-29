@@ -35,6 +35,20 @@ import {
   PLAN_RETURN_MS,
 } from "@/components/landing/landing-hub-planning-film";
 import {
+  ClientsFilmPanel,
+  CLIENTS_DEMO_SAFETY_MS,
+  CLIENTS_ENTER_MS,
+  CLIENTS_HIGHLIGHT_MS,
+  CLIENTS_RETURN_MS,
+} from "@/components/landing/landing-hub-clients-film";
+import {
+  ChantiersFilmPanel,
+  CHANTIER_DEMO_SAFETY_MS,
+  CHANTIER_ENTER_MS,
+  CHANTIER_HIGHLIGHT_MS,
+  CHANTIER_RETURN_MS,
+} from "@/components/landing/landing-hub-chantiers-film";
+import {
   FinanceFilmPanel,
   FinanceFilmShell,
   FIN_CONVERGE_MS,
@@ -125,22 +139,26 @@ const HUB_MODULES: HubModule[] = [
 
 /**
  * 0 breath → 1 logo → 2 ecosystem
- * → 3 mumFilm → 4 mumReturn
- * → 5 planFilm → 6 planReturn
- * → 7 financeFilm → 8 financeReturn
- * → 9 converge (modules → logo)
- * → 10 signature (fusion + écrou + sceau Batimum)
- * → exit
+ * → 3 mum → 4 mumReturn
+ * → 5 clients → 6 clientsReturn
+ * → 7 plan → 8 planReturn
+ * → 9 chantiers → 10 chantiersReturn
+ * → 11 finance → 12 financeReturn
+ * → 13 converge → 14 signature → exit
  */
-const LAST_SCENE = 10;
+const LAST_SCENE = 14;
 const SCENE_LOCK_MS = [
   900,
   1100,
   2200,
   MUM_DEMO_SAFETY_MS,
   MUM_RETURN_MS,
+  CLIENTS_DEMO_SAFETY_MS,
+  CLIENTS_RETURN_MS,
   PLAN_DEMO_SAFETY_MS,
   PLAN_RETURN_MS,
+  CHANTIER_DEMO_SAFETY_MS,
+  CHANTIER_RETURN_MS,
   FIN_DEMO_SAFETY_MS,
   FIN_RETURN_MS,
   FIN_CONVERGE_MS,
@@ -153,8 +171,17 @@ const WHEEL_SETTLE_MS = 160;
 const ENGAGE_GRACE_MS = 280;
 
 type PinMode = "before" | "pin";
-type FocusId = "mum" | "planning" | "finance" | null;
-type ActiveFilm = "mum" | "planning" | "finance" | null;
+type FocusId = "mum" | "clients" | "planning" | "chantiers" | "finance" | null;
+type ActiveFilm =
+  | "mum"
+  | "clients"
+  | "planning"
+  | "chantiers"
+  | "finance"
+  | null;
+
+const DEMO_UNLOCK_SCENES = new Set([3, 5, 7, 9, 11, 14]);
+const FILM_ENTRY_SCENES = new Set([3, 5, 7, 9, 11]);
 
 function BmMark({ className }: { className?: string }) {
   return (
@@ -187,7 +214,7 @@ function HubStage({
   filmPhase: MumFilmPhase;
   focusId: FocusId;
   reduced: boolean | null;
-  /** Scène 10 : modules fusionnent puis le monde hub s’efface. */
+  /** Scène signature : modules fusionnent puis le monde hub s’efface. */
   signatureMode?: boolean;
 }) {
   const sealed =
@@ -196,10 +223,10 @@ function HubStage({
   const showLogo = scene >= 1 && !sealed;
   const showModules = scene >= 2 && !sealed;
   const converging =
-    !signatureMode && (filmPhase === "converge" || scene === 9);
+    !signatureMode && (filmPhase === "converge" || scene === 13);
   const highlight =
     filmPhase === "highlight" ||
-    ((scene === 3 || scene === 5 || scene === 7) && filmPhase === "idle");
+    (FILM_ENTRY_SCENES.has(scene) && filmPhase === "idle");
   const deep =
     filmPhase === "enter" ||
     filmPhase === "demo" ||
@@ -234,14 +261,22 @@ function HubStage({
       className={[
         "lp-hub__stage",
         highlight && focusId === "mum" ? "lp-hub__stage--highlightMum" : "",
+        highlight && focusId === "clients"
+          ? "lp-hub__stage--highlightClients"
+          : "",
         highlight && focusId === "planning"
           ? "lp-hub__stage--highlightPlan"
+          : "",
+        highlight && focusId === "chantiers"
+          ? "lp-hub__stage--highlightChantiers"
           : "",
         highlight && focusId === "finance"
           ? "lp-hub__stage--highlightFin"
           : "",
         deep && focusId === "mum" ? "lp-hub__stage--deepMum" : "",
+        deep && focusId === "clients" ? "lp-hub__stage--deepClients" : "",
         deep && focusId === "planning" ? "lp-hub__stage--deepPlan" : "",
+        deep && focusId === "chantiers" ? "lp-hub__stage--deepChantiers" : "",
         deep && focusId === "finance" ? "lp-hub__stage--deepFin" : "",
         returning && !deep ? "lp-hub__stage--return" : "",
         converging ? "lp-hub__stage--converge" : "",
@@ -545,13 +580,7 @@ export function LandingHubSection() {
       const ms = overrideMs ?? SCENE_LOCK_MS[sceneIndex] ?? 1200;
       lockTimerRef.current = setTimeout(() => {
         // Films démo / signature : unlock géré par onComplete
-        if (
-          sceneIndex === 3 ||
-          sceneIndex === 5 ||
-          sceneIndex === 7 ||
-          sceneIndex === 10
-        )
-          return;
+        if (DEMO_UNLOCK_SCENES.has(sceneIndex)) return;
         unlockScroll();
       }, ms);
     },
@@ -574,109 +603,126 @@ export function LandingHubSection() {
     resetToEcosystem();
   }, [resetToEcosystem]);
 
+  const holdThenUnlock = useCallback(() => {
+    setFilm("hold");
+    filmLater(() => unlockScroll(), 500);
+  }, [setFilm, filmLater, unlockScroll]);
+
   const onMumDemoComplete = useCallback(() => {
     if (sceneRef.current !== 3) return;
-    setFilm("hold");
-    filmLater(() => unlockScroll(), 500);
-  }, [setFilm, filmLater, unlockScroll]);
+    holdThenUnlock();
+  }, [holdThenUnlock]);
+
+  const onClientsDemoComplete = useCallback(() => {
+    if (sceneRef.current !== 5) return;
+    holdThenUnlock();
+  }, [holdThenUnlock]);
 
   const onPlanDemoComplete = useCallback(() => {
-    if (sceneRef.current !== 5) return;
-    setFilm("hold");
-    filmLater(() => unlockScroll(), 500);
-  }, [setFilm, filmLater, unlockScroll]);
+    if (sceneRef.current !== 7) return;
+    holdThenUnlock();
+  }, [holdThenUnlock]);
+
+  const onChantiersDemoComplete = useCallback(() => {
+    if (sceneRef.current !== 9) return;
+    holdThenUnlock();
+  }, [holdThenUnlock]);
 
   const onFinDemoComplete = useCallback(() => {
-    if (sceneRef.current !== 7) return;
-    setFilm("hold");
-    filmLater(() => unlockScroll(), 500);
-  }, [setFilm, filmLater, unlockScroll]);
+    if (sceneRef.current !== 11) return;
+    holdThenUnlock();
+  }, [holdThenUnlock]);
+
+  const startModuleFilm = useCallback(
+    (
+      kind: Exclude<ActiveFilm, null>,
+      focus: Exclude<FocusId, null>,
+      sceneIndex: number,
+      highlightMs: number,
+      enterMs: number,
+    ) => {
+      clearFilmTimers();
+      setFilmKind(kind);
+      setFocus(focus);
+      setFilm("highlight");
+      startSceneLock(sceneIndex);
+      filmLater(() => setFilm("enter"), highlightMs);
+      filmLater(() => setFilm("demo"), highlightMs + enterMs);
+    },
+    [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater],
+  );
+
+  const startModuleReturn = useCallback(
+    (
+      kind: Exclude<ActiveFilm, null>,
+      focus: Exclude<FocusId, null>,
+      sceneIndex: number,
+      returnMs: number,
+    ) => {
+      clearFilmTimers();
+      setFilmKind(kind);
+      setFocus(focus);
+      setFilm("returning");
+      startSceneLock(sceneIndex, returnMs);
+      filmLater(() => {
+        setFilmKind(null);
+        setFocus(null);
+        setFilm("idle");
+      }, returnMs);
+    },
+    [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater],
+  );
 
   const startMumFilm = useCallback(() => {
-    clearFilmTimers();
-    setFilmKind("mum");
-    setFocus("mum");
-    setFilm("highlight");
-    startSceneLock(3);
-
-    filmLater(() => setFilm("enter"), MUM_HIGHLIGHT_MS);
-    filmLater(() => setFilm("demo"), MUM_HIGHLIGHT_MS + MUM_ENTER_MS);
-  }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater]);
+    startModuleFilm("mum", "mum", 3, MUM_HIGHLIGHT_MS, MUM_ENTER_MS);
+  }, [startModuleFilm]);
 
   const startMumReturn = useCallback(() => {
-    clearFilmTimers();
-    setFilmKind("mum");
-    setFocus("mum");
-    setFilm("returning");
-    startSceneLock(4, MUM_RETURN_MS);
+    startModuleReturn("mum", "mum", 4, MUM_RETURN_MS);
+  }, [startModuleReturn]);
 
-    filmLater(() => {
-      setFilm("idle");
-      setFocus(null);
-      setFilmKind(null);
-    }, MUM_RETURN_MS);
-  }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater]);
+  const startClientsFilm = useCallback(() => {
+    startModuleFilm("clients", "clients", 5, CLIENTS_HIGHLIGHT_MS, CLIENTS_ENTER_MS);
+  }, [startModuleFilm]);
+
+  const startClientsReturn = useCallback(() => {
+    startModuleReturn("clients", "clients", 6, CLIENTS_RETURN_MS);
+  }, [startModuleReturn]);
 
   const startPlanFilm = useCallback(() => {
-    clearFilmTimers();
-    setFilmKind("planning");
-    setFocus("planning");
-    setFilm("highlight");
-    startSceneLock(5);
-
-    filmLater(() => setFilm("enter"), PLAN_HIGHLIGHT_MS);
-    filmLater(() => setFilm("demo"), PLAN_HIGHLIGHT_MS + PLAN_ENTER_MS);
-  }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater]);
+    startModuleFilm("planning", "planning", 7, PLAN_HIGHLIGHT_MS, PLAN_ENTER_MS);
+  }, [startModuleFilm]);
 
   const startPlanReturn = useCallback(() => {
-    clearFilmTimers();
-    setFilmKind("planning");
-    setFocus("planning");
-    setFilm("returning");
-    startSceneLock(6, PLAN_RETURN_MS);
+    startModuleReturn("planning", "planning", 8, PLAN_RETURN_MS);
+  }, [startModuleReturn]);
 
-    filmLater(() => {
-      setFilmKind(null);
-      setFocus(null);
-      setFilm("idle");
-    }, PLAN_RETURN_MS);
-  }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater]);
+  const startChantiersFilm = useCallback(() => {
+    startModuleFilm("chantiers", "chantiers", 9, CHANTIER_HIGHLIGHT_MS, CHANTIER_ENTER_MS);
+  }, [startModuleFilm]);
+
+  const startChantiersReturn = useCallback(() => {
+    startModuleReturn("chantiers", "chantiers", 10, CHANTIER_RETURN_MS);
+  }, [startModuleReturn]);
 
   const startFinFilm = useCallback(() => {
-    clearFilmTimers();
-    setFilmKind("finance");
-    setFocus("finance");
-    setFilm("highlight");
-    startSceneLock(7);
-
-    filmLater(() => setFilm("enter"), FIN_HIGHLIGHT_MS);
-    filmLater(() => setFilm("demo"), FIN_HIGHLIGHT_MS + FIN_ENTER_MS);
-  }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater]);
+    startModuleFilm("finance", "finance", 11, FIN_HIGHLIGHT_MS, FIN_ENTER_MS);
+  }, [startModuleFilm]);
 
   const startFinReturn = useCallback(() => {
-    clearFilmTimers();
-    setFilmKind("finance");
-    setFocus("finance");
-    setFilm("returning");
-    startSceneLock(8, FIN_RETURN_MS);
-
-    filmLater(() => {
-      setFilmKind(null);
-      setFocus(null);
-      setFilm("idle");
-    }, FIN_RETURN_MS);
-  }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater]);
+    startModuleReturn("finance", "finance", 12, FIN_RETURN_MS);
+  }, [startModuleReturn]);
 
   const startConverge = useCallback(() => {
     clearFilmTimers();
     setFilmKind(null);
     setFocus(null);
     setFilm("converge");
-    startSceneLock(9, FIN_CONVERGE_MS);
+    startSceneLock(13, FIN_CONVERGE_MS);
   }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock]);
 
   const onSignatureComplete = useCallback(() => {
-    if (sceneRef.current !== 10) return;
+    if (sceneRef.current !== 14) return;
     signaturePlayedRef.current = true;
     setSignatureSealed(true);
     setFilm("sealed");
@@ -691,13 +737,13 @@ export function LandingHubSection() {
     if (signaturePlayedRef.current) {
       setSignatureSealed(true);
       setFilm("sealed");
-      startSceneLock(10, 600);
+      startSceneLock(14, 600);
       filmLater(() => unlockScroll(), 500);
       return;
     }
 
     setFilm("signature");
-    startSceneLock(10, SIG_DEMO_SAFETY_MS);
+    startSceneLock(14, SIG_DEMO_SAFETY_MS);
   }, [
     clearFilmTimers,
     setFilmKind,
@@ -724,12 +770,16 @@ export function LandingHubSection() {
           setScene(next);
           if (next === 3) startMumFilm();
           else if (next === 4) startMumReturn();
-          else if (next === 5) startPlanFilm();
-          else if (next === 6) startPlanReturn();
-          else if (next === 7) startFinFilm();
-          else if (next === 8) startFinReturn();
-          else if (next === 9) startConverge();
-          else if (next === 10) startSignature();
+          else if (next === 5) startClientsFilm();
+          else if (next === 6) startClientsReturn();
+          else if (next === 7) startPlanFilm();
+          else if (next === 8) startPlanReturn();
+          else if (next === 9) startChantiersFilm();
+          else if (next === 10) startChantiersReturn();
+          else if (next === 11) startFinFilm();
+          else if (next === 12) startFinReturn();
+          else if (next === 13) startConverge();
+          else if (next === 14) startSignature();
           else startSceneLock(next);
           return "handled";
         }
@@ -759,8 +809,12 @@ export function LandingHubSection() {
       startSceneLock,
       startMumFilm,
       startMumReturn,
+      startClientsFilm,
+      startClientsReturn,
       startPlanFilm,
       startPlanReturn,
+      startChantiersFilm,
+      startChantiersReturn,
       startFinFilm,
       startFinReturn,
       startConverge,
@@ -962,17 +1016,23 @@ export function LandingHubSection() {
 
   const mumDemoActive =
     activeFilm === "mum" && (filmPhase === "demo" || filmPhase === "hold");
+  const clientsDemoActive =
+    activeFilm === "clients" &&
+    (filmPhase === "demo" || filmPhase === "hold");
   const planDemoActive =
     activeFilm === "planning" &&
+    (filmPhase === "demo" || filmPhase === "hold");
+  const chantiersDemoActive =
+    activeFilm === "chantiers" &&
     (filmPhase === "demo" || filmPhase === "hold");
   const finDemoActive =
     activeFilm === "finance" &&
     (filmPhase === "demo" || filmPhase === "hold");
 
   const signatureActive =
-    scene === 10 && filmPhase === "signature" && !signatureSealed;
+    scene === 14 && filmPhase === "signature" && !signatureSealed;
   const signatureVisible =
-    scene === 10 ||
+    scene === 14 ||
     (done && signatureSealed) ||
     filmPhase === "sealed" ||
     filmPhase === "signature";
@@ -1036,14 +1096,14 @@ export function LandingHubSection() {
               filmPhase={filmPhase}
               focusId={focusId}
               reduced={reduced}
-              enabled={scene < 10 || filmPhase === "signature"}
+              enabled={scene < 14 || filmPhase === "signature"}
             />
             <HubStage
               scene={scene}
               filmPhase={filmPhase}
               focusId={focusId}
               reduced={reduced}
-              signatureMode={scene === 10}
+              signatureMode={scene === 14}
             />
 
             <MumFilmShell phase={activeFilm === "mum" ? filmPhase : "idle"}>
@@ -1055,6 +1115,17 @@ export function LandingHubSection() {
             </MumFilmShell>
 
             <ModuleFilmShell
+              moduleId="clients"
+              phase={activeFilm === "clients" ? filmPhase : "idle"}
+            >
+              <ClientsFilmPanel
+                active={clientsDemoActive}
+                reduced={!!reduced}
+                onDemoComplete={onClientsDemoComplete}
+              />
+            </ModuleFilmShell>
+
+            <ModuleFilmShell
               moduleId="planning"
               phase={activeFilm === "planning" ? filmPhase : "idle"}
             >
@@ -1062,6 +1133,17 @@ export function LandingHubSection() {
                 active={planDemoActive}
                 reduced={!!reduced}
                 onDemoComplete={onPlanDemoComplete}
+              />
+            </ModuleFilmShell>
+
+            <ModuleFilmShell
+              moduleId="chantiers"
+              phase={activeFilm === "chantiers" ? filmPhase : "idle"}
+            >
+              <ChantiersFilmPanel
+                active={chantiersDemoActive}
+                reduced={!!reduced}
+                onDemoComplete={onChantiersDemoComplete}
               />
             </ModuleFilmShell>
 
@@ -1075,7 +1157,7 @@ export function LandingHubSection() {
               />
             </FinanceFilmShell>
 
-            {scene === 10 ? (
+            {scene === 14 ? (
               <HubSignaturePanel
                 active={signatureActive}
                 sealed={signatureSealed || filmPhase === "sealed"}

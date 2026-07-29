@@ -390,7 +390,7 @@ export function ModuleFilmShell({
   children,
 }: {
   phase: HubFilmPhase;
-  moduleId: "mum" | "planning";
+  moduleId: "mum" | "planning" | "clients" | "chantiers";
   children: ReactNode;
 }) {
   const open =
@@ -399,10 +399,20 @@ export function ModuleFilmShell({
     phase === "hold" ||
     phase === "returning";
 
+  const root =
+    moduleId === "mum"
+      ? "lp-hubMum"
+      : moduleId === "clients"
+        ? "lp-hubClients"
+        : moduleId === "chantiers"
+          ? "lp-hubChantier"
+          : "lp-hubPlan";
+  const frame = `${root}__frame`;
+
   return (
     <div
       className={[
-        moduleId === "mum" ? "lp-hubMum" : "lp-hubPlan",
+        root,
         open ? "is-open" : "",
         phase === "enter" ? "is-entering" : "",
         phase === "demo" || phase === "hold" ? "is-inside" : "",
@@ -412,13 +422,7 @@ export function ModuleFilmShell({
         .join(" ")}
       aria-hidden={!open}
     >
-      <div
-        className={
-          moduleId === "mum" ? "lp-hubMum__frame" : "lp-hubPlan__frame"
-        }
-      >
-        {children}
-      </div>
+      <div className={frame}>{children}</div>
     </div>
   );
 }
