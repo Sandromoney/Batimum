@@ -29,13 +29,19 @@ import {
 import {
   ModuleFilmShell,
   PlanningFilmPanel,
-  PLAN_BREATH_MS,
   PLAN_DEMO_SAFETY_MS,
   PLAN_ENTER_MS,
   PLAN_HIGHLIGHT_MS,
   PLAN_RETURN_MS,
-  PLAN_TEASE_MS,
 } from "@/components/landing/landing-hub-planning-film";
+import {
+  FinanceFilmPanel,
+  FinanceFilmShell,
+  FIN_DEMO_SAFETY_MS,
+  FIN_ENTER_MS,
+  FIN_HIGHLIGHT_MS,
+  FIN_RETURN_MS,
+} from "@/components/landing/landing-hub-finance-film";
 
 const BM_SRC = "/logo-batimum.png";
 const BM_SRC_W = 829;
@@ -111,10 +117,11 @@ const HUB_MODULES: HubModule[] = [
 /**
  * 0 breath → 1 logo → 2 ecosystem
  * → 3 mumFilm → 4 mumReturn
- * → 5 planFilm → 6 planReturn (+ auto fact tease)
- * → exit
+ * → 5 planFilm → 6 planReturn
+ * → 7 financeFilm → 8 financeReturn
+ * → exit (hub prêt pour le final)
  */
-const LAST_SCENE = 6;
+const LAST_SCENE = 8;
 const SCENE_LOCK_MS = [
   900,
   1100,
@@ -122,7 +129,9 @@ const SCENE_LOCK_MS = [
   MUM_DEMO_SAFETY_MS,
   MUM_RETURN_MS,
   PLAN_DEMO_SAFETY_MS,
-  PLAN_RETURN_MS + PLAN_BREATH_MS + PLAN_TEASE_MS,
+  PLAN_RETURN_MS,
+  FIN_DEMO_SAFETY_MS,
+  FIN_RETURN_MS,
 ] as const;
 
 const WHEEL_THRESHOLD = 44;
@@ -131,8 +140,8 @@ const WHEEL_SETTLE_MS = 160;
 const ENGAGE_GRACE_MS = 280;
 
 type PinMode = "before" | "pin";
-type FocusId = "mum" | "planning" | "facturation" | null;
-type ActiveFilm = "mum" | "planning" | null;
+type FocusId = "mum" | "planning" | "finance" | null;
+type ActiveFilm = "mum" | "planning" | "finance" | null;
 
 function BmMark({ className }: { className?: string }) {
   return (
@@ -169,27 +178,32 @@ function HubStage({
   const showModules = scene >= 2;
   const highlight =
     filmPhase === "highlight" ||
-    filmPhase === "tease" ||
-    ((scene === 3 || scene === 5) && filmPhase === "idle");
+    ((scene === 3 || scene === 5 || scene === 7) && filmPhase === "idle");
   const deep =
     filmPhase === "enter" ||
     filmPhase === "demo" ||
     filmPhase === "hold";
   const returning = filmPhase === "returning";
-  const teasing = filmPhase === "tease" && focusId === "facturation";
 
   const floatOn =
     showModules &&
     !reduced &&
     (scene === 2 ||
       filmPhase === "highlight" ||
-      filmPhase === "tease" ||
       filmPhase === "idle" ||
       (returning && !deep));
 
   const logoAwake = scene >= 2;
   const hubVisible = !deep;
-  const hierarchy = Boolean(focusId) && (highlight || deep || returning || teasing);
+  const hierarchy = Boolean(focusId) && (highlight || deep || returning);
+
+  const isModActive = (id: string) => {
+    if (!hierarchy || !focusId) return false;
+    if (focusId === "finance") {
+      return id === "facturation" || id === "pilotage";
+    }
+    return focusId === id;
+  };
 
   return (
     <div
@@ -199,9 +213,12 @@ function HubStage({
         highlight && focusId === "planning"
           ? "lp-hub__stage--highlightPlan"
           : "",
-        teasing ? "lp-hub__stage--teaseFact" : "",
+        highlight && focusId === "finance"
+          ? "lp-hub__stage--highlightFin"
+          : "",
         deep && focusId === "mum" ? "lp-hub__stage--deepMum" : "",
         deep && focusId === "planning" ? "lp-hub__stage--deepPlan" : "",
+        deep && focusId === "finance" ? "lp-hub__stage--deepFin" : "",
         returning && !deep ? "lp-hub__stage--return" : "",
         floatOn ? "lp-hub__stage--float" : "",
       ]
@@ -232,7 +249,7 @@ function HubStage({
               showLogo
                 ? {
                     opacity: hierarchy ? 0.72 : 1,
-                    scale: logoAwake ? (highlight || teasing ? 1.04 : 1.06) : 1,
+                    scale: logoAwake ? (highlight ? 1.04 : 1.06) : 1,
                   }
                 : { opacity: 0, scale: 0.95 }
             }
@@ -245,7 +262,7 @@ function HubStage({
               className={[
                 "lp-hub__halo",
                 logoAwake && !hierarchy ? "is-on" : "",
-                highlight || teasing ? "is-soft" : "",
+                highlight ? "is-soft" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -262,8 +279,8 @@ function HubStage({
         >
           {HUB_MODULES.map((mod, index) => {
             const Icon = mod.Icon;
-            const active = hierarchy && focusId === mod.id;
-            const dimmed = hierarchy && focusId !== mod.id;
+            const active = isModActive(mod.id);
+            const dimmed = hierarchy && !active;
 
             return (
               <li
@@ -289,13 +306,13 @@ function HubStage({
                   animate={
                     showModules
                       ? {
-                          opacity: dimmed ? (teasing ? 0.62 : 0.7) : 1,
-                          scale: active ? (teasing ? 1.1 : 1.08) : dimmed ? 0.97 : 1,
+                          opacity: dimmed ? 0.7 : 1,
+                          scale: active ? 1.08 : dimmed ? 0.97 : 1,
                         }
                       : { opacity: 0, scale: 0.92 }
                   }
                   transition={{
-                    duration: reduced ? 0.01 : highlight || teasing ? 1.1 : 0.75,
+                    duration: reduced ? 0.01 : highlight ? 1.1 : 0.75,
                     delay:
                       reduced || hierarchy || !showModules
                         ? 0
@@ -453,7 +470,7 @@ export function LandingHubSection() {
       const ms = overrideMs ?? SCENE_LOCK_MS[sceneIndex] ?? 1200;
       lockTimerRef.current = setTimeout(() => {
         // Films démo : unlock géré par onDemoComplete
-        if (sceneIndex === 3 || sceneIndex === 5) return;
+        if (sceneIndex === 3 || sceneIndex === 5 || sceneIndex === 7) return;
         unlockScroll();
       }, ms);
     },
@@ -473,12 +490,8 @@ export function LandingHubSection() {
     setDone(true);
     pinModeRef.current = "before";
     setPinMode("before");
-    clearFilmTimers();
-    setFilmKind(null);
-    // Resting : teasing Facturation conservé pour l’attente narrative
-    setFocus("facturation");
-    setFilm("tease");
-  }, [clearFilmTimers, setFilmKind, setFocus, setFilm]);
+    resetToEcosystem();
+  }, [resetToEcosystem]);
 
   const onMumDemoComplete = useCallback(() => {
     if (sceneRef.current !== 3) return;
@@ -488,6 +501,12 @@ export function LandingHubSection() {
 
   const onPlanDemoComplete = useCallback(() => {
     if (sceneRef.current !== 5) return;
+    setFilm("hold");
+    filmLater(() => unlockScroll(), 500);
+  }, [setFilm, filmLater, unlockScroll]);
+
+  const onFinDemoComplete = useCallback(() => {
+    if (sceneRef.current !== 7) return;
     setFilm("hold");
     filmLater(() => unlockScroll(), 500);
   }, [setFilm, filmLater, unlockScroll]);
@@ -528,40 +547,44 @@ export function LandingHubSection() {
     filmLater(() => setFilm("demo"), PLAN_HIGHLIGHT_MS + PLAN_ENTER_MS);
   }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater]);
 
-  const startPlanReturnAndTease = useCallback(() => {
+  const startPlanReturn = useCallback(() => {
     clearFilmTimers();
     setFilmKind("planning");
     setFocus("planning");
     setFilm("returning");
-    startSceneLock(
-      6,
-      PLAN_RETURN_MS + PLAN_BREATH_MS + PLAN_TEASE_MS + 200,
-    );
+    startSceneLock(6, PLAN_RETURN_MS);
 
     filmLater(() => {
       setFilmKind(null);
       setFocus(null);
       setFilm("idle");
     }, PLAN_RETURN_MS);
+  }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater]);
 
-    // Respiration, puis teasing Facturation (sans entrer)
-    filmLater(() => {
-      setFocus("facturation");
-      setFilm("tease");
-    }, PLAN_RETURN_MS + PLAN_BREATH_MS);
+  const startFinFilm = useCallback(() => {
+    clearFilmTimers();
+    setFilmKind("finance");
+    setFocus("finance");
+    setFilm("highlight");
+    startSceneLock(7);
+
+    filmLater(() => setFilm("enter"), FIN_HIGHLIGHT_MS);
+    filmLater(() => setFilm("demo"), FIN_HIGHLIGHT_MS + FIN_ENTER_MS);
+  }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater]);
+
+  const startFinReturn = useCallback(() => {
+    clearFilmTimers();
+    setFilmKind("finance");
+    setFocus("finance");
+    setFilm("returning");
+    startSceneLock(8, FIN_RETURN_MS);
 
     filmLater(() => {
-      unlockScroll();
-    }, PLAN_RETURN_MS + PLAN_BREATH_MS + PLAN_TEASE_MS);
-  }, [
-    clearFilmTimers,
-    setFilmKind,
-    setFocus,
-    setFilm,
-    startSceneLock,
-    filmLater,
-    unlockScroll,
-  ]);
+      setFilmKind(null);
+      setFocus(null);
+      setFilm("idle");
+    }, FIN_RETURN_MS);
+  }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater]);
 
   const applyIntent = useCallback(
     (direction: 1 | -1): "handled" | "exit" | "pass" => {
@@ -580,7 +603,9 @@ export function LandingHubSection() {
           if (next === 3) startMumFilm();
           else if (next === 4) startMumReturn();
           else if (next === 5) startPlanFilm();
-          else if (next === 6) startPlanReturnAndTease();
+          else if (next === 6) startPlanReturn();
+          else if (next === 7) startFinFilm();
+          else if (next === 8) startFinReturn();
           else startSceneLock(next);
           return "handled";
         }
@@ -611,7 +636,9 @@ export function LandingHubSection() {
       startMumFilm,
       startMumReturn,
       startPlanFilm,
-      startPlanReturnAndTease,
+      startPlanReturn,
+      startFinFilm,
+      startFinReturn,
       exitHub,
       resetToEcosystem,
     ],
@@ -812,6 +839,9 @@ export function LandingHubSection() {
   const planDemoActive =
     activeFilm === "planning" &&
     (filmPhase === "demo" || filmPhase === "hold");
+  const finDemoActive =
+    activeFilm === "finance" &&
+    (filmPhase === "demo" || filmPhase === "hold");
 
   return (
     <section
@@ -841,8 +871,8 @@ export function LandingHubSection() {
         <div className="lp-hub__resting">
           <HubStage
             scene={2}
-            filmPhase="tease"
-            focusId="facturation"
+            filmPhase="idle"
+            focusId={null}
             reduced={reduced}
           />
         </div>
@@ -882,6 +912,16 @@ export function LandingHubSection() {
                 onDemoComplete={onPlanDemoComplete}
               />
             </ModuleFilmShell>
+
+            <FinanceFilmShell
+              phase={activeFilm === "finance" ? filmPhase : "idle"}
+            >
+              <FinanceFilmPanel
+                active={finDemoActive}
+                reduced={!!reduced}
+                onDemoComplete={onFinDemoComplete}
+              />
+            </FinanceFilmShell>
           </div>
         </div>
       )}
