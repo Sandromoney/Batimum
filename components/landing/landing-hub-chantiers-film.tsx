@@ -195,7 +195,15 @@ function ChantiersBoard({
       </div>
 
       {showSteps ? (
-        <div className="lp-hubChantier__steps is-on">
+        <div
+          className={[
+            "lp-hubChantier__steps",
+            "is-on",
+            highlightFaïence ? "is-focusFaience" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
           <p className="lp-hubChantier__blockLabel">Étapes</p>
           <ul>
             {STEPS.map((step) => {
