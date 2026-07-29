@@ -3690,21 +3690,10 @@ html:has(.landing-emerald) body {
   scroll-margin-top: 88px;
 }
 
+/* Hauteur ~viewport : la narration avance par étapes discrètes, plus par pixels */
 .landing-emerald .lp-story__pinTrack {
   position: relative;
-  height: 420vh;
-}
-
-@media (min-width: 768px) {
-  .landing-emerald .lp-story__pinTrack {
-    height: 460vh;
-  }
-}
-
-@media (min-width: 1200px) {
-  .landing-emerald .lp-story__pinTrack {
-    height: 480vh;
-  }
+  height: 100svh;
 }
 
 .landing-emerald .lp-story__sticky {

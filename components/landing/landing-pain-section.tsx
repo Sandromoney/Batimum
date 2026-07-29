@@ -4,7 +4,6 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
   type RefObject,
@@ -16,14 +15,7 @@ import {
   LineChart,
   type LucideIcon,
 } from "lucide-react";
-import {
-  motion,
-  useMotionValueEvent,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-  type MotionValue,
-} from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { LandingReveal } from "@/components/landing/landing-reveal";
 
 type SolutionCard = {
@@ -68,67 +60,25 @@ const MICRO_LINES = [
   "À chaque chantier.",
 ] as const;
 
-/** Progress où le dernier texte est pleinement visible */
-const STORY_COMPLETE_AT = 0.92;
+/** Index discret : 0 = titre, 1–5 = micros, 6 = perdu, 7 = pour toujours, 8 = final */
+const LAST_STEP = 8;
+
+const TRANSITION_S = 0.42;
+const LOCK_MS = 780;
+const WHEEL_THRESHOLD = 42;
+const TOUCH_THRESHOLD = 52;
+const ENGAGE_GRACE_MS = 280;
+
+const STEP_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 /**
- * playing         → pin + hauteur narrative + étapes
- * finishedPinned  → dernière phrase verrouillée, pin encore actif jusqu’à sortie
+ * playing         → pin + étapes discrètes
+ * finishedPinned  → dernière phrase verrouillée (transitoire avant compact)
  * compact         → section normale, plus de pin / hauteur artificielle
  */
 type StoryPhase = "playing" | "finishedPinned" | "compact";
 
-function clamp01(n: number) {
-  return Math.min(1, Math.max(0, n));
-}
-
-function useEnvelope(
-  progress: MotionValue<number>,
-  fadeIn: number,
-  holdStart: number,
-  holdEnd: number,
-  fadeOut: number,
-) {
-  return useTransform(progress, (raw) => {
-    const p = clamp01(raw);
-    if (p <= fadeIn) return 0;
-    if (p < holdStart) {
-      const span = holdStart - fadeIn;
-      return span <= 0 ? 1 : (p - fadeIn) / span;
-    }
-    if (p <= holdEnd) return 1;
-    if (p < fadeOut) {
-      const span = fadeOut - holdEnd;
-      return span <= 0 ? 0 : 1 - (p - holdEnd) / span;
-    }
-    return 0;
-  });
-}
-
-function useSoftY(
-  progress: MotionValue<number>,
-  fadeIn: number,
-  holdStart: number,
-  holdEnd: number,
-  fadeOut: number,
-  from = 14,
-  to = -8,
-) {
-  return useTransform(progress, (raw) => {
-    const p = clamp01(raw);
-    if (p <= fadeIn) return from;
-    if (p < holdStart) {
-      const t = holdStart - fadeIn <= 0 ? 1 : (p - fadeIn) / (holdStart - fadeIn);
-      return from + (0 - from) * t;
-    }
-    if (p <= holdEnd) return 0;
-    if (p < fadeOut) {
-      const t = fadeOut - holdEnd <= 0 ? 1 : (p - holdEnd) / (fadeOut - holdEnd);
-      return 0 + (to - 0) * t;
-    }
-    return to;
-  });
-}
+type PinMode = "before" | "pin" | "after";
 
 function FinalCopy() {
   return (
@@ -150,183 +100,6 @@ function StoryFinalLocked() {
   );
 }
 
-function StoryPinnedLive({ progress }: { progress: MotionValue<number> }) {
-  const titleOpacity = useTransform(progress, (raw) => {
-    const p = clamp01(raw);
-    if (p <= 0.54) return 1;
-    if (p >= 0.6) return 0;
-    return 1 - (p - 0.54) / 0.06;
-  });
-  const titleY = useTransform(progress, (raw) => {
-    const p = clamp01(raw);
-    if (p <= 0.54) return 0;
-    if (p >= 0.6) return -10;
-    return ((p - 0.54) / 0.06) * -10;
-  });
-
-  const microWindows = useMemo(
-    () =>
-      MICRO_LINES.map((_, i) => {
-        const start = 0.12 + i * 0.085;
-        const end = start + 0.085;
-        return {
-          fadeIn: start,
-          holdStart: start + 0.018,
-          holdEnd: end - 0.018,
-          fadeOut: end,
-        };
-      }),
-    [],
-  );
-
-  const micro0O = useEnvelope(
-    progress,
-    microWindows[0].fadeIn,
-    microWindows[0].holdStart,
-    microWindows[0].holdEnd,
-    microWindows[0].fadeOut,
-  );
-  const micro0Y = useSoftY(
-    progress,
-    microWindows[0].fadeIn,
-    microWindows[0].holdStart,
-    microWindows[0].holdEnd,
-    microWindows[0].fadeOut,
-    10,
-    -6,
-  );
-  const micro1O = useEnvelope(
-    progress,
-    microWindows[1].fadeIn,
-    microWindows[1].holdStart,
-    microWindows[1].holdEnd,
-    microWindows[1].fadeOut,
-  );
-  const micro1Y = useSoftY(
-    progress,
-    microWindows[1].fadeIn,
-    microWindows[1].holdStart,
-    microWindows[1].holdEnd,
-    microWindows[1].fadeOut,
-    10,
-    -6,
-  );
-  const micro2O = useEnvelope(
-    progress,
-    microWindows[2].fadeIn,
-    microWindows[2].holdStart,
-    microWindows[2].holdEnd,
-    microWindows[2].fadeOut,
-  );
-  const micro2Y = useSoftY(
-    progress,
-    microWindows[2].fadeIn,
-    microWindows[2].holdStart,
-    microWindows[2].holdEnd,
-    microWindows[2].fadeOut,
-    10,
-    -6,
-  );
-  const micro3O = useEnvelope(
-    progress,
-    microWindows[3].fadeIn,
-    microWindows[3].holdStart,
-    microWindows[3].holdEnd,
-    microWindows[3].fadeOut,
-  );
-  const micro3Y = useSoftY(
-    progress,
-    microWindows[3].fadeIn,
-    microWindows[3].holdStart,
-    microWindows[3].holdEnd,
-    microWindows[3].fadeOut,
-    10,
-    -6,
-  );
-  const micro4O = useEnvelope(
-    progress,
-    microWindows[4].fadeIn,
-    microWindows[4].holdStart,
-    microWindows[4].holdEnd,
-    microWindows[4].fadeOut,
-  );
-  const micro4Y = useSoftY(
-    progress,
-    microWindows[4].fadeIn,
-    microWindows[4].holdStart,
-    microWindows[4].holdEnd,
-    microWindows[4].fadeOut,
-    10,
-    -6,
-  );
-
-  const microOps = [micro0O, micro1O, micro2O, micro3O, micro4O];
-  const microYs = [micro0Y, micro1Y, micro2Y, micro3Y, micro4Y];
-
-  const lostOpacity = useEnvelope(progress, 0.62, 0.66, 0.86, 0.9);
-  const lostY = useSoftY(progress, 0.62, 0.66, 0.86, 0.9, 16, -8);
-
-  const perduOpacity = useEnvelope(progress, 0.62, 0.66, 0.73, 0.77);
-  const foreverOpacity = useEnvelope(progress, 0.75, 0.79, 0.86, 0.9);
-  const foreverY = useSoftY(progress, 0.75, 0.79, 0.86, 0.9, 8, -6);
-
-  const finalOpacity = useEnvelope(progress, 0.88, 0.92, 1.0, 1.05);
-  const finalY = useSoftY(progress, 0.88, 0.92, 1.0, 1.05, 20, 0);
-
-  return (
-    <div className="lp-story__stage" aria-hidden="true">
-      <motion.div
-        className="lp-story__layer lp-story__layer--main"
-        style={{ opacity: titleOpacity, y: titleY }}
-      >
-        <p className="lp-story__headline">
-          Votre entreprise perd{" "}
-          <span className="lp-story__headlineEmphasis">du temps.</span>
-        </p>
-        <div className="lp-story__microSlot">
-          {MICRO_LINES.map((line, i) => (
-            <motion.p
-              key={line}
-              className="lp-story__micro"
-              style={{ opacity: microOps[i], y: microYs[i] }}
-            >
-              {line}
-            </motion.p>
-          ))}
-        </div>
-      </motion.div>
-
-      <motion.div
-        className="lp-story__layer"
-        style={{ opacity: lostOpacity, y: lostY }}
-      >
-        <p className="lp-story__lostLead">Ce temps…</p>
-        <div className="lp-story__lostSwap">
-          <motion.p
-            className="lp-story__lostLine"
-            style={{ opacity: perduOpacity }}
-          >
-            reste <span className="lp-story__lostWarm">perdu</span>.
-          </motion.p>
-          <motion.p
-            className="lp-story__lostLine lp-story__lostLine--forever"
-            style={{ opacity: foreverOpacity, y: foreverY }}
-          >
-            pour toujours.
-          </motion.p>
-        </div>
-      </motion.div>
-
-      <motion.div
-        className="lp-story__layer"
-        style={{ opacity: finalOpacity, y: finalY }}
-      >
-        <FinalCopy />
-      </motion.div>
-    </div>
-  );
-}
-
 function StoryStatic() {
   return (
     <div className="lp-story__stage lp-story__stage--static">
@@ -336,6 +109,115 @@ function StoryStatic() {
       </p>
       <p className="lp-story__lostLead">Ce temps… pour toujours.</p>
       <FinalCopy />
+    </div>
+  );
+}
+
+function stepTransition(reduced: boolean | null) {
+  return {
+    duration: reduced ? 0.01 : TRANSITION_S,
+    ease: STEP_EASE,
+  };
+}
+
+function StoryPinnedSteps({
+  activeStep,
+  reduced,
+}: {
+  activeStep: number;
+  reduced: boolean | null;
+}) {
+  const t = stepTransition(reduced);
+  const mainActive = activeStep <= 5;
+  const lostActive = activeStep === 6 || activeStep === 7;
+  const finalActive = activeStep >= 8;
+  const perduActive = activeStep === 6;
+  const foreverActive = activeStep === 7;
+
+  return (
+    <div
+      className="lp-story__stage"
+      aria-hidden="true"
+      data-active-step={activeStep}
+    >
+      <motion.div
+        className="lp-story__layer lp-story__layer--main"
+        initial={false}
+        animate={{
+          opacity: mainActive ? 1 : 0,
+          y: mainActive ? 0 : -10,
+        }}
+        transition={t}
+      >
+        <p className="lp-story__headline">
+          Votre entreprise perd{" "}
+          <span className="lp-story__headlineEmphasis">du temps.</span>
+        </p>
+        <div className="lp-story__microSlot">
+          {MICRO_LINES.map((line, i) => {
+            const on = activeStep === i + 1;
+            return (
+              <motion.p
+                key={line}
+                className="lp-story__micro"
+                initial={false}
+                animate={{
+                  opacity: on ? 1 : 0,
+                  y: on ? 0 : 10,
+                }}
+                transition={t}
+              >
+                {line}
+              </motion.p>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      <motion.div
+        className="lp-story__layer"
+        initial={false}
+        animate={{
+          opacity: lostActive ? 1 : 0,
+          y: lostActive ? 0 : 12,
+        }}
+        transition={t}
+      >
+        <p className="lp-story__lostLead">Ce temps…</p>
+        <div className="lp-story__lostSwap">
+          <motion.p
+            className="lp-story__lostLine"
+            initial={false}
+            animate={{ opacity: perduActive ? 1 : 0 }}
+            transition={t}
+          >
+            reste <span className="lp-story__lostWarm">perdu</span>.
+          </motion.p>
+          <motion.p
+            className="lp-story__lostLine lp-story__lostLine--forever"
+            initial={false}
+            animate={{
+              opacity: foreverActive ? 1 : 0,
+              y: foreverActive ? 0 : 8,
+            }}
+            transition={t}
+          >
+            pour toujours.
+          </motion.p>
+        </div>
+      </motion.div>
+
+      <motion.div
+        className="lp-story__layer"
+        initial={false}
+        animate={{
+          opacity: finalActive ? 1 : 0,
+          y: finalActive ? 0 : 14,
+        }}
+        transition={t}
+      >
+        <FinalCopy />
+      </motion.div>
     </div>
   );
 }
@@ -370,43 +252,6 @@ function SolutionsGrid() {
   );
 }
 
-type PinMode = "before" | "pin" | "after";
-
-function usePinMode(
-  trackRef: RefObject<HTMLDivElement | null>,
-  enabled: boolean,
-): PinMode {
-  const [mode, setMode] = useState<PinMode>("before");
-
-  useEffect(() => {
-    if (!enabled) return;
-
-    const update = () => {
-      const el = trackRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight;
-      if (rect.top > 0) {
-        setMode("before");
-      } else if (rect.bottom <= vh) {
-        setMode("after");
-      } else {
-        setMode("pin");
-      }
-    };
-
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, [trackRef, enabled]);
-
-  return mode;
-}
-
 function StoryCompactFinal({
   compactRef,
 }: {
@@ -428,55 +273,260 @@ export function LandingPainSection() {
   const compactRef = useRef<HTMLDivElement>(null);
   const pendingCompactTop = useRef<number | null>(null);
 
-  /**
-   * Source de vérité unique pour la narration (mémoire page uniquement).
-   * false tant que playing ; true une fois la dernière phrase atteinte.
-   */
+  const [activeStep, setActiveStep] = useState(0);
+  const activeStepRef = useRef(0);
+
   const [storyCompleted, setStoryCompleted] = useState(false);
   const storyCompletedRef = useRef(false);
-  /** Compact = pin/hauteur retirés après sortie de la zone épinglée */
   const [storyCompact, setStoryCompact] = useState(false);
 
+  const [pinMode, setPinMode] = useState<PinMode>("before");
+  const pinModeRef = useRef<PinMode>("before");
+
+  const isTransitioningRef = useRef(false);
+  const deltaAccumRef = useRef(0);
+  const engageAtRef = useRef(0);
+  const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+  const touchHandledRef = useRef(false);
+
   const narrativeActive = !reduced && !storyCompact;
-  const pinMode = usePinMode(pinRef, narrativeActive);
+  const playing = narrativeActive && !storyCompleted;
 
-  const { scrollYProgress } = useScroll({
-    target: pinRef,
-    offset: ["start start", "end end"],
-  });
+  const setStep = useCallback((next: number) => {
+    const clamped = Math.max(0, Math.min(LAST_STEP, next));
+    activeStepRef.current = clamped;
+    setActiveStep(clamped);
+  }, []);
 
-  const markCompleted = useCallback(() => {
+  const startLock = useCallback(() => {
+    isTransitioningRef.current = true;
+    deltaAccumRef.current = 0;
+    if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
+    lockTimerRef.current = setTimeout(() => {
+      isTransitioningRef.current = false;
+      deltaAccumRef.current = 0;
+    }, LOCK_MS);
+  }, []);
+
+  const exitToCompact = useCallback(() => {
     if (storyCompletedRef.current) return;
     storyCompletedRef.current = true;
     setStoryCompleted(true);
-  }, []);
-
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (!narrativeActive || storyCompletedRef.current) return;
-    if (latest >= STORY_COMPLETE_AT) markCompleted();
-  });
-
-  /** Filet si le scroll saute la fin du pin */
-  useEffect(() => {
-    if (!narrativeActive) return;
-    if (pinMode === "after") markCompleted();
-  }, [pinMode, narrativeActive, markCompleted]);
-
-  /**
-   * Une fois la narration terminée, attendre que le visiteur quitte
-   * la zone épinglée (before | after) avant de passer en compact —
-   * puis compenser le scroll pour éviter un saut.
-   */
-  useEffect(() => {
-    if (!storyCompleted || storyCompact || reduced) return;
-    if (pinMode === "pin") return;
 
     const sticky = stickyRef.current;
     pendingCompactTop.current = sticky
       ? sticky.getBoundingClientRect().top
       : null;
     setStoryCompact(true);
-  }, [storyCompleted, storyCompact, pinMode, reduced]);
+  }, []);
+
+  const applyIntent = useCallback(
+    (direction: 1 | -1): "handled" | "exit" | "pass" => {
+      if (!playing) return "pass";
+      if (pinModeRef.current !== "pin") return "pass";
+      if (Date.now() < engageAtRef.current) return "handled";
+      if (isTransitioningRef.current) return "handled";
+
+      const step = activeStepRef.current;
+
+      if (direction > 0) {
+        if (step < LAST_STEP) {
+          setStep(step + 1);
+          startLock();
+          return "handled";
+        }
+        // Dernière phrase déjà affichée : une impulsion de plus quitte la narration
+        startLock();
+        exitToCompact();
+        return "exit";
+      }
+
+      if (step > 0) {
+        setStep(step - 1);
+        startLock();
+        return "handled";
+      }
+
+      // Étape 0 : laisser remonter vers le Hero
+      return "pass";
+    },
+    [playing, setStep, startLock, exitToCompact],
+  );
+
+  /** Pin : verrouiller le scroll sur le début de piste tant que la narration joue */
+  useEffect(() => {
+    if (!playing) return;
+
+    const syncPin = () => {
+      const el = pinRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.top > 1) {
+        pinModeRef.current = "before";
+        setPinMode("before");
+        return;
+      }
+
+      const targetY = window.scrollY + rect.top;
+      if (Math.abs(window.scrollY - targetY) > 1) {
+        window.scrollTo(0, targetY);
+      }
+
+      if (pinModeRef.current !== "pin") {
+        engageAtRef.current = Date.now() + ENGAGE_GRACE_MS;
+        deltaAccumRef.current = 0;
+      }
+      pinModeRef.current = "pin";
+      setPinMode("pin");
+    };
+
+    syncPin();
+    window.addEventListener("scroll", syncPin, { passive: true });
+    window.addEventListener("resize", syncPin);
+    return () => {
+      window.removeEventListener("scroll", syncPin);
+      window.removeEventListener("resize", syncPin);
+    };
+  }, [playing]);
+
+  /** Molette / trackpad : une intention = une étape */
+  useEffect(() => {
+    if (!playing) return;
+
+    const onWheel = (event: WheelEvent) => {
+      if (pinModeRef.current !== "pin") return;
+
+      if (Date.now() < engageAtRef.current) {
+        event.preventDefault();
+        deltaAccumRef.current = 0;
+        return;
+      }
+
+      // Pendant le verrou : ignorer l’inertie trackpad / molette libre
+      if (isTransitioningRef.current) {
+        event.preventDefault();
+        deltaAccumRef.current = 0;
+        return;
+      }
+
+      // Sur étape 0 vers le haut : ne pas bloquer le retour Hero
+      if (activeStepRef.current === 0 && event.deltaY < 0) {
+        deltaAccumRef.current = 0;
+        return;
+      }
+
+      event.preventDefault();
+      deltaAccumRef.current += event.deltaY;
+
+      if (Math.abs(deltaAccumRef.current) < WHEEL_THRESHOLD) return;
+
+      const direction: 1 | -1 = deltaAccumRef.current > 0 ? 1 : -1;
+      deltaAccumRef.current = 0;
+      applyIntent(direction);
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, [playing, applyIntent]);
+
+  /** Clavier */
+  useEffect(() => {
+    if (!playing) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (pinModeRef.current !== "pin") return;
+      const key = event.key;
+      let direction: 1 | -1 | null = null;
+
+      if (
+        key === "ArrowDown" ||
+        key === "PageDown" ||
+        key === " " ||
+        key === "Spacebar"
+      ) {
+        direction = 1;
+      } else if (key === "ArrowUp" || key === "PageUp") {
+        direction = -1;
+      }
+
+      if (!direction) return;
+
+      // Éviter de voler Space hors contexte de page
+      if (
+        (key === " " || key === "Spacebar") &&
+        event.target instanceof HTMLElement &&
+        /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/i.test(event.target.tagName)
+      ) {
+        return;
+      }
+
+      const result = applyIntent(direction);
+      if (result === "pass") return;
+      event.preventDefault();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [playing, applyIntent]);
+
+  /** Touch : un swipe clair = une étape */
+  useEffect(() => {
+    if (!playing) return;
+    const el = stickyRef.current;
+    if (!el) return;
+
+    const onTouchStart = (event: TouchEvent) => {
+      if (pinModeRef.current !== "pin") return;
+      touchStartYRef.current = event.touches[0]?.clientY ?? null;
+      touchHandledRef.current = false;
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (pinModeRef.current !== "pin") return;
+      if (touchStartYRef.current == null) return;
+
+      // Bloquer le scroll natif pendant la narration épinglée
+      if (activeStepRef.current > 0 || isTransitioningRef.current) {
+        event.preventDefault();
+      } else {
+        const y = event.touches[0]?.clientY;
+        if (y != null && y < touchStartYRef.current) {
+          // Swipe vers le haut depuis étape 0 → avancer (bloquer le scroll page)
+          event.preventDefault();
+        }
+      }
+    };
+
+    const onTouchEnd = (event: TouchEvent) => {
+      if (pinModeRef.current !== "pin") return;
+      if (touchHandledRef.current) return;
+      const startY = touchStartYRef.current;
+      touchStartYRef.current = null;
+      if (startY == null) return;
+
+      const endY = event.changedTouches[0]?.clientY;
+      if (endY == null) return;
+      const dy = startY - endY; // >0 = swipe up = étape suivante
+
+      if (Math.abs(dy) < TOUCH_THRESHOLD) return;
+
+      const direction: 1 | -1 = dy > 0 ? 1 : -1;
+      const result = applyIntent(direction);
+      if (result === "pass") return;
+      touchHandledRef.current = true;
+      event.preventDefault();
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: false });
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [playing, applyIntent]);
 
   useLayoutEffect(() => {
     if (!storyCompact) return;
@@ -492,6 +542,12 @@ export function LandingPainSection() {
       window.scrollBy(0, delta);
     }
   }, [storyCompact]);
+
+  useEffect(() => {
+    return () => {
+      if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
+    };
+  }, []);
 
   const phase: StoryPhase = storyCompact
     ? "compact"
@@ -511,6 +567,7 @@ export function LandingPainSection() {
       aria-labelledby="pain-title"
       id="quotidien"
       data-story-phase={phase}
+      data-active-step={activeStep}
     >
       <h2 id="pain-title" className="sr-only">
         Votre entreprise perd du temps. Ce temps reste perdu pour toujours. Et
@@ -538,7 +595,7 @@ export function LandingPainSection() {
             {storyCompleted ? (
               <StoryFinalLocked />
             ) : (
-              <StoryPinnedLive progress={scrollYProgress} />
+              <StoryPinnedSteps activeStep={activeStep} reduced={reduced} />
             )}
           </div>
         </div>
