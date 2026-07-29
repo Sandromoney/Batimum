@@ -3858,11 +3858,6 @@ html:has(.landing-emerald) body {
   padding-inline: 0.35rem;
 }
 
-.landing-emerald .lp-story__finalAccent {
-  color: var(--bm-green);
-  font-weight: 780;
-}
-
 /* Solutions — gris très clair après le pin blanc */
 .landing-emerald .lp-story__solutions {
   background: #fafafa;

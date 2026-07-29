@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import {
   motion,
+  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -58,6 +59,9 @@ const MICRO_LINES = [
   "À chaque oubli.",
   "À chaque chantier.",
 ] as const;
+
+/** Progress où le dernier texte est pleinement visible */
+const STORY_COMPLETE_AT = 0.92;
 
 function clamp01(n: number) {
   return Math.min(1, Math.max(0, n));
@@ -112,11 +116,27 @@ function useSoftY(
   });
 }
 
-function StoryPinned({
-  progress,
-}: {
-  progress: MotionValue<number>;
-}) {
+function FinalCopy() {
+  return (
+    <p className="lp-story__final">
+      Et si vous pouviez récupérer plusieurs heures…
+      <br />
+      chaque semaine&nbsp;?
+    </p>
+  );
+}
+
+function StoryFinalLocked() {
+  return (
+    <div className="lp-story__stage" aria-hidden="true">
+      <div className="lp-story__layer">
+        <FinalCopy />
+      </div>
+    </div>
+  );
+}
+
+function StoryPinnedLive({ progress }: { progress: MotionValue<number> }) {
   /* Étape 1 — titre immersif (visible dès le pin) */
   const titleOpacity = useTransform(progress, (raw) => {
     const p = clamp01(raw);
@@ -239,9 +259,9 @@ function StoryPinned({
   const foreverOpacity = useEnvelope(progress, 0.75, 0.79, 0.86, 0.9);
   const foreverY = useSoftY(progress, 0.75, 0.79, 0.86, 0.9, 8, -6);
 
-  /* Étape 9 — question finale */
-  const finalOpacity = useEnvelope(progress, 0.88, 0.92, 0.995, 1.001);
-  const finalY = useSoftY(progress, 0.88, 0.92, 0.995, 1.001, 20, 0);
+  /* Étape 9 — question finale (reste visible jusqu’à la fin du pin) */
+  const finalOpacity = useEnvelope(progress, 0.88, 0.92, 1.0, 1.05);
+  const finalY = useSoftY(progress, 0.88, 0.92, 1.0, 1.05, 20, 0);
 
   return (
     <div className="lp-story__stage" aria-hidden="true">
@@ -291,16 +311,21 @@ function StoryPinned({
         className="lp-story__layer"
         style={{ opacity: finalOpacity, y: finalY }}
       >
-        <p className="lp-story__final">
-          Et si vous pouviez récupérer{" "}
-          <span className="lp-story__finalAccent">plusieurs heures</span>
-          …
-          <br />
-          chaque semaine&nbsp;?
-        </p>
+        <FinalCopy />
       </motion.div>
     </div>
   );
+}
+
+function StoryPinned({
+  progress,
+  completed,
+}: {
+  progress: MotionValue<number>;
+  completed: boolean;
+}) {
+  if (completed) return <StoryFinalLocked />;
+  return <StoryPinnedLive progress={progress} />;
 }
 
 function StoryStatic() {
@@ -311,13 +336,7 @@ function StoryStatic() {
         <span className="lp-story__headlineEmphasis">du temps.</span>
       </p>
       <p className="lp-story__lostLead">Ce temps… pour toujours.</p>
-      <p className="lp-story__final">
-        Et si vous pouviez récupérer{" "}
-        <span className="lp-story__finalAccent">plusieurs heures</span>
-        …
-        <br />
-        chaque semaine&nbsp;?
-      </p>
+      <FinalCopy />
     </div>
   );
 }
@@ -393,6 +412,29 @@ export function LandingPainSection() {
     offset: ["start start", "end end"],
   });
 
+  /**
+   * Source de vérité unique : la narration ne se joue qu’une fois
+   * par chargement de page (pas de localStorage / cookies).
+   */
+  const [storyCompleted, setStoryCompleted] = useState(false);
+  const storyCompletedRef = useRef(false);
+
+  const markCompleted = () => {
+    if (storyCompletedRef.current) return;
+    storyCompletedRef.current = true;
+    setStoryCompleted(true);
+  };
+
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    if (storyCompletedRef.current) return;
+    if (latest >= STORY_COMPLETE_AT) markCompleted();
+  });
+
+  /** Filet de sécurité si le scroll saute la fin du pin */
+  useEffect(() => {
+    if (pinMode === "after") markCompleted();
+  }, [pinMode]);
+
   return (
     <section
       className="lp-story lp-section--after-hero"
@@ -419,7 +461,10 @@ export function LandingPainSection() {
               .filter(Boolean)
               .join(" ")}
           >
-            <StoryPinned progress={scrollYProgress} />
+            <StoryPinned
+              progress={scrollYProgress}
+              completed={storyCompleted}
+            />
           </div>
         </div>
       )}
