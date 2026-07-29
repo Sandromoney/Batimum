@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
+import { hexPoints, polarPoint, svgPair } from "@/lib/svg-stable";
 
 /** Fusion modules → respiration → écrou → vissage → textes → CTAs */
 export const SIG_MERGE_MS = 1800;
@@ -45,17 +46,6 @@ type SigBeat =
   | "cta"
   | "sealed";
 
-function hexPoints(cx: number, cy: number, r: number) {
-  return Array.from({ length: 6 }, (_, i) => {
-    const a = (Math.PI / 180) * (i * 60);
-    return `${cx + Math.cos(a) * r},${cy + Math.sin(a) * r}`;
-  }).join(" ");
-}
-
-/**
- * Écrou signature — même ADN que le Hero, version plus mature :
- * moins de facettes décoratives, traits plus fins, bleu plus discret.
- */
 function SignatureNutSvg() {
   const cx = 200;
   const cy = 200;
@@ -69,6 +59,11 @@ function SignatureNutSvg() {
   const outer = hexPoints(cx, cy, outerR);
   const mid = hexPoints(cx, cy, midR);
   const inner = hexPoints(cx, cy, innerR);
+  const shineA = polarPoint(cx, cy, -18, midR);
+  const shineB = polarPoint(cx, cy, 38, midR);
+  const shineC = polarPoint(cx, cy, 38, ringR + 6);
+  const shineD = polarPoint(cx, cy, -18, ringR + 6);
+  const shine = `${svgPair(shineA.x, shineA.y)} ${svgPair(shineB.x, shineB.y)} ${svgPair(shineC.x, shineC.y)} ${svgPair(shineD.x, shineD.y)}`;
 
   return (
     <svg
@@ -144,22 +139,18 @@ function SignatureNutSvg() {
       />
 
       {Array.from({ length: 6 }, (_, i) => {
-        const a0 = (Math.PI / 180) * (i * 60);
-        const a1 = (Math.PI / 180) * ((i + 1) * 60);
-        const x0 = cx + Math.cos(a0) * midR;
-        const y0 = cy + Math.sin(a0) * midR;
-        const x1 = cx + Math.cos(a1) * midR;
-        const y1 = cy + Math.sin(a1) * midR;
-        const ix0 = cx + Math.cos(a0) * ringR;
-        const iy0 = cy + Math.sin(a0) * ringR;
-        const ix1 = cx + Math.cos(a1) * ringR;
-        const iy1 = cy + Math.sin(a1) * ringR;
+        const a0 = i * 60;
+        const a1 = (i + 1) * 60;
+        const p0 = polarPoint(cx, cy, a0, midR);
+        const p1 = polarPoint(cx, cy, a1, midR);
+        const ip0 = polarPoint(cx, cy, a0, ringR);
+        const ip1 = polarPoint(cx, cy, a1, ringR);
         const lit = i === 0 || i === 1;
         const shade = i === 3 || i === 4;
         return (
           <polygon
             key={`pan-${i}`}
-            points={`${x0},${y0} ${x1},${y1} ${ix1},${iy1} ${ix0},${iy0}`}
+            points={`${svgPair(p0.x, p0.y)} ${svgPair(p1.x, p1.y)} ${svgPair(ip1.x, ip1.y)} ${svgPair(ip0.x, ip0.y)}`}
             fill={
               lit
                 ? "rgba(255,255,255,0.11)"
@@ -173,7 +164,7 @@ function SignatureNutSvg() {
       })}
 
       <polygon
-        points={`${cx + Math.cos((-18 * Math.PI) / 180) * midR},${cy + Math.sin((-18 * Math.PI) / 180) * midR} ${cx + Math.cos((38 * Math.PI) / 180) * midR},${cy + Math.sin((38 * Math.PI) / 180) * midR} ${cx + Math.cos((38 * Math.PI) / 180) * (ringR + 6)},${cy + Math.sin((38 * Math.PI) / 180) * (ringR + 6)} ${cx + Math.cos((-18 * Math.PI) / 180) * (ringR + 6)},${cy + Math.sin((-18 * Math.PI) / 180) * (ringR + 6)}`}
+        points={shine}
         fill="url(#sigNutShine)"
         opacity="0.48"
         stroke="none"

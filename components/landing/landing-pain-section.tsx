@@ -202,7 +202,10 @@ function StoryCompactFinal({
 }
 
 export function LandingPainSection() {
-  const reduced = useReducedMotion();
+  const prefersReduced = useReducedMotion();
+  const [motionReady, setMotionReady] = useState(false);
+  useEffect(() => setMotionReady(true), []);
+  const reduced = motionReady ? prefersReduced : false;
   const pinRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const compactRef = useRef<HTMLDivElement>(null);

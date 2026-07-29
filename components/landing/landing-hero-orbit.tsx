@@ -22,6 +22,7 @@ import {
   type FocusEvent,
   type RefObject,
 } from "react";
+import { hexPoints, polarPoint, svgPair } from "@/lib/svg-stable";
 
 export type HeroFeatureId =
   | "devis"
@@ -252,15 +253,8 @@ function useSceneSize(ref: RefObject<HTMLDivElement | null>) {
 }
 
 function vertexPoint(angleDeg: number, radius: number) {
-  const rad = (angleDeg * Math.PI) / 180;
-  return { x: Math.cos(rad) * radius, y: Math.sin(rad) * radius };
-}
-
-function hexPoints(cx: number, cy: number, r: number) {
-  return Array.from({ length: 6 }, (_, i) => {
-    const a = (Math.PI / 180) * (i * 60);
-    return `${cx + Math.cos(a) * r},${cy + Math.sin(a) * r}`;
-  }).join(" ");
+  const pt = polarPoint(0, 0, angleDeg, radius);
+  return { x: pt.x, y: pt.y };
 }
 
 function scrollToAnchor(href: string) {
@@ -363,6 +357,11 @@ function HeroNutSvg() {
   const outer = hexPoints(cx, cy, outerR);
   const mid = hexPoints(cx, cy, midR);
   const inner = hexPoints(cx, cy, innerR);
+  const shineA = polarPoint(cx, cy, -20, midR);
+  const shineB = polarPoint(cx, cy, 40, midR);
+  const shineC = polarPoint(cx, cy, 40, ringR + 8);
+  const shineD = polarPoint(cx, cy, -20, ringR + 8);
+  const shine = `${svgPair(shineA.x, shineA.y)} ${svgPair(shineB.x, shineB.y)} ${svgPair(shineC.x, shineC.y)} ${svgPair(shineD.x, shineD.y)}`;
 
   return (
     <svg
@@ -438,20 +437,16 @@ function HeroNutSvg() {
       />
 
       {Array.from({ length: 6 }, (_, i) => {
-        const a0 = (Math.PI / 180) * (i * 60);
-        const a1 = (Math.PI / 180) * ((i + 1) * 60);
-        const x0 = cx + Math.cos(a0) * midR;
-        const y0 = cy + Math.sin(a0) * midR;
-        const x1 = cx + Math.cos(a1) * midR;
-        const y1 = cy + Math.sin(a1) * midR;
-        const ix0 = cx + Math.cos(a0) * ringR;
-        const iy0 = cy + Math.sin(a0) * ringR;
-        const ix1 = cx + Math.cos(a1) * ringR;
-        const iy1 = cy + Math.sin(a1) * ringR;
+        const a0 = i * 60;
+        const a1 = (i + 1) * 60;
+        const p0 = polarPoint(cx, cy, a0, midR);
+        const p1 = polarPoint(cx, cy, a1, midR);
+        const ip0 = polarPoint(cx, cy, a0, ringR);
+        const ip1 = polarPoint(cx, cy, a1, ringR);
         return (
           <g key={`pan-${i}`}>
             <polygon
-              points={`${x0},${y0} ${x1},${y1} ${ix1},${iy1} ${ix0},${iy0}`}
+              points={`${svgPair(p0.x, p0.y)} ${svgPair(p1.x, p1.y)} ${svgPair(ip1.x, ip1.y)} ${svgPair(ip0.x, ip0.y)}`}
               fill={
                 i === 0 || i === 1
                   ? "rgba(255,255,255,0.14)"
@@ -462,10 +457,10 @@ function HeroNutSvg() {
               stroke="none"
             />
             <line
-              x1={x0}
-              y1={y0}
-              x2={ix0}
-              y2={iy0}
+              x1={p0.x}
+              y1={p0.y}
+              x2={ip0.x}
+              y2={ip0.y}
               stroke="rgba(17,17,17,0.045)"
               strokeWidth="0.85"
               strokeLinecap="round"
@@ -475,7 +470,7 @@ function HeroNutSvg() {
       })}
 
       <polygon
-        points={`${cx + Math.cos((-20 * Math.PI) / 180) * midR},${cy + Math.sin((-20 * Math.PI) / 180) * midR} ${cx + Math.cos((40 * Math.PI) / 180) * midR},${cy + Math.sin((40 * Math.PI) / 180) * midR} ${cx + Math.cos((40 * Math.PI) / 180) * (ringR + 8)},${cy + Math.sin((40 * Math.PI) / 180) * (ringR + 8)} ${cx + Math.cos((-20 * Math.PI) / 180) * (ringR + 8)},${cy + Math.sin((-20 * Math.PI) / 180) * (ringR + 8)}`}
+        points={shine}
         fill="url(#batimumNutShine)"
         opacity="0.55"
         stroke="none"
@@ -523,24 +518,24 @@ function HeroNutSvg() {
       />
 
       {Array.from({ length: 6 }, (_, i) => {
-        const a = (Math.PI / 180) * (i * 60);
-        const vx = cx + Math.cos(a) * outerR;
-        const vy = cy + Math.sin(a) * outerR;
+        const a = i * 60;
+        const v = polarPoint(cx, cy, a, outerR);
+        const innerV = polarPoint(cx, cy, a, outerR - 12);
         return (
           <g key={`vertex-${i}`}>
             <circle
-              cx={vx}
-              cy={vy}
+              cx={v.x}
+              cy={v.y}
               r="2.4"
               fill="rgba(59,130,246,0.16)"
               stroke="rgba(59,130,246,0.16)"
               strokeWidth="0.6"
             />
             <line
-              x1={cx + Math.cos(a) * (outerR - 12)}
-              y1={cy + Math.sin(a) * (outerR - 12)}
-              x2={vx}
-              y2={vy}
+              x1={innerV.x}
+              y1={innerV.y}
+              x2={v.x}
+              y2={v.y}
               stroke="rgba(17,17,17,0.08)"
               strokeWidth="1"
               strokeLinecap="round"
@@ -788,7 +783,10 @@ type LandingHeroOrbitProps = {
  * - zone hover commune carte ↔ pont ↔ bulle
  */
 export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
-  const reduced = useReducedMotion() ?? false;
+  const prefersReduced = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+  // Premier paint SSR/client identique ; reduced-motion appliqué après montage.
+  const reduced = mounted ? (prefersReduced ?? false) : false;
   const sceneRef = useRef<HTMLDivElement>(null);
   const sceneWrapRef = useRef<HTMLDivElement>(null);
   const interactRef = useRef<HTMLDivElement>(null);
@@ -798,7 +796,6 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
   );
   const sceneSize = useSceneSize(sceneRef);
 
-  const [mounted, setMounted] = useState(false);
   const [isNarrow, setIsNarrow] = useState(false);
 
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

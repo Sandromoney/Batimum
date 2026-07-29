@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   HERO_FEATURES,
   HERO_BM_SYMBOL_SRC,
@@ -10,7 +11,6 @@ import {
 } from "@/components/landing/landing-hero-orbit";
 import { heroContent } from "@/lib/landing-hero-content";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
-import type { CSSProperties } from "react";
 
 const enterEase = [0.22, 1, 0.36, 1] as const;
 
@@ -37,7 +37,12 @@ export function LandingHero() {
   const primaryLabel = isPrivateBetaEnabled()
     ? "Se connecter"
     : heroContent.primaryCta;
-  const reduced = useReducedMotion() ?? false;
+  // SSR + premier paint client : toujours false → même HTML.
+  // Après montage seulement, respecter prefers-reduced-motion.
+  const prefersReduced = useReducedMotion();
+  const [motionReady, setMotionReady] = useState(false);
+  useEffect(() => setMotionReady(true), []);
+  const reduced = motionReady ? (prefersReduced ?? false) : false;
 
   return (
     <section
