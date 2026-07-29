@@ -64,10 +64,13 @@ const MICRO_LINES = [
 const LAST_STEP = 8;
 
 const TRANSITION_S = 0.42;
-const LOCK_MS = 780;
+const LOCK_MS = 820;
 const WHEEL_THRESHOLD = 42;
 const TOUCH_THRESHOLD = 52;
 const ENGAGE_GRACE_MS = 280;
+/** Fin d’inertie trackpad avant la prochaine intention molette */
+const WHEEL_SETTLE_MS = 160;
+const WHEEL_SETTLE_DELTA = 3.5;
 
 const STEP_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -284,9 +287,11 @@ export function LandingPainSection() {
   const pinModeRef = useRef<PinMode>("before");
 
   const isTransitioningRef = useRef(false);
+  const wheelArmedRef = useRef(true);
   const deltaAccumRef = useRef(0);
   const engageAtRef = useRef(0);
   const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const touchHandledRef = useRef(false);
 
@@ -299,15 +304,27 @@ export function LandingPainSection() {
     setActiveStep(clamped);
   }, []);
 
+  const armWheelAfterSettle = useCallback(() => {
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = setTimeout(() => {
+      wheelArmedRef.current = true;
+      deltaAccumRef.current = 0;
+      settleTimerRef.current = null;
+    }, WHEEL_SETTLE_MS);
+  }, []);
+
   const startLock = useCallback(() => {
     isTransitioningRef.current = true;
+    wheelArmedRef.current = false;
     deltaAccumRef.current = 0;
     if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     lockTimerRef.current = setTimeout(() => {
       isTransitioningRef.current = false;
-      deltaAccumRef.current = 0;
+      // La molette ne se réarme qu’après fin d’inertie (voir onWheel)
+      armWheelAfterSettle();
     }, LOCK_MS);
-  }, []);
+  }, [armWheelAfterSettle]);
 
   const exitToCompact = useCallback(() => {
     if (storyCompletedRef.current) return;
@@ -376,6 +393,7 @@ export function LandingPainSection() {
       if (pinModeRef.current !== "pin") {
         engageAtRef.current = Date.now() + ENGAGE_GRACE_MS;
         deltaAccumRef.current = 0;
+        wheelArmedRef.current = true;
       }
       pinModeRef.current = "pin";
       setPinMode("pin");
@@ -403,10 +421,18 @@ export function LandingPainSection() {
         return;
       }
 
-      // Pendant le verrou : ignorer l’inertie trackpad / molette libre
-      if (isTransitioningRef.current) {
+      // Verrou lecture + inertie : une seule étape par geste
+      if (isTransitioningRef.current || !wheelArmedRef.current) {
         event.preventDefault();
         deltaAccumRef.current = 0;
+        if (!isTransitioningRef.current) {
+          // Après le verrou temporel, attendre la fin réelle du geste / inertie
+          if (Math.abs(event.deltaY) > WHEEL_SETTLE_DELTA) {
+            armWheelAfterSettle();
+          } else {
+            armWheelAfterSettle();
+          }
+        }
         return;
       }
 
@@ -428,7 +454,7 @@ export function LandingPainSection() {
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [playing, applyIntent]);
+  }, [playing, applyIntent, armWheelAfterSettle]);
 
   /** Clavier */
   useEffect(() => {
@@ -546,6 +572,7 @@ export function LandingPainSection() {
   useEffect(() => {
     return () => {
       if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
+      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     };
   }, []);
 
