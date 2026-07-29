@@ -4,6 +4,7 @@ import "./landing-emerald.css";
 import { LandingTop } from "@/components/landing-top";
 import { LandingScrollReset } from "@/components/landing/landing-scroll-reset";
 import { LandingPainSection } from "@/components/landing/landing-pain-section";
+import { LandingHubSection } from "@/components/landing/landing-hub-section";
 import { LandingBeforeAfterSection } from "@/components/landing/landing-before-after-section";
 import { LandingJourneySection } from "@/components/landing/landing-journey-section";
 import { LandingProofsSection } from "@/components/landing/landing-proofs-section";
@@ -80,6 +81,7 @@ export default function LandingPage() {
       <LandingScrollReset />
       <LandingTop />
       <LandingPainSection />
+      <LandingHubSection />
       <LandingBeforeAfterSection />
       <LandingJourneySection />
       <LandingProofsSection />

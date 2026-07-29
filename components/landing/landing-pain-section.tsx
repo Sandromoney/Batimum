@@ -8,49 +8,7 @@ import {
   useState,
   type RefObject,
 } from "react";
-import {
-  FileCheck2,
-  Users,
-  CalendarDays,
-  LineChart,
-  type LucideIcon,
-} from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
-import { LandingReveal } from "@/components/landing/landing-reveal";
-
-type SolutionCard = {
-  id: string;
-  title: string;
-  text: string;
-  Icon: LucideIcon;
-};
-
-const SOLUTION_CARDS: SolutionCard[] = [
-  {
-    id: "devis",
-    title: "Vos devis sont prêts en quelques minutes.",
-    text: "Décrivez simplement les travaux et obtenez une première version de votre devis prête à être ajustée.",
-    Icon: FileCheck2,
-  },
-  {
-    id: "equipe",
-    title: "Toute votre équipe retrouve les informations immédiatement.",
-    text: "Clients, documents, photos, devis, planning et historique sont réunis dans une seule application.",
-    Icon: Users,
-  },
-  {
-    id: "planning",
-    title: "Votre planning reste toujours à jour.",
-    text: "Chaque intervention est centralisée et vos équipes savent immédiatement où aller.",
-    Icon: CalendarDays,
-  },
-  {
-    id: "rentabilite",
-    title: "Vous pilotez enfin votre rentabilité.",
-    text: "Visualisez vos marges, vos coûts et vos performances en temps réel pour prendre de meilleures décisions.",
-    Icon: LineChart,
-  },
-];
 
 const MICRO_LINES = [
   "Chaque jour.",
@@ -221,36 +179,6 @@ function StoryPinnedSteps({
       >
         <FinalCopy />
       </motion.div>
-    </div>
-  );
-}
-
-function SolutionsGrid() {
-  return (
-    <div className="lp-story__solutions">
-      <div className="lp-container lp-story__solutionsInner">
-        <ul className="lp-story__grid" role="list">
-          {SOLUTION_CARDS.map((card, index) => {
-            const Icon = card.Icon;
-            return (
-              <LandingReveal
-                key={card.id}
-                as="li"
-                className="lp-story__cardReveal"
-                delay={index * 150}
-              >
-                <article className="lp-story__card">
-                  <span className="lp-story__icon" aria-hidden="true">
-                    <Icon size={22} strokeWidth={1.7} />
-                  </span>
-                  <h3 className="lp-story__cardTitle">{card.title}</h3>
-                  <p className="lp-story__cardText">{card.text}</p>
-                </article>
-              </LandingReveal>
-            );
-          })}
-        </ul>
-      </div>
     </div>
   );
 }
@@ -627,8 +555,6 @@ export function LandingPainSection() {
           </div>
         </div>
       )}
-
-      <SolutionsGrid />
     </section>
   );
 }
