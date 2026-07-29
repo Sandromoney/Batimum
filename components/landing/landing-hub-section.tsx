@@ -44,6 +44,10 @@ import {
   FIN_RETURN_MS,
 } from "@/components/landing/landing-hub-finance-film";
 import {
+  HubAtmosphere,
+  HubOrbitRings,
+} from "@/components/landing/landing-hub-atmosphere";
+import {
   HubSignaturePanel,
   SIG_DEMO_SAFETY_MS,
 } from "@/components/landing/landing-hub-signature";
@@ -215,6 +219,7 @@ function HubStage({
   const logoAwake = scene >= 2;
   const hubVisible = !deep && !sealed;
   const hierarchy = Boolean(focusId) && (highlight || deep || returning);
+  const showRings = showModules && !deep;
 
   const isModActive = (id: string) => {
     if (!hierarchy || !focusId) return false;
@@ -257,6 +262,8 @@ function HubStage({
           .filter(Boolean)
           .join(" ")}
       >
+        <HubOrbitRings visible={showRings} reduced={reduced} />
+
         <div className="lp-hub__core">
           <motion.div
             className={[
@@ -389,7 +396,7 @@ function HubStage({
                   >
                     <article className="lp-hub__card">
                       <span className="lp-hub__icon" aria-hidden="true">
-                        <Icon size={20} strokeWidth={1.7} />
+                        <Icon size={18} strokeWidth={1.75} />
                       </span>
                       <h3 className="lp-hub__cardTitle">{mod.title}</h3>
                     </article>
@@ -405,39 +412,51 @@ function HubStage({
 }
 
 function HubStatic() {
+  const staticRef = useRef<HTMLDivElement>(null);
   return (
-    <div className="lp-hub__static">
+    <div className="lp-hub__static" ref={staticRef}>
+      <HubAtmosphere
+        containerRef={staticRef}
+        scene={2}
+        filmPhase="idle"
+        focusId={null}
+        reduced
+        enabled={false}
+      />
       <div className="lp-hub__stage lp-hub__stage--static">
-        <div className="lp-hub__core">
-          <div className="lp-hub__logoWrap lp-hub__logoWrap--awake">
-            <span className="lp-hub__halo is-on" aria-hidden="true" />
-            <BmMark />
+        <div className="lp-hub__world is-visible">
+          <HubOrbitRings visible reduced />
+          <div className="lp-hub__core">
+            <div className="lp-hub__logoWrap lp-hub__logoWrap--awake">
+              <span className="lp-hub__halo is-on" aria-hidden="true" />
+              <BmMark />
+            </div>
           </div>
+          <ul className="lp-hub__orbit" role="list">
+            {HUB_MODULES.map((mod) => {
+              const Icon = mod.Icon;
+              return (
+                <li
+                  key={mod.id}
+                  className="lp-hub__mod"
+                  style={
+                    {
+                      "--hub-x": mod.x,
+                      "--hub-y": mod.y,
+                    } as CSSProperties
+                  }
+                >
+                  <article className="lp-hub__card">
+                    <span className="lp-hub__icon" aria-hidden="true">
+                      <Icon size={18} strokeWidth={1.75} />
+                    </span>
+                    <h3 className="lp-hub__cardTitle">{mod.title}</h3>
+                  </article>
+                </li>
+              );
+            })}
+          </ul>
         </div>
-        <ul className="lp-hub__orbit" role="list">
-          {HUB_MODULES.map((mod) => {
-            const Icon = mod.Icon;
-            return (
-              <li
-                key={mod.id}
-                className="lp-hub__mod"
-                style={
-                  {
-                    "--hub-x": mod.x,
-                    "--hub-y": mod.y,
-                  } as CSSProperties
-                }
-              >
-                <article className="lp-hub__card">
-                  <span className="lp-hub__icon" aria-hidden="true">
-                    <Icon size={20} strokeWidth={1.7} />
-                  </span>
-                  <h3 className="lp-hub__cardTitle">{mod.title}</h3>
-                </article>
-              </li>
-            );
-          })}
-        </ul>
       </div>
     </div>
   );
@@ -1011,6 +1030,14 @@ export function LandingHubSection() {
               .filter(Boolean)
               .join(" ")}
           >
+            <HubAtmosphere
+              containerRef={stickyRef}
+              scene={scene}
+              filmPhase={filmPhase}
+              focusId={focusId}
+              reduced={reduced}
+              enabled={scene < 10 || filmPhase === "signature"}
+            />
             <HubStage
               scene={scene}
               filmPhase={filmPhase}

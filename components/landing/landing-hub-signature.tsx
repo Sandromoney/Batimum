@@ -103,8 +103,8 @@ function SignatureNutSvg() {
           <stop offset="100%" stopColor="rgba(255,255,255,0)" />
         </linearGradient>
         <radialGradient id="sigNutBlue" cx="40%" cy="36%" r="52%">
-          <stop offset="0%" stopColor="rgba(59,130,246,0.05)" />
-          <stop offset="100%" stopColor="rgba(59,130,246,0)" />
+          <stop offset="0%" stopColor="rgba(17,17,17,0.03)" />
+          <stop offset="100%" stopColor="rgba(17,17,17,0)" />
         </radialGradient>
         <radialGradient id="sigNutHoleShade" cx="50%" cy="42%" r="58%">
           <stop offset="0%" stopColor="rgba(17,17,17,0)" />
@@ -191,7 +191,7 @@ function SignatureNutSvg() {
         cx={cx}
         cy={cy}
         r={ringR}
-        stroke="rgba(59,130,246,0.1)"
+        stroke="rgba(17,17,17,0.08)"
         strokeWidth="1.05"
         fill="rgba(255,255,255,0.05)"
       />
