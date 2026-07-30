@@ -4274,7 +4274,7 @@ html:has(.landing-emerald) body {
   position: relative;
   z-index: 1;
   width: min(920px, 100%);
-  height: min(620px, 78svh);
+  height: min(560px, var(--hub-film-max-h, 78svh));
   display: grid;
   place-items: center;
   transform-origin: 38% 32%;
