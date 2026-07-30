@@ -5,7 +5,7 @@
   /* Attio-like B&W + blue accent — scoped to public landing only */
   --landing-bg: #ffffff;
   --landing-surface: #f6f7f9;
-  --landing-surface-soft: #fafafa;
+  --landing-surface-soft: #f8f9fa;
   --landing-text: #111111;
   --landing-muted: #666666;
   --landing-subtle: #8a8a8a;
@@ -3794,6 +3794,14 @@ html:has(.landing-emerald) body {
   color: #111111;
 }
 
+.landing-emerald .lp-story__closing--tout {
+  font-size: clamp(2.2rem, 5vw, 3.65rem);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: #111111;
+}
+
 .landing-emerald .lp-story__closing--finale {
   font-size: clamp(1.65rem, 3.6vw, 2.65rem);
   font-weight: 600;
@@ -3935,13 +3943,13 @@ html:has(.landing-emerald) body {
 
 /* Hub Batimum — fond crème premium */
 .landing-emerald .lp-hub {
-  --hub-cream: #f7f5f1;
+  --hub-cream: #ffffff;
   --hub-ink: #111111;
   --hub-muted: #666666;
   --hub-line: rgba(17, 17, 17, 0.08);
   --hub-surface: #ffffff;
-  --hub-surface-soft: #f1eee8;
-  --hub-accent-soft: rgba(17, 17, 17, 0.05);
+  --hub-surface-soft: #f6f7f8;
+  --hub-accent-soft: rgba(17, 17, 17, 0.04);
   --hub-accent: #171717;
   --hub-safe-top: max(5.5rem, env(safe-area-inset-top, 0px) + 4.75rem);
   --hub-safe-bottom: max(5.25rem, env(safe-area-inset-bottom, 0px) + 4.5rem);
@@ -4000,14 +4008,14 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-hub__atmosphere--static {
   background-color: transparent;
-  /* Pointillisme CSS ultra-discret — même esprit que le canvas, sans amas */
+  /* Pointillisme CSS ultra-discret — blanc premium, gris très clair */
   background-image:
-    radial-gradient(circle, rgba(62, 56, 48, 0.07) 0 0.4px, transparent 0.75px),
-    radial-gradient(circle, rgba(62, 56, 48, 0.05) 0 0.35px, transparent 0.65px),
-    radial-gradient(circle, rgba(62, 56, 48, 0.035) 0 0.3px, transparent 0.55px);
+    radial-gradient(circle, rgba(15, 23, 42, 0.055) 0 0.4px, transparent 0.75px),
+    radial-gradient(circle, rgba(15, 23, 42, 0.04) 0 0.35px, transparent 0.65px),
+    radial-gradient(circle, rgba(15, 23, 42, 0.028) 0 0.3px, transparent 0.55px);
   background-size: 18px 18px, 29px 29px, 41px 41px;
   background-position: 0 0, 9px 14px, 19px 6px;
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 /* Respiration très lente — transform/opacity uniquement */
@@ -4928,7 +4936,7 @@ html:has(.landing-emerald) body {
   box-sizing: border-box;
   background:
     radial-gradient(900px 420px at 12% 8%, rgba(17, 17, 17, 0.03), transparent 55%),
-    #fafafa;
+    #f8f9fa;
 }
 
 .landing-emerald .lp-hubMum__copy {
@@ -5966,7 +5974,7 @@ html:has(.landing-emerald) body {
   overflow: auto;
   background:
     radial-gradient(700px 280px at 100% 0%, rgba(17, 17, 17, 0.03), transparent 55%),
-    #fafafa;
+    #f8f9fa;
 }
 
 .landing-emerald .lp-hubMumSign__pageHead h4 {
@@ -6589,7 +6597,7 @@ html:has(.landing-emerald) body {
   box-sizing: border-box;
   background:
     radial-gradient(900px 420px at 88% 10%, rgba(17, 17, 17, 0.03), transparent 55%),
-    #fafafa;
+    #f8f9fa;
 }
 
 .landing-emerald .lp-hubPlan__copy {
@@ -7112,7 +7120,7 @@ html:has(.landing-emerald) body {
   box-sizing: border-box;
   background:
     radial-gradient(900px 420px at 88% 10%, rgba(17, 17, 17, 0.03), transparent 55%),
-    #fafafa;
+    #f8f9fa;
 }
 
 .landing-emerald .lp-hubClients__copy {
@@ -7446,7 +7454,7 @@ html:has(.landing-emerald) body {
   box-sizing: border-box;
   background:
     radial-gradient(900px 420px at 88% 10%, rgba(17, 17, 17, 0.03), transparent 55%),
-    #fafafa;
+    #f8f9fa;
 }
 
 .landing-emerald .lp-hubChantier__copy {
@@ -7883,7 +7891,7 @@ html:has(.landing-emerald) body {
   box-sizing: border-box;
   background:
     radial-gradient(820px 380px at 90% 12%, rgba(17, 17, 17, 0.03), transparent 55%),
-    #fafafa;
+    #f8f9fa;
   overflow: auto;
 }
 

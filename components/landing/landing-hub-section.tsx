@@ -163,6 +163,9 @@ const LAST_SCENE = 14;
 /** Plans scrollables à l’intérieur de la scène MUM (après intro Hub). */
 const MUM_PLAN_COUNT = 6;
 const INTRO_TO_MUM_MS = 3200;
+/** Respiration entre scènes du film automatique. */
+const AUTO_BREATH_MS = 720;
+const AUTO_PLAN_BREATH_MS = 520;
 const SCENE_LOCK_MS = [
   500,
   700,
@@ -564,6 +567,10 @@ export function LandingHubSection() {
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const touchArmedRef = useRef(true);
+  /** Film automatique après le premier geste. */
+  const autoPlayRef = useRef(false);
+  const [autoPlaying, setAutoPlaying] = useState(false);
+  const advanceFilmRef = useRef<() => void>(() => {});
 
   /** Parcours scroll interactif (hors gate / finished / reduced simplifié). */
   const active = !reduced && !done && experience === "tour";
@@ -628,17 +635,37 @@ export function LandingHubSection() {
     }, WHEEL_QUIET_MS);
   }, []);
 
+  const continueAuto = useCallback(
+    (delay = AUTO_BREATH_MS) => {
+      if (!autoPlayRef.current || doneRef.current) return;
+      filmLater(() => {
+        if (!autoPlayRef.current || doneRef.current) return;
+        advanceFilmRef.current();
+      }, delay);
+    },
+    [filmLater],
+  );
+
   const unlockScroll = useCallback(() => {
     if (lockTimerRef.current) {
       clearTimeout(lockTimerRef.current);
       lockTimerRef.current = null;
     }
     isPlayingRef.current = false;
-    if (experienceRef.current === "tour" && !doneRef.current) {
+    if (autoPlayRef.current && !doneRef.current) {
+      const breath =
+        sceneRef.current === 3 ? AUTO_PLAN_BREATH_MS : AUTO_BREATH_MS;
+      continueAuto(breath);
+    } else if (
+      experienceRef.current === "tour" &&
+      !doneRef.current &&
+      !autoPlayRef.current
+    ) {
       setAwaitingGesture(true);
+      setHintMode("start");
     }
     scheduleWheelRearm();
-  }, [scheduleWheelRearm]);
+  }, [scheduleWheelRearm, continueAuto]);
 
   const startSceneLock = useCallback(
     (sceneIndex: number, overrideMs?: number) => {
@@ -669,6 +696,8 @@ export function LandingHubSection() {
     if (doneRef.current) return;
     doneRef.current = true;
     setDone(true);
+    autoPlayRef.current = false;
+    setAutoPlaying(false);
     pinModeRef.current = "before";
     setPinMode("before");
     setAwaitingGesture(false);
@@ -703,12 +732,13 @@ export function LandingHubSection() {
 
   const beginExperience = useCallback(() => {
     if (reduced) {
-      // Reduced motion : proposer l’expérience, mais aboutir au sceau sans parcours lourd
       setSignatureSealed(true);
       setFilm("sealed");
       exitHub();
       return;
     }
+    autoPlayRef.current = false;
+    setAutoPlaying(false);
     setHintMode("start");
     setAwaitingGesture(true);
     sceneRef.current = 0;
@@ -737,13 +767,15 @@ export function LandingHubSection() {
     setMumPlan(0);
     signaturePlayedRef.current = false;
     setSignatureSealed(false);
+    autoPlayRef.current = false;
+    setAutoPlaying(false);
     resetToEcosystem();
     setFilm("idle");
-    setAwaitingGesture(false);
+    setAwaitingGesture(true);
     setHintMode("start");
     pinModeRef.current = "before";
     setPinMode("before");
-    setExperiencePhase("idle");
+    setExperiencePhase("tour");
     requestAnimationFrame(() => {
       document
         .getElementById("ecosysteme")
@@ -908,138 +940,143 @@ export function LandingHubSection() {
     exitHub,
   ]);
 
+  const advanceFilm = useCallback(() => {
+    if (doneRef.current || experienceRef.current !== "tour") return;
+    if (isPlayingRef.current) return;
+
+    const current = sceneRef.current;
+    setAwaitingGesture(false);
+
+    if (current < LAST_SCENE) {
+      if (current === 3 && mumPlanRef.current < MUM_PLAN_COUNT - 1) {
+        const nextPlan = mumPlanRef.current + 1;
+        mumPlanRef.current = nextPlan;
+        setMumPlan(nextPlan);
+        setFilm("demo");
+        startSceneLock(3);
+        return;
+      }
+
+      const go = current + 1;
+      sceneRef.current = go;
+      setScene(go);
+      if (go === 3) {
+        mumPlanRef.current = 0;
+        setMumPlan(0);
+        startMumFilm();
+      } else if (go === 4) startMumReturn();
+      else if (go === 5) startClientsFilm();
+      else if (go === 6) startClientsReturn();
+      else if (go === 7) startPlanFilm();
+      else if (go === 8) startPlanReturn();
+      else if (go === 9) startChantiersFilm();
+      else if (go === 10) startChantiersReturn();
+      else if (go === 11) startFinFilm();
+      else if (go === 12) startFinReturn();
+      else if (go === 13) startConverge();
+      else if (go === 14) startSignature();
+      else startSceneLock(go);
+      return;
+    }
+
+    exitHub();
+  }, [
+    startSceneLock,
+    startMumFilm,
+    startMumReturn,
+    startClientsFilm,
+    startClientsReturn,
+    startPlanFilm,
+    startPlanReturn,
+    startChantiersFilm,
+    startChantiersReturn,
+    startFinFilm,
+    startFinReturn,
+    startConverge,
+    startSignature,
+    exitHub,
+    setFilm,
+  ]);
+
+  useEffect(() => {
+    advanceFilmRef.current = advanceFilm;
+  }, [advanceFilm]);
+
   const applyIntent = useCallback(
     (direction: 1 | -1): "handled" | "exit" | "pass" => {
       if (!active) return "pass";
       if (pinModeRef.current !== "pin") return "pass";
       if (Date.now() < engageAtRef.current) return "handled";
+
+      // Pendant le film auto : absorber les gestes (pas d’étapes manuelles)
+      if (autoPlayRef.current) return "handled";
       if (isPlayingRef.current) return "handled";
 
       const current = sceneRef.current;
-      setAwaitingGesture(false);
-      if (hintMode === "start") setHintMode("continue");
 
       if (direction > 0) {
-        if (current < LAST_SCENE) {
-          // Premier geste : intro Hub complète → atterrissage MUM (plan 0)
-          if (current === 0) {
-            clearFilmTimers();
-            mumPlanRef.current = 0;
-            setMumPlan(0);
-            sceneRef.current = 1;
-            setScene(1);
-            startSceneLock(3, INTRO_TO_MUM_MS);
-            filmLater(() => {
-              sceneRef.current = 2;
-              setScene(2);
-            }, 700);
-            filmLater(() => {
-              sceneRef.current = 3;
-              setScene(3);
-              mumPlanRef.current = 0;
-              setMumPlan(0);
-              startMumFilm();
-            }, 1650);
-            return "handled";
-          }
-
-          // Scène MUM : avancer plan par plan avant le return hub
-          if (current === 3 && mumPlanRef.current < MUM_PLAN_COUNT - 1) {
-            const nextPlan = mumPlanRef.current + 1;
-            mumPlanRef.current = nextPlan;
-            setMumPlan(nextPlan);
-            setFilm("demo");
-            startSceneLock(3);
-            return "handled";
-          }
-
-          const next = current + 1;
-          sceneRef.current = next;
-          setScene(next);
-          if (next === 3) {
+        // Premier et unique geste : lancer tout le film
+        if (current === 0) {
+          autoPlayRef.current = true;
+          setAutoPlaying(true);
+          setAwaitingGesture(false);
+          setHintMode("start");
+          clearFilmTimers();
+          mumPlanRef.current = 0;
+          setMumPlan(0);
+          sceneRef.current = 1;
+          setScene(1);
+          startSceneLock(3, INTRO_TO_MUM_MS);
+          filmLater(() => {
+            sceneRef.current = 2;
+            setScene(2);
+          }, 700);
+          filmLater(() => {
+            sceneRef.current = 3;
+            setScene(3);
             mumPlanRef.current = 0;
             setMumPlan(0);
             startMumFilm();
-          } else if (next === 4) startMumReturn();
-          else if (next === 5) startClientsFilm();
-          else if (next === 6) startClientsReturn();
-          else if (next === 7) startPlanFilm();
-          else if (next === 8) startPlanReturn();
-          else if (next === 9) startChantiersFilm();
-          else if (next === 10) startChantiersReturn();
-          else if (next === 11) startFinFilm();
-          else if (next === 12) startFinReturn();
-          else if (next === 13) startConverge();
-          else if (next === 14) startSignature();
-          else startSceneLock(next);
+          }, 1650);
           return "handled";
         }
-        exitHub();
-        return "exit";
-      }
-
-      if (current > 0) {
-        if (current === 3 && mumPlanRef.current > 0) {
-          const prevPlan = mumPlanRef.current - 1;
-          mumPlanRef.current = prevPlan;
-          setMumPlan(prevPlan);
-          setFilm("demo");
-          startSceneLock(3);
-          return "handled";
-        }
-        if (current >= 3) {
-          resetToEcosystem();
-          mumPlanRef.current = 0;
-          setMumPlan(0);
-          sceneRef.current = 2;
-          setScene(2);
-          startSceneLock(2);
-          return "handled";
-        }
-        const prev = current - 1;
-        sceneRef.current = prev;
-        setScene(prev);
-        startSceneLock(prev);
         return "handled";
       }
 
-      return "pass";
+      // Remonter uniquement depuis l’écran d’attente (avant le film)
+      if (current === 0) return "pass";
+      return "handled";
     },
     [
       active,
-      hintMode,
       clearFilmTimers,
       filmLater,
       startSceneLock,
       startMumFilm,
-      startMumReturn,
-      startClientsFilm,
-      startClientsReturn,
-      startPlanFilm,
-      startPlanReturn,
-      startChantiersFilm,
-      startChantiersReturn,
-      startFinFilm,
-      startFinReturn,
-      startConverge,
-      startSignature,
-      exitHub,
-      resetToEcosystem,
-      setFilm,
     ],
   );
 
   const [gateCinematic, setGateCinematic] = useState(false);
 
   useEffect(() => {
-    const onOpenGate = (event: Event) => {
+    const onOpenStart = (event: Event) => {
       if (readHubSkippedSession() || doneRef.current) return;
       const detail = (event as CustomEvent<{ cinematic?: boolean }>).detail;
       setSessionSkipped(false);
       doneRef.current = false;
       setDone(false);
+      autoPlayRef.current = false;
+      setAutoPlaying(false);
+      signaturePlayedRef.current = false;
+      setSignatureSealed(false);
+      sceneRef.current = 0;
+      setScene(0);
+      mumPlanRef.current = 0;
+      setMumPlan(0);
+      setHintMode("start");
+      setAwaitingGesture(true);
       setGateCinematic(detail?.cinematic !== false);
-      setExperiencePhase("gate");
+      setExperiencePhase("tour");
       pinModeRef.current = "before";
       setPinMode("before");
       requestAnimationFrame(() => {
@@ -1049,9 +1086,9 @@ export function LandingHubSection() {
         window.scrollTo({ top: Math.max(0, top), behavior: "auto" });
       });
     };
-    window.addEventListener("batimum:open-hub-gate", onOpenGate);
+    window.addEventListener("batimum:open-hub-gate", onOpenStart);
     return () =>
-      window.removeEventListener("batimum:open-hub-gate", onOpenGate);
+      window.removeEventListener("batimum:open-hub-gate", onOpenStart);
   }, [setExperiencePhase]);
 
   useEffect(() => {
@@ -1082,8 +1119,12 @@ export function LandingHubSection() {
         touchArmedRef.current = true;
 
         if (experienceRef.current === "idle" || experienceRef.current === "gate") {
-          setExperiencePhase("gate");
-          // Ne pas démarrer le parcours tant que le visiteur n’a pas choisi
+          // Page de présentation : uniquement « Défilez pour commencer »
+          setExperiencePhase("tour");
+          setHintMode("start");
+          setAwaitingGesture(true);
+          autoPlayRef.current = false;
+          setAutoPlaying(false);
         }
       }
       pinModeRef.current = "pin";
@@ -1105,7 +1146,7 @@ export function LandingHubSection() {
     const onWheel = (event: WheelEvent) => {
       if (pinModeRef.current !== "pin") return;
 
-      // Gate : bloquer le scroll bas, laisser remonter pour quitter la zone
+      // Gate legacy : bloquer le scroll bas
       if (experienceRef.current === "gate") {
         if (event.deltaY < 0) return;
         event.preventDefault();
@@ -1113,6 +1154,12 @@ export function LandingHubSection() {
       }
 
       if (experienceRef.current !== "tour") return;
+
+      // Film automatique : absorber toute inertie, ne jamais avancer manuellement
+      if (autoPlayRef.current || autoPlaying) {
+        event.preventDefault();
+        return;
+      }
 
       if (Date.now() < engageAtRef.current) {
         event.preventDefault();
@@ -1143,7 +1190,7 @@ export function LandingHubSection() {
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [pinListeners, applyIntent, scheduleWheelRearm]);
+  }, [pinListeners, applyIntent, scheduleWheelRearm, autoPlaying]);
 
   useEffect(() => {
     if (!pinListeners) return;
@@ -1320,15 +1367,17 @@ export function LandingHubSection() {
   const showHint =
     showTourChrome &&
     awaitingGesture &&
+    !autoPlaying &&
     !signatureSealed &&
+    hintMode === "start" &&
+    scene === 0 &&
     filmPhase !== "demo" &&
     filmPhase !== "enter" &&
     filmPhase !== "highlight" &&
     filmPhase !== "returning" &&
     filmPhase !== "signature" &&
     filmPhase !== "converge" &&
-    filmPhase !== "sealed" &&
-    scene < 14;
+    filmPhase !== "sealed";
 
   const restingBlock = (
     <div className="lp-hub__resting lp-hub__resting--signature">
@@ -1406,12 +1455,16 @@ export function LandingHubSection() {
               <>
                 {showTourChrome ? (
                   <>
-                    <HubSkipControl onSkip={skipPresentation} />
-                    <HubTourProgress
-                      current={chapter.current}
-                      total={chapter.total}
-                    />
-                    <HubScrollHint visible={showHint} mode={hintMode} />
+                    {autoPlaying || scene > 0 ? (
+                      <>
+                        <HubSkipControl onSkip={skipPresentation} />
+                        <HubTourProgress
+                          current={chapter.current}
+                          total={chapter.total}
+                        />
+                      </>
+                    ) : null}
+                    <HubScrollHint visible={showHint} mode="start" />
                   </>
                 ) : null}
 

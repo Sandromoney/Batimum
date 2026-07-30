@@ -12,22 +12,20 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 const MICRO_LINES = [
-  "Devis trop longs à rédiger.",
-  "Relances oubliées.",
-  "Chantiers mal suivis.",
-  "Données éparpillées.",
-  "Décisions trop tardives.",
+  "À chaque devis créé manuellement.",
+  "À chaque chantier mal suivi.",
+  "À chaque planning non centralisé.",
+  "À chaque marge découverte trop tard.",
 ] as const;
 
-/** Closing beats — one slot, never simultaneous. Last line then cinematic handoff. */
+/** Closing beats — culmination du post-hero. */
 const CLOSING_LINES = [
-  "Ce temps perdu.",
-  "Tous les jours.",
-  "Finit par ralentir votre entreprise.",
+  "Tout cela…",
+  "finit par ralentir votre entreprise.",
 ] as const;
 
-/** 0 = titre, 1–5 = micros, 6–8 = closings */
-const LAST_STEP = 5 + CLOSING_LINES.length;
+/** 0 = titre, 1–4 = micros, 5–6 = closings */
+const LAST_STEP = MICRO_LINES.length + CLOSING_LINES.length;
 
 const TRANSITION_S = 0.42;
 const WHEEL_THRESHOLD = 40;
@@ -87,10 +85,7 @@ function StoryPinnedSteps({
   } else if (closingIndex >= 0 && closingIndex < CLOSING_LINES.length) {
     key = `closing-${closingIndex}`;
     if (closingIndex === 0) {
-      className = "lp-story__lostLead lp-story__closing";
-    } else if (closingIndex === 1) {
-      className =
-        "lp-story__lostLine lp-story__closing lp-story__closing--days";
+      className = "lp-story__lostLead lp-story__closing lp-story__closing--tout";
     } else {
       className =
         "lp-story__lostLine lp-story__closing lp-story__closing--finale";
@@ -134,10 +129,9 @@ function StoryStatic() {
           {line}
         </p>
       ))}
-      <p className="lp-story__lostLead">Ce temps perdu.</p>
-      <p className="lp-story__lostLine">Tous les jours.</p>
+      <p className="lp-story__lostLead">Tout cela…</p>
       <p className="lp-story__lostLine">
-        Finit par ralentir votre entreprise.
+        finit par ralentir votre entreprise.
       </p>
     </div>
   );
@@ -533,9 +527,9 @@ export function LandingPainSection() {
       data-active-step={activeStep}
     >
       <h2 id="pain-title" className="sr-only">
-        Votre entreprise perd du temps. Devis trop longs à rédiger. Relances
-        oubliées. Chantiers mal suivis. Données éparpillées. Décisions trop
-        tardives. Ce temps perdu. Tous les jours. Finit par ralentir votre
+        Votre entreprise perd du temps. À chaque devis créé manuellement. À
+        chaque chantier mal suivi. À chaque planning non centralisé. À chaque
+        marge découverte trop tard. Tout cela finit par ralentir votre
         entreprise.
       </h2>
 

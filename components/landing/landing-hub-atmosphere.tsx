@@ -398,7 +398,7 @@ export function HubAtmosphere({
             const pbx = b.x + mx * (0.6 + b.z * 1.1);
             const pby = b.y + my * (0.45 + b.z * 0.85);
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(72, 66, 58, ${alpha})`;
+            ctx.strokeStyle = `rgba(100, 110, 125, ${alpha})`;
             ctx.lineWidth = 0.45;
             ctx.moveTo(pax, pay);
             ctx.lineTo(pbx, pby);
@@ -476,11 +476,11 @@ export function HubAtmosphere({
             const pary = my * (0.4 + p.z * 0.9);
 
             // Point net (pas d’arc soft) — rendu technologique, pas de halo « tache »
-            const g = 62 + Math.floor(p.z * 28);
+            const g = 120 + Math.floor(p.z * 40);
             const px = Math.round(p.x + parx);
             const py = Math.round(p.y + pary);
             const size = p.r < 0.55 ? 1 : p.r < 0.75 ? 1.25 : 1.5;
-            ctx.fillStyle = `rgba(${g}, ${g - 2}, ${g - 6}, ${alpha})`;
+            ctx.fillStyle = `rgba(${g}, ${g + 2}, ${g + 6}, ${alpha})`;
             ctx.fillRect(px, py, size, size);
           }
 
