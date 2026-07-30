@@ -3929,30 +3929,31 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-hub__atmosphere--static {
   background-color: transparent;
+  /* Pointillisme CSS ultra-discret — même esprit que le canvas, sans amas */
   background-image:
-    radial-gradient(circle, rgba(55, 48, 40, 0.14) 0 0.7px, transparent 1.1px),
-    radial-gradient(circle, rgba(55, 48, 40, 0.09) 0 0.55px, transparent 0.95px),
-    radial-gradient(circle, rgba(55, 48, 40, 0.07) 0 0.45px, transparent 0.85px);
-  background-size: 14px 14px, 22px 22px, 34px 34px;
-  background-position: 0 0, 7px 11px, 15px 4px;
-  opacity: 0.85;
+    radial-gradient(circle, rgba(62, 56, 48, 0.07) 0 0.4px, transparent 0.75px),
+    radial-gradient(circle, rgba(62, 56, 48, 0.05) 0 0.35px, transparent 0.65px),
+    radial-gradient(circle, rgba(62, 56, 48, 0.035) 0 0.3px, transparent 0.55px);
+  background-size: 18px 18px, 29px 29px, 41px 41px;
+  background-position: 0 0, 9px 14px, 19px 6px;
+  opacity: 0.7;
 }
 
-/* Respiration très lente — transform/opacity uniquement, données fixes CSS */
+/* Respiration très lente — transform/opacity uniquement */
 .landing-emerald .lp-hub__atmosphere--fallback {
-  animation: lp-hub-atmosphere-breathe 18s ease-in-out infinite;
+  animation: lp-hub-atmosphere-breathe 22s ease-in-out infinite;
   will-change: opacity, transform;
 }
 
 @keyframes lp-hub-atmosphere-breathe {
   0%,
   100% {
-    opacity: 0.78;
+    opacity: 0.62;
     transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    opacity: 0.92;
-    transform: translate3d(0, -0.35%, 0) scale(1.012);
+    opacity: 0.78;
+    transform: translate3d(0, -0.2%, 0) scale(1.006);
   }
 }
 
