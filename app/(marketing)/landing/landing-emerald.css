@@ -3922,7 +3922,13 @@ html:has(.landing-emerald) body {
   display: block;
 }
 
+.landing-emerald .lp-hub__atmosphere--canvas {
+  z-index: 1;
+  background: transparent;
+}
+
 .landing-emerald .lp-hub__atmosphere--static {
+  background-color: transparent;
   background-image:
     radial-gradient(circle, rgba(55, 48, 40, 0.14) 0 0.7px, transparent 1.1px),
     radial-gradient(circle, rgba(55, 48, 40, 0.09) 0 0.55px, transparent 0.95px),
@@ -3930,6 +3936,30 @@ html:has(.landing-emerald) body {
   background-size: 14px 14px, 22px 22px, 34px 34px;
   background-position: 0 0, 7px 11px, 15px 4px;
   opacity: 0.85;
+}
+
+/* Respiration très lente — transform/opacity uniquement, données fixes CSS */
+.landing-emerald .lp-hub__atmosphere--fallback {
+  animation: lp-hub-atmosphere-breathe 18s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+@keyframes lp-hub-atmosphere-breathe {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.92;
+    transform: translate3d(0, -0.35%, 0) scale(1.012);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-emerald .lp-hub__atmosphere--fallback {
+    animation: none;
+  }
 }
 
 .landing-emerald .lp-hub__resting,

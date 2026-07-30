@@ -59,8 +59,10 @@ import {
 } from "@/components/landing/landing-hub-finance-film";
 import {
   HubAtmosphere,
+  HubAtmosphereFallback,
   HubOrbitRings,
 } from "@/components/landing/landing-hub-atmosphere";
+import { LandingSafeBoundary } from "@/components/landing/landing-safe-boundary";
 import {
   HubSignaturePanel,
   SIG_DEMO_SAFETY_MS,
@@ -451,14 +453,16 @@ function HubStatic() {
   const staticRef = useRef<HTMLDivElement>(null);
   return (
     <div className="lp-hub__static" ref={staticRef}>
-      <HubAtmosphere
-        containerRef={staticRef}
-        scene={2}
-        filmPhase="idle"
-        focusId={null}
-        reduced
-        enabled={false}
-      />
+      <LandingSafeBoundary name="hub-atmosphere-static" fallback={<HubAtmosphereFallback />}>
+        <HubAtmosphere
+          containerRef={staticRef}
+          scene={2}
+          filmPhase="idle"
+          focusId={null}
+          reduced
+          enabled={false}
+        />
+      </LandingSafeBoundary>
       <div className="lp-hub__stage lp-hub__stage--static">
         <div className="lp-hub__world is-visible">
           <HubOrbitRings visible reduced />
@@ -1097,14 +1101,16 @@ export function LandingHubSection() {
               .filter(Boolean)
               .join(" ")}
           >
-            <HubAtmosphere
-              containerRef={stickyRef}
-              scene={scene}
-              filmPhase={filmPhase}
-              focusId={focusId}
-              reduced={reduced}
-              enabled={true}
-            />
+            <LandingSafeBoundary name="hub-atmosphere" fallback={<HubAtmosphereFallback />}>
+              <HubAtmosphere
+                containerRef={stickyRef}
+                scene={scene}
+                filmPhase={filmPhase}
+                focusId={focusId}
+                reduced={reduced}
+                enabled={true}
+              />
+            </LandingSafeBoundary>
             <HubStage
               scene={scene}
               filmPhase={filmPhase}
