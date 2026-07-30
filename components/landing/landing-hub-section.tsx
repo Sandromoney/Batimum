@@ -67,6 +67,17 @@ import {
   HubSignaturePanel,
   SIG_DEMO_SAFETY_MS,
 } from "@/components/landing/landing-hub-signature";
+import {
+  HubExperienceGate,
+  HubReplayLink,
+  HubScrollHint,
+  HubSkipControl,
+  HubTourProgress,
+  clearHubSkippedSession,
+  hubChapterFromScene,
+  readHubSkippedSession,
+  writeHubSkippedSession,
+} from "@/components/landing/landing-hub-experience-ui";
 
 const BM_SRC = "/logo-batimum.png";
 const BM_SRC_W = 829;
@@ -183,8 +194,12 @@ type ActiveFilm =
   | "finance"
   | null;
 
-const DEMO_UNLOCK_SCENES = new Set([3, 5, 7, 9, 11, 14]);
 const FILM_ENTRY_SCENES = new Set([3, 5, 7, 9, 11]);
+
+/** idle → gate (choix) → tour (scroll) → finished */
+type ExperiencePhase = "idle" | "gate" | "tour" | "finished";
+
+const NEXT_SECTION_ID = "avant-apres";
 
 function BmMark({ className }: { className?: string }) {
   return (
@@ -515,6 +530,12 @@ export function LandingHubSection() {
   const [done, setDone] = useState(false);
   const doneRef = useRef(false);
 
+  const [experience, setExperience] = useState<ExperiencePhase>("idle");
+  const experienceRef = useRef<ExperiencePhase>("idle");
+  const [awaitingGesture, setAwaitingGesture] = useState(false);
+  const [hintMode, setHintMode] = useState<"start" | "continue">("start");
+  const [sessionSkipped, setSessionSkipped] = useState(false);
+
   const [filmPhase, setFilmPhase] = useState<MumFilmPhase>("idle");
   const filmPhaseRef = useRef<MumFilmPhase>("idle");
   const [focusId, setFocusId] = useState<FocusId>(null);
@@ -536,8 +557,31 @@ export function LandingHubSection() {
   const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartYRef = useRef<number | null>(null);
+  const touchArmedRef = useRef(true);
 
-  const active = !reduced && !done;
+  /** Parcours scroll interactif (hors gate / finished / reduced simplifié). */
+  const active = !reduced && !done && experience === "tour";
+  /** Pin + écouteurs : gate (tous) ou tour (motion OK). */
+  const pinListeners =
+    !done &&
+    !sessionSkipped &&
+    (experience === "gate" ||
+      experience === "tour" ||
+      experience === "idle");
+
+  useEffect(() => {
+    if (!readHubSkippedSession()) return;
+    setSessionSkipped(true);
+    doneRef.current = true;
+    setDone(true);
+    experienceRef.current = "finished";
+    setExperience("finished");
+  }, []);
+
+  const setExperiencePhase = useCallback((phase: ExperiencePhase) => {
+    experienceRef.current = phase;
+    setExperience(phase);
+  }, []);
 
   const clearFilmTimers = useCallback(() => {
     filmTimersRef.current.forEach(clearTimeout);
@@ -572,13 +616,21 @@ export function LandingHubSection() {
         return;
       }
       wheelArmedRef.current = true;
+      touchArmedRef.current = true;
       deltaAccumRef.current = 0;
       settleTimerRef.current = null;
     }, WHEEL_QUIET_MS);
   }, []);
 
   const unlockScroll = useCallback(() => {
+    if (lockTimerRef.current) {
+      clearTimeout(lockTimerRef.current);
+      lockTimerRef.current = null;
+    }
     isPlayingRef.current = false;
+    if (experienceRef.current === "tour" && !doneRef.current) {
+      setAwaitingGesture(true);
+    }
     scheduleWheelRearm();
   }, [scheduleWheelRearm]);
 
@@ -586,7 +638,9 @@ export function LandingHubSection() {
     (sceneIndex: number, overrideMs?: number) => {
       isPlayingRef.current = true;
       wheelArmedRef.current = false;
+      touchArmedRef.current = false;
       deltaAccumRef.current = 0;
+      setAwaitingGesture(false);
       if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
       if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
       const ms = overrideMs ?? SCENE_LOCK_MS[sceneIndex] ?? 1200;
@@ -611,8 +665,81 @@ export function LandingHubSection() {
     setDone(true);
     pinModeRef.current = "before";
     setPinMode("before");
+    setAwaitingGesture(false);
+    setExperiencePhase("finished");
     resetToEcosystem();
-  }, [resetToEcosystem]);
+  }, [resetToEcosystem, setExperiencePhase]);
+
+  const scrollToNextSection = useCallback(() => {
+    const go = () => {
+      document
+        .getElementById(NEXT_SECTION_ID)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    requestAnimationFrame(() => requestAnimationFrame(go));
+  }, []);
+
+  const skipPresentation = useCallback(() => {
+    writeHubSkippedSession();
+    setSessionSkipped(true);
+    if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    clearFilmTimers();
+    isPlayingRef.current = false;
+    wheelArmedRef.current = true;
+    touchArmedRef.current = true;
+    setAwaitingGesture(false);
+    setSignatureSealed(true);
+    setFilm("sealed");
+    exitHub();
+    scrollToNextSection();
+  }, [clearFilmTimers, exitHub, scrollToNextSection, setFilm]);
+
+  const beginExperience = useCallback(() => {
+    if (reduced) {
+      // Reduced motion : proposer l’expérience, mais aboutir au sceau sans parcours lourd
+      setSignatureSealed(true);
+      setFilm("sealed");
+      exitHub();
+      return;
+    }
+    setHintMode("start");
+    setAwaitingGesture(true);
+    sceneRef.current = 0;
+    setScene(0);
+    isPlayingRef.current = false;
+    wheelArmedRef.current = true;
+    touchArmedRef.current = true;
+    deltaAccumRef.current = 0;
+    engageAtRef.current = Date.now() + ENGAGE_GRACE_MS;
+    setExperiencePhase("tour");
+  }, [reduced, exitHub, setFilm, setExperiencePhase]);
+
+  const replayPresentation = useCallback(() => {
+    clearHubSkippedSession();
+    setSessionSkipped(false);
+    if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    clearFilmTimers();
+    doneRef.current = false;
+    setDone(false);
+    sceneRef.current = 0;
+    setScene(0);
+    signaturePlayedRef.current = false;
+    setSignatureSealed(false);
+    resetToEcosystem();
+    setFilm("idle");
+    setAwaitingGesture(false);
+    setHintMode("start");
+    pinModeRef.current = "before";
+    setPinMode("before");
+    setExperiencePhase("idle");
+    requestAnimationFrame(() => {
+      document
+        .getElementById("ecosysteme")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [clearFilmTimers, resetToEcosystem, setFilm, setExperiencePhase]);
 
   const holdThenUnlock = useCallback(() => {
     setFilm("hold");
@@ -773,6 +900,8 @@ export function LandingHubSection() {
       if (isPlayingRef.current) return "handled";
 
       const current = sceneRef.current;
+      setAwaitingGesture(false);
+      if (hintMode === "start") setHintMode("continue");
 
       if (direction > 0) {
         if (current < LAST_SCENE) {
@@ -817,6 +946,7 @@ export function LandingHubSection() {
     },
     [
       active,
+      hintMode,
       startSceneLock,
       startMumFilm,
       startMumReturn,
@@ -836,7 +966,7 @@ export function LandingHubSection() {
   );
 
   useEffect(() => {
-    if (!active) return;
+    if (!pinListeners || sessionSkipped) return;
 
     const syncPin = () => {
       const el = pinRef.current;
@@ -845,6 +975,9 @@ export function LandingHubSection() {
       if (rect.top > 1) {
         pinModeRef.current = "before";
         setPinMode("before");
+        if (experienceRef.current === "gate") {
+          setExperiencePhase("idle");
+        }
         return;
       }
 
@@ -857,7 +990,12 @@ export function LandingHubSection() {
         engageAtRef.current = Date.now() + ENGAGE_GRACE_MS;
         deltaAccumRef.current = 0;
         wheelArmedRef.current = true;
-        if (sceneRef.current === 0) startSceneLock(0);
+        touchArmedRef.current = true;
+
+        if (experienceRef.current === "idle" || experienceRef.current === "gate") {
+          setExperiencePhase("gate");
+          // Ne pas démarrer le parcours tant que le visiteur n’a pas choisi
+        }
       }
       pinModeRef.current = "pin";
       setPinMode("pin");
@@ -870,13 +1008,22 @@ export function LandingHubSection() {
       window.removeEventListener("scroll", syncPin);
       window.removeEventListener("resize", syncPin);
     };
-  }, [active, startSceneLock]);
+  }, [pinListeners, sessionSkipped, setExperiencePhase]);
 
   useEffect(() => {
-    if (!active) return;
+    if (!pinListeners) return;
 
     const onWheel = (event: WheelEvent) => {
       if (pinModeRef.current !== "pin") return;
+
+      // Gate : bloquer le scroll bas, laisser remonter pour quitter la zone
+      if (experienceRef.current === "gate") {
+        if (event.deltaY < 0) return;
+        event.preventDefault();
+        return;
+      }
+
+      if (experienceRef.current !== "tour") return;
 
       if (Date.now() < engageAtRef.current) {
         event.preventDefault();
@@ -907,13 +1054,30 @@ export function LandingHubSection() {
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [active, applyIntent, scheduleWheelRearm]);
+  }, [pinListeners, applyIntent, scheduleWheelRearm]);
 
   useEffect(() => {
-    if (!active) return;
+    if (!pinListeners) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (pinModeRef.current !== "pin") return;
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        skipPresentation();
+        return;
+      }
+
+      if (experienceRef.current === "gate") {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          beginExperience();
+        }
+        return;
+      }
+
+      if (experienceRef.current !== "tour") return;
+
       let direction: 1 | -1 | null = null;
       if (
         event.key === "ArrowDown" ||
@@ -933,6 +1097,10 @@ export function LandingHubSection() {
       ) {
         return;
       }
+      if (isPlayingRef.current || !wheelArmedRef.current) {
+        event.preventDefault();
+        return;
+      }
       const result = applyIntent(direction);
       if (result === "pass") return;
       event.preventDefault();
@@ -940,10 +1108,10 @@ export function LandingHubSection() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [active, applyIntent]);
+  }, [pinListeners, applyIntent, skipPresentation, beginExperience]);
 
   useEffect(() => {
-    if (!active) return;
+    if (!pinListeners) return;
     const el = stickyRef.current;
     if (!el) return;
 
@@ -955,6 +1123,13 @@ export function LandingHubSection() {
     const onTouchMove = (event: TouchEvent) => {
       if (pinModeRef.current !== "pin") return;
       if (touchStartYRef.current == null) return;
+      if (experienceRef.current === "gate") {
+        const y = event.touches[0]?.clientY;
+        // Bloquer glissement vers le haut (contenu suivant) pendant la gate
+        if (y != null && y < touchStartYRef.current) event.preventDefault();
+        return;
+      }
+      if (experienceRef.current !== "tour") return;
       if (sceneRef.current > 0 || isPlayingRef.current) {
         event.preventDefault();
       } else {
@@ -968,6 +1143,9 @@ export function LandingHubSection() {
       const startY = touchStartYRef.current;
       touchStartYRef.current = null;
       if (startY == null) return;
+      if (experienceRef.current === "gate") return;
+      if (experienceRef.current !== "tour") return;
+      if (isPlayingRef.current || !touchArmedRef.current) return;
       const endY = event.changedTouches[0]?.clientY;
       if (endY == null) return;
       const dy = startY - endY;
@@ -986,7 +1164,7 @@ export function LandingHubSection() {
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
     };
-  }, [active, applyIntent]);
+  }, [pinListeners, applyIntent]);
 
   useEffect(() => {
     return () => {
@@ -1048,6 +1226,32 @@ export function LandingHubSection() {
     filmPhase === "sealed" ||
     filmPhase === "signature";
 
+  const chapter = hubChapterFromScene(scene);
+  const showTourChrome = experience === "tour" && pinMode === "pin" && !done;
+  const showHint =
+    showTourChrome &&
+    awaitingGesture &&
+    filmPhase !== "demo" &&
+    filmPhase !== "enter" &&
+    filmPhase !== "highlight" &&
+    filmPhase !== "returning" &&
+    filmPhase !== "signature" &&
+    filmPhase !== "converge";
+
+  const restingBlock = (
+    <div className="lp-hub__resting lp-hub__resting--signature">
+      <HubSignaturePanel
+        active={false}
+        sealed
+        reduced={!!reduced}
+        onComplete={() => {}}
+      />
+      <div className="lp-hub__restingReplay">
+        <HubReplayLink onReplay={replayPresentation} />
+      </div>
+    </div>
+  );
+
   return (
     <section
       className={[
@@ -1055,6 +1259,8 @@ export function LandingHubSection() {
         done ? "lp-hub--done" : "",
         pinMode === "pin" ? "lp-hub--pinned" : "",
         signatureVisible ? "lp-hub--signature" : "",
+        experience === "gate" ? "lp-hub--gate" : "",
+        experience === "tour" ? "lp-hub--tour" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -1062,6 +1268,7 @@ export function LandingHubSection() {
       aria-labelledby="hub-title"
       data-hub-scene={scene}
       data-hub-done={done ? "true" : "false"}
+      data-hub-experience={experience}
       data-film-phase={filmPhase}
       data-focus={focusId ?? ""}
       data-active-film={activeFilm ?? ""}
@@ -1072,24 +1279,8 @@ export function LandingHubSection() {
         Facturation et Pilotage.
       </h2>
 
-      {reduced ? (
-        <div className="lp-hub__resting lp-hub__resting--signature">
-          <HubSignaturePanel
-            active={false}
-            sealed
-            reduced
-            onComplete={() => {}}
-          />
-        </div>
-      ) : done ? (
-        <div className="lp-hub__resting lp-hub__resting--signature">
-          <HubSignaturePanel
-            active={false}
-            sealed
-            reduced={false}
-            onComplete={() => {}}
-          />
-        </div>
+      {done ? (
+        restingBlock
       ) : (
         <div className="lp-hub__pinTrack" ref={pinRef}>
           <div
@@ -1104,80 +1295,101 @@ export function LandingHubSection() {
             <LandingSafeBoundary name="hub-atmosphere" fallback={<HubAtmosphereFallback />}>
               <HubAtmosphere
                 containerRef={stickyRef}
-                scene={scene}
+                scene={experience === "gate" ? 1 : scene}
                 filmPhase={filmPhase}
                 focusId={focusId}
                 reduced={reduced}
                 enabled={true}
               />
             </LandingSafeBoundary>
-            <HubStage
-              scene={scene}
-              filmPhase={filmPhase}
-              focusId={focusId}
-              reduced={reduced}
-              signatureMode={scene === 14}
-            />
 
-            <MumFilmShell phase={activeFilm === "mum" ? filmPhase : "idle"}>
-              <MumFilmPanel
-                active={mumDemoActive}
-                reduced={!!reduced}
-                onDemoComplete={onMumDemoComplete}
+            {experience === "gate" ? (
+              <HubExperienceGate
+                onDiscover={beginExperience}
+                onSkip={skipPresentation}
               />
-            </MumFilmShell>
+            ) : (
+              <>
+                {showTourChrome ? (
+                  <>
+                    <HubSkipControl onSkip={skipPresentation} />
+                    <HubTourProgress
+                      current={chapter.current}
+                      total={chapter.total}
+                    />
+                    <HubScrollHint visible={showHint} mode={hintMode} />
+                  </>
+                ) : null}
 
-            <ModuleFilmShell
-              moduleId="clients"
-              phase={activeFilm === "clients" ? filmPhase : "idle"}
-            >
-              <ClientsFilmPanel
-                active={clientsDemoActive}
-                reduced={!!reduced}
-                onDemoComplete={onClientsDemoComplete}
-              />
-            </ModuleFilmShell>
+                <HubStage
+                  scene={scene}
+                  filmPhase={filmPhase}
+                  focusId={focusId}
+                  reduced={reduced}
+                  signatureMode={scene === 14}
+                />
 
-            <ModuleFilmShell
-              moduleId="planning"
-              phase={activeFilm === "planning" ? filmPhase : "idle"}
-            >
-              <PlanningFilmPanel
-                active={planDemoActive}
-                reduced={!!reduced}
-                onDemoComplete={onPlanDemoComplete}
-              />
-            </ModuleFilmShell>
+                <MumFilmShell phase={activeFilm === "mum" ? filmPhase : "idle"}>
+                  <MumFilmPanel
+                    active={mumDemoActive}
+                    reduced={!!reduced}
+                    onDemoComplete={onMumDemoComplete}
+                  />
+                </MumFilmShell>
 
-            <ModuleFilmShell
-              moduleId="chantiers"
-              phase={activeFilm === "chantiers" ? filmPhase : "idle"}
-            >
-              <ChantiersFilmPanel
-                active={chantiersDemoActive}
-                reduced={!!reduced}
-                onDemoComplete={onChantiersDemoComplete}
-              />
-            </ModuleFilmShell>
+                <ModuleFilmShell
+                  moduleId="clients"
+                  phase={activeFilm === "clients" ? filmPhase : "idle"}
+                >
+                  <ClientsFilmPanel
+                    active={clientsDemoActive}
+                    reduced={!!reduced}
+                    onDemoComplete={onClientsDemoComplete}
+                  />
+                </ModuleFilmShell>
 
-            <FinanceFilmShell
-              phase={activeFilm === "finance" ? filmPhase : "idle"}
-            >
-              <FinanceFilmPanel
-                active={finDemoActive}
-                reduced={!!reduced}
-                onDemoComplete={onFinDemoComplete}
-              />
-            </FinanceFilmShell>
+                <ModuleFilmShell
+                  moduleId="planning"
+                  phase={activeFilm === "planning" ? filmPhase : "idle"}
+                >
+                  <PlanningFilmPanel
+                    active={planDemoActive}
+                    reduced={!!reduced}
+                    onDemoComplete={onPlanDemoComplete}
+                  />
+                </ModuleFilmShell>
 
-            {scene === 14 ? (
-              <HubSignaturePanel
-                active={signatureActive}
-                sealed={signatureSealed || filmPhase === "sealed"}
-                reduced={!!reduced}
-                onComplete={onSignatureComplete}
-              />
-            ) : null}
+                <ModuleFilmShell
+                  moduleId="chantiers"
+                  phase={activeFilm === "chantiers" ? filmPhase : "idle"}
+                >
+                  <ChantiersFilmPanel
+                    active={chantiersDemoActive}
+                    reduced={!!reduced}
+                    onDemoComplete={onChantiersDemoComplete}
+                  />
+                </ModuleFilmShell>
+
+                <FinanceFilmShell
+                  phase={activeFilm === "finance" ? filmPhase : "idle"}
+                >
+                  <FinanceFilmPanel
+                    active={finDemoActive}
+                    reduced={!!reduced}
+                    onDemoComplete={onFinDemoComplete}
+                  />
+                </FinanceFilmShell>
+
+                {scene === 14 ? (
+                  <HubSignaturePanel
+                    active={signatureActive}
+                    sealed={signatureSealed || filmPhase === "sealed"}
+                    reduced={!!reduced}
+                    onComplete={onSignatureComplete}
+                  />
+                ) : null}
+              </>
+            )}
           </div>
         </div>
       )}

@@ -3963,6 +3963,296 @@ html:has(.landing-emerald) body {
   }
 }
 
+/* ── Hub experience gate / chrome ── */
+.landing-emerald .lp-hub__gate {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  pointer-events: auto;
+}
+
+.landing-emerald .lp-hub__gateInner {
+  width: min(34rem, 100%);
+  text-align: center;
+  display: grid;
+  gap: 0.85rem;
+  justify-items: center;
+}
+
+.landing-emerald .lp-hub__gateLogo {
+  width: min(11rem, 42vw);
+  margin-bottom: 0.35rem;
+  overflow: hidden;
+  display: grid;
+  place-items: start center;
+}
+
+.landing-emerald .lp-hub__gateLogoBreath {
+  width: 100%;
+  animation: lp-hub-gate-breath 5.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.landing-emerald .lp-hub__gateLogoImg {
+  height: auto;
+  width: 100%;
+  max-width: none;
+  min-width: calc(100% * 829 / 210);
+  object-fit: cover;
+  object-position: left center;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 10px 24px rgba(17, 17, 17, 0.08));
+}
+
+@keyframes lp-hub-gate-breath {
+  0%,
+  100% {
+    opacity: 0.92;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(0, -3px, 0) scale(1.015);
+  }
+}
+
+.landing-emerald .lp-hub__gateTitle {
+  margin: 0;
+  font-size: clamp(1.55rem, 3.2vw, 2.05rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: #111111;
+}
+
+.landing-emerald .lp-hub__gateLead {
+  margin: 0;
+  max-width: 28rem;
+  font-size: clamp(0.95rem, 1.5vw, 1.05rem);
+  line-height: 1.55;
+  color: #555555;
+}
+
+.landing-emerald .lp-hub__gateActions {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: center;
+  margin-top: 0.85rem;
+  width: min(20rem, 100%);
+}
+
+.landing-emerald .lp-hub__gateBtn {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-radius: 999px;
+  padding: 0.85rem 1.35rem;
+  transition:
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.landing-emerald .lp-hub__gateBtn:focus-visible {
+  outline: 2px solid #111111;
+  outline-offset: 3px;
+}
+
+.landing-emerald .lp-hub__gateBtn--primary {
+  width: 100%;
+  background: #111111;
+  color: #ffffff;
+}
+
+.landing-emerald .lp-hub__gateBtn--primary:hover {
+  transform: translateY(-1px);
+}
+
+.landing-emerald .lp-hub__gateBtn--ghost {
+  background: transparent;
+  color: #666666;
+  font-weight: 500;
+  padding: 0.45rem 0.75rem;
+}
+
+.landing-emerald .lp-hub__gateBtn--ghost:hover {
+  color: #111111;
+}
+
+.landing-emerald .lp-hub__skip {
+  position: absolute;
+  top: max(5.5rem, env(safe-area-inset-top, 0px) + 5rem);
+  right: max(1rem, env(safe-area-inset-right, 0px) + 0.75rem);
+  z-index: 12;
+  appearance: none;
+  border: 0;
+  background: rgba(247, 245, 241, 0.72);
+  backdrop-filter: blur(8px);
+  color: #666666;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.landing-emerald .lp-hub__skip:hover {
+  color: #111111;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.landing-emerald .lp-hub__skip:focus-visible {
+  outline: 2px solid #111111;
+  outline-offset: 2px;
+}
+
+.landing-emerald .lp-hub__progress {
+  position: absolute;
+  top: max(5.65rem, env(safe-area-inset-top, 0px) + 5.1rem);
+  left: max(1rem, env(safe-area-inset-left, 0px) + 0.85rem);
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  pointer-events: none;
+}
+
+.landing-emerald .lp-hub__progressLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: rgba(17, 17, 17, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-emerald .lp-hub__progressDots {
+  display: flex;
+  gap: 0.28rem;
+  align-items: center;
+}
+
+.landing-emerald .lp-hub__progressDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(17, 17, 17, 0.18);
+}
+
+.landing-emerald .lp-hub__progressDot.is-done {
+  background: rgba(17, 17, 17, 0.38);
+}
+
+.landing-emerald .lp-hub__progressDot.is-current {
+  background: rgba(17, 17, 17, 0.7);
+  transform: scale(1.25);
+}
+
+.landing-emerald .lp-hub__hint {
+  position: absolute;
+  left: 50%;
+  bottom: max(1.4rem, env(safe-area-inset-bottom, 0px) + 1.1rem);
+  transform: translateX(-50%) translateY(6px);
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hub__hint.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.landing-emerald .lp-hub__hintText {
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: rgba(17, 17, 17, 0.62);
+}
+
+.landing-emerald .lp-hub__hintArrow {
+  color: #3b82f6;
+  display: grid;
+  place-items: center;
+  animation: lp-hub-hint-bob 1.8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes lp-hub-hint-bob {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(0, 5px, 0);
+  }
+}
+
+.landing-emerald .lp-hub__restingReplay {
+  position: absolute;
+  left: 50%;
+  bottom: max(1.25rem, env(safe-area-inset-bottom, 0px) + 1rem);
+  transform: translateX(-50%);
+  z-index: 5;
+}
+
+.landing-emerald .lp-hub__replay {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #777777;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  text-decoration-color: rgba(17, 17, 17, 0.2);
+}
+
+.landing-emerald .lp-hub__replay:hover {
+  color: #111111;
+  text-decoration-color: rgba(17, 17, 17, 0.45);
+}
+
+.landing-emerald .lp-hub__replay:focus-visible {
+  outline: 2px solid #111111;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-emerald .lp-hub__gateLogoBreath,
+  .landing-emerald .lp-hub__hintArrow {
+    animation: none;
+  }
+
+  .landing-emerald .lp-hub__hint {
+    transition: opacity 0.2s ease;
+  }
+}
+
 .landing-emerald .lp-hub__resting,
 .landing-emerald .lp-hub__static {
   min-height: min(92svh, 860px);
