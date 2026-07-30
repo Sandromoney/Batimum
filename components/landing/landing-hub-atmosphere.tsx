@@ -379,7 +379,7 @@ export function HubAtmosphere({
 
   return (
     <>
-      <HubAtmosphereFallback />
+      {!showCanvas ? <HubAtmosphereFallback /> : null}
       {showCanvas ? (
         <canvas
           ref={canvasRef}
