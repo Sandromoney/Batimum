@@ -15,8 +15,38 @@ const TIP_OFFSET_Y = 2;
 type Pos = { x: number; y: number };
 
 /**
- * Curseur film — positionné sur le centre cliquable réel de la cible.
- * Invisible tant qu’aucune cible n’est fournie.
+ * Coordonnées localesa du centre de la cible, dans le référentiel
+ * du containing block (padding edge), même si un ancêtre est scale/transformé.
+ */
+function measureTargetLocal(
+  root: HTMLElement,
+  selector: string,
+): Pos | null {
+  const el = root.querySelector(selector) as HTMLElement | null;
+  if (!el) return null;
+  const rootRect = root.getBoundingClientRect();
+  const rect = el.getBoundingClientRect();
+  if (rect.width < 1 || rect.height < 1) return null;
+
+  const scaleX =
+    root.offsetWidth > 0 ? rootRect.width / root.offsetWidth : 1;
+  const scaleY =
+    root.offsetHeight > 0 ? rootRect.height / root.offsetHeight : 1;
+
+  const originX = rootRect.left + root.clientLeft * scaleX;
+  const originY = rootRect.top + root.clientTop * scaleY;
+  const cx = (rect.left + rect.width / 2 - originX) / (scaleX || 1);
+  const cy = (rect.top + rect.height / 2 - originY) / (scaleY || 1);
+
+  return {
+    x: cx - TIP_OFFSET_X,
+    y: cy - TIP_OFFSET_Y,
+  };
+}
+
+/**
+ * Curseur film — pointe active sur le centre cliquable réel.
+ * Invisible hors action ; première apparition sans vol depuis (0,0).
  */
 export function FilmCursor({
   visible,
@@ -24,12 +54,7 @@ export function FilmCursor({
   clicking = false,
   className,
 }: {
-  /** Afficher le curseur (fondu). */
   visible: boolean;
-  /**
-   * Sélecteur CSS de la cible dans le conteneur parent `position: relative`.
-   * Ex. `[data-cursor-target="mic"]`. Null = curseur masqué.
-   */
   target: string | null;
   clicking?: boolean;
   className?: string;
@@ -37,70 +62,70 @@ export function FilmCursor({
   const cursorRef = useRef<HTMLSpanElement>(null);
   const [pos, setPos] = useState<Pos | null>(null);
   const [ready, setReady] = useState(false);
-  const lastTarget = useRef<string | null>(null);
-
-  const measure = () => {
-    const cursor = cursorRef.current;
-    if (!cursor || !target) {
-      setPos(null);
-      setReady(false);
-      return;
-    }
-    const root = cursor.offsetParent as HTMLElement | null;
-    if (!root) return;
-    const el = root.querySelector(target) as HTMLElement | null;
-    if (!el) {
-      setPos(null);
-      setReady(false);
-      return;
-    }
-    const rootRect = root.getBoundingClientRect();
-    const rect = el.getBoundingClientRect();
-    if (rect.width < 1 || rect.height < 1) {
-      setPos(null);
-      setReady(false);
-      return;
-    }
-    const cx = rect.left + rect.width / 2 - rootRect.left;
-    const cy = rect.top + rect.height / 2 - rootRect.top;
-    setPos({
-      x: cx - TIP_OFFSET_X,
-      y: cy - TIP_OFFSET_Y,
-    });
-    setReady(true);
-  };
+  const [animateMove, setAnimateMove] = useState(false);
+  const hadPos = useRef(false);
 
   useLayoutEffect(() => {
     if (!visible || !target) {
       setReady(false);
-      if (!target) setPos(null);
+      if (!target) {
+        setPos(null);
+        hadPos.current = false;
+        setAnimateMove(false);
+      }
       return;
     }
-    // Nouveau trajet : partir de la position actuelle puis animer
-    if (lastTarget.current !== target) {
-      lastTarget.current = target;
-    }
-    measure();
-    const cursor = cursorRef.current;
-    const root = cursor?.offsetParent as HTMLElement | null;
-    const el = root?.querySelector(target) as HTMLElement | null;
 
-    const ro = new ResizeObserver(() => measure());
-    if (root) ro.observe(root);
+    const cursor = cursorRef.current;
+    const root =
+      (cursor?.offsetParent as HTMLElement | null) ||
+      (cursor?.parentElement as HTMLElement | null);
+    if (!root) return;
+
+    const apply = () => {
+      const next = measureTargetLocal(root, target);
+      if (!next) {
+        setPos(null);
+        setReady(false);
+        return;
+      }
+      if (!hadPos.current) {
+        setAnimateMove(false);
+        setPos(next);
+        hadPos.current = true;
+        setReady(true);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => setAnimateMove(true));
+        });
+      } else {
+        setAnimateMove(true);
+        setPos(next);
+        setReady(true);
+      }
+    };
+
+    apply();
+
+    const el = root.querySelector(target) as HTMLElement | null;
+    const ro = new ResizeObserver(() => apply());
+    ro.observe(root);
     if (el) ro.observe(el);
-    window.addEventListener("resize", measure);
-    const id = window.setInterval(measure, 120);
+    window.addEventListener("resize", apply);
+    const id = window.setInterval(apply, 100);
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", measure);
+      window.removeEventListener("resize", apply);
       window.clearInterval(id);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, target]);
 
   useEffect(() => {
     if (!visible) {
-      const t = window.setTimeout(() => setReady(false), 280);
+      const t = window.setTimeout(() => {
+        setReady(false);
+        hadPos.current = false;
+        setAnimateMove(false);
+      }, 280);
       return () => window.clearTimeout(t);
     }
   }, [visible]);
@@ -113,7 +138,7 @@ export function FilmCursor({
       className={[
         "lp-hubFilm__cursor",
         on ? "is-on" : "is-off",
-        clicking ? "is-click" : "",
+        animateMove ? "is-animated" : "is-snap",
         className,
       ]
         .filter(Boolean)
@@ -128,7 +153,16 @@ export function FilmCursor({
       }
       aria-hidden="true"
     >
-      <MousePointer2 size={18} strokeWidth={1.7} />
+      <span
+        className={[
+          "lp-hubFilm__cursorGlyph",
+          clicking ? "is-click" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <MousePointer2 size={18} strokeWidth={1.7} />
+      </span>
     </span>
   );
 }

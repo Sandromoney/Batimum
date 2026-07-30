@@ -216,7 +216,26 @@ export function LandingPainSection() {
     }, VISUAL_LOCK_MS);
   }, [scheduleWheelRearm]);
 
+  const exitToCompact = useCallback(() => {
+    storyCompletedRef.current = true;
+    setStoryCompleted(true);
+    setStoryCompact((prev) => {
+      if (prev) return prev;
+      const sticky = stickyRef.current;
+      pendingCompactTop.current = sticky
+        ? sticky.getBoundingClientRect().top
+        : null;
+      return true;
+    });
+  }, []);
+
   const openHubGate = useCallback((cinematic = true) => {
+    // Libérer immédiatement le pin post-hero pour ne pas combattre le hub
+    storyCompletedRef.current = true;
+    setStoryCompleted(true);
+    pinModeRef.current = "after";
+    setPinMode("after");
+
     window.dispatchEvent(
       new CustomEvent("batimum:open-hub-gate", {
         detail: { cinematic },
@@ -229,18 +248,6 @@ export function LandingPainSection() {
     }
   }, []);
 
-  const exitToCompact = useCallback(() => {
-    if (storyCompletedRef.current) return;
-    storyCompletedRef.current = true;
-    setStoryCompleted(true);
-
-    const sticky = stickyRef.current;
-    pendingCompactTop.current = sticky
-      ? sticky.getBoundingClientRect().top
-      : null;
-    setStoryCompact(true);
-  }, []);
-
   /** Breath → fade texte → gate soft enter → compact. */
   const beginCinematicHandoff = useCallback(() => {
     if (cinematicStartedRef.current || handoffRef.current) return;
@@ -248,6 +255,9 @@ export function LandingPainSection() {
     handoffRef.current = true;
     isTransitioningRef.current = true;
     wheelArmedRef.current = false;
+    // Couper les listeners wheel/pin tout de suite
+    storyCompletedRef.current = true;
+    setStoryCompleted(true);
 
     if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
     handoffTimerRef.current = setTimeout(() => {
@@ -261,6 +271,21 @@ export function LandingPainSection() {
       }, HANDOFF_FADE_MS);
     }, HANDOFF_BREATH_MS);
   }, [openHubGate, exitToCompact]);
+
+  // Si le hub s’ouvre depuis l’extérieur, ne plus capturer le scroll
+  useEffect(() => {
+    const onHubOpen = () => {
+      storyCompletedRef.current = true;
+      setStoryCompleted(true);
+      pinModeRef.current = "after";
+      setPinMode("after");
+      cinematicStartedRef.current = true;
+      handoffRef.current = true;
+      window.setTimeout(() => exitToCompact(), 80);
+    };
+    window.addEventListener("batimum:open-hub-gate", onHubOpen);
+    return () => window.removeEventListener("batimum:open-hub-gate", onHubOpen);
+  }, [exitToCompact]);
 
   const scheduleHandoff = useCallback(() => {
     beginCinematicHandoff();
