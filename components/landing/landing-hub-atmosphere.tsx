@@ -14,6 +14,7 @@ type FocusId =
   | "planning"
   | "chantiers"
   | "finance"
+  | "pilotage"
   | null;
 
 type AtmosphereMood = {
@@ -103,6 +104,9 @@ function moodFromScene(
     } else if (focusId === "finance") {
       driftX = k * 0.85;
       driftY = -k * 0.7;
+    } else if (focusId === "pilotage") {
+      driftX = -k * 0.6;
+      driftY = -k * 0.85;
     }
   }
 

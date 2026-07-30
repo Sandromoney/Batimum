@@ -29,6 +29,7 @@ export const CLIENTS_DEMO_SAFETY_MS = 28000;
 
 type ClientsBeat =
   | "list"
+  | "hover"
   | "open"
   | "identity"
   | "contact"
@@ -50,15 +51,9 @@ function ClientsCopy() {
         <span className="lp-eyebrow__dot" aria-hidden="true" />
         Clients
       </span>
-      <h3 className="lp-hubClients__title">
-        Toutes les infos client.
-        <br />
-        Au même endroit.
-      </h3>
+      <h3 className="lp-hubClients__title">Clients</h3>
       <p className="lp-hubClients__subtitle">
-        Coordonnées, devis, factures, chantiers.
-        <br />
-        Plus besoin de chercher ailleurs.
+        Toutes les informations au même endroit.
       </p>
     </div>
   );
@@ -71,7 +66,8 @@ function ClientsBoard({
   beat: ClientsBeat;
   openId: string | null;
 }) {
-  const showFiche = beat !== "list";
+  const showFiche =
+    beat !== "list" && beat !== "hover" && beat !== "open";
   const showIdentity =
     beat === "identity" ||
     beat === "contact" ||
@@ -93,7 +89,6 @@ function ClientsBoard({
   const showDocs =
     beat === "docs" || beat === "notes" || beat === "done";
   const showNotes = beat === "notes" || beat === "done";
-  const showCursor = beat !== "done";
 
   return (
     <div className="lp-hubClients__ui" aria-hidden="true">
@@ -107,9 +102,14 @@ function ClientsBoard({
           {CLIENTS.map((c, i) => (
             <li
               key={c.id}
+              data-cursor-target={c.id === "martin" || i === 0 ? "client-row" : undefined}
               className={[
                 "is-on",
                 openId === c.id ? "is-selected" : "",
+                (beat === "hover" || beat === "open") &&
+                (openId === c.id || i === 0)
+                  ? "is-hover"
+                  : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -237,13 +237,11 @@ function ClientsBoard({
       )}
 
       <FilmCursor
-        visible={showCursor}
-        className={
-          beat === "list"
-            ? "is-clientsPark"
-            : beat === "open"
-              ? "is-clientsRow"
-              : "is-clientsFiche"
+        visible={beat === "hover" || beat === "open"}
+        target={
+          beat === "hover" || beat === "open"
+            ? '[data-cursor-target="client-row"]'
+            : null
         }
         clicking={beat === "open"}
       />
@@ -298,15 +296,16 @@ export function ClientsFilmPanel({
 
     later(() => {
       setOpenId("martin");
-      setBeat("open");
-    }, 900);
-    later(() => setBeat("identity"), 1600);
+      setBeat("hover");
+    }, 500);
+    later(() => setBeat("open"), 1100);
+    later(() => setBeat("identity"), 1700);
     later(() => setBeat("contact"), 2600);
-    later(() => setBeat("history"), 3800);
-    later(() => setBeat("docs"), 5600);
-    later(() => setBeat("notes"), 7000);
-    later(() => setBeat("done"), 8400);
-    later(finish, 9800);
+    later(() => setBeat("history"), 3600);
+    later(() => setBeat("docs"), 4800);
+    later(() => setBeat("notes"), 6000);
+    later(() => setBeat("done"), 7200);
+    later(finish, 8400);
 
     return clearTimers;
   }, [active, reduced, finish]);

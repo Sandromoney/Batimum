@@ -99,15 +99,9 @@ function PlanningCopy() {
         <span className="lp-eyebrow__dot" aria-hidden="true" />
         Planning
       </span>
-      <h3 className="lp-hubPlan__title">
-        Organisez toute votre entreprise
-        <br />
-        en quelques secondes.
-      </h3>
+      <h3 className="lp-hubPlan__title">Planning</h3>
       <p className="lp-hubPlan__subtitle">
-        Disponibilités, chantiers et trajets.
-        <br />
-        Batimum propose la bonne affectation.
+        Centralisez les équipes et les indisponibilités.
       </p>
     </div>
   );
@@ -160,12 +154,17 @@ function PlanningBoard({
           {TEAM.map((member) => (
             <li
               key={member.id}
+              data-cursor-target={
+                member.id === "lucas" ? "plan-assign" : undefined
+              }
               className={[
                 `is-${member.kind}`,
                 conflict && !resolved && member.id === "anthony"
                   ? "is-focus"
                   : "",
                 resolved && member.id === "lucas" ? "is-focus" : "",
+                beat === "people" && member.id === "lucas" ? "is-hover" : "",
+                beat === "resolve" && member.id === "lucas" ? "is-hover" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -291,22 +290,12 @@ function PlanningBoard({
       ) : null}
 
       <FilmCursor
-        visible={
-          beat === "jobs" ||
-          beat === "people" ||
-          beat === "conflict" ||
-          beat === "resolve" ||
-          beat === "status"
+        visible={beat === "people" || beat === "resolve"}
+        target={
+          beat === "people" || beat === "resolve"
+            ? '[data-cursor-target="plan-assign"]'
+            : null
         }
-        className={[
-          beat === "jobs" ? "is-planPark" : "",
-          beat === "people" ? "is-planAssign" : "",
-          beat === "conflict" ? "is-planAlert" : "",
-          beat === "resolve" ? "is-planResolve" : "",
-          beat === "status" ? "is-planStatus" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
         clicking={beat === "people" || beat === "resolve"}
       />
     </div>

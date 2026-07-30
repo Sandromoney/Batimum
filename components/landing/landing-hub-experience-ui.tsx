@@ -222,13 +222,13 @@ export function HubReplayLink({ onReplay }: { onReplay: () => void }) {
   );
 }
 
-/** Mappe les scènes internes vers 6 chapitres lisibles. */
+/** Mappe les scènes internes vers 6 modules (MUM → … → Pilotage). */
 export function hubChapterFromScene(scene: number): { current: number; total: number } {
   const total = 6;
-  if (scene <= 2) return { current: 1, total };
-  if (scene <= 4) return { current: 2, total };
-  if (scene <= 6) return { current: 3, total };
-  if (scene <= 8) return { current: 4, total };
-  if (scene <= 10) return { current: 5, total };
-  return { current: 6, total };
+  if (scene <= 4) return { current: 1, total }; // intro + MUM
+  if (scene <= 6) return { current: 2, total }; // Clients
+  if (scene <= 8) return { current: 3, total }; // Chantiers
+  if (scene <= 10) return { current: 4, total }; // Planning
+  if (scene <= 12) return { current: 5, total }; // Facturation
+  return { current: 6, total }; // Pilotage + finale
 }

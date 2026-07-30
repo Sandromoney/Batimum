@@ -96,15 +96,9 @@ function ChantiersCopy() {
         <span className="lp-eyebrow__dot" aria-hidden="true" />
         Chantiers
       </span>
-      <h3 className="lp-hubChantier__title">
-        Suivez l’avancement réel.
-        <br />
-        Pas juste la liste des tâches.
-      </h3>
+      <h3 className="lp-hubChantier__title">Chantiers</h3>
       <p className="lp-hubChantier__subtitle">
-        Chaque étape a un poids.
-        <br />
-        Batimum calcule la progression intelligemment.
+        Suivez chaque étape en temps réel.
       </p>
     </div>
   );
@@ -197,9 +191,14 @@ function ChantiersBoard({
               return (
                 <li
                   key={step.id}
+                  data-cursor-target={step.id === "faience" ? "chantier-step" : undefined}
                   className={[
                     `is-${st}`,
                     step.id === "faience" && highlightFaïence ? "is-focus" : "",
+                    step.id === "faience" &&
+                    (beat === "faïence" || beat === "bump")
+                      ? "is-hover"
+                      : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
@@ -248,22 +247,11 @@ function ChantiersBoard({
       ) : null}
 
       <FilmCursor
-        visible={
-          beat === "fiche" ||
-          beat === "steps" ||
-          beat === "progress" ||
-          beat === "faïence" ||
-          beat === "bump" ||
-          beat === "alive"
-        }
-        className={
-          beat === "fiche"
-            ? "is-chantierOpen"
-            : beat === "steps" || beat === "progress"
-              ? "is-chantierList"
-              : beat === "bump"
-                ? "is-chantierBump"
-                : "is-chantierStep"
+        visible={beat === "faïence" || beat === "bump"}
+        target={
+          beat === "faïence" || beat === "bump"
+            ? '[data-cursor-target="chantier-step"]'
+            : null
         }
         clicking={beat === "faïence" || beat === "bump"}
       />

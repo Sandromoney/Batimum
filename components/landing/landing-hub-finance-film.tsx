@@ -192,19 +192,11 @@ function FinanceCopy() {
     <div className="lp-hubFin__copy">
       <span className="lp-eyebrow">
         <span className="lp-eyebrow__dot" aria-hidden="true" />
-        Facturation &amp; Pilotage
+        Facturation
       </span>
-      <h3 className="lp-hubFin__title">
-        Pilotez votre entreprise
-        <br />
-        en temps réel.
-      </h3>
+      <h3 className="lp-hubFin__title">Facturation</h3>
       <p className="lp-hubFin__subtitle">
-        Voyez votre activité.
-        <br />
-        Voyez vos marges.
-        <br />
-        En un coup d’œil.
+        Envoyez, signez et suivez vos documents.
       </p>
     </div>
   );
@@ -293,9 +285,11 @@ function FinanceBoard({
 
           <button
             type="button"
+            data-cursor-target="fin-send"
             className={[
               "lp-hubFin__send",
               sendPressed ? "is-pressed" : "",
+              beat === "send" ? "is-hover" : "",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -326,9 +320,11 @@ function FinanceBoard({
           <div className="lp-hubFin__row">
             <p className="lp-hubFin__label">Suivi paiement</p>
             <div
+              data-cursor-target="fin-pay"
               className={[
                 "lp-hubFin__pill",
                 payStep >= 2 ? "is-ok" : "",
+                beat === "pay" ? "is-hover" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -448,18 +444,13 @@ function FinanceBoard({
       ) : null}
 
       <FilmCursor
-        visible={
-          beat === "pipeline" ||
-          beat === "send" ||
-          beat === "pay" ||
-          beat === "pulse"
-        }
-        className={
-          beat === "pipeline"
-            ? "is-finPark"
-            : beat === "send"
-              ? "is-finSend"
-              : "is-finPay"
+        visible={beat === "send" || beat === "pay"}
+        target={
+          beat === "send"
+            ? '[data-cursor-target="fin-send"]'
+            : beat === "pay"
+              ? '[data-cursor-target="fin-pay"]'
+              : null
         }
         clicking={beat === "send" || beat === "pay"}
       />

@@ -6,7 +6,8 @@
  * Statuts narratifs : Envoyé → Consulté → Signé → Commande confirmée
  */
 
-import { Check, FileText, Mail, MousePointer2 } from "lucide-react";
+import { Check, FileText, Mail } from "lucide-react";
+import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
 
 export type MumSignBeat =
   | "idle"
@@ -123,16 +124,19 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
   const drawing = beat === "draw" || beat === "validate" || beat === "validating";
   const validated = beat === "validate" || beat === "validating";
   const pipeIdx = pipelineIndex(beat);
-  const showCursor =
-    beat === "send" ||
-    beat === "sending" ||
-    beat === "openMail" ||
-    beat === "consult" ||
-    beat === "scroll" ||
-    beat === "hoverSign" ||
-    beat === "signModal" ||
-    beat === "draw" ||
-    beat === "validate";
+  const cursorTarget =
+    beat === "send" || beat === "sending"
+      ? '[data-cursor-target="sign-send"]'
+      : beat === "openMail"
+        ? '[data-cursor-target="sign-mail"]'
+        : beat === "consult"
+          ? '[data-cursor-target="sign-consult"]'
+          : beat === "hoverSign" || beat === "signModal"
+            ? '[data-cursor-target="sign-cta"]'
+            : beat === "validate"
+              ? '[data-cursor-target="sign-validate"]'
+              : null;
+  const showCursor = Boolean(cursorTarget);
   const cursorClick =
     beat === "sending" ||
     beat === "consult" ||
@@ -180,9 +184,11 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
         <div className="lp-hubMumSign__sendLayer">
           <button
             type="button"
+            data-cursor-target="sign-send"
             className={[
               "lp-hubMumSign__sendBtn",
               beat === "sending" ? "is-pressed" : "is-on",
+              beat === "send" ? "is-hover" : "",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -211,9 +217,11 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
           </div>
           <ul className="lp-hubMumSign__inbox">
             <li
+              data-cursor-target="sign-mail"
               className={[
                 "is-new",
                 beat === "openMail" || beat === "consult" ? "is-focus" : "",
+                beat === "openMail" ? "is-hover" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -244,9 +252,11 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
                 le détail, puis signez électroniquement.
               </p>
               <span
+                data-cursor-target="sign-consult"
                 className={[
                   "lp-hubMumSign__mailCta",
                   beat === "consult" ? "is-focus" : "",
+                  beat === "consult" ? "is-hover" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -337,10 +347,12 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
 
               <button
                 type="button"
+                data-cursor-target="sign-cta"
                 className={[
                   "lp-hubMumSign__signCta",
                   beat === "hoverSign" || showModal ? "is-focus" : "",
                   showModal ? "is-pressed" : "",
+                  beat === "hoverSign" ? "is-hover" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -370,11 +382,13 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
             </div>
             <button
               type="button"
+              data-cursor-target="sign-validate"
               className={[
                 "lp-hubMumSign__validate",
                 drawing ? "is-on" : "",
                 validated ? "is-pressed" : "",
                 beat === "validating" ? "is-busy" : "",
+                beat === "validate" ? "is-hover" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -386,25 +400,11 @@ export function MumSignJourney({ beat }: { beat: MumSignBeat }) {
         </div>
       ) : null}
 
-      {showCursor ? (
-        <span
-          className={[
-            "lp-hubMumSign__cursor",
-            beat === "send" || beat === "sending" ? "is-send" : "",
-            beat === "openMail" ? "is-mail" : "",
-            beat === "consult" ? "is-cta" : "",
-            beat === "scroll" ? "is-scroll" : "",
-            beat === "hoverSign" ? "is-signCta" : "",
-            beat === "signModal" || beat === "draw" ? "is-pad" : "",
-            beat === "validate" ? "is-validate" : "",
-            cursorClick ? "is-click" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          <MousePointer2 size={16} strokeWidth={1.7} />
-        </span>
-      ) : null}
+      <FilmCursor
+        visible={showCursor}
+        target={cursorTarget}
+        clicking={cursorClick}
+      />
     </div>
   );
 }

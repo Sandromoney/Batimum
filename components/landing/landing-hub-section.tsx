@@ -22,7 +22,6 @@ import {
   MumFilmShell,
   MUM_DEMO_SAFETY_MS,
   MUM_ENTER_MS,
-  MUM_HIGHLIGHT_MS,
   MUM_RETURN_MS,
   type MumFilmPhase,
 } from "@/components/landing/landing-hub-mum-film";
@@ -31,21 +30,18 @@ import {
   PlanningFilmPanel,
   PLAN_DEMO_SAFETY_MS,
   PLAN_ENTER_MS,
-  PLAN_HIGHLIGHT_MS,
   PLAN_RETURN_MS,
 } from "@/components/landing/landing-hub-planning-film";
 import {
   ClientsFilmPanel,
   CLIENTS_DEMO_SAFETY_MS,
   CLIENTS_ENTER_MS,
-  CLIENTS_HIGHLIGHT_MS,
   CLIENTS_RETURN_MS,
 } from "@/components/landing/landing-hub-clients-film";
 import {
   ChantiersFilmPanel,
   CHANTIER_DEMO_SAFETY_MS,
   CHANTIER_ENTER_MS,
-  CHANTIER_HIGHLIGHT_MS,
   CHANTIER_RETURN_MS,
 } from "@/components/landing/landing-hub-chantiers-film";
 import {
@@ -54,9 +50,15 @@ import {
   FIN_CONVERGE_MS,
   FIN_DEMO_SAFETY_MS,
   FIN_ENTER_MS,
-  FIN_HIGHLIGHT_MS,
   FIN_RETURN_MS,
 } from "@/components/landing/landing-hub-finance-film";
+import {
+  PilotageFilmPanel,
+  PilotageFilmShell,
+  PILOTAGE_DEMO_SAFETY_MS,
+  PILOTAGE_ENTER_MS,
+  PILOTAGE_RETURN_MS,
+} from "@/components/landing/landing-hub-pilotage-film";
 import {
   HubAtmosphere,
   HubAtmosphereFallback,
@@ -93,93 +95,132 @@ type HubModule = {
   floatDuration: number;
 };
 
+/** Ordre circulaire horaire — index 0 verrouille en haut. */
+const MODULE_RING_ORDER = [
+  "mum",
+  "clients",
+  "chantiers",
+  "planning",
+  "facturation",
+  "pilotage",
+] as const;
+
 const HUB_MODULES: HubModule[] = [
   {
     id: "mum",
     title: "MUM IA",
     Icon: Bot,
-    x: -26,
-    y: -30,
+    x: 0,
+    y: -34,
     floatDelay: 0,
     floatDuration: 5.4,
-  },
-  {
-    id: "planning",
-    title: "Planning",
-    Icon: Calendar,
-    x: 28,
-    y: -26,
-    floatDelay: 0.4,
-    floatDuration: 5.8,
   },
   {
     id: "clients",
     title: "Clients",
     Icon: Users,
-    x: 36,
-    y: 6,
-    floatDelay: 0.9,
-    floatDuration: 6.2,
+    x: 29.4,
+    y: -17,
+    floatDelay: 0.35,
+    floatDuration: 5.8,
   },
   {
     id: "chantiers",
     title: "Chantiers",
     Icon: HardHat,
-    x: 16,
+    x: 29.4,
+    y: 17,
+    floatDelay: 0.7,
+    floatDuration: 5.6,
+  },
+  {
+    id: "planning",
+    title: "Planning",
+    Icon: Calendar,
+    x: 0,
     y: 34,
     floatDelay: 0.2,
-    floatDuration: 5.6,
+    floatDuration: 5.9,
   },
   {
     id: "facturation",
     title: "Facturation",
     Icon: Receipt,
-    x: -20,
-    y: 32,
-    floatDelay: 1.1,
+    x: -29.4,
+    y: 17,
+    floatDelay: 0.95,
     floatDuration: 6.0,
   },
   {
     id: "pilotage",
     title: "Pilotage",
     Icon: LineChart,
-    x: -38,
-    y: 2,
-    floatDelay: 0.65,
+    x: -29.4,
+    y: -17,
+    floatDelay: 0.55,
     floatDuration: 5.5,
   },
 ];
+
+function polarModulePos(index: number, ringRotDeg: number, radius = 34) {
+  // -90° = haut ; rotation horaire positive
+  const angle = ((-90 + index * 60 + ringRotDeg) * Math.PI) / 180;
+  return {
+    x: Math.cos(angle) * radius,
+    y: Math.sin(angle) * radius,
+  };
+}
+
+function ringRotationForModule(moduleId: string): number {
+  const id = moduleId === "finance" ? "facturation" : moduleId;
+  const idx = MODULE_RING_ORDER.indexOf(
+    id as (typeof MODULE_RING_ORDER)[number],
+  );
+  if (idx < 0) return 0;
+  // Modules ordonnés horaire ; rotation CCW amène le suivant en haut
+  // (progression circulaire cohérente, sans retour arrière).
+  return -idx * 60;
+}
 
 /**
  * 0 breath → 1 logo → 2 ecosystem
  * → 3 mum → 4 mumReturn
  * → 5 clients → 6 clientsReturn
- * → 7 plan → 8 planReturn
- * → 9 chantiers → 10 chantiersReturn
+ * → 7 chantiers → 8 chantiersReturn
+ * → 9 plan → 10 planReturn
  * → 11 finance → 12 financeReturn
- * → 13 converge → 14 signature → exit
+ * → 13 pilotage → 14 pilotageReturn
+ * → 15 converge → 16 signature → exit
  */
-const LAST_SCENE = 14;
-/** Plans scrollables à l’intérieur de la scène MUM (après intro Hub). */
+const LAST_SCENE = 16;
+/** Plans MUM internes (dictée → … → signature). */
 const MUM_PLAN_COUNT = 6;
 const INTRO_TO_MUM_MS = 3200;
+/** Verrouillage mécanique du module en haut. */
+const MODULE_LOCK_MS = 1400;
+/** Pause lecture titre + phrase avant la démo. */
+const MODULE_READ_MS = 2600;
 /** Respiration entre scènes du film automatique. */
-const AUTO_BREATH_MS = 720;
+const AUTO_BREATH_MS = 800;
 const AUTO_PLAN_BREATH_MS = 520;
+/** Marge sécurité = verrouillage + zoom + lecture + démo. */
+const PRE_DEMO_MS = MODULE_LOCK_MS + MODULE_READ_MS;
 const SCENE_LOCK_MS = [
   500,
   700,
   1100,
-  MUM_DEMO_SAFETY_MS,
+  PRE_DEMO_MS + MUM_DEMO_SAFETY_MS,
   MUM_RETURN_MS,
-  CLIENTS_DEMO_SAFETY_MS,
+  PRE_DEMO_MS + CLIENTS_DEMO_SAFETY_MS,
   CLIENTS_RETURN_MS,
-  PLAN_DEMO_SAFETY_MS,
-  PLAN_RETURN_MS,
-  CHANTIER_DEMO_SAFETY_MS,
+  PRE_DEMO_MS + CHANTIER_DEMO_SAFETY_MS,
   CHANTIER_RETURN_MS,
-  FIN_DEMO_SAFETY_MS,
+  PRE_DEMO_MS + PLAN_DEMO_SAFETY_MS,
+  PLAN_RETURN_MS,
+  PRE_DEMO_MS + FIN_DEMO_SAFETY_MS,
   FIN_RETURN_MS,
+  PRE_DEMO_MS + PILOTAGE_DEMO_SAFETY_MS,
+  PILOTAGE_RETURN_MS,
   FIN_CONVERGE_MS,
   SIG_DEMO_SAFETY_MS,
 ] as const;
@@ -191,16 +232,24 @@ const WHEEL_QUIET_MS = 200;
 const ENGAGE_GRACE_MS = 280;
 
 type PinMode = "before" | "pin";
-type FocusId = "mum" | "clients" | "planning" | "chantiers" | "finance" | null;
+type FocusId =
+  | "mum"
+  | "clients"
+  | "planning"
+  | "chantiers"
+  | "finance"
+  | "pilotage"
+  | null;
 type ActiveFilm =
   | "mum"
   | "clients"
   | "planning"
   | "chantiers"
   | "finance"
+  | "pilotage"
   | null;
 
-const FILM_ENTRY_SCENES = new Set([3, 5, 7, 9, 11]);
+const FILM_ENTRY_SCENES = new Set([3, 5, 7, 9, 11, 13]);
 
 /** idle → gate (choix) → tour (scroll) → finished */
 type ExperiencePhase = "idle" | "gate" | "tour" | "finished";
@@ -232,12 +281,16 @@ function HubStage({
   filmPhase,
   focusId,
   reduced,
+  ringRotation,
+  moduleLocked,
   signatureMode = false,
 }: {
   scene: number;
   filmPhase: MumFilmPhase;
   focusId: FocusId;
   reduced: boolean | null;
+  ringRotation: number;
+  moduleLocked: boolean;
   /** Scène signature : modules fusionnent puis le monde hub s’efface. */
   signatureMode?: boolean;
 }) {
@@ -247,7 +300,7 @@ function HubStage({
   const showLogo = scene >= 1 && !sealed;
   const showModules = scene >= 2 && !sealed;
   const converging =
-    !signatureMode && (filmPhase === "converge" || scene === 13);
+    !signatureMode && (filmPhase === "converge" || scene === 15);
   const highlight =
     filmPhase === "highlight" ||
     (FILM_ENTRY_SCENES.has(scene) && filmPhase === "idle");
@@ -262,10 +315,8 @@ function HubStage({
     !reduced &&
     !converging &&
     !merging &&
-    (scene === 2 ||
-      filmPhase === "highlight" ||
-      filmPhase === "idle" ||
-      (returning && !deep));
+    !highlight &&
+    (scene === 2 || filmPhase === "idle" || (returning && !deep));
 
   const logoAwake = scene >= 2;
   const hubVisible = !deep && !sealed;
@@ -274,34 +325,35 @@ function HubStage({
 
   const isModActive = (id: string) => {
     if (!hierarchy || !focusId) return false;
-    if (focusId === "finance") {
-      return id === "facturation" || id === "pilotage";
-    }
+    if (focusId === "finance") return id === "facturation";
     return focusId === id;
   };
+
+  const focusStageClass =
+    focusId === "mum"
+      ? "Mum"
+      : focusId === "clients"
+        ? "Clients"
+        : focusId === "planning"
+          ? "Plan"
+          : focusId === "chantiers"
+            ? "Chantiers"
+            : focusId === "finance"
+              ? "Fin"
+              : focusId === "pilotage"
+                ? "Pilotage"
+                : "";
 
   return (
     <div
       className={[
         "lp-hub__stage",
-        highlight && focusId === "mum" ? "lp-hub__stage--highlightMum" : "",
-        highlight && focusId === "clients"
-          ? "lp-hub__stage--highlightClients"
+        "lp-hub__stage--mechanism",
+        highlight && focusStageClass
+          ? `lp-hub__stage--highlight${focusStageClass}`
           : "",
-        highlight && focusId === "planning"
-          ? "lp-hub__stage--highlightPlan"
-          : "",
-        highlight && focusId === "chantiers"
-          ? "lp-hub__stage--highlightChantiers"
-          : "",
-        highlight && focusId === "finance"
-          ? "lp-hub__stage--highlightFin"
-          : "",
-        deep && focusId === "mum" ? "lp-hub__stage--deepMum" : "",
-        deep && focusId === "clients" ? "lp-hub__stage--deepClients" : "",
-        deep && focusId === "planning" ? "lp-hub__stage--deepPlan" : "",
-        deep && focusId === "chantiers" ? "lp-hub__stage--deepChantiers" : "",
-        deep && focusId === "finance" ? "lp-hub__stage--deepFin" : "",
+        deep && focusStageClass ? `lp-hub__stage--deep${focusStageClass}` : "",
+        moduleLocked && highlight ? "lp-hub__stage--locked" : "",
         returning && !deep ? "lp-hub__stage--return" : "",
         converging ? "lp-hub__stage--converge" : "",
         merging ? "lp-hub__stage--merge" : "",
@@ -312,6 +364,7 @@ function HubStage({
       data-hub-scene={scene}
       data-film-phase={filmPhase}
       data-focus={focusId ?? ""}
+      style={{ "--hub-ring-rot": `${ringRotation}deg` } as CSSProperties}
     >
       <div
         className={[
@@ -372,7 +425,7 @@ function HubStage({
         </div>
 
         <ul
-          className="lp-hub__orbit"
+          className="lp-hub__orbit lp-hub__orbit--ring"
           role="list"
           aria-hidden={showModules ? undefined : true}
         >
@@ -380,6 +433,8 @@ function HubStage({
             const Icon = mod.Icon;
             const active = isModActive(mod.id);
             const dimmed = hierarchy && !active;
+            const pos = polarModulePos(index, ringRotation);
+            const locked = active && moduleLocked && highlight;
 
             return (
               <li
@@ -389,13 +444,14 @@ function HubStage({
                   `lp-hub__mod--${mod.id}`,
                   active ? "is-active" : "",
                   dimmed ? "is-dimmed" : "",
+                  locked ? "is-locked" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
                 style={
                   {
-                    "--hub-x": mod.x,
-                    "--hub-y": mod.y,
+                    "--hub-x": pos.x,
+                    "--hub-y": pos.y,
                   } as CSSProperties
                 }
               >
@@ -408,19 +464,21 @@ function HubStage({
                           opacity: merging
                             ? 0
                             : dimmed
-                              ? 0.7
+                              ? 0.55
                               : converging
                                 ? 0.92
                                 : 1,
                           scale: merging
                             ? 0.55
-                            : active
-                              ? 1.08
-                              : converging
-                                ? 0.94
-                                : dimmed
-                                  ? 0.97
-                                  : 1,
+                            : locked
+                              ? 1.16
+                              : active
+                                ? 1.1
+                                : converging
+                                  ? 0.94
+                                  : dimmed
+                                    ? 0.94
+                                    : 1,
                         }
                       : { opacity: 0, scale: 0.92 }
                   }
@@ -430,7 +488,7 @@ function HubStage({
                       : merging
                         ? 1.75
                         : highlight
-                          ? 1.1
+                          ? 1.15
                           : 0.75,
                     delay:
                       reduced || hierarchy || !showModules || merging
@@ -453,11 +511,12 @@ function HubStage({
                       } as CSSProperties
                     }
                   >
-                    <article className="lp-hub__card">
-                      <span className="lp-hub__icon" aria-hidden="true">
-                        <Icon size={18} strokeWidth={1.75} />
+                    <article className="lp-hub__nut" data-module={mod.id}>
+                      <span className="lp-hub__nutFace" aria-hidden="true">
+                        <span className="lp-hub__nutSheen" />
+                        <Icon size={16} strokeWidth={1.75} />
                       </span>
-                      <h3 className="lp-hub__cardTitle">{mod.title}</h3>
+                      <h3 className="lp-hub__nutLabel">{mod.title}</h3>
                     </article>
                   </div>
                 </motion.div>
@@ -493,25 +552,27 @@ function HubStatic() {
               <BmMark />
             </div>
           </div>
-          <ul className="lp-hub__orbit" role="list">
-            {HUB_MODULES.map((mod) => {
+          <ul className="lp-hub__orbit lp-hub__orbit--ring" role="list">
+            {HUB_MODULES.map((mod, index) => {
               const Icon = mod.Icon;
+              const pos = polarModulePos(index, 0);
               return (
                 <li
                   key={mod.id}
                   className="lp-hub__mod"
                   style={
                     {
-                      "--hub-x": mod.x,
-                      "--hub-y": mod.y,
+                      "--hub-x": pos.x,
+                      "--hub-y": pos.y,
                     } as CSSProperties
                   }
                 >
-                  <article className="lp-hub__card">
-                    <span className="lp-hub__icon" aria-hidden="true">
-                      <Icon size={18} strokeWidth={1.75} />
+                  <article className="lp-hub__nut" data-module={mod.id}>
+                    <span className="lp-hub__nutFace" aria-hidden="true">
+                      <span className="lp-hub__nutSheen" />
+                      <Icon size={16} strokeWidth={1.75} />
                     </span>
-                    <h3 className="lp-hub__cardTitle">{mod.title}</h3>
+                    <h3 className="lp-hub__nutLabel">{mod.title}</h3>
                   </article>
                 </li>
               );
@@ -571,6 +632,8 @@ export function LandingHubSection() {
   const autoPlayRef = useRef(false);
   const [autoPlaying, setAutoPlaying] = useState(false);
   const advanceFilmRef = useRef<() => void>(() => {});
+  const [ringRotation, setRingRotation] = useState(0);
+  const [moduleLocked, setModuleLocked] = useState(false);
 
   /** Parcours scroll interactif (hors gate / finished / reduced simplifié). */
   const active = !reduced && !done && experience === "tour";
@@ -690,6 +753,8 @@ export function LandingHubSection() {
     setFilm("idle");
     setFocus(null);
     setFilmKind(null);
+    setModuleLocked(false);
+    setRingRotation(0);
   }, [clearFilmTimers, setFilm, setFocus, setFilmKind]);
 
   const exitHub = useCallback(() => {
@@ -798,12 +863,12 @@ export function LandingHubSection() {
     holdThenUnlock();
   }, [holdThenUnlock]);
 
-  const onPlanDemoComplete = useCallback(() => {
+  const onChantiersDemoComplete = useCallback(() => {
     if (sceneRef.current !== 7) return;
     holdThenUnlock();
   }, [holdThenUnlock]);
 
-  const onChantiersDemoComplete = useCallback(() => {
+  const onPlanDemoComplete = useCallback(() => {
     if (sceneRef.current !== 9) return;
     holdThenUnlock();
   }, [holdThenUnlock]);
@@ -813,21 +878,34 @@ export function LandingHubSection() {
     holdThenUnlock();
   }, [holdThenUnlock]);
 
+  const onPilotageDemoComplete = useCallback(() => {
+    if (sceneRef.current !== 13) return;
+    holdThenUnlock();
+  }, [holdThenUnlock]);
+
   const startModuleFilm = useCallback(
     (
       kind: Exclude<ActiveFilm, null>,
       focus: Exclude<FocusId, null>,
       sceneIndex: number,
-      highlightMs: number,
       enterMs: number,
     ) => {
       clearFilmTimers();
+      setModuleLocked(false);
       setFilmKind(kind);
       setFocus(focus);
+      setRingRotation(ringRotationForModule(focus));
       setFilm("highlight");
       startSceneLock(sceneIndex);
-      filmLater(() => setFilm("enter"), highlightMs);
-      filmLater(() => setFilm("demo"), highlightMs + enterMs);
+      // Verrouillage mécanique en haut
+      filmLater(() => setModuleLocked(true), Math.max(280, MODULE_LOCK_MS - 320));
+      // Zoom vers le module → titre visible
+      filmLater(() => setFilm("enter"), MODULE_LOCK_MS);
+      // Pause lecture (≥ 2,5 s) puis démo / curseur
+      filmLater(
+        () => setFilm("demo"),
+        MODULE_LOCK_MS + enterMs + MODULE_READ_MS,
+      );
     },
     [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater],
   );
@@ -840,6 +918,7 @@ export function LandingHubSection() {
       returnMs: number,
     ) => {
       clearFilmTimers();
+      setModuleLocked(false);
       setFilmKind(kind);
       setFocus(focus);
       setFilm("returning");
@@ -854,7 +933,7 @@ export function LandingHubSection() {
   );
 
   const startMumFilm = useCallback(() => {
-    startModuleFilm("mum", "mum", 3, MUM_HIGHLIGHT_MS, MUM_ENTER_MS);
+    startModuleFilm("mum", "mum", 3, MUM_ENTER_MS);
   }, [startModuleFilm]);
 
   const startMumReturn = useCallback(() => {
@@ -862,47 +941,57 @@ export function LandingHubSection() {
   }, [startModuleReturn]);
 
   const startClientsFilm = useCallback(() => {
-    startModuleFilm("clients", "clients", 5, CLIENTS_HIGHLIGHT_MS, CLIENTS_ENTER_MS);
+    startModuleFilm("clients", "clients", 5, CLIENTS_ENTER_MS);
   }, [startModuleFilm]);
 
   const startClientsReturn = useCallback(() => {
     startModuleReturn("clients", "clients", 6, CLIENTS_RETURN_MS);
   }, [startModuleReturn]);
 
-  const startPlanFilm = useCallback(() => {
-    startModuleFilm("planning", "planning", 7, PLAN_HIGHLIGHT_MS, PLAN_ENTER_MS);
-  }, [startModuleFilm]);
-
-  const startPlanReturn = useCallback(() => {
-    startModuleReturn("planning", "planning", 8, PLAN_RETURN_MS);
-  }, [startModuleReturn]);
-
   const startChantiersFilm = useCallback(() => {
-    startModuleFilm("chantiers", "chantiers", 9, CHANTIER_HIGHLIGHT_MS, CHANTIER_ENTER_MS);
+    startModuleFilm("chantiers", "chantiers", 7, CHANTIER_ENTER_MS);
   }, [startModuleFilm]);
 
   const startChantiersReturn = useCallback(() => {
-    startModuleReturn("chantiers", "chantiers", 10, CHANTIER_RETURN_MS);
+    startModuleReturn("chantiers", "chantiers", 8, CHANTIER_RETURN_MS);
+  }, [startModuleReturn]);
+
+  const startPlanFilm = useCallback(() => {
+    startModuleFilm("planning", "planning", 9, PLAN_ENTER_MS);
+  }, [startModuleFilm]);
+
+  const startPlanReturn = useCallback(() => {
+    startModuleReturn("planning", "planning", 10, PLAN_RETURN_MS);
   }, [startModuleReturn]);
 
   const startFinFilm = useCallback(() => {
-    startModuleFilm("finance", "finance", 11, FIN_HIGHLIGHT_MS, FIN_ENTER_MS);
+    startModuleFilm("finance", "finance", 11, FIN_ENTER_MS);
   }, [startModuleFilm]);
 
   const startFinReturn = useCallback(() => {
     startModuleReturn("finance", "finance", 12, FIN_RETURN_MS);
   }, [startModuleReturn]);
 
+  const startPilotageFilm = useCallback(() => {
+    startModuleFilm("pilotage", "pilotage", 13, PILOTAGE_ENTER_MS);
+  }, [startModuleFilm]);
+
+  const startPilotageReturn = useCallback(() => {
+    startModuleReturn("pilotage", "pilotage", 14, PILOTAGE_RETURN_MS);
+  }, [startModuleReturn]);
+
   const startConverge = useCallback(() => {
     clearFilmTimers();
+    setModuleLocked(false);
     setFilmKind(null);
     setFocus(null);
+    setRingRotation(0);
     setFilm("converge");
-    startSceneLock(13, FIN_CONVERGE_MS);
+    startSceneLock(15, FIN_CONVERGE_MS);
   }, [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock]);
 
   const onSignatureComplete = useCallback(() => {
-    if (sceneRef.current !== 14) return;
+    if (sceneRef.current !== 16) return;
     signaturePlayedRef.current = true;
     setSignatureSealed(true);
     setFilm("sealed");
@@ -916,6 +1005,7 @@ export function LandingHubSection() {
 
   const startSignature = useCallback(() => {
     clearFilmTimers();
+    setModuleLocked(false);
     setFilmKind(null);
     setFocus(null);
 
@@ -923,13 +1013,13 @@ export function LandingHubSection() {
       setSignatureSealed(true);
       setFilm("sealed");
       setAwaitingGesture(false);
-      startSceneLock(14, 600);
+      startSceneLock(16, 600);
       filmLater(() => exitHub(), 500);
       return;
     }
 
     setFilm("signature");
-    startSceneLock(14, SIG_DEMO_SAFETY_MS);
+    startSceneLock(16, SIG_DEMO_SAFETY_MS);
   }, [
     clearFilmTimers,
     setFilmKind,
@@ -967,14 +1057,16 @@ export function LandingHubSection() {
       } else if (go === 4) startMumReturn();
       else if (go === 5) startClientsFilm();
       else if (go === 6) startClientsReturn();
-      else if (go === 7) startPlanFilm();
-      else if (go === 8) startPlanReturn();
-      else if (go === 9) startChantiersFilm();
-      else if (go === 10) startChantiersReturn();
+      else if (go === 7) startChantiersFilm();
+      else if (go === 8) startChantiersReturn();
+      else if (go === 9) startPlanFilm();
+      else if (go === 10) startPlanReturn();
       else if (go === 11) startFinFilm();
       else if (go === 12) startFinReturn();
-      else if (go === 13) startConverge();
-      else if (go === 14) startSignature();
+      else if (go === 13) startPilotageFilm();
+      else if (go === 14) startPilotageReturn();
+      else if (go === 15) startConverge();
+      else if (go === 16) startSignature();
       else startSceneLock(go);
       return;
     }
@@ -986,12 +1078,14 @@ export function LandingHubSection() {
     startMumReturn,
     startClientsFilm,
     startClientsReturn,
-    startPlanFilm,
-    startPlanReturn,
     startChantiersFilm,
     startChantiersReturn,
+    startPlanFilm,
+    startPlanReturn,
     startFinFilm,
     startFinReturn,
+    startPilotageFilm,
+    startPilotageReturn,
     startConverge,
     startSignature,
     exitHub,
@@ -1344,20 +1438,23 @@ export function LandingHubSection() {
   const clientsDemoActive =
     activeFilm === "clients" &&
     (filmPhase === "demo" || filmPhase === "hold");
-  const planDemoActive =
-    activeFilm === "planning" &&
-    (filmPhase === "demo" || filmPhase === "hold");
   const chantiersDemoActive =
     activeFilm === "chantiers" &&
+    (filmPhase === "demo" || filmPhase === "hold");
+  const planDemoActive =
+    activeFilm === "planning" &&
     (filmPhase === "demo" || filmPhase === "hold");
   const finDemoActive =
     activeFilm === "finance" &&
     (filmPhase === "demo" || filmPhase === "hold");
+  const pilotageDemoActive =
+    activeFilm === "pilotage" &&
+    (filmPhase === "demo" || filmPhase === "hold");
 
   const signatureActive =
-    scene === 14 && filmPhase === "signature" && !signatureSealed;
+    scene === 16 && filmPhase === "signature" && !signatureSealed;
   const signatureVisible =
-    scene === 14 ||
+    scene === 16 ||
     (done && signatureSealed) ||
     filmPhase === "sealed" ||
     filmPhase === "signature";
@@ -1473,7 +1570,9 @@ export function LandingHubSection() {
                   filmPhase={filmPhase}
                   focusId={focusId}
                   reduced={reduced}
-                  signatureMode={scene === 14}
+                  ringRotation={ringRotation}
+                  moduleLocked={moduleLocked}
+                  signatureMode={scene === 16}
                 />
 
                 <MumFilmShell phase={activeFilm === "mum" ? filmPhase : "idle"}>
@@ -1497,17 +1596,6 @@ export function LandingHubSection() {
                 </ModuleFilmShell>
 
                 <ModuleFilmShell
-                  moduleId="planning"
-                  phase={activeFilm === "planning" ? filmPhase : "idle"}
-                >
-                  <PlanningFilmPanel
-                    active={planDemoActive}
-                    reduced={!!reduced}
-                    onDemoComplete={onPlanDemoComplete}
-                  />
-                </ModuleFilmShell>
-
-                <ModuleFilmShell
                   moduleId="chantiers"
                   phase={activeFilm === "chantiers" ? filmPhase : "idle"}
                 >
@@ -1515,6 +1603,17 @@ export function LandingHubSection() {
                     active={chantiersDemoActive}
                     reduced={!!reduced}
                     onDemoComplete={onChantiersDemoComplete}
+                  />
+                </ModuleFilmShell>
+
+                <ModuleFilmShell
+                  moduleId="planning"
+                  phase={activeFilm === "planning" ? filmPhase : "idle"}
+                >
+                  <PlanningFilmPanel
+                    active={planDemoActive}
+                    reduced={!!reduced}
+                    onDemoComplete={onPlanDemoComplete}
                   />
                 </ModuleFilmShell>
 
@@ -1528,7 +1627,17 @@ export function LandingHubSection() {
                   />
                 </FinanceFilmShell>
 
-                {scene === 14 ? (
+                <PilotageFilmShell
+                  phase={activeFilm === "pilotage" ? filmPhase : "idle"}
+                >
+                  <PilotageFilmPanel
+                    active={pilotageDemoActive}
+                    reduced={!!reduced}
+                    onDemoComplete={onPilotageDemoComplete}
+                  />
+                </PilotageFilmShell>
+
+                {scene === 16 ? (
                   <HubSignaturePanel
                     active={signatureActive}
                     sealed={signatureSealed || filmPhase === "sealed"}

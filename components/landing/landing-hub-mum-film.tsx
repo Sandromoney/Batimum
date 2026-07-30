@@ -190,9 +190,11 @@ function MumInterface({
               <MicWaves active={listening} />
               <button
                 type="button"
+                data-cursor-target="mic"
                 className={[
                   "lp-hubMum__mic",
                   listening ? "is-active" : "",
+                  listening ? "is-hover" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -298,25 +300,9 @@ function MumInterface({
       ) : null}
 
       <FilmCursor
-        visible={
-          viewPlan <= 3 &&
-          (listening ||
-            beat === "pause" ||
-            beat === "analyse" ||
-            beat === "lines" ||
-            beat === "total" ||
-            beat === "ready")
-        }
-        className={
-          listening
-            ? "is-mumMic"
-            : beat === "pause" || beat === "analyse"
-              ? "is-mumGenerate"
-              : beat === "lines" || beat === "total"
-                ? "is-mumLines"
-                : "is-mumReady"
-        }
-        clicking={listening || beat === "ready"}
+        visible={beat === "listen"}
+        target={beat === "listen" ? '[data-cursor-target="mic"]' : null}
+        clicking={beat === "listen"}
       />
     </div>
   );
@@ -330,34 +316,12 @@ function MumFilmCopy({ signing }: { signing: boolean }) {
         MUM IA
       </span>
       <h3 className="lp-hubMum__title">
-        {signing ? (
-          <>
-            Envoyez.
-            <br />
-            Le client signe.
-          </>
-        ) : (
-          <>
-            Créez un devis professionnel
-            <br />
-            en quelques minutes.
-          </>
-        )}
+        {signing ? "Envoyez. Le client signe." : "MUM IA"}
       </h3>
       <p className="lp-hubMum__subtitle">
-        {signing ? (
-          <>
-            Signature électronique.
-            <br />
-            Le statut se met à jour seul.
-          </>
-        ) : (
-          <>
-            Décrivez les travaux. Ou dictez-les.
-            <br />
-            MUM IA structure le devis.
-          </>
-        )}
+        {signing
+          ? "Signature électronique, statut mis à jour."
+          : "Décrivez le chantier. Le devis se construit."}
       </p>
     </div>
   );

@@ -4446,44 +4446,29 @@ html:has(.landing-emerald) body {
   transition: transform 1.65s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.landing-emerald .lp-hub__stage--highlightMum {
-  transform: scale(1.02) translate(1%, 1.5%);
+/* Mécanisme : léger zoom centré — le module actif est déjà en haut via la bague */
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--highlightMum,
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--highlightClients,
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--highlightChantiers,
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--highlightPlan,
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--highlightFin,
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--highlightPilotage {
+  transform: scale(1.035) translateY(1.2%);
 }
 
-.landing-emerald .lp-hub__stage--highlightPlan {
-  transform: scale(1.02) translate(-1%, 1.5%);
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--deepMum,
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--deepClients,
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--deepChantiers,
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--deepPlan,
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--deepFin,
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--deepPilotage {
+  transform: scale(1.05) translateY(1.6%);
 }
 
-.landing-emerald .lp-hub__stage--deepMum {
-  transform: scale(1.03) translate(1.5%, 2%);
-}
-
-.landing-emerald .lp-hub__stage--deepPlan {
-  transform: scale(1.03) translate(-1.5%, 1.5%);
-}
-
-.landing-emerald .lp-hub__stage--highlightFin {
-  transform: scale(1.02) translate(1%, -1%);
-}
-
-.landing-emerald .lp-hub__stage--deepFin {
-  transform: scale(1.03) translate(1.2%, -1.2%);
-}
-
-.landing-emerald .lp-hub__stage--highlightClients {
-  transform: scale(1.02) translate(-1.2%, 0.5%);
-}
-
-.landing-emerald .lp-hub__stage--deepClients {
-  transform: scale(1.03) translate(-1.8%, 0.8%);
-}
-
-.landing-emerald .lp-hub__stage--highlightChantiers {
-  transform: scale(1.02) translate(-0.5%, -1.2%);
-}
-
-.landing-emerald .lp-hub__stage--deepChantiers {
-  transform: scale(1.03) translate(-0.8%, -1.8%);
+.landing-emerald .lp-hub__stage--mechanism.lp-hub__stage--locked {
+  transition:
+    transform 1.15s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.45s ease;
 }
 
 .landing-emerald .lp-hub__stage--teaseFact {
@@ -4737,7 +4722,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-hub--signature .lp-hub__sticky {
-  background: var(--hub-cream);
+  background: #ffffff;
 }
 
 .landing-emerald .lp-hub__modMotion {
@@ -4757,39 +4742,8 @@ html:has(.landing-emerald) body {
   z-index: 1;
 }
 
-.landing-emerald .lp-hub__stage--highlightMum .lp-hub__mod--mum {
-  top: 38%;
-  left: 40%;
-}
-
-.landing-emerald .lp-hub__stage--highlightPlan .lp-hub__mod--planning {
-  top: 38%;
-  left: 58%;
-}
-
-.landing-emerald .lp-hub__stage--highlightClients .lp-hub__mod--clients {
-  top: 46%;
-  left: 60%;
-}
-
-.landing-emerald .lp-hub__stage--highlightChantiers .lp-hub__mod--chantiers {
-  top: 58%;
-  left: 54%;
-}
-
-.landing-emerald .lp-hub__stage--highlightFin .lp-hub__mod--facturation {
-  top: 58%;
-  left: 40%;
-}
-
-.landing-emerald .lp-hub__stage--highlightFin .lp-hub__mod--pilotage {
-  top: 48%;
-  left: 34%;
-}
-
-.landing-emerald .lp-hub__stage--teaseFact .lp-hub__mod--facturation {
-  top: 58%;
-  left: 42%;
+.landing-emerald .lp-hub__mod.is-locked .lp-hub__nut {
+  animation: lp-hub-nut-lock 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes lp-hub-float {
@@ -4802,6 +4756,116 @@ html:has(.landing-emerald) body {
   }
 }
 
+@keyframes lp-hub-nut-lock {
+  0% {
+    transform: scale(1);
+  }
+  55% {
+    transform: scale(1.08);
+  }
+  78% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Écrou / module — premium, pas une carte lourde */
+.landing-emerald .lp-hub__nut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.42rem;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.landing-emerald .lp-hub__nutFace {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  color: #111111;
+  background:
+    linear-gradient(145deg, #ffffff 0%, #f4f5f7 48%, #ebecef 100%);
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: 0.85rem;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 4px 12px -6px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  clip-path: polygon(
+    30% 0%,
+    70% 0%,
+    100% 30%,
+    100% 70%,
+    70% 100%,
+    30% 100%,
+    0% 70%,
+    0% 30%
+  );
+  transition:
+    box-shadow 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.7s ease,
+    background 0.7s ease,
+    color 0.5s ease;
+}
+
+.landing-emerald .lp-hub__nutSheen {
+  position: absolute;
+  inset: 12% 18% auto;
+  height: 28%;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.75),
+    rgba(255, 255, 255, 0)
+  );
+  pointer-events: none;
+}
+
+.landing-emerald .lp-hub__mod.is-active .lp-hub__nutFace {
+  background:
+    linear-gradient(145deg, #ffffff 0%, #f7f8fa 45%, #eef0f3 100%);
+  border-color: rgba(17, 17, 17, 0.16);
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.05),
+    0 8px 18px -8px rgba(15, 23, 42, 0.14),
+    0 0 0 1px rgba(37, 99, 235, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.landing-emerald .lp-hub__mod.is-locked .lp-hub__nutFace {
+  border-color: rgba(17, 17, 17, 0.2);
+  box-shadow:
+    0 2px 6px rgba(15, 23, 42, 0.06),
+    0 10px 22px -8px rgba(15, 23, 42, 0.16),
+    0 0 0 1px rgba(37, 99, 235, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.landing-emerald .lp-hub__nutLabel {
+  margin: 0;
+  color: #111111;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.landing-emerald .lp-hub__mod.is-dimmed .lp-hub__nutLabel {
+  color: #6b7280;
+}
+
+/* Compat anciens sélecteurs carte */
 .landing-emerald .lp-hub__card {
   display: flex;
   flex-direction: column;
@@ -4815,26 +4879,6 @@ html:has(.landing-emerald) body {
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.03),
     0 2px 8px -4px rgba(15, 23, 42, 0.05);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition:
-    box-shadow 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.7s ease,
-    background 0.7s ease,
-    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.landing-emerald .lp-hub__mod--mum .lp-hub__card {
-  min-width: 8.35rem;
-}
-
-.landing-emerald .lp-hub__mod.is-active .lp-hub__card {
-  background: #ffffff;
-  box-shadow:
-    0 2px 4px rgba(15, 23, 42, 0.04),
-    0 6px 16px -6px rgba(15, 23, 42, 0.08),
-    0 0 0 1px rgba(17, 17, 17, 0.06);
-  border-color: rgba(17, 17, 17, 0.12);
 }
 
 .landing-emerald .lp-hub__icon {
@@ -4859,21 +4903,13 @@ html:has(.landing-emerald) body {
 }
 
 @media (max-width: 639px) {
-  .landing-emerald .lp-hub__card {
-    min-width: 6.5rem;
-    padding: 0.75rem 0.8rem;
-    gap: 0.45rem;
-    border-radius: 1.15rem;
+  .landing-emerald .lp-hub__nutFace {
+    width: 2.35rem;
+    height: 2.35rem;
   }
 
-  .landing-emerald .lp-hub__cardTitle {
-    font-size: 0.86rem;
-  }
-
-  .landing-emerald .lp-hub__icon {
-    width: 1.95rem;
-    height: 1.95rem;
-    border-radius: 0.65rem;
+  .landing-emerald .lp-hub__nutLabel {
+    font-size: 0.72rem;
   }
 }
 
@@ -6238,12 +6274,12 @@ html:has(.landing-emerald) body {
     transform 160ms ease;
 }
 
-/* Curseur film partagé — trajet animé, jamais téléporté */
+/* Curseur film — left/top = pointe active (corrigée en JS), invisible hors action */
 .landing-emerald .lp-hubFilm__cursor {
   position: absolute;
   z-index: 9;
-  left: 48%;
-  top: 42%;
+  left: 0;
+  top: 0;
   color: #111111;
   filter: drop-shadow(0 2px 4px rgba(17, 17, 17, 0.18));
   transition:
@@ -6254,7 +6290,8 @@ html:has(.landing-emerald) body {
   opacity: 0;
   pointer-events: none;
   display: inline-flex;
-  transform: translate(-10%, -8%) scale(1);
+  transform: scale(1);
+  transform-origin: 4px 2px;
 }
 
 .landing-emerald .lp-hubFilm__cursor.is-on {
@@ -6266,7 +6303,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-hubFilm__cursor.is-click {
-  transform: translate(-10%, -8%) scale(0.88);
+  transform: scale(0.88);
 }
 
 .landing-emerald .lp-hubFilm__cursor.is-planAssign {
@@ -8441,6 +8478,222 @@ html:has(.landing-emerald) body {
   .landing-emerald .lp-story__lostLine,
   .landing-emerald .lp-story__final {
     will-change: auto;
+  }
+}
+
+/* ——— Film Pilotage ——— */
+.landing-emerald .lp-hubPilot {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 3vh, 2rem) clamp(1rem, 3vw, 2rem);
+  box-sizing: border-box;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.42);
+  transform-origin: 50% 18%;
+  transition:
+    opacity 1.15s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubPilot.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.landing-emerald .lp-hubPilot.is-entering,
+.landing-emerald .lp-hubPilot.is-inside {
+  transform: scale(1) translate(0, 0);
+}
+
+.landing-emerald .lp-hubPilot.is-returning {
+  opacity: 0;
+  transform: scale(0.55);
+  transition:
+    opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubPilot__frame {
+  width: min(980px, 100%);
+  height: min(520px, var(--hub-film-max-h));
+  max-height: var(--hub-film-max-h);
+  border-radius: 28px;
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.06);
+  box-shadow:
+    0 28px 64px rgba(17, 17, 17, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  overflow: hidden;
+}
+
+.landing-emerald .lp-hubPilot__panel {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.25fr);
+  gap: clamp(1.1rem, 2.8vw, 2.2rem);
+  padding: clamp(1.25rem, 2.8vw, 2.2rem);
+  box-sizing: border-box;
+  background:
+    radial-gradient(720px 320px at 88% 10%, rgba(17, 17, 17, 0.03), transparent 55%),
+    #f8f9fa;
+  overflow: hidden;
+}
+
+.landing-emerald .lp-hubPilot__copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.landing-emerald .lp-hubPilot__title {
+  margin: 1.1rem 0 0;
+  color: #111111;
+  font-size: clamp(1.7rem, 3.1vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.038em;
+  line-height: 1.12;
+}
+
+.landing-emerald .lp-hubPilot__subtitle {
+  margin: 1rem 0 0;
+  max-width: 26ch;
+  color: #666666;
+  font-size: clamp(0.96rem, 1.25vw, 1.06rem);
+  line-height: 1.55;
+}
+
+.landing-emerald .lp-hubPilot__ui {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.05rem 1.1rem 1.15rem;
+  border-radius: 1.35rem;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.03),
+    0 2px 8px -4px rgba(15, 23, 42, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-emerald .lp-hubPilot__uiHead {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #111111;
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.landing-emerald .lp-hubPilot__kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.landing-emerald .lp-hubPilot__kpi {
+  padding: 0.7rem 0.75rem;
+  border-radius: 12px;
+  background: #f7f8fa;
+  border: 1px solid transparent;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 480ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hubPilot__kpi.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-emerald .lp-hubPilot__kpi p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.landing-emerald .lp-hubPilot__kpi strong {
+  display: block;
+  margin-top: 0.3rem;
+  color: #111111;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-emerald .lp-hubPilot__alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  background: #fff7ed;
+  border: 1px solid rgba(194, 65, 12, 0.18);
+  color: #9a3412;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 420ms ease,
+    transform 420ms ease,
+    background 350ms ease,
+    border-color 350ms ease,
+    box-shadow 350ms ease;
+}
+
+.landing-emerald .lp-hubPilot__alert.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-emerald .lp-hubPilot__alert.is-hover {
+  box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.1);
+}
+
+.landing-emerald .lp-hubPilot__alert.is-resolved {
+  background: #f0fdf4;
+  border-color: rgba(21, 128, 61, 0.2);
+  color: #166534;
+}
+
+.landing-emerald .lp-hubPilot__alertTitle {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
+.landing-emerald .lp-hubPilot__alertText {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  opacity: 0.9;
+}
+
+.landing-emerald .lp-hubPilot__calm {
+  margin: 0.15rem 0 0;
+  color: #555555;
+  font-size: 0.82rem;
+  font-weight: 550;
+}
+
+@media (max-width: 860px) {
+  .landing-emerald .lp-hubPilot__panel {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+
+  .landing-emerald .lp-hubPilot__kpis {
+    grid-template-columns: 1fr;
   }
 }
 
