@@ -11,15 +11,17 @@ import {
 import { motion, useReducedMotion } from "framer-motion";
 
 const MICRO_LINES = [
-  "Chaque jour.",
-  "À chaque devis.",
-  "À chaque appel.",
-  "À chaque oubli.",
-  "À chaque chantier.",
+  "À chaque devis recommencé.",
+  "À chaque information client dispersée.",
+  "À chaque chantier sans suivi précis.",
+  "À chaque planning modifié manuellement.",
+  "À chaque consigne répétée aux équipes.",
+  "À chaque facture suivie trop tard.",
+  "À chaque marge découverte après le chantier.",
 ] as const;
 
-/** Index discret : 0 = titre, 1–5 = micros, 6 = perdu, 7 = pour toujours, 8 = final */
-const LAST_STEP = 8;
+/** 0 = titre, 1–7 = micros, 8 = Ce temps…, 9 = reste perdu., 10 = pour toujours., 11 = final */
+const LAST_STEP = 11;
 
 const TRANSITION_S = 0.55;
 /** Seuil d’une intention molette (un geste, une étape). */
@@ -72,7 +74,7 @@ function StoryStatic() {
         Votre entreprise perd{" "}
         <span className="lp-story__headlineEmphasis">du temps.</span>
       </p>
-      <p className="lp-story__lostLead">Ce temps… pour toujours.</p>
+      <p className="lp-story__lostLead">Ce temps… reste perdu. pour toujours.</p>
       <FinalCopy />
     </div>
   );
@@ -93,11 +95,16 @@ function StoryPinnedSteps({
   reduced: boolean | null;
 }) {
   const t = stepTransition(reduced);
-  const mainActive = activeStep <= 5;
-  const lostActive = activeStep === 6 || activeStep === 7;
-  const finalActive = activeStep >= 8;
-  const perduActive = activeStep === 6;
-  const foreverActive = activeStep === 7;
+  const microCount = MICRO_LINES.length;
+  const mainActive = activeStep <= microCount;
+  const lostActive =
+    activeStep === microCount + 1 ||
+    activeStep === microCount + 2 ||
+    activeStep === microCount + 3;
+  const finalActive = activeStep >= microCount + 4;
+  const tempsOnly = activeStep === microCount + 1;
+  const perduActive = activeStep === microCount + 2;
+  const foreverActive = activeStep === microCount + 3;
 
   return (
     <div
@@ -153,7 +160,9 @@ function StoryPinnedSteps({
           <motion.p
             className="lp-story__lostLine"
             initial={false}
-            animate={{ opacity: perduActive ? 1 : 0 }}
+            animate={{
+              opacity: perduActive || foreverActive ? (foreverActive ? 0.38 : 1) : 0,
+            }}
             transition={t}
           >
             reste <span className="lp-story__lostWarm">perdu</span>.
@@ -170,6 +179,8 @@ function StoryPinnedSteps({
             pour toujours.
           </motion.p>
         </div>
+        {/* tempsOnly : seul le lead « Ce temps… » est visible */}
+        <span className="sr-only">{tempsOnly ? "Ce temps…" : null}</span>
       </motion.div>
 
       <motion.div
@@ -533,8 +544,12 @@ export function LandingPainSection() {
       data-active-step={activeStep}
     >
       <h2 id="pain-title" className="sr-only">
-        Votre entreprise perd du temps. Ce temps reste perdu pour toujours. Et
-        si vous pouviez récupérer plusieurs heures chaque semaine ?
+        Votre entreprise perd du temps. À chaque devis recommencé. À chaque
+        information client dispersée. À chaque chantier sans suivi précis. À
+        chaque planning modifié manuellement. À chaque consigne répétée aux
+        équipes. À chaque facture suivie trop tard. À chaque marge découverte
+        après le chantier. Ce temps reste perdu pour toujours. Et si vous
+        pouviez récupérer plusieurs heures chaque semaine ?
       </h2>
 
       {reduced ? (

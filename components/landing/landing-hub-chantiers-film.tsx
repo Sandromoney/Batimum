@@ -125,8 +125,6 @@ function ChantiersBoard({
     beat === "bump" ||
     beat === "alive" ||
     beat === "done";
-  const showCursor =
-    beat === "faïence" || beat === "bump" || beat === "alive";
 
   return (
     <div className="lp-hubChantier__ui" aria-hidden="true">
@@ -262,8 +260,24 @@ function ChantiersBoard({
       ) : null}
 
       <FilmCursor
-        visible={showCursor}
-        className="is-chantierStep"
+        visible={
+          beat === "fiche" ||
+          beat === "steps" ||
+          beat === "progress" ||
+          beat === "faïence" ||
+          beat === "bump" ||
+          beat === "alive"
+        }
+        className={
+          beat === "fiche"
+            ? "is-chantierOpen"
+            : beat === "steps" || beat === "progress"
+              ? "is-chantierList"
+              : beat === "bump"
+                ? "is-chantierBump"
+                : "is-chantierStep"
+        }
+        clicking={beat === "faïence" || beat === "bump"}
       />
     </div>
   );

@@ -93,7 +93,7 @@ function ClientsBoard({
   const showDocs =
     beat === "docs" || beat === "notes" || beat === "done";
   const showNotes = beat === "notes" || beat === "done";
-  const showCursor = beat === "list" || beat === "open" || beat === "identity";
+  const showCursor = beat !== "done";
 
   return (
     <div className="lp-hubClients__ui" aria-hidden="true">
@@ -239,8 +239,13 @@ function ClientsBoard({
       <FilmCursor
         visible={showCursor}
         className={
-          beat === "list" ? "is-clientsRow" : "is-clientsFiche"
+          beat === "list"
+            ? "is-clientsPark"
+            : beat === "open"
+              ? "is-clientsRow"
+              : "is-clientsFiche"
         }
+        clicking={beat === "open"}
       />
     </div>
   );

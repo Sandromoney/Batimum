@@ -137,12 +137,6 @@ function PlanningBoard({
   const statusLabel =
     statusStep >= 1 ? "En cours" : "Prévu";
 
-  const showCursor =
-    beat === "people" ||
-    beat === "conflict" ||
-    beat === "resolve" ||
-    beat === "status";
-
   return (
     <div className="lp-hubPlan__ui" aria-hidden="true">
       <div className="lp-hubPlan__uiHead">
@@ -297,8 +291,15 @@ function PlanningBoard({
       ) : null}
 
       <FilmCursor
-        visible={showCursor}
+        visible={
+          beat === "jobs" ||
+          beat === "people" ||
+          beat === "conflict" ||
+          beat === "resolve" ||
+          beat === "status"
+        }
         className={[
+          beat === "jobs" ? "is-planPark" : "",
           beat === "people" ? "is-planAssign" : "",
           beat === "conflict" ? "is-planAlert" : "",
           beat === "resolve" ? "is-planResolve" : "",
@@ -306,6 +307,7 @@ function PlanningBoard({
         ]
           .filter(Boolean)
           .join(" ")}
+        clicking={beat === "people" || beat === "resolve"}
       />
     </div>
   );

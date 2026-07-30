@@ -161,9 +161,9 @@ const HUB_MODULES: HubModule[] = [
  */
 const LAST_SCENE = 14;
 const SCENE_LOCK_MS = [
-  800,
-  1000,
-  1800,
+  500,
+  700,
+  1100,
   MUM_DEMO_SAFETY_MS,
   MUM_RETURN_MS,
   CLIENTS_DEMO_SAFETY_MS,
@@ -905,7 +905,9 @@ export function LandingHubSection() {
 
       if (direction > 0) {
         if (current < LAST_SCENE) {
-          const next = current + 1;
+          // Premier geste : révéler le Hub (logo + modules) immédiatement —
+          // pas de zone vide / respiration longue avant le contenu.
+          const next = current === 0 ? 2 : current + 1;
           sceneRef.current = next;
           setScene(next);
           if (next === 3) startMumFilm();
@@ -1240,6 +1242,7 @@ export function LandingHubSection() {
 
   const restingBlock = (
     <div className="lp-hub__resting lp-hub__resting--signature">
+      <HubAtmosphereFallback />
       <HubSignaturePanel
         active={false}
         sealed

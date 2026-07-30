@@ -255,8 +255,24 @@ function MumInterface({
       ) : null}
 
       <FilmCursor
-        visible={listening || beat === "ready"}
-        className={listening ? "is-mumMic" : "is-mumReady"}
+        visible={
+          listening ||
+          beat === "pause" ||
+          beat === "analyse" ||
+          beat === "lines" ||
+          beat === "total" ||
+          beat === "ready"
+        }
+        className={
+          listening
+            ? "is-mumMic"
+            : beat === "pause" || beat === "analyse"
+              ? "is-mumGenerate"
+              : beat === "lines" || beat === "total"
+                ? "is-mumLines"
+                : "is-mumReady"
+        }
+        clicking={listening || beat === "ready"}
       />
     </div>
   );

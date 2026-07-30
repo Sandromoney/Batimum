@@ -448,8 +448,20 @@ function FinanceBoard({
       ) : null}
 
       <FilmCursor
-        visible={beat === "send" || beat === "pay"}
-        className="is-finPay"
+        visible={
+          beat === "pipeline" ||
+          beat === "send" ||
+          beat === "pay" ||
+          beat === "pulse"
+        }
+        className={
+          beat === "pipeline"
+            ? "is-finPark"
+            : beat === "send"
+              ? "is-finSend"
+              : "is-finPay"
+        }
+        clicking={beat === "send" || beat === "pay"}
       />
     </div>
   );
