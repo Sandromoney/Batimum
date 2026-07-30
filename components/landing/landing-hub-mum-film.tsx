@@ -106,10 +106,14 @@ function MumInterface({
   listening: boolean;
   devisStatut: "ready" | "envoye" | "consulte" | "signe" | "commande" | null;
 }) {
-  const showAnalyse = viewPlan >= 1;
-  const showLines = viewPlan >= 2;
-  const showTotal = viewPlan >= 3;
-  const showPreview = showAnalyse || showLines || showTotal || showReady;
+  /** Un plan = une composition centrée — jamais d’empilement vertical progressif. */
+  const planDictation = viewPlan === 0;
+  const planAnalyse = viewPlan === 1;
+  const planLines = viewPlan === 2;
+  const planTotals = viewPlan === 3;
+  const showComposer = planDictation || planAnalyse;
+  const typedPreview =
+    typed.length > 140 ? `${typed.slice(0, 137).trim()}…` : typed;
 
   return (
     <div
@@ -137,124 +141,151 @@ function MumInterface({
         ) : devisStatut === "envoye" ? (
           <span className="lp-hubMum__statut is-envoye">Envoyé</span>
         ) : (
-          <span className="lp-hubMum__uiHeadMeta">Préparation du devis</span>
+          <span className="lp-hubMum__uiHeadMeta">
+            {planDictation
+              ? "Dictée"
+              : planAnalyse
+                ? "Analyse"
+                : planLines
+                  ? "Devis"
+                  : planTotals
+                    ? "Validation"
+                    : "Préparation du devis"}
+          </span>
         )}
       </div>
 
-      <div className="lp-hubMum__composer">
-        <p className="lp-hubMum__composerLabel">Décrivez votre chantier</p>
+      {showComposer ? (
         <div
           className={[
-            "lp-hubMum__composerRow",
-            listening ? "is-listening" : "",
+            "lp-hubMum__composer",
+            planAnalyse ? "is-compact" : "",
           ]
             .filter(Boolean)
             .join(" ")}
         >
-          <div className="lp-hubMum__composerBox">
-            <p
-              className={[
-                "lp-hubMum__composerText",
-                !typed && listening ? "is-placeholder" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              {typed || (listening ? "Écoute…" : "")}
-            </p>
-          </div>
+          <p className="lp-hubMum__composerLabel">Décrivez votre chantier</p>
+          <div
+            className={[
+              "lp-hubMum__composerRow",
+              listening ? "is-listening" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            <div className="lp-hubMum__composerBox">
+              <p
+                className={[
+                  "lp-hubMum__composerText",
+                  !typed && listening ? "is-placeholder" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                {typedPreview || (listening ? "Écoute…" : "")}
+              </p>
+            </div>
 
-          <div className="lp-hubMum__micWrap">
-            <MicWaves active={listening} />
-            <button
-              type="button"
-              className={[
-                "lp-hubMum__mic",
-                listening ? "is-active" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              tabIndex={-1}
-              aria-hidden="true"
-            >
-              <Mic size={16} strokeWidth={1.9} />
-            </button>
+            <div className="lp-hubMum__micWrap">
+              <MicWaves active={listening} />
+              <button
+                type="button"
+                className={[
+                  "lp-hubMum__mic",
+                  listening ? "is-active" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                tabIndex={-1}
+                aria-hidden="true"
+              >
+                <Mic size={16} strokeWidth={1.9} />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
-      {showPreview ? (
-        <div className="lp-hubMum__preview">
+      {planAnalyse ? (
+        <div className="lp-hubMum__preview lp-hubMum__preview--plan">
           <div className="lp-hubMum__previewHead">
             <Bot size={14} strokeWidth={1.8} />
-            <span>Prévisualisation</span>
+            <span>Informations détectées</span>
           </div>
-
-          {showAnalyse ? (
-            <div className="lp-hubMum__analyse">
-              <ul className="lp-hubMum__analyseList">
-                {ANALYSIS.map((item, i) => {
-                  const done = i < analyseDone;
-                  return (
-                    <li key={item} className={done ? "is-done" : undefined}>
-                      <span
-                        className="lp-hubMum__analyseMark"
-                        aria-hidden="true"
-                      >
-                        {done ? <Check size={12} strokeWidth={2.4} /> : null}
-                      </span>
-                      <span>{item}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ) : null}
-
-          {showLines ? (
-            <div className="lp-hubMum__devis">
-              <div className="lp-hubMum__devisHead">
-                <p className="lp-hubMum__sectionTitle">Salle de bain · 18 m²</p>
-                <div className="lp-hubMum__colHeads" aria-hidden="true">
-                  <span>Prestation</span>
-                  <span>Qté</span>
-                  <span>Unité</span>
-                  <span>Prix</span>
-                </div>
-              </div>
-              <ul className="lp-hubMum__lines">
-                {LINES.map((line, i) => (
-                  <li
-                    key={line.label}
-                    className={i < linesVisible ? "is-on" : undefined}
-                  >
-                    <span className="lp-hubMum__lineLabel">{line.label}</span>
-                    <span className="lp-hubMum__lineQty">{line.qty}</span>
-                    <span className="lp-hubMum__lineUnit">{line.unit}</span>
-                    <span className="lp-hubMum__lineAmt">{PRICE_MASK}</span>
+          <div className="lp-hubMum__analyse">
+            <ul className="lp-hubMum__analyseList">
+              {ANALYSIS.map((item, i) => {
+                const done = i < analyseDone;
+                return (
+                  <li key={item} className={done ? "is-done" : undefined}>
+                    <span className="lp-hubMum__analyseMark" aria-hidden="true">
+                      {done ? <Check size={12} strokeWidth={2.4} /> : null}
+                    </span>
+                    <span>{item}</span>
                   </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+      ) : null}
 
-          {showTotal ? (
-            <div className="lp-hubMum__totals is-on">
-              <div className="lp-hubMum__totalRow">
-                <span>Sous-total HT</span>
-                <span aria-hidden="true">{PRICE_MASK}</span>
-              </div>
-              <div className="lp-hubMum__totalRow">
-                <span>TVA</span>
-                <span aria-hidden="true">{PRICE_MASK}</span>
-              </div>
-              <div className="lp-hubMum__totalRow is-grand">
-                <span>Total TTC</span>
-                <span aria-hidden="true">{PRICE_MASK}</span>
+      {planLines ? (
+        <div className="lp-hubMum__preview lp-hubMum__preview--plan">
+          <div className="lp-hubMum__devis">
+            <div className="lp-hubMum__devisHead">
+              <p className="lp-hubMum__sectionTitle">Salle de bain · 18 m²</p>
+              <div className="lp-hubMum__colHeads" aria-hidden="true">
+                <span>Prestation</span>
+                <span>Qté</span>
+                <span>Unité</span>
+                <span>Prix</span>
               </div>
             </div>
-          ) : null}
+            <ul className="lp-hubMum__lines lp-hubMum__lines--framed">
+              {LINES.map((line, i) => (
+                <li
+                  key={line.label}
+                  className={i < linesVisible ? "is-on" : undefined}
+                >
+                  <span className="lp-hubMum__lineLabel">{line.label}</span>
+                  <span className="lp-hubMum__lineQty">{line.qty}</span>
+                  <span className="lp-hubMum__lineUnit">{line.unit}</span>
+                  <span className="lp-hubMum__lineAmt">{PRICE_MASK}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ) : null}
 
+      {planTotals ? (
+        <div className="lp-hubMum__preview lp-hubMum__preview--plan">
+          <div className="lp-hubMum__devis lp-hubMum__devis--summary">
+            <p className="lp-hubMum__sectionTitle">Salle de bain · 18 m²</p>
+            <ul className="lp-hubMum__lines lp-hubMum__lines--summary">
+              {LINES.slice(0, 4).map((line) => (
+                <li key={line.label} className="is-on">
+                  <span className="lp-hubMum__lineLabel">{line.label}</span>
+                  <span className="lp-hubMum__lineAmt">{PRICE_MASK}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="lp-hubMum__totals is-on">
+            <div className="lp-hubMum__totalRow">
+              <span>Sous-total HT</span>
+              <span aria-hidden="true">{PRICE_MASK}</span>
+            </div>
+            <div className="lp-hubMum__totalRow">
+              <span>TVA</span>
+              <span aria-hidden="true">{PRICE_MASK}</span>
+            </div>
+            <div className="lp-hubMum__totalRow is-grand">
+              <span>Total TTC</span>
+              <span aria-hidden="true">{PRICE_MASK}</span>
+            </div>
+          </div>
           {showReady ? (
             <div className="lp-hubMum__ready is-on">
               <span className="lp-hubMum__readyCheck" aria-hidden="true">

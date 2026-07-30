@@ -47,9 +47,11 @@ const BM_SRC = "/logo-batimum.png";
 export function HubExperienceGate({
   onDiscover,
   onSkip,
+  cinematic = false,
 }: {
   onDiscover: () => void;
   onSkip: () => void;
+  cinematic?: boolean;
 }) {
   useEffect(() => {
     const btn = document.querySelector(
@@ -60,7 +62,12 @@ export function HubExperienceGate({
 
   return (
     <div
-      className="lp-hub__gate"
+      className={[
+        "lp-hub__gate",
+        cinematic ? "is-cinematic" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       role="dialog"
       aria-modal="true"
       aria-labelledby="hub-gate-title"
@@ -171,10 +178,13 @@ export function HubScrollHint({
         ? "Faites glisser pour continuer"
         : "Défilez pour continuer";
 
+  const arrowSize = mode === "start" ? 22 : 18;
+
   return (
     <div
       className={[
         "lp-hub__hint",
+        mode === "start" ? "lp-hub__hint--start" : "lp-hub__hint--continue",
         visible ? "is-visible" : "",
       ]
         .filter(Boolean)
@@ -184,8 +194,8 @@ export function HubScrollHint({
       <span className="lp-hub__hintText">{label}</span>
       <span className="lp-hub__hintArrow" aria-hidden="true">
         <svg
-          width="18"
-          height="18"
+          width={arrowSize}
+          height={arrowSize}
           viewBox="0 0 18 18"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"

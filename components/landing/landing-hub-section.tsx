@@ -874,8 +874,13 @@ export function LandingHubSection() {
     signaturePlayedRef.current = true;
     setSignatureSealed(true);
     setFilm("sealed");
-    filmLater(() => unlockScroll(), 400);
-  }, [setFilm, filmLater, unlockScroll]);
+    setAwaitingGesture(false);
+    isPlayingRef.current = false;
+    // Finale : écrou + logo + CTA — aucun « Défilez pour continuer »
+    filmLater(() => {
+      exitHub();
+    }, 900);
+  }, [setFilm, filmLater, exitHub]);
 
   const startSignature = useCallback(() => {
     clearFilmTimers();
@@ -885,8 +890,9 @@ export function LandingHubSection() {
     if (signaturePlayedRef.current) {
       setSignatureSealed(true);
       setFilm("sealed");
+      setAwaitingGesture(false);
       startSceneLock(14, 600);
-      filmLater(() => unlockScroll(), 500);
+      filmLater(() => exitHub(), 500);
       return;
     }
 
@@ -899,7 +905,7 @@ export function LandingHubSection() {
     setFilm,
     startSceneLock,
     filmLater,
-    unlockScroll,
+    exitHub,
   ]);
 
   const applyIntent = useCallback(
@@ -1023,12 +1029,16 @@ export function LandingHubSection() {
     ],
   );
 
+  const [gateCinematic, setGateCinematic] = useState(false);
+
   useEffect(() => {
-    const onOpenGate = () => {
+    const onOpenGate = (event: Event) => {
       if (readHubSkippedSession() || doneRef.current) return;
+      const detail = (event as CustomEvent<{ cinematic?: boolean }>).detail;
       setSessionSkipped(false);
       doneRef.current = false;
       setDone(false);
+      setGateCinematic(detail?.cinematic !== false);
       setExperiencePhase("gate");
       pinModeRef.current = "before";
       setPinMode("before");
@@ -1310,12 +1320,15 @@ export function LandingHubSection() {
   const showHint =
     showTourChrome &&
     awaitingGesture &&
+    !signatureSealed &&
     filmPhase !== "demo" &&
     filmPhase !== "enter" &&
     filmPhase !== "highlight" &&
     filmPhase !== "returning" &&
     filmPhase !== "signature" &&
-    filmPhase !== "converge";
+    filmPhase !== "converge" &&
+    filmPhase !== "sealed" &&
+    scene < 14;
 
   const restingBlock = (
     <div className="lp-hub__resting lp-hub__resting--signature">
@@ -1385,6 +1398,7 @@ export function LandingHubSection() {
 
             {experience === "gate" ? (
               <HubExperienceGate
+                cinematic={gateCinematic}
                 onDiscover={beginExperience}
                 onSkip={skipPresentation}
               />

@@ -19,10 +19,14 @@ const MICRO_LINES = [
   "Décisions trop tardives.",
 ] as const;
 
-/** Closing beats — one slot, never simultaneous. Auto-handoff after last. */
-const CLOSING_LINES = ["Ce temps perdu.", "Tous les jours."] as const;
+/** Closing beats — one slot, never simultaneous. Last line then cinematic handoff. */
+const CLOSING_LINES = [
+  "Ce temps perdu.",
+  "Tous les jours.",
+  "Finit par ralentir votre entreprise.",
+] as const;
 
-/** 0 = titre, 1–5 = micros, 6–7 = closings */
+/** 0 = titre, 1–5 = micros, 6–8 = closings */
 const LAST_STEP = 5 + CLOSING_LINES.length;
 
 const TRANSITION_S = 0.42;
@@ -32,8 +36,10 @@ const ENGAGE_GRACE_MS = 280;
 const WHEEL_QUIET_MS = 200;
 /** Wait for exit opacity → 0 before enter (mode="wait"). */
 const VISUAL_LOCK_MS = Math.round(TRANSITION_S * 1000) + 160;
-/** Hold last line briefly, then open hub gate without another scroll. */
-const HANDOFF_HOLD_MS = 780;
+/** Breath after last line before cinematic fade. */
+const HANDOFF_BREATH_MS = 520;
+/** Soft fade + depth toward hub gate (~500–800 ms felt). */
+const HANDOFF_FADE_MS = 680;
 
 const STEP_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -80,10 +86,15 @@ function StoryPinnedSteps({
     content = MICRO_LINES[microIndex];
   } else if (closingIndex >= 0 && closingIndex < CLOSING_LINES.length) {
     key = `closing-${closingIndex}`;
-    className =
-      closingIndex === 0
-        ? "lp-story__lostLead lp-story__closing"
-        : "lp-story__lostLine lp-story__closing lp-story__closing--days";
+    if (closingIndex === 0) {
+      className = "lp-story__lostLead lp-story__closing";
+    } else if (closingIndex === 1) {
+      className =
+        "lp-story__lostLine lp-story__closing lp-story__closing--days";
+    } else {
+      className =
+        "lp-story__lostLine lp-story__closing lp-story__closing--finale";
+    }
     content = CLOSING_LINES[closingIndex];
   }
 
@@ -125,6 +136,9 @@ function StoryStatic() {
       ))}
       <p className="lp-story__lostLead">Ce temps perdu.</p>
       <p className="lp-story__lostLine">Tous les jours.</p>
+      <p className="lp-story__lostLine">
+        Finit par ralentir votre entreprise.
+      </p>
     </div>
   );
 }
@@ -157,7 +171,9 @@ export function LandingPainSection() {
   const [storyCompleted, setStoryCompleted] = useState(false);
   const storyCompletedRef = useRef(false);
   const [storyCompact, setStoryCompact] = useState(false);
+  const [cinematicOut, setCinematicOut] = useState(false);
   const handoffRef = useRef(false);
+  const cinematicStartedRef = useRef(false);
 
   const [pinMode, setPinMode] = useState<PinMode>("before");
   const pinModeRef = useRef<PinMode>("before");
@@ -206,10 +222,12 @@ export function LandingPainSection() {
     }, VISUAL_LOCK_MS);
   }, [scheduleWheelRearm]);
 
-  const openHubGate = useCallback(() => {
-    if (handoffRef.current) return;
-    handoffRef.current = true;
-    window.dispatchEvent(new CustomEvent("batimum:open-hub-gate"));
+  const openHubGate = useCallback((cinematic = true) => {
+    window.dispatchEvent(
+      new CustomEvent("batimum:open-hub-gate", {
+        detail: { cinematic },
+      }),
+    );
     const hub = document.getElementById("ecosysteme");
     if (hub) {
       const top = hub.getBoundingClientRect().top + window.scrollY;
@@ -227,15 +245,32 @@ export function LandingPainSection() {
       ? sticky.getBoundingClientRect().top
       : null;
     setStoryCompact(true);
-    openHubGate();
-  }, [openHubGate]);
+  }, []);
 
-  const scheduleHandoff = useCallback(() => {
+  /** Breath → fade texte → gate soft enter → compact. */
+  const beginCinematicHandoff = useCallback(() => {
+    if (cinematicStartedRef.current || handoffRef.current) return;
+    cinematicStartedRef.current = true;
+    handoffRef.current = true;
+    isTransitioningRef.current = true;
+    wheelArmedRef.current = false;
+
     if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
     handoffTimerRef.current = setTimeout(() => {
-      exitToCompact();
-    }, HANDOFF_HOLD_MS);
-  }, [exitToCompact]);
+      setCinematicOut(true);
+      // Mid-fade : ouvrir le gate pendant que le texte disparaît
+      window.setTimeout(() => {
+        openHubGate(true);
+      }, Math.round(HANDOFF_FADE_MS * 0.35));
+      window.setTimeout(() => {
+        exitToCompact();
+      }, HANDOFF_FADE_MS);
+    }, HANDOFF_BREATH_MS);
+  }, [openHubGate, exitToCompact]);
+
+  const scheduleHandoff = useCallback(() => {
+    beginCinematicHandoff();
+  }, [beginCinematicHandoff]);
 
   const applyIntent = useCallback(
     (direction: 1 | -1): "handled" | "exit" | "pass" => {
@@ -260,14 +295,17 @@ export function LandingPainSection() {
           }
           return "handled";
         }
-        // Already on last line: any further intent → handoff
+        // Already on last line: any further intent → cinematic handoff
         startLock();
-        exitToCompact();
+        beginCinematicHandoff();
         return "exit";
       }
 
       if (step > 0) {
         if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
+        cinematicStartedRef.current = false;
+        handoffRef.current = false;
+        setCinematicOut(false);
         setStep(step - 1);
         startLock();
         return "handled";
@@ -275,7 +313,7 @@ export function LandingPainSection() {
 
       return "pass";
     },
-    [playing, setStep, startLock, exitToCompact, scheduleHandoff],
+    [playing, setStep, startLock, beginCinematicHandoff, scheduleHandoff],
   );
 
   useEffect(() => {
@@ -485,6 +523,7 @@ export function LandingPainSection() {
         "lp-section--after-hero",
         phase === "compact" ? "lp-story--compact" : "",
         phase === "compact" ? "is-handoff" : "",
+        cinematicOut ? "is-cinematic-out" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -496,7 +535,8 @@ export function LandingPainSection() {
       <h2 id="pain-title" className="sr-only">
         Votre entreprise perd du temps. Devis trop longs à rédiger. Relances
         oubliées. Chantiers mal suivis. Données éparpillées. Décisions trop
-        tardives. Ce temps perdu. Tous les jours.
+        tardives. Ce temps perdu. Tous les jours. Finit par ralentir votre
+        entreprise.
       </h2>
 
       {reduced ? (
@@ -513,6 +553,7 @@ export function LandingPainSection() {
               "lp-story__sticky",
               pinMode === "pin" ? "is-pinned" : "",
               pinMode === "after" ? "is-after" : "",
+              cinematicOut ? "is-cinematic-out" : "",
             ]
               .filter(Boolean)
               .join(" ")}
