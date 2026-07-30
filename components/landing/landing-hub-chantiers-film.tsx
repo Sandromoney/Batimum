@@ -157,18 +157,6 @@ function ChantiersBoard({
           </li>
         </ul>
 
-        <div className="lp-hubChantier__photos" aria-hidden="true">
-          <div className="lp-hubChantier__photo lp-hubChantier__photo--prep">
-            <span>Avant · 12 juil.</span>
-          </div>
-          <div className="lp-hubChantier__photo lp-hubChantier__photo--plomb">
-            <span>Plomberie · 16 juil.</span>
-          </div>
-          <div className="lp-hubChantier__photo lp-hubChantier__photo--faience">
-            <span>Faïence · 28 juil.</span>
-          </div>
-        </div>
-
         <div
           className={[
             "lp-hubChantier__progress",

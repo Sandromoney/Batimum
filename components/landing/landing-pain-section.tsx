@@ -6,79 +6,39 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type ReactNode,
   type RefObject,
 } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 const MICRO_LINES = [
-  "À chaque devis recommencé.",
-  "À chaque information client dispersée.",
-  "À chaque chantier sans suivi précis.",
-  "À chaque planning modifié manuellement.",
-  "À chaque consigne répétée aux équipes.",
-  "À chaque facture suivie trop tard.",
-  "À chaque marge découverte après le chantier.",
+  "Devis trop longs à rédiger.",
+  "Relances oubliées.",
+  "Chantiers mal suivis.",
+  "Données éparpillées.",
+  "Décisions trop tardives.",
 ] as const;
 
-/** 0 = titre, 1–7 = micros, 8 = Ce temps…, 9 = reste perdu., 10 = pour toujours., 11 = final */
-const LAST_STEP = 11;
+/** Closing beats — one slot, never simultaneous. Auto-handoff after last. */
+const CLOSING_LINES = ["Ce temps perdu.", "Tous les jours."] as const;
 
-const TRANSITION_S = 0.55;
-/** Seuil d’une intention molette (un geste, une étape). */
+/** 0 = titre, 1–5 = micros, 6–7 = closings */
+const LAST_STEP = 5 + CLOSING_LINES.length;
+
+const TRANSITION_S = 0.42;
 const WHEEL_THRESHOLD = 40;
 const TOUCH_THRESHOLD = 52;
 const ENGAGE_GRACE_MS = 280;
-/**
- * Réarmement uniquement après silence molette — jamais sur chronomètre.
- * Empêche l’inertie trackpad de compter comme un second geste.
- */
 const WHEEL_QUIET_MS = 200;
-/** Verrou visuel pendant la transition Framer (pas un auto-avance). */
-const VISUAL_LOCK_MS = Math.round(TRANSITION_S * 1000) + 120;
+/** Wait for exit opacity → 0 before enter (mode="wait"). */
+const VISUAL_LOCK_MS = Math.round(TRANSITION_S * 1000) + 160;
+/** Hold last line briefly, then open hub gate without another scroll. */
+const HANDOFF_HOLD_MS = 780;
 
 const STEP_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-/**
- * playing         → pin + étapes discrètes
- * finishedPinned  → dernière phrase verrouillée (transitoire avant compact)
- * compact         → section normale, plus de pin / hauteur artificielle
- */
 type StoryPhase = "playing" | "finishedPinned" | "compact";
-
 type PinMode = "before" | "pin" | "after";
-
-function FinalCopy() {
-  return (
-    <p className="lp-story__final">
-      Et si vous pouviez récupérer plusieurs heures…
-      <br />
-      chaque semaine&nbsp;?
-    </p>
-  );
-}
-
-function StoryFinalLocked() {
-  return (
-    <div className="lp-story__stage" aria-hidden="true">
-      <div className="lp-story__layer">
-        <FinalCopy />
-      </div>
-    </div>
-  );
-}
-
-function StoryStatic() {
-  return (
-    <div className="lp-story__stage lp-story__stage--static">
-      <p className="lp-story__headline">
-        Votre entreprise perd{" "}
-        <span className="lp-story__headlineEmphasis">du temps.</span>
-      </p>
-      <p className="lp-story__lostLead">Ce temps… reste perdu. pour toujours.</p>
-      <FinalCopy />
-    </div>
-  );
-}
 
 function stepTransition(reduced: boolean | null) {
   return {
@@ -95,16 +55,37 @@ function StoryPinnedSteps({
   reduced: boolean | null;
 }) {
   const t = stepTransition(reduced);
-  const microCount = MICRO_LINES.length;
-  const mainActive = activeStep <= microCount;
-  const lostActive =
-    activeStep === microCount + 1 ||
-    activeStep === microCount + 2 ||
-    activeStep === microCount + 3;
-  const finalActive = activeStep >= microCount + 4;
-  const tempsOnly = activeStep === microCount + 1;
-  const perduActive = activeStep === microCount + 2;
-  const foreverActive = activeStep === microCount + 3;
+  const showLead = activeStep === 0;
+  const microIndex =
+    activeStep >= 1 && activeStep <= MICRO_LINES.length
+      ? activeStep - 1
+      : -1;
+  const closingIndex =
+    activeStep > MICRO_LINES.length
+      ? activeStep - MICRO_LINES.length - 1
+      : -1;
+
+  let key = "lead";
+  let className = "lp-story__headline";
+  let content: ReactNode = (
+    <>
+      Votre entreprise perd{" "}
+      <span className="lp-story__headlineEmphasis">du temps.</span>
+    </>
+  );
+
+  if (microIndex >= 0) {
+    key = `micro-${microIndex}`;
+    className = "lp-story__micro lp-story__micro--solo";
+    content = MICRO_LINES[microIndex];
+  } else if (closingIndex >= 0 && closingIndex < CLOSING_LINES.length) {
+    key = `closing-${closingIndex}`;
+    className =
+      closingIndex === 0
+        ? "lp-story__lostLead lp-story__closing"
+        : "lp-story__lostLine lp-story__closing lp-story__closing--days";
+    content = CLOSING_LINES[closingIndex];
+  }
 
   return (
     <div
@@ -112,102 +93,50 @@ function StoryPinnedSteps({
       aria-hidden="true"
       data-active-step={activeStep}
     >
-      <motion.div
-        className="lp-story__layer lp-story__layer--main"
-        initial={false}
-        animate={{
-          opacity: mainActive ? 1 : 0,
-          y: mainActive ? 0 : -10,
-        }}
-        transition={t}
-      >
-        <p className="lp-story__headline">
-          Votre entreprise perd{" "}
-          <span className="lp-story__headlineEmphasis">du temps.</span>
-        </p>
-        <div className="lp-story__microSlot">
-          {MICRO_LINES.map((line, i) => {
-            const on = activeStep === i + 1;
-            return (
-              <motion.p
-                key={line}
-                className="lp-story__micro"
-                initial={false}
-                animate={{
-                  opacity: on ? 1 : 0,
-                  y: on ? 0 : 10,
-                }}
-                transition={t}
-              >
-                {line}
-              </motion.p>
-            );
-          })}
-        </div>
-      </motion.div>
-
-      <motion.div
-        className="lp-story__layer"
-        initial={false}
-        animate={{
-          opacity: lostActive ? 1 : 0,
-          y: lostActive ? 0 : 12,
-        }}
-        transition={t}
-      >
-        <p className="lp-story__lostLead">Ce temps…</p>
-        <div className="lp-story__lostSwap">
+      <div className="lp-story__copySlot" aria-live="polite">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.p
-            className="lp-story__lostLine"
-            initial={false}
-            animate={{
-              opacity: perduActive || foreverActive ? (foreverActive ? 0.38 : 1) : 0,
-            }}
+            key={key}
+            className={className}
+            initial={reduced ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8, transition: { duration: TRANSITION_S * 0.85 } }}
             transition={t}
           >
-            reste <span className="lp-story__lostWarm">perdu</span>.
+            {content}
           </motion.p>
-          <motion.p
-            className="lp-story__lostLine lp-story__lostLine--forever"
-            initial={false}
-            animate={{
-              opacity: foreverActive ? 1 : 0,
-              y: foreverActive ? 0 : 8,
-            }}
-            transition={t}
-          >
-            pour toujours.
-          </motion.p>
-        </div>
-        {/* tempsOnly : seul le lead « Ce temps… » est visible */}
-        <span className="sr-only">{tempsOnly ? "Ce temps…" : null}</span>
-      </motion.div>
-
-      <motion.div
-        className="lp-story__layer"
-        initial={false}
-        animate={{
-          opacity: finalActive ? 1 : 0,
-          y: finalActive ? 0 : 14,
-        }}
-        transition={t}
-      >
-        <FinalCopy />
-      </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
 
-function StoryCompactFinal({
+function StoryStatic() {
+  return (
+    <div className="lp-story__stage lp-story__stage--static">
+      <p className="lp-story__headline">
+        Votre entreprise perd{" "}
+        <span className="lp-story__headlineEmphasis">du temps.</span>
+      </p>
+      {MICRO_LINES.map((line) => (
+        <p key={line} className="lp-story__micro">
+          {line}
+        </p>
+      ))}
+      <p className="lp-story__lostLead">Ce temps perdu.</p>
+      <p className="lp-story__lostLine">Tous les jours.</p>
+    </div>
+  );
+}
+
+function StoryCompactHandoff({
   compactRef,
 }: {
   compactRef: RefObject<HTMLDivElement | null>;
 }) {
   return (
-    <div ref={compactRef} className="lp-story__compact">
-      <div className="lp-story__compactInner" aria-hidden="true">
-        <FinalCopy />
-      </div>
+    <div ref={compactRef} className="lp-story__compact lp-story__compact--handoff">
+      <div className="lp-story__compactInner" aria-hidden="true" />
     </div>
   );
 }
@@ -228,6 +157,7 @@ export function LandingPainSection() {
   const [storyCompleted, setStoryCompleted] = useState(false);
   const storyCompletedRef = useRef(false);
   const [storyCompact, setStoryCompact] = useState(false);
+  const handoffRef = useRef(false);
 
   const [pinMode, setPinMode] = useState<PinMode>("before");
   const pinModeRef = useRef<PinMode>("before");
@@ -238,6 +168,7 @@ export function LandingPainSection() {
   const engageAtRef = useRef(0);
   const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handoffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const touchHandledRef = useRef(false);
 
@@ -250,7 +181,6 @@ export function LandingPainSection() {
     setActiveStep(clamped);
   }, []);
 
-  /** Réarme la molette seulement après silence + fin de transition visuelle. */
   const scheduleWheelRearm = useCallback(() => {
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     settleTimerRef.current = setTimeout(() => {
@@ -272,10 +202,20 @@ export function LandingPainSection() {
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     lockTimerRef.current = setTimeout(() => {
       isTransitioningRef.current = false;
-      // Pas d’auto-réarmement temporel : attendre le silence du geste
       scheduleWheelRearm();
     }, VISUAL_LOCK_MS);
   }, [scheduleWheelRearm]);
+
+  const openHubGate = useCallback(() => {
+    if (handoffRef.current) return;
+    handoffRef.current = true;
+    window.dispatchEvent(new CustomEvent("batimum:open-hub-gate"));
+    const hub = document.getElementById("ecosysteme");
+    if (hub) {
+      const top = hub.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: Math.max(0, top - 4), behavior: "auto" });
+    }
+  }, []);
 
   const exitToCompact = useCallback(() => {
     if (storyCompletedRef.current) return;
@@ -287,7 +227,15 @@ export function LandingPainSection() {
       ? sticky.getBoundingClientRect().top
       : null;
     setStoryCompact(true);
-  }, []);
+    openHubGate();
+  }, [openHubGate]);
+
+  const scheduleHandoff = useCallback(() => {
+    if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
+    handoffTimerRef.current = setTimeout(() => {
+      exitToCompact();
+    }, HANDOFF_HOLD_MS);
+  }, [exitToCompact]);
 
   const applyIntent = useCallback(
     (direction: 1 | -1): "handled" | "exit" | "pass" => {
@@ -300,29 +248,36 @@ export function LandingPainSection() {
 
       if (direction > 0) {
         if (step < LAST_STEP) {
-          setStep(step + 1);
+          const next = step + 1;
+          setStep(next);
           startLock();
+          if (next >= LAST_STEP) {
+            // Last line shown — auto gate after settle (no extra scroll)
+            if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
+            handoffTimerRef.current = setTimeout(() => {
+              scheduleHandoff();
+            }, VISUAL_LOCK_MS);
+          }
           return "handled";
         }
-        // Dernière phrase déjà affichée : une impulsion de plus quitte la narration
+        // Already on last line: any further intent → handoff
         startLock();
         exitToCompact();
         return "exit";
       }
 
       if (step > 0) {
+        if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
         setStep(step - 1);
         startLock();
         return "handled";
       }
 
-      // Étape 0 : laisser remonter vers le Hero
       return "pass";
     },
-    [playing, setStep, startLock, exitToCompact],
+    [playing, setStep, startLock, exitToCompact, scheduleHandoff],
   );
 
-  /** Pin : verrouiller le scroll sur le début de piste tant que la narration joue */
   useEffect(() => {
     if (!playing) return;
 
@@ -359,7 +314,6 @@ export function LandingPainSection() {
     };
   }, [playing]);
 
-  /** Molette / trackpad : une intention = une étape (jamais multi-saut). */
   useEffect(() => {
     if (!playing) return;
 
@@ -372,7 +326,6 @@ export function LandingPainSection() {
         return;
       }
 
-      // Geste déjà consommé ou transition visuelle : absorber l’inertie
       if (isTransitioningRef.current || !wheelArmedRef.current) {
         event.preventDefault();
         deltaAccumRef.current = 0;
@@ -380,7 +333,6 @@ export function LandingPainSection() {
         return;
       }
 
-      // Sur étape 0 vers le haut : ne pas bloquer le retour Hero
       if (activeStepRef.current === 0 && event.deltaY < 0) {
         deltaAccumRef.current = 0;
         return;
@@ -400,7 +352,6 @@ export function LandingPainSection() {
     return () => window.removeEventListener("wheel", onWheel);
   }, [playing, applyIntent, scheduleWheelRearm]);
 
-  /** Clavier : une touche = une étape (ignorer les répétitions auto). */
   useEffect(() => {
     if (!playing) return;
 
@@ -443,7 +394,6 @@ export function LandingPainSection() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [playing, applyIntent]);
 
-  /** Touch : un swipe clair = une étape */
   useEffect(() => {
     if (!playing) return;
     const el = stickyRef.current;
@@ -459,13 +409,11 @@ export function LandingPainSection() {
       if (pinModeRef.current !== "pin") return;
       if (touchStartYRef.current == null) return;
 
-      // Bloquer le scroll natif pendant la narration épinglée
       if (activeStepRef.current > 0 || isTransitioningRef.current) {
         event.preventDefault();
       } else {
         const y = event.touches[0]?.clientY;
         if (y != null && y < touchStartYRef.current) {
-          // Swipe vers le haut depuis étape 0 → avancer (bloquer le scroll page)
           event.preventDefault();
         }
       }
@@ -480,7 +428,7 @@ export function LandingPainSection() {
 
       const endY = event.changedTouches[0]?.clientY;
       if (endY == null) return;
-      const dy = startY - endY; // >0 = swipe up = étape suivante
+      const dy = startY - endY;
 
       if (Math.abs(dy) < TOUCH_THRESHOLD) return;
 
@@ -520,6 +468,7 @@ export function LandingPainSection() {
     return () => {
       if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
       if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+      if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
     };
   }, []);
 
@@ -535,6 +484,7 @@ export function LandingPainSection() {
         "lp-story",
         "lp-section--after-hero",
         phase === "compact" ? "lp-story--compact" : "",
+        phase === "compact" ? "is-handoff" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -544,12 +494,9 @@ export function LandingPainSection() {
       data-active-step={activeStep}
     >
       <h2 id="pain-title" className="sr-only">
-        Votre entreprise perd du temps. À chaque devis recommencé. À chaque
-        information client dispersée. À chaque chantier sans suivi précis. À
-        chaque planning modifié manuellement. À chaque consigne répétée aux
-        équipes. À chaque facture suivie trop tard. À chaque marge découverte
-        après le chantier. Ce temps reste perdu pour toujours. Et si vous
-        pouviez récupérer plusieurs heures chaque semaine ?
+        Votre entreprise perd du temps. Devis trop longs à rédiger. Relances
+        oubliées. Chantiers mal suivis. Données éparpillées. Décisions trop
+        tardives. Ce temps perdu. Tous les jours.
       </h2>
 
       {reduced ? (
@@ -557,7 +504,7 @@ export function LandingPainSection() {
           <StoryStatic />
         </div>
       ) : storyCompact ? (
-        <StoryCompactFinal compactRef={compactRef} />
+        <StoryCompactHandoff compactRef={compactRef} />
       ) : (
         <div className="lp-story__pinTrack" ref={pinRef}>
           <div
@@ -570,11 +517,7 @@ export function LandingPainSection() {
               .filter(Boolean)
               .join(" ")}
           >
-            {storyCompleted ? (
-              <StoryFinalLocked />
-            ) : (
-              <StoryPinnedSteps activeStep={activeStep} reduced={reduced} />
-            )}
+            <StoryPinnedSteps activeStep={activeStep} reduced={reduced} />
           </div>
         </div>
       )}

@@ -160,6 +160,9 @@ const HUB_MODULES: HubModule[] = [
  * → 13 converge → 14 signature → exit
  */
 const LAST_SCENE = 14;
+/** Plans scrollables à l’intérieur de la scène MUM (après intro Hub). */
+const MUM_PLAN_COUNT = 6;
+const INTRO_TO_MUM_MS = 3200;
 const SCENE_LOCK_MS = [
   500,
   700,
@@ -527,6 +530,9 @@ export function LandingHubSection() {
 
   const [scene, setScene] = useState(0);
   const sceneRef = useRef(0);
+  /** Plans MUM internes (dictée → analyse → devis → envoi → signature). */
+  const [mumPlan, setMumPlan] = useState(0);
+  const mumPlanRef = useRef(0);
   const [done, setDone] = useState(false);
   const doneRef = useRef(false);
 
@@ -707,6 +713,8 @@ export function LandingHubSection() {
     setAwaitingGesture(true);
     sceneRef.current = 0;
     setScene(0);
+    mumPlanRef.current = 0;
+    setMumPlan(0);
     isPlayingRef.current = false;
     wheelArmedRef.current = true;
     touchArmedRef.current = true;
@@ -725,6 +733,8 @@ export function LandingHubSection() {
     setDone(false);
     sceneRef.current = 0;
     setScene(0);
+    mumPlanRef.current = 0;
+    setMumPlan(0);
     signaturePlayedRef.current = false;
     setSignatureSealed(false);
     resetToEcosystem();
@@ -746,7 +756,7 @@ export function LandingHubSection() {
     filmLater(() => unlockScroll(), 500);
   }, [setFilm, filmLater, unlockScroll]);
 
-  const onMumDemoComplete = useCallback(() => {
+  const onMumPlanComplete = useCallback(() => {
     if (sceneRef.current !== 3) return;
     holdThenUnlock();
   }, [holdThenUnlock]);
@@ -905,13 +915,46 @@ export function LandingHubSection() {
 
       if (direction > 0) {
         if (current < LAST_SCENE) {
-          // Premier geste : révéler le Hub (logo + modules) immédiatement —
-          // pas de zone vide / respiration longue avant le contenu.
-          const next = current === 0 ? 2 : current + 1;
+          // Premier geste : intro Hub complète → atterrissage MUM (plan 0)
+          if (current === 0) {
+            clearFilmTimers();
+            mumPlanRef.current = 0;
+            setMumPlan(0);
+            sceneRef.current = 1;
+            setScene(1);
+            startSceneLock(3, INTRO_TO_MUM_MS);
+            filmLater(() => {
+              sceneRef.current = 2;
+              setScene(2);
+            }, 700);
+            filmLater(() => {
+              sceneRef.current = 3;
+              setScene(3);
+              mumPlanRef.current = 0;
+              setMumPlan(0);
+              startMumFilm();
+            }, 1650);
+            return "handled";
+          }
+
+          // Scène MUM : avancer plan par plan avant le return hub
+          if (current === 3 && mumPlanRef.current < MUM_PLAN_COUNT - 1) {
+            const nextPlan = mumPlanRef.current + 1;
+            mumPlanRef.current = nextPlan;
+            setMumPlan(nextPlan);
+            setFilm("demo");
+            startSceneLock(3);
+            return "handled";
+          }
+
+          const next = current + 1;
           sceneRef.current = next;
           setScene(next);
-          if (next === 3) startMumFilm();
-          else if (next === 4) startMumReturn();
+          if (next === 3) {
+            mumPlanRef.current = 0;
+            setMumPlan(0);
+            startMumFilm();
+          } else if (next === 4) startMumReturn();
           else if (next === 5) startClientsFilm();
           else if (next === 6) startClientsReturn();
           else if (next === 7) startPlanFilm();
@@ -930,8 +973,18 @@ export function LandingHubSection() {
       }
 
       if (current > 0) {
+        if (current === 3 && mumPlanRef.current > 0) {
+          const prevPlan = mumPlanRef.current - 1;
+          mumPlanRef.current = prevPlan;
+          setMumPlan(prevPlan);
+          setFilm("demo");
+          startSceneLock(3);
+          return "handled";
+        }
         if (current >= 3) {
           resetToEcosystem();
+          mumPlanRef.current = 0;
+          setMumPlan(0);
           sceneRef.current = 2;
           setScene(2);
           startSceneLock(2);
@@ -949,6 +1002,8 @@ export function LandingHubSection() {
     [
       active,
       hintMode,
+      clearFilmTimers,
+      filmLater,
       startSceneLock,
       startMumFilm,
       startMumReturn,
@@ -964,8 +1019,30 @@ export function LandingHubSection() {
       startSignature,
       exitHub,
       resetToEcosystem,
+      setFilm,
     ],
   );
+
+  useEffect(() => {
+    const onOpenGate = () => {
+      if (readHubSkippedSession() || doneRef.current) return;
+      setSessionSkipped(false);
+      doneRef.current = false;
+      setDone(false);
+      setExperiencePhase("gate");
+      pinModeRef.current = "before";
+      setPinMode("before");
+      requestAnimationFrame(() => {
+        const el = pinRef.current;
+        if (!el) return;
+        const top = el.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: Math.max(0, top), behavior: "auto" });
+      });
+    };
+    window.addEventListener("batimum:open-hub-gate", onOpenGate);
+    return () =>
+      window.removeEventListener("batimum:open-hub-gate", onOpenGate);
+  }, [setExperiencePhase]);
 
   useEffect(() => {
     if (!pinListeners || sessionSkipped) return;
@@ -1336,7 +1413,8 @@ export function LandingHubSection() {
                   <MumFilmPanel
                     active={mumDemoActive}
                     reduced={!!reduced}
-                    onDemoComplete={onMumDemoComplete}
+                    plan={mumPlan}
+                    onPlanComplete={onMumPlanComplete}
                   />
                 </MumFilmShell>
 
