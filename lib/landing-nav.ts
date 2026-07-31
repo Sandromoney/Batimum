@@ -1,14 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
-  BookOpen,
   CalendarDays,
   FileText,
   FolderKanban,
   HelpCircle,
   MessageSquareQuote,
-  Mic,
-  Receipt,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -42,40 +39,34 @@ const FONCTIONNALITES_MENU: LandingNavMenu = {
   label: "Fonctionnalités",
   items: [
     {
-      label: "Devis",
-      href: "/landing#devis-ia",
-      description: "Devis clairs, structurés par lots.",
+      label: "Présentation",
+      href: "/landing#ecosysteme",
+      description: "Voir Batimum en action.",
+      icon: Sparkles,
+    },
+    {
+      label: "Devis & MUM IA",
+      href: "/landing#ecosysteme",
+      description: "Devis préparés plus rapidement.",
       icon: FileText,
     },
     {
-      label: "Planning des équipes",
-      href: "/landing#planning",
-      description: "Attribuez chaque chantier aux bons collaborateurs.",
+      label: "Planning",
+      href: "/landing#ecosysteme",
+      description: "Équipes organisées au même endroit.",
       icon: CalendarDays,
     },
     {
-      label: "Suivi des chantiers",
-      href: "/landing#chantiers",
-      description: "Étapes, photos, documents et avancement.",
+      label: "Chantiers",
+      href: "/landing#ecosysteme",
+      description: "Suivi clair, bureau et terrain.",
       icon: FolderKanban,
     },
     {
-      label: "Facturation",
-      href: "/landing#facturation",
-      description: "Devis transformés en factures sans ressaisie.",
-      icon: Receipt,
-    },
-    {
-      label: "Pilotage et rentabilité",
-      href: "/landing#pilotage",
-      description: "Marge par devis et par chantier.",
+      label: "Pilotage",
+      href: "/landing#avant-apres",
+      description: "Marges et rentabilité visibles.",
       icon: BarChart3,
-    },
-    {
-      label: "Assistant vocal",
-      href: "/landing#assistant-vocal",
-      description: "Créer un devis depuis le chantier — à venir.",
-      icon: Mic,
     },
   ],
 };
@@ -84,18 +75,18 @@ const EQUIPES_MENU: LandingNavMenu = {
   id: "equipes",
   label: "Pour les équipes",
   intro:
-    "Le bureau pilote l’activité. Le terrain retrouve planning, consignes et chantiers.",
+    "Le dirigeant garde le contrôle. Les salariés retrouvent planning et consignes.",
   items: [
     {
-      label: "Espace terrain",
-      href: "/landing#bureau-terrain",
-      description: "Planning, adresse, photos et étapes sur mobile.",
+      label: "Espace employé",
+      href: "/landing#faq",
+      description: "Accès séparé, sans données sensibles.",
       icon: Users,
     },
     {
       label: "Connexion employé",
       href: "/login-employe",
-      description: "Accès sécurisé, sans données sensibles.",
+      description: "Accès sécurisé dédié au terrain.",
       icon: Sparkles,
     },
   ],
@@ -106,18 +97,6 @@ const RESSOURCES_MENU: LandingNavMenu = {
   label: "Ressources",
   items: [
     {
-      label: "Premiers pas",
-      href: "/landing#premiers-pas",
-      description: "Démarrer Batimum en quelques étapes.",
-      icon: BookOpen,
-    },
-    {
-      label: "Évolutions",
-      href: "/landing#evolutions",
-      description: "Disponible, bientôt et à venir.",
-      icon: Sparkles,
-    },
-    {
       label: "FAQ",
       href: "/landing#faq",
       description: "Réponses aux questions fréquentes.",
@@ -126,7 +105,7 @@ const RESSOURCES_MENU: LandingNavMenu = {
     {
       label: "Témoignages",
       href: "/landing#temoignages",
-      description: "Retours de la phase de test.",
+      description: "Retours d’entreprises du BTP.",
       icon: MessageSquareQuote,
     },
   ],
