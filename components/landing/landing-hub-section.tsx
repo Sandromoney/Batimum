@@ -47,7 +47,6 @@ import {
 import {
   FinanceFilmPanel,
   FinanceFilmShell,
-  FIN_CONVERGE_MS,
   FIN_DEMO_SAFETY_MS,
   FIN_ENTER_MS,
   FIN_RETURN_MS,
@@ -67,7 +66,6 @@ import {
 import { LandingSafeBoundary } from "@/components/landing/landing-safe-boundary";
 import {
   HubSignaturePanel,
-  SIG_DEMO_SAFETY_MS,
 } from "@/components/landing/landing-hub-signature";
 import {
   HubExperienceGate,
@@ -86,10 +84,16 @@ import { FilmClock } from "@/lib/landing-hub-film-clock";
 import {
   AUTO_BREATH_MS,
   AUTO_PLAN_BREATH_MS,
+  FIN_CONVERGE_MS,
   HOLD_MS,
   HUB_FILM_TOTAL_MS,
   INTRO_MS,
   MODULE_LOCK_MS,
+  SIG_DEMO_SAFETY_MS,
+  SIG_DISMISS_EACH_MS,
+  SIG_HOLD_MS,
+  hitPhaseKey,
+  hitSegmentKey,
   nextAnchorAfterDemo,
   resolveTimeline,
   type HubFilmModule,
@@ -342,6 +346,7 @@ function HubStage({
   ringRotation,
   moduleLocked,
   signatureMode = false,
+  sigDismissCount = 0,
 }: {
   scene: number;
   filmPhase: MumFilmPhase;
@@ -349,14 +354,23 @@ function HubStage({
   reduced: boolean | null;
   ringRotation: number;
   moduleLocked: boolean;
-  /** Scène signature : modules fusionnent puis le monde hub s’efface. */
+  /** Scène signature : disparition horaire des modules autour du BM fixe. */
   signatureMode?: boolean;
+  /** Nombre de modules déjà éteints (sens horaire), 0–6. */
+  sigDismissCount?: number;
 }) {
   const sealed =
     signatureMode && (filmPhase === "sealed" || filmPhase === "idle");
-  const merging = signatureMode && filmPhase === "signature";
-  const showLogo = scene >= 1 && !sealed;
-  const showModules = scene >= 2 && !sealed;
+  const dismissing =
+    signatureMode &&
+    filmPhase === "signature" &&
+    sigDismissCount < MODULE_RING_ORDER.length;
+  const postDismiss =
+    signatureMode &&
+    filmPhase === "signature" &&
+    sigDismissCount >= MODULE_RING_ORDER.length;
+  const showLogo = scene >= 1 && !sealed && !postDismiss;
+  const showModules = scene >= 2 && !sealed && !postDismiss;
   const converging =
     !signatureMode && (filmPhase === "converge" || scene === 15);
   const highlight =
@@ -372,14 +386,14 @@ function HubStage({
     showModules &&
     !reduced &&
     !converging &&
-    !merging &&
+    !dismissing &&
     !highlight &&
     (scene === 2 || filmPhase === "idle" || (returning && !deep));
 
   const logoAwake = scene >= 2;
-  const hubVisible = !deep && !sealed;
+  const hubVisible = !deep && !sealed && !postDismiss;
   const hierarchy = Boolean(focusId) && (highlight || deep || returning);
-  const showRings = showModules && !deep;
+  const showRings = showModules && !deep && !dismissing;
 
   const isModActive = (id: string) => {
     if (!hierarchy || !focusId) return false;
@@ -414,7 +428,7 @@ function HubStage({
         moduleLocked && highlight ? "lp-hub__stage--locked" : "",
         returning && !deep ? "lp-hub__stage--return" : "",
         converging ? "lp-hub__stage--converge" : "",
-        merging ? "lp-hub__stage--merge" : "",
+        dismissing ? "lp-hub__stage--sigDismiss" : "",
         floatOn ? "lp-hub__stage--float" : "",
       ]
         .filter(Boolean)
@@ -422,6 +436,7 @@ function HubStage({
       data-hub-scene={scene}
       data-film-phase={filmPhase}
       data-focus={focusId ?? ""}
+      data-sig-dismiss={signatureMode ? String(sigDismissCount) : ""}
       style={{ "--hub-ring-rot": `${ringRotation}deg` } as CSSProperties}
     >
       <div
@@ -439,6 +454,7 @@ function HubStage({
             className={[
               "lp-hub__logoWrap",
               logoAwake ? "lp-hub__logoWrap--awake" : "",
+              dismissing || converging ? "lp-hub__logoWrap--fixed" : "",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -446,22 +462,24 @@ function HubStage({
             animate={
               showLogo
                 ? {
-                    opacity: merging ? 0 : hierarchy ? 0.72 : 1,
-                    scale: merging
-                      ? 0.96
-                      : logoAwake
-                        ? highlight
-                          ? 1.04
-                          : 1.06
-                        : 1,
+                    /* BM fixe pendant conclusion — ni fade ni scale agressif */
+                    opacity: hierarchy && !dismissing && !converging ? 0.72 : 1,
+                    scale:
+                      dismissing || converging
+                        ? 1
+                        : logoAwake
+                          ? highlight
+                            ? 1.04
+                            : 1.06
+                          : 1,
                   }
                 : { opacity: 0, scale: 0.95 }
             }
             transition={{
               duration: reduced
                 ? 0.01
-                : merging
-                  ? 1.4
+                : dismissing
+                  ? 0.5
                   : showLogo && scene === 1
                     ? 0.75
                     : 0.6,
@@ -487,6 +505,11 @@ function HubStage({
             const dimmed = hierarchy && !active;
             const pos = polarModulePos(index, ringRotation);
             const locked = active && moduleLocked && highlight;
+            const ringIdx = MODULE_RING_ORDER.indexOf(
+              mod.id as (typeof MODULE_RING_ORDER)[number],
+            );
+            const sigDismissed =
+              dismissing && ringIdx >= 0 && ringIdx < sigDismissCount;
 
             return (
               <li
@@ -497,6 +520,7 @@ function HubStage({
                   active ? "is-active" : "",
                   dimmed ? "is-dimmed" : "",
                   locked ? "is-locked" : "",
+                  sigDismissed ? "is-sig-dismissed" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -513,15 +537,15 @@ function HubStage({
                   animate={
                     showModules
                       ? {
-                          opacity: merging
+                          opacity: sigDismissed
                             ? 0
                             : dimmed
                               ? 0.55
                               : converging
                                 ? 0.92
                                 : 1,
-                          scale: merging
-                            ? 0.55
+                          scale: sigDismissed
+                            ? 0.82
                             : locked
                               ? 1.08
                               : active
@@ -531,22 +555,20 @@ function HubStage({
                                   : dimmed
                                     ? 0.94
                                     : 1,
+                          z: sigDismissed ? -24 : 0,
                         }
                       : { opacity: 0, scale: 0.92 }
                   }
                   transition={{
                     duration: reduced
                       ? 0.01
-                      : merging
-                        ? 1.55
+                      : sigDismissed
+                        ? 0.72
                         : highlight
                           ? 1.05
                           : 0.7,
-                    delay:
-                      reduced || hierarchy || !showModules || merging
-                        ? 0
-                        : 0.08 + index * 0.07,
-                    ease: [0.16, 1, 0.3, 1],
+                    delay: 0,
+                    ease: [0.22, 1, 0.36, 1],
                   }}
                 >
                   <div
@@ -693,9 +715,19 @@ export function LandingHubSection() {
   const startMumFilmRef = useRef<() => void>(() => {});
   const [ringRotation, setRingRotation] = useState(0);
   const [moduleLocked, setModuleLocked] = useState(false);
+  /** Clés de sync déterministe — la narration suit currentTime, pas les jobs. */
+  const lastSegKeyRef = useRef("");
+  const lastPhaseKeyRef = useRef("");
+  const exitArmedRef = useRef(false);
+  const syncFromTimeRef = useRef<(t: number, force?: boolean) => void>(
+    () => {},
+  );
 
   useEffect(() => {
-    const unsub = clockRef.current.subscribe((t) => setElapsedMs(t));
+    const unsub = clockRef.current.subscribe((t) => {
+      setElapsedMs(t);
+      syncFromTimeRef.current(t, false);
+    });
     return () => {
       unsub();
     };
@@ -795,14 +827,14 @@ export function LandingHubSection() {
 
   const unlockScroll = useCallback(() => {
     clearLockJob();
-    isPlayingRef.current = false;
+    // Autoplay time-driven : ne jamais enchaîner via continueAuto (casse après seek).
     if (autoPlayRef.current && !doneRef.current) {
-      const breath =
-        sceneRef.current === 3 && mumPlanRef.current < MUM_PLAN_COUNT - 1
-          ? AUTO_PLAN_BREATH_MS
-          : AUTO_BREATH_MS;
-      continueAuto(breath);
-    } else if (
+      isPlayingRef.current = true;
+      scheduleWheelRearm();
+      return;
+    }
+    isPlayingRef.current = false;
+    if (
       experienceRef.current === "tour" &&
       !doneRef.current &&
       !autoPlayRef.current
@@ -811,7 +843,7 @@ export function LandingHubSection() {
       setHintMode("start");
     }
     scheduleWheelRearm();
-  }, [scheduleWheelRearm, continueAuto, clearLockJob]);
+  }, [scheduleWheelRearm, clearLockJob]);
 
   const startSceneLock = useCallback(
     (sceneIndex: number, overrideMs?: number) => {
@@ -950,6 +982,8 @@ export function LandingHubSection() {
   ]);
 
   const snapClockAfterDemo = useCallback((filmModule: HubFilmModule) => {
+    // Time-driven : ne jamais seek le clock depuis un panel (efface la timeline).
+    if (autoPlayRef.current) return;
     const plan = mumPlanRef.current;
     const snap =
       nextAnchorAfterDemo(filmModule, plan) -
@@ -966,6 +1000,10 @@ export function LandingHubSection() {
 
   const holdThenUnlock = useCallback(
     (filmModule: HubFilmModule) => {
+      if (autoPlayRef.current) {
+        setFilm("hold");
+        return;
+      }
       snapClockAfterDemo(filmModule);
       setFilm("hold");
       filmLater(() => unlockScroll(), HOLD_MS);
@@ -1120,10 +1158,12 @@ export function LandingHubSection() {
     setFilm("sealed");
     setAwaitingGesture(false);
     isPlayingRef.current = false;
-    // Finale : écrou + logo + CTA — aucun « Défilez pour continuer »
-    filmLater(() => {
-      exitHub();
-    }, 900);
+    // Time-driven : la sortie est gérée quand currentTime atteint la fin.
+    if (!autoPlayRef.current) {
+      filmLater(() => {
+        exitHub();
+      }, 900);
+    }
   }, [setFilm, filmLater, exitHub]);
 
   const startSignature = useCallback(() => {
@@ -1131,17 +1171,11 @@ export function LandingHubSection() {
     setModuleLocked(false);
     setFilmKind(null);
     setFocus(null);
-
-    if (signaturePlayedRef.current) {
-      setSignatureSealed(true);
-      setFilm("sealed");
-      setAwaitingGesture(false);
-      startSceneLock(16, 600);
-      filmLater(() => exitHub(), 500);
-      return;
-    }
-
+    signaturePlayedRef.current = false;
+    setSignatureSealed(false);
     setFilm("signature");
+    setDemoSeekMs(0);
+    setSeekKey((k) => k + 1);
     startSceneLock(16, SIG_DEMO_SAFETY_MS);
   }, [
     clearFilmTimers,
@@ -1149,8 +1183,6 @@ export function LandingHubSection() {
     setFocus,
     setFilm,
     startSceneLock,
-    filmLater,
-    exitHub,
   ]);
 
   useEffect(() => {
@@ -1175,10 +1207,18 @@ export function LandingHubSection() {
     return PILOTAGE_RETURN_MS;
   };
 
-  const applySeekHit = useCallback(
-    (hit: TimelineHit) => {
+  /** Applique l'état visuel d'un hit timeline (sans replanifier de narration). */
+  const applyHitState = useCallback(
+    (hit: TimelineHit, remountDemo: boolean) => {
       const filmModule = hit.module;
       const focus = filmModule as Exclude<FocusId, null> | null;
+      isPlayingRef.current = true;
+      setAwaitingGesture(false);
+
+      sceneRef.current = hit.scene;
+      setScene(hit.scene);
+      mumPlanRef.current = hit.mumPlan;
+      setMumPlan(hit.mumPlan);
 
       if (hit.kind === "intro") {
         setFilm("idle");
@@ -1186,52 +1226,22 @@ export function LandingHubSection() {
         setFilmKind(null);
         setModuleLocked(false);
         setRingRotation(0);
+        setSignatureSealed(false);
         setDemoSeekMs(0);
-        startSceneLock(3, Math.max(16, INTRO_TO_MUM_MS - hit.offsetMs));
-        if (hit.offsetMs < 300) {
-          filmLater(() => {
-            sceneRef.current = 2;
-            setScene(2);
-          }, 300 - hit.offsetMs);
-        }
-        filmLater(() => {
-          sceneRef.current = 3;
-          setScene(3);
-          mumPlanRef.current = 0;
-          setMumPlan(0);
-          startMumFilmRef.current();
-        }, Math.max(16, 700 - hit.offsetMs));
+        if (remountDemo) setSeekKey((k) => k + 1);
         return;
       }
 
       if (hit.kind === "modulePre" && filmModule && focus) {
-        const enterMs = enterMsForModule(filmModule);
-        const readMs = moduleReadMs(focus);
-        const pre = hit.preOffsetMs;
         const lockAt = Math.max(240, MODULE_LOCK_MS - 260);
-        const enterAt = MODULE_LOCK_MS;
-        const demoAt = MODULE_LOCK_MS + enterMs + readMs;
-
         setFilmKind(filmModule);
         setFocus(focus);
         setRingRotation(ringRotationForModule(focus));
-        setFilm(hit.filmPhase);
-        setModuleLocked(pre >= lockAt);
+        setFilm(hit.filmPhase === "idle" ? "highlight" : hit.filmPhase);
+        setModuleLocked(hit.preOffsetMs >= lockAt);
+        setSignatureSealed(false);
         setDemoSeekMs(hit.demoOffsetMs);
-
-        if (pre < lockAt) {
-          filmLater(() => setModuleLocked(true), lockAt - pre);
-        }
-        if (hit.filmPhase === "highlight" && pre < enterAt) {
-          filmLater(() => setFilm("enter"), enterAt - pre);
-        }
-        if (hit.filmPhase !== "demo" && pre < demoAt) {
-          filmLater(() => setFilm("demo"), demoAt - pre);
-        }
-
-        const safety =
-          (SCENE_LOCK_MS[hit.scene] ?? PRE_DEMO_MS) - Math.min(pre, PRE_DEMO_MS);
-        startSceneLock(hit.scene, Math.max(120, safety));
+        if (remountDemo && hit.filmPhase === "demo") setSeekKey((k) => k + 1);
         return;
       }
 
@@ -1241,54 +1251,28 @@ export function LandingHubSection() {
         setRingRotation(ringRotationForModule(focus));
         setFilm(hit.filmPhase);
         setModuleLocked(true);
+        setSignatureSealed(false);
         setDemoSeekMs(hit.demoOffsetMs);
-        isPlayingRef.current = true;
-
-        if (hit.filmPhase === "hold") {
-          // Offset past demo duration — finish hold then breathe
-          const holdElapsed = hit.offsetMs - hit.demoOffsetMs;
-          const remHold = Math.max(16, HOLD_MS - holdElapsed);
-          clearLockJob();
-          filmLater(() => unlockScroll(), remHold);
-        } else {
-          const safety = Math.max(
-            400,
-            (SCENE_LOCK_MS[hit.scene] ?? 4000) - PRE_DEMO_MS - hit.demoOffsetMs,
-          );
-          startSceneLock(hit.scene, safety);
-        }
+        if (remountDemo) setSeekKey((k) => k + 1);
         return;
       }
 
       if (hit.kind === "moduleReturn" && filmModule && focus) {
         const returnMs = returnMsForModule(filmModule);
-        const rem = Math.max(16, returnMs - hit.offsetMs);
         setModuleLocked(false);
-        setFilmKind(filmModule);
-        setFocus(focus);
-        setFilm("returning");
+        setSignatureSealed(false);
         setDemoSeekMs(0);
         if (hit.offsetMs >= returnMs) {
           setFilmKind(null);
           setFocus(null);
           setFilm("idle");
-          const breathRem = Math.max(
-            16,
-            returnMs + AUTO_BREATH_MS - hit.offsetMs,
-          );
-          isPlayingRef.current = false;
-          filmLater(() => {
-            if (!autoPlayRef.current || doneRef.current) return;
-            advanceFilmRef.current();
-          }, breathRem);
         } else {
-          startSceneLock(hit.scene, rem);
-          filmLater(() => {
-            setFilmKind(null);
-            setFocus(null);
-            setFilm("idle");
-          }, rem);
+          setFilmKind(filmModule);
+          setFocus(focus);
+          setRingRotation(ringRotationForModule(focus));
+          setFilm("returning");
         }
+        if (remountDemo) setSeekKey((k) => k + 1);
         return;
       }
 
@@ -1298,43 +1282,99 @@ export function LandingHubSection() {
         setFocus(null);
         setRingRotation(0);
         setFilm("converge");
+        setSignatureSealed(false);
         setDemoSeekMs(0);
-        const rem = Math.max(16, FIN_CONVERGE_MS - hit.offsetMs);
-        if (hit.offsetMs >= FIN_CONVERGE_MS) {
-          isPlayingRef.current = false;
-          filmLater(() => {
-            if (!autoPlayRef.current || doneRef.current) return;
-            advanceFilmRef.current();
-          }, Math.max(16, FIN_CONVERGE_MS + AUTO_BREATH_MS - hit.offsetMs));
-        } else {
-          startSceneLock(15, rem);
-        }
+        if (remountDemo) setSeekKey((k) => k + 1);
         return;
       }
 
-      // signature
+      // signature — seekable / rejouable
+      signaturePlayedRef.current = false;
       setModuleLocked(false);
       setFilmKind(null);
       setFocus(null);
       setRingRotation(0);
-      setSignatureSealed(false);
-      setFilm("signature");
+      const sealedNow = hit.demoOffsetMs >= SIG_DEMO_SAFETY_MS - SIG_HOLD_MS;
+      setSignatureSealed(sealedNow);
+      setFilm(sealedNow ? "sealed" : "signature");
       setDemoSeekMs(hit.demoOffsetMs);
-      startSceneLock(
-        16,
-        Math.max(200, SIG_DEMO_SAFETY_MS - hit.offsetMs),
-      );
+      if (remountDemo) setSeekKey((k) => k + 1);
     },
-    [
-      setFilm,
-      setFocus,
-      setFilmKind,
-      filmLater,
-      startSceneLock,
-      clearLockJob,
-      unlockScroll,
-    ],
+    [setFilm, setFocus, setFilmKind],
   );
+
+  const syncFromTime = useCallback(
+    (t: number, force = false) => {
+      if (!autoPlayRef.current || doneRef.current) return;
+
+      if (t >= HUB_FILM_TOTAL_MS - 1) {
+        if (!exitArmedRef.current) {
+          exitArmedRef.current = true;
+          signaturePlayedRef.current = true;
+          setSignatureSealed(true);
+          setFilm("sealed");
+          setElapsedMs(HUB_FILM_TOTAL_MS);
+          window.setTimeout(() => {
+            if (doneRef.current) return;
+            exitHub();
+          }, 700);
+        }
+        return;
+      }
+
+      const hit = resolveTimeline(t);
+      const segKey = hitSegmentKey(hit);
+      const phaseKey = hitPhaseKey(hit);
+
+      if (force || segKey !== lastSegKeyRef.current) {
+        lastSegKeyRef.current = segKey;
+        lastPhaseKeyRef.current = phaseKey;
+        const remount =
+          hit.kind === "moduleDemo" ||
+          hit.kind === "signature" ||
+          (hit.kind === "modulePre" && hit.filmPhase === "demo");
+        applyHitState(hit, remount || force);
+        return;
+      }
+
+      if (phaseKey !== lastPhaseKeyRef.current) {
+        lastPhaseKeyRef.current = phaseKey;
+        if (hit.kind === "modulePre") {
+          const lockAt = Math.max(240, MODULE_LOCK_MS - 260);
+          setFilm(hit.filmPhase === "idle" ? "highlight" : hit.filmPhase);
+          setModuleLocked(hit.preOffsetMs >= lockAt);
+          if (hit.filmPhase === "demo") {
+            setDemoSeekMs(hit.demoOffsetMs);
+            setSeekKey((k) => k + 1);
+          }
+        } else if (hit.kind === "moduleDemo") {
+          setFilm(hit.filmPhase);
+          setDemoSeekMs(hit.demoOffsetMs);
+        } else if (hit.kind === "signature") {
+          const sealedNow = hit.demoOffsetMs >= SIG_DEMO_SAFETY_MS - SIG_HOLD_MS;
+          setSignatureSealed(sealedNow);
+          setFilm(sealedNow ? "sealed" : "signature");
+          setDemoSeekMs(hit.demoOffsetMs);
+        } else if (hit.kind === "moduleReturn") {
+          applyHitState(hit, false);
+        } else if (hit.kind === "intro") {
+          sceneRef.current = hit.scene;
+          setScene(hit.scene);
+        }
+      } else if (hit.kind === "signature") {
+        // Progression continue pour la disparition horaire (sans remount).
+        setDemoSeekMs(hit.demoOffsetMs);
+      } else if (hit.kind === "intro" && sceneRef.current !== hit.scene) {
+        sceneRef.current = hit.scene;
+        setScene(hit.scene);
+      }
+    },
+    [applyHitState, exitHub, setFilm],
+  );
+
+  useEffect(() => {
+    syncFromTimeRef.current = syncFromTime;
+  }, [syncFromTime]);
 
   const seekTo = useCallback(
     (ms: number) => {
@@ -1342,26 +1382,23 @@ export function LandingHubSection() {
       const clamped = Math.max(0, Math.min(ms, HUB_FILM_TOTAL_MS - 1));
       clearFilmTimers();
       clearLockJob();
+      exitArmedRef.current = false;
+      signaturePlayedRef.current = false;
+      doneRef.current = false;
+      setDone(false);
 
-      const hit = resolveTimeline(clamped);
-      clockRef.current.seek(clamped);
-      setDemoSeekMs(hit.demoOffsetMs);
-      setSeekKey((k) => k + 1);
+      clockRef.current.seek(clamped, { clearJobs: true });
+      setElapsedMs(clamped);
 
       autoPlayRef.current = true;
       setAutoPlaying(true);
-      doneRef.current = false;
-      setDone(false);
       setExperiencePhase("tour");
       setAwaitingGesture(false);
-      setSignatureSealed(false);
+      isPlayingRef.current = true;
 
-      sceneRef.current = hit.scene;
-      setScene(hit.scene);
-      mumPlanRef.current = hit.mumPlan;
-      setMumPlan(hit.mumPlan);
-
-      applySeekHit(hit);
+      lastSegKeyRef.current = "";
+      lastPhaseKeyRef.current = "";
+      syncFromTime(clamped, true);
 
       if (!filmPausedRef.current) {
         clockRef.current.play();
@@ -1372,7 +1409,7 @@ export function LandingHubSection() {
       clearFilmTimers,
       clearLockJob,
       setExperiencePhase,
-      applySeekHit,
+      syncFromTime,
     ],
   );
 
@@ -1481,30 +1518,22 @@ export function LandingHubSection() {
           setAutoPlaying(true);
           filmPausedRef.current = false;
           setFilmPaused(false);
+          exitArmedRef.current = false;
+          signaturePlayedRef.current = false;
+          clearFilmTimers();
+          clearLockJob();
           clockRef.current.reset();
-          clockRef.current.play();
           setDemoSeekMs(0);
-          setSeekKey((k) => k + 1);
           setElapsedMs(0);
           setAwaitingGesture(false);
           setHintMode("start");
-          clearFilmTimers();
           mumPlanRef.current = 0;
           setMumPlan(0);
-          sceneRef.current = 1;
-          setScene(1);
-          startSceneLock(3, INTRO_TO_MUM_MS);
-          filmLater(() => {
-            sceneRef.current = 2;
-            setScene(2);
-          }, Math.round(INTRO_MS * 0.42));
-          filmLater(() => {
-            sceneRef.current = 3;
-            setScene(3);
-            mumPlanRef.current = 0;
-            setMumPlan(0);
-            startMumFilm();
-          }, INTRO_MS);
+          isPlayingRef.current = true;
+          lastSegKeyRef.current = "";
+          lastPhaseKeyRef.current = "";
+          syncFromTime(0, true);
+          clockRef.current.play();
           return "handled";
         }
         return "handled";
@@ -1517,9 +1546,8 @@ export function LandingHubSection() {
     [
       active,
       clearFilmTimers,
-      filmLater,
-      startSceneLock,
-      startMumFilm,
+      clearLockJob,
+      syncFromTime,
     ],
   );
 
@@ -1838,6 +1866,13 @@ export function LandingHubSection() {
     filmPhase === "signature";
 
   const chapter = hubChapterFromScene(scene);
+  const sigDismissCount =
+    scene === 16
+      ? Math.min(
+          MODULE_RING_ORDER.length,
+          Math.floor(Math.max(0, demoSeekMs) / SIG_DISMISS_EACH_MS),
+        )
+      : 0;
   const showTourChrome = experience === "tour" && pinMode === "pin" && !done;
   const { controlsVisible, bumpControls } = useHubControlsVisibility(
     autoPlaying && showTourChrome,
@@ -1984,6 +2019,7 @@ export function LandingHubSection() {
                   ringRotation={ringRotation}
                   moduleLocked={moduleLocked}
                   signatureMode={scene === 16}
+                  sigDismissCount={sigDismissCount}
                 />
 
                 <MumFilmShell phase={activeFilm === "mum" ? filmPhase : "idle"}>

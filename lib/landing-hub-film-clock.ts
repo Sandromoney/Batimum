@@ -85,12 +85,14 @@ export class FilmClock {
     this.emit();
   }
 
-  /** Fixe le temps média et annule les jobs futurs. */
-  seek(ms: number) {
+  /** Fixe le temps média. Par défaut annule les jobs (seek utilisateur). */
+  seek(ms: number, opts?: { clearJobs?: boolean }) {
     const t = Math.max(0, ms);
     this.baseElapsed = t;
     this.runningSince = this._playing ? performance.now() : null;
-    this.jobs = [];
+    if (opts?.clearJobs !== false) {
+      this.jobs = [];
+    }
     this.emit();
     this.ensurePump();
   }

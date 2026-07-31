@@ -14,34 +14,43 @@ import {
   runCueTimeline,
   usePauseableTimers,
 } from "@/lib/landing-hub-pauseable-timer";
+import {
+  SIG_APPROACH_MS,
+  SIG_COPY_MS,
+  SIG_CTA_MS,
+  SIG_DEMO_SAFETY_MS,
+  SIG_DISMISS_EACH_MS,
+  SIG_DISMISS_TOTAL_MS,
+  SIG_HOLD_MS,
+  SIG_PULSE_MS,
+  SIG_SCREW_MS,
+  SIG_SOLO_MS,
+} from "@/lib/landing-hub-timeline";
 
-/** Fusion modules → respiration → écrou → vissage → textes → CTAs */
-export const SIG_MERGE_MS = 1000;
-export const SIG_BREATH_MS = 1100;
-export const SIG_APPROACH_MS = 1500;
-export const SIG_SCREW_MS = 1700;
-export const SIG_PULSE_MS = 500;
-export const SIG_COPY_MS = 1100;
-export const SIG_CTA_MS = 500;
-export const SIG_HOLD_MS = 400;
+export {
+  SIG_APPROACH_MS,
+  SIG_COPY_MS,
+  SIG_CTA_MS,
+  SIG_DEMO_SAFETY_MS,
+  SIG_DISMISS_EACH_MS,
+  SIG_DISMISS_TOTAL_MS,
+  SIG_HOLD_MS,
+  SIG_PULSE_MS,
+  SIG_SCREW_MS,
+  SIG_SOLO_MS,
+};
 
-export const SIG_DEMO_SAFETY_MS =
-  SIG_MERGE_MS +
-  SIG_BREATH_MS +
-  SIG_APPROACH_MS +
-  SIG_SCREW_MS +
-  SIG_PULSE_MS +
-  SIG_COPY_MS +
-  SIG_CTA_MS +
-  SIG_HOLD_MS;
+/** @deprecated alias — fusion remplacée par dismiss horaire */
+export const SIG_MERGE_MS = SIG_DISMISS_TOTAL_MS;
+export const SIG_BREATH_MS = SIG_SOLO_MS;
 
 const BM_SRC = "/logo-batimum.png";
 const BM_SRC_W = 829;
 const BM_SRC_H = 210;
 
 type SigBeat =
-  | "merge"
-  | "breath"
+  | "dismiss"
+  | "solo"
   | "approach"
   | "screw"
   | "pulse"
@@ -57,7 +66,6 @@ function SignatureNutSvg() {
   const innerR = 154;
   const holeR = 56;
   const ringR = 70;
-  const chamferR = 80;
   const back = hexPoints(cx + 3.5, cy + 4.5, outerR);
   const outer = hexPoints(cx, cy, outerR);
   const mid = hexPoints(cx, cy, midR);
@@ -101,8 +109,8 @@ function SignatureNutSvg() {
           <stop offset="100%" stopColor="rgba(255,255,255,0)" />
         </linearGradient>
         <radialGradient id="sigNutBlue" cx="40%" cy="36%" r="52%">
-          <stop offset="0%" stopColor="rgba(17,17,17,0.03)" />
-          <stop offset="100%" stopColor="rgba(17,17,17,0)" />
+          <stop offset="0%" stopColor="rgba(37,99,235,0.14)" />
+          <stop offset="100%" stopColor="rgba(37,99,235,0)" />
         </radialGradient>
         <radialGradient id="sigNutHoleShade" cx="50%" cy="42%" r="58%">
           <stop offset="0%" stopColor="rgba(17,17,17,0)" />
@@ -121,82 +129,26 @@ function SignatureNutSvg() {
       <polygon
         points={outer}
         fill="url(#sigNutFace)"
-        stroke="rgba(17,17,17,0.13)"
-        strokeWidth="1.2"
+        stroke="rgba(17,17,17,0.14)"
+        strokeWidth="1.35"
         strokeLinejoin="round"
       />
-      <polygon points={outer} fill="url(#sigNutBlue)" stroke="none" />
       <polygon
         points={mid}
-        fill="rgba(255,255,255,0.08)"
-        stroke="rgba(17,17,17,0.07)"
+        fill="url(#sigNutBlue)"
+        stroke="rgba(17,17,17,0.08)"
         strokeWidth="1"
         strokeLinejoin="round"
       />
       <polygon
         points={inner}
-        fill="rgba(255,255,255,0.03)"
-        stroke="rgba(17,17,17,0.045)"
-        strokeWidth="0.85"
+        fill="rgba(255,255,255,0.22)"
+        stroke="rgba(17,17,17,0.1)"
+        strokeWidth="1"
         strokeLinejoin="round"
       />
-
-      {Array.from({ length: 6 }, (_, i) => {
-        const a0 = i * 60;
-        const a1 = (i + 1) * 60;
-        const p0 = polarPoint(cx, cy, a0, midR);
-        const p1 = polarPoint(cx, cy, a1, midR);
-        const ip0 = polarPoint(cx, cy, a0, ringR);
-        const ip1 = polarPoint(cx, cy, a1, ringR);
-        const lit = i === 0 || i === 1;
-        const shade = i === 3 || i === 4;
-        return (
-          <polygon
-            key={`pan-${i}`}
-            points={`${svgPair(p0.x, p0.y)} ${svgPair(p1.x, p1.y)} ${svgPair(ip1.x, ip1.y)} ${svgPair(ip0.x, ip0.y)}`}
-            fill={
-              lit
-                ? "rgba(255,255,255,0.11)"
-                : shade
-                  ? "rgba(17,17,17,0.022)"
-                  : "rgba(255,255,255,0.03)"
-            }
-            stroke="none"
-          />
-        );
-      })}
-
-      <polygon
-        points={shine}
-        fill="url(#sigNutShine)"
-        opacity="0.48"
-        stroke="none"
-      />
-
-      <circle
-        cx={cx}
-        cy={cy}
-        r={chamferR}
-        stroke="rgba(17,17,17,0.04)"
-        strokeWidth="0.85"
-        fill="none"
-      />
-      <circle
-        cx={cx}
-        cy={cy}
-        r={ringR}
-        stroke="rgba(17,17,17,0.08)"
-        strokeWidth="1.05"
-        fill="rgba(255,255,255,0.05)"
-      />
-      <circle
-        cx={cx}
-        cy={cy}
-        r={holeR + 5}
-        stroke="rgba(17,17,17,0.05)"
-        strokeWidth="0.85"
-        fill="url(#sigNutHoleShade)"
-      />
+      <polygon points={shine} fill="url(#sigNutShine)" opacity="0.9" />
+      <circle cx={cx} cy={cy} r={ringR} fill="url(#sigNutHoleShade)" />
       <circle
         cx={cx}
         cy={cy}
@@ -209,16 +161,9 @@ function SignatureNutSvg() {
   );
 }
 
-function SigBmMark({ breathe }: { breathe: boolean }) {
+function SigBmMark() {
   return (
-    <div
-      className={[
-        "lp-hubSig__bm",
-        breathe ? "is-breathing" : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
+    <div className="lp-hubSig__bm">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={BM_SRC}
@@ -233,6 +178,18 @@ function SigBmMark({ breathe }: { breathe: boolean }) {
   );
 }
 
+function beatFromOffset(ms: number): SigBeat {
+  let t = 0;
+  if (ms < (t += SIG_DISMISS_TOTAL_MS)) return "dismiss";
+  if (ms < (t += SIG_SOLO_MS)) return "solo";
+  if (ms < (t += SIG_APPROACH_MS)) return "approach";
+  if (ms < (t += SIG_SCREW_MS)) return "screw";
+  if (ms < (t += SIG_PULSE_MS)) return "pulse";
+  if (ms < (t += SIG_COPY_MS)) return "copy";
+  if (ms < (t += SIG_CTA_MS)) return "cta";
+  return "sealed";
+}
+
 export function HubSignaturePanel({
   active,
   sealed,
@@ -242,9 +199,7 @@ export function HubSignaturePanel({
   seekKey = 0,
   onComplete,
 }: {
-  /** Joue la séquence complète une fois. */
   active: boolean;
-  /** État final déjà assemblé (revisit / reduced). */
   sealed: boolean;
   reduced: boolean;
   paused?: boolean;
@@ -252,7 +207,7 @@ export function HubSignaturePanel({
   seekKey?: number;
   onComplete: () => void;
 }) {
-  const [beat, setBeat] = useState<SigBeat>(sealed ? "sealed" : "merge");
+  const [beat, setBeat] = useState<SigBeat>(sealed ? "sealed" : "dismiss");
   const finishedRef = useRef(false);
   const { later, clear } = usePauseableTimers(paused);
 
@@ -274,44 +229,28 @@ export function HubSignaturePanel({
     }
 
     if (!active) {
-      setBeat("merge");
+      setBeat("dismiss");
       return clear;
     }
 
+    setBeat(beatFromOffset(seekMs));
+
+    const t0 = 0;
+    const tSolo = SIG_DISMISS_TOTAL_MS;
+    const tApproach = tSolo + SIG_SOLO_MS;
+    const tScrew = tApproach + SIG_APPROACH_MS;
+    const tPulse = tScrew + SIG_SCREW_MS;
+    const tCopy = tPulse + SIG_PULSE_MS;
+    const tCta = tCopy + SIG_COPY_MS;
+
     const cues: { at: number; apply: () => void }[] = [
-      { at: 0, apply: () => setBeat("merge") },
-      { at: SIG_MERGE_MS, apply: () => setBeat("breath") },
-      {
-        at: SIG_MERGE_MS + SIG_BREATH_MS,
-        apply: () => setBeat("approach"),
-      },
-      {
-        at: SIG_MERGE_MS + SIG_BREATH_MS + SIG_APPROACH_MS,
-        apply: () => setBeat("screw"),
-      },
-      {
-        at: SIG_MERGE_MS + SIG_BREATH_MS + SIG_APPROACH_MS + SIG_SCREW_MS,
-        apply: () => setBeat("pulse"),
-      },
-      {
-        at:
-          SIG_MERGE_MS +
-          SIG_BREATH_MS +
-          SIG_APPROACH_MS +
-          SIG_SCREW_MS +
-          SIG_PULSE_MS,
-        apply: () => setBeat("copy"),
-      },
-      {
-        at:
-          SIG_MERGE_MS +
-          SIG_BREATH_MS +
-          SIG_APPROACH_MS +
-          SIG_SCREW_MS +
-          SIG_PULSE_MS +
-          SIG_COPY_MS,
-        apply: () => setBeat("cta"),
-      },
+      { at: t0, apply: () => setBeat("dismiss") },
+      { at: tSolo, apply: () => setBeat("solo") },
+      { at: tApproach, apply: () => setBeat("approach") },
+      { at: tScrew, apply: () => setBeat("screw") },
+      { at: tPulse, apply: () => setBeat("pulse") },
+      { at: tCopy, apply: () => setBeat("copy") },
+      { at: tCta, apply: () => setBeat("cta") },
     ];
 
     runCueTimeline({
@@ -319,7 +258,7 @@ export function HubSignaturePanel({
       seekMs,
       later,
       onFinish: finish,
-      finishAt: SIG_DEMO_SAFETY_MS,
+      finishAt: SIG_DEMO_SAFETY_MS - SIG_HOLD_MS,
     });
 
     return clear;
@@ -329,6 +268,15 @@ export function HubSignaturePanel({
   const primaryLabel = isPrivateBetaEnabled()
     ? "Se connecter"
     : "Essayer gratuitement";
+
+  const showStage =
+    beat === "solo" ||
+    beat === "approach" ||
+    beat === "screw" ||
+    beat === "pulse" ||
+    beat === "copy" ||
+    beat === "cta" ||
+    beat === "sealed";
 
   const showNut =
     beat === "approach" ||
@@ -341,8 +289,6 @@ export function HubSignaturePanel({
   const showCopy =
     beat === "copy" || beat === "cta" || beat === "sealed";
   const showCta = beat === "cta" || beat === "sealed";
-  const logoBreath = beat === "breath";
-  const idleBreath = beat === "sealed" || beat === "cta";
 
   return (
     <div
@@ -351,6 +297,7 @@ export function HubSignaturePanel({
         `is-${beat}`,
         sealed || reduced ? "is-sealed" : "",
         active || sealed ? "is-visible" : "",
+        showStage ? "is-stage-on" : "is-stage-off",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -360,8 +307,6 @@ export function HubSignaturePanel({
         <div
           className={[
             "lp-hubSig__mark",
-            logoBreath ? "is-breath-once" : "",
-            idleBreath ? "is-breath-idle" : "",
             beat === "pulse" ? "is-pulse" : "",
           ]
             .filter(Boolean)
@@ -398,7 +343,8 @@ export function HubSignaturePanel({
             <SignatureNutSvg />
           </div>
 
-          <SigBmMark breathe={idleBreath && !reduced} />
+          {/* Logo BM : toujours fixe, jamais de scale / rotation */}
+          <SigBmMark />
         </div>
 
         <div

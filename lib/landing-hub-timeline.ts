@@ -1,48 +1,70 @@
 /**
  * Timeline nominale de la présentation hub (autoplay).
- * Cible durée totale ~1 min (plafond ~1 min 20).
+ * Cible durée totale ~2 min 05–2 min 15 (plafond 2 min 20).
  */
 
-export const MODULE_LOCK_MS = 640;
-export const AUTO_BREATH_MS = 240;
-export const AUTO_PLAN_BREATH_MS = 180;
-export const HOLD_MS = 220;
-export const INTRO_MS = 6000;
+export const MODULE_LOCK_MS = 880;
+export const AUTO_BREATH_MS = 420;
+export const AUTO_PLAN_BREATH_MS = 280;
+export const HOLD_MS = 950;
+export const INTRO_MS = 11000;
 
-const MUM_ENTER_MS = 680;
-const MUM_RETURN_MS = 750;
-const CLIENTS_ENTER_MS = 680;
-const CLIENTS_RETURN_MS = 750;
-const CHANTIER_ENTER_MS = 680;
-const CHANTIER_RETURN_MS = 750;
-const PLAN_ENTER_MS = 680;
-const PLAN_RETURN_MS = 750;
-const FIN_ENTER_MS = 680;
-const FIN_RETURN_MS = 750;
-const FIN_CONVERGE_MS = 900;
-const PILOTAGE_ENTER_MS = 640;
-const PILOTAGE_RETURN_MS = 700;
-/** Signature compressée (alignée sur landing-hub-signature, sans marge morte). */
-const SIG_DEMO_SAFETY_MS =
-  1000 + 1100 + 1500 + 1700 + 500 + 1100 + 500 + 400;
+export const MUM_ENTER_MS = 880;
+export const MUM_RETURN_MS = 1000;
+export const CLIENTS_ENTER_MS = 880;
+export const CLIENTS_RETURN_MS = 1000;
+export const CHANTIER_ENTER_MS = 880;
+export const CHANTIER_RETURN_MS = 1000;
+export const PLAN_ENTER_MS = 880;
+export const PLAN_RETURN_MS = 1000;
+export const FIN_ENTER_MS = 880;
+export const FIN_RETURN_MS = 1000;
+export const FIN_CONVERGE_MS = 1600;
+export const PILOTAGE_ENTER_MS = 840;
+export const PILOTAGE_RETURN_MS = 980;
 
-/** Lecture module — courte mais lisible. */
+/** Conclusion : disparition horaire → écrou → verrouillage → CTA */
+export const SIG_DISMISS_EACH_MS = 820;
+export const SIG_DISMISS_COUNT = 6;
+export const SIG_DISMISS_TOTAL_MS = SIG_DISMISS_EACH_MS * SIG_DISMISS_COUNT;
+export const SIG_SOLO_MS = 480;
+export const SIG_APPROACH_MS = 1400;
+export const SIG_SCREW_MS = 2200;
+export const SIG_PULSE_MS = 600;
+export const SIG_COPY_MS = 1300;
+export const SIG_CTA_MS = 800;
+export const SIG_HOLD_MS = 550;
+
+export const SIG_DEMO_SAFETY_MS =
+  SIG_DISMISS_TOTAL_MS +
+  SIG_SOLO_MS +
+  SIG_APPROACH_MS +
+  SIG_SCREW_MS +
+  SIG_PULSE_MS +
+  SIG_COPY_MS +
+  SIG_CTA_MS +
+  SIG_HOLD_MS;
+
+/** Lecture module — assez longue pour une TPE BTP. */
 function readMs(copyLen: number) {
-  return Math.round(Math.min(1100, Math.max(750, 520 + copyLen * 8)));
+  return Math.round(Math.min(2400, Math.max(1400, 900 + copyLen * 14)));
 }
 
 function modulePreMs(enterMs: number, copyLen: number) {
   return MODULE_LOCK_MS + enterMs + readMs(copyLen);
 }
 
-/** Durées de démo alignées sur les cues des films. */
+/**
+ * Durées de démo : actions fluides, résultats tenus via HOLD_MS
+ * (pas un ralenti artificiel de chaque tween).
+ */
 export const DEMO_MS = {
-  mumPlans: [4000, 1200, 1800, 900, 3600, 5200] as const,
-  clients: 3600,
-  chantiers: 5000,
-  planning: 3800,
-  finance: 6000,
-  pilotage: 2800,
+  mumPlans: [5000, 1500, 2200, 1300, 4500, 6400] as const,
+  clients: 6800,
+  chantiers: 8500,
+  planning: 9800,
+  finance: 8200,
+  pilotage: 7200,
 } as const;
 
 export type HubFilmModule =
@@ -79,7 +101,7 @@ export type TimelineHit = {
   preOffsetMs: number;
 };
 
-type Seg = {
+export type Seg = {
   start: number;
   duration: number;
   scene: number;
@@ -218,7 +240,7 @@ function buildSegments(): Seg[] {
   });
 
   push({
-    duration: SIG_DEMO_SAFETY_MS + 300,
+    duration: SIG_DEMO_SAFETY_MS + 400,
     scene: 16,
     kind: "signature",
     module: null,
@@ -450,6 +472,14 @@ export function chapterAtTime(ms: number): HubFilmChapter {
   return current;
 }
 
+export function hitSegmentKey(hit: TimelineHit): string {
+  return `${hit.kind}|${hit.scene}|${hit.module ?? ""}|${hit.mumPlan}`;
+}
+
+export function hitPhaseKey(hit: TimelineHit): string {
+  return `${hitSegmentKey(hit)}|${hit.filmPhase}`;
+}
+
 export function nextAnchorAfterDemo(
   module: HubFilmModule,
   mumPlan = 0,
@@ -474,4 +504,18 @@ export function segmentStartForHit(hit: TimelineHit): number {
       s.mumPlan === hit.mumPlan,
   );
   return seg?.start ?? hit.timeMs - hit.offsetMs;
+}
+
+/** Durées par chapitre (pour audits). */
+export function chapterDurationsMs(): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (let i = 0; i < HUB_FILM_CHAPTERS.length; i++) {
+    const ch = HUB_FILM_CHAPTERS[i];
+    const end =
+      i + 1 < HUB_FILM_CHAPTERS.length
+        ? HUB_FILM_CHAPTERS[i + 1].startMs
+        : HUB_FILM_TOTAL_MS;
+    out[ch.label] = end - ch.startMs;
+  }
+  return out;
 }

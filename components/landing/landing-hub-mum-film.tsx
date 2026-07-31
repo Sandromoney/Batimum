@@ -375,6 +375,11 @@ export function MumFilmPanel({
     [onPlanComplete],
   );
 
+  // Seek / changement de plan : toujours autoriser une nouvelle complétion.
+  useEffect(() => {
+    planDoneRef.current = -1;
+  }, [active, plan, seekKey, seekMs]);
+
   const listening = beat === "listen" || beat === "speak";
 
   // Reset when film becomes inactive
