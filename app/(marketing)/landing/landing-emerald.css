@@ -1162,8 +1162,8 @@ html:has(.landing-emerald) body {
   left: 50%;
   top: 50%;
   z-index: 10;
-  width: 164px;
-  flex: 0 0 164px;
+  width: 188px;
+  flex: 0 0 188px;
   min-height: 64px;
   will-change: opacity;
   pointer-events: auto;
@@ -1181,14 +1181,14 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__featureCard,
 .landing-emerald .batimumHero__bubble {
   position: relative;
-  width: 164px;
-  min-height: 64px;
+  width: 188px;
+  min-height: 72px;
   max-height: none;
-  padding: 11px 14px;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 0 0 164px;
+  flex: 0 0 188px;
   box-sizing: border-box;
   outline: none;
   overflow: visible;
@@ -1264,12 +1264,12 @@ html:has(.landing-emerald) body {
 .landing-emerald .batimumHero__featureButton.is-active .batimumHero__featureCard,
 .landing-emerald .batimumHero__featureAnchor.is-active .batimumHero__featureCard,
 .landing-emerald .batimumHero__featureAnchor:hover .batimumHero__featureCard {
-  transform: translateY(-1px) scale(1.02);
-  border-color: rgba(59, 130, 246, 0.38);
+  transform: translateY(-1px) scale(1.015);
+  border-color: rgba(59, 130, 246, 0.32);
   box-shadow:
-    0 0 0 4px rgba(59, 130, 246, 0.1),
-    0 18px 40px rgba(59, 130, 246, 0.12),
-    0 8px 18px rgba(17, 17, 17, 0.04),
+    0 0 0 3px rgba(59, 130, 246, 0.08),
+    0 16px 34px rgba(17, 17, 17, 0.06),
+    0 6px 14px rgba(59, 130, 246, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
@@ -1713,8 +1713,8 @@ html:has(.landing-emerald) body {
   .landing-emerald .batimumHero__bubbleWrap,
   .landing-emerald .batimumHero__featureCard,
   .landing-emerald .batimumHero__bubble {
-    width: 164px;
-    flex-basis: 164px;
+    width: 188px;
+    flex-basis: 188px;
   }
 
   .landing-emerald .batimumHero__logoSymbol {
@@ -1765,8 +1765,8 @@ html:has(.landing-emerald) body {
   .landing-emerald .batimumHero__bubbleWrap,
   .landing-emerald .batimumHero__featureCard,
   .landing-emerald .batimumHero__bubble {
-    width: 164px;
-    flex-basis: 164px;
+    width: 188px;
+    flex-basis: 188px;
   }
 
   .landing-emerald .batimumHero__nut {
@@ -9666,7 +9666,24 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-ba__head {
-  margin-bottom: clamp(2rem, 4vw, 3rem);
+  margin-bottom: clamp(1.75rem, 3.5vw, 2.6rem);
+  margin-inline: auto;
+  max-width: 40rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.landing-emerald .lp-ba__title {
+  margin-top: 1.15rem;
+  max-width: 34rem;
+  text-wrap: balance;
+}
+
+.landing-emerald .lp-ba__lead {
+  margin-top: 1rem;
+  max-width: 30rem;
 }
 
 .landing-emerald .lp-ba__rows {
@@ -9724,6 +9741,9 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-ba__label--batimum {
   color: #3b82f6;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .landing-emerald .lp-ba__text {
@@ -11058,73 +11078,108 @@ html:has(.landing-emerald) body {
 }
 
 /* ——— Voices / témoignages premium ——— */
+
 .landing-emerald .lp-voices {
   scroll-margin-top: 88px;
   background: #ffffff;
+  overflow: hidden;
 }
 
 .landing-emerald .lp-voices__head {
-  margin-bottom: clamp(2rem, 4vw, 3rem);
+  margin-bottom: clamp(1.75rem, 3.5vw, 2.6rem);
+  margin-inline: auto;
+  max-width: 40rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.landing-emerald .lp-voices__grid {
-  display: grid;
+.landing-emerald .lp-voices__title {
+  margin-top: 1.15rem;
+  max-width: 34rem;
+  text-wrap: balance;
+}
+
+.landing-emerald .lp-voices__lead {
+  margin-top: 1rem;
+  max-width: 32rem;
+  text-wrap: pretty;
+}
+
+.landing-emerald .lp-voices__disclaimer {
+  margin: 0.85rem 0 0;
+  color: #8a8a8a;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+}
+
+.landing-emerald .lp-voices__railWrap {
+  position: relative;
+  margin-top: 0.25rem;
+}
+
+.landing-emerald .lp-voices__rail {
+  display: flex;
   gap: 1rem;
-  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scroll-behavior: auto;
+  padding: 0.35rem max(1rem, calc((100vw - 72rem) / 2 + 1rem)) 1.1rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  cursor: grab;
+  touch-action: pan-x;
 }
 
-@media (min-width: 900px) {
-  .landing-emerald .lp-voices__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.15rem;
-  }
+.landing-emerald .lp-voices__rail::-webkit-scrollbar {
+  display: none;
 }
 
-@media (max-width: 899px) {
-  .landing-emerald .lp-voices__grid {
-    display: flex;
-    gap: 0.9rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: 0.15rem;
-    padding-bottom: 0.35rem;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-  }
-
-  .landing-emerald .lp-voices__card {
-    flex: 0 0 min(86vw, 22rem);
-    scroll-snap-align: start;
-  }
+.landing-emerald .lp-voices__railWrap.is-paused .lp-voices__rail {
+  cursor: grabbing;
 }
 
 .landing-emerald .lp-voices__card {
+  flex: 0 0 min(78vw, 22.5rem);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 1.35rem;
-  height: 100%;
+  gap: 1.1rem;
+  min-height: 16.5rem;
   background: #ffffff;
   border: 1px solid rgba(17, 17, 17, 0.07);
-  border-radius: 22px;
-  padding: 1.45rem 1.35rem 1.3rem;
-  box-shadow: 0 10px 28px rgba(17, 17, 17, 0.03);
+  border-radius: 18px;
+  padding: 1.25rem 1.2rem 1.15rem;
+  box-shadow: 0 8px 24px rgba(17, 17, 17, 0.03);
+  scroll-snap-align: start;
   transition:
     transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.28s ease,
     border-color 0.28s ease;
+  user-select: none;
 }
 
 .landing-emerald .lp-voices__card:hover {
-  transform: translateY(-3px);
   border-color: rgba(17, 17, 17, 0.1);
-  box-shadow: 0 14px 34px rgba(17, 17, 17, 0.055);
+  box-shadow: 0 12px 30px rgba(17, 17, 17, 0.045);
+}
+
+.landing-emerald .lp-voices__stars {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.28);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  font-weight: 500;
 }
 
 .landing-emerald .lp-voices__quote {
   margin: 0;
   color: #111111;
-  font-size: clamp(1rem, 1.35vw, 1.08rem);
+  font-size: clamp(0.95rem, 1.2vw, 1.02rem);
   font-weight: 550;
   letter-spacing: -0.015em;
   line-height: 1.55;
@@ -11133,19 +11188,19 @@ html:has(.landing-emerald) body {
 .landing-emerald .lp-voices__meta {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.7rem;
 }
 
 .landing-emerald .lp-voices__avatar {
-  width: 2.35rem;
-  height: 2.35rem;
+  width: 2.2rem;
+  height: 2.2rem;
   border-radius: 999px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
   background: #f3f4f6;
   color: #111111;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   border: 1px solid rgba(17, 17, 17, 0.06);
@@ -11153,38 +11208,71 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-voices__who {
   display: grid;
-  gap: 0.12rem;
+  gap: 0.1rem;
   min-width: 0;
 }
 
 .landing-emerald .lp-voices__name {
   color: #111111;
-  font-size: 0.9375rem;
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .landing-emerald .lp-voices__detail {
   color: #8a8a8a;
-  font-size: 0.8125rem;
+  font-size: 0.78rem;
   font-weight: 500;
   line-height: 1.35;
 }
 
+.landing-emerald .lp-voices__railControls {
+  display: flex;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+
+.landing-emerald .lp-voices__railBtn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  background: #ffffff;
+  color: #111111;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.landing-emerald .lp-voices__railBtn:hover {
+  border-color: rgba(17, 17, 17, 0.18);
+  background: #fafafa;
+}
+
+.landing-emerald .lp-voices__railBtn:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.4);
+  outline-offset: 2px;
+}
+
 .landing-emerald .lp-voices__footer {
-  margin-top: clamp(2.25rem, 5vw, 3.25rem);
+  margin-top: clamp(2rem, 4.5vw, 2.85rem);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 1.25rem;
+  gap: 1.15rem;
 }
 
 .landing-emerald .lp-voices__closing {
   margin: 0;
   max-width: 32rem;
   color: #111111;
-  font-size: clamp(1.15rem, 2vw, 1.35rem);
+  font-size: clamp(1.1rem, 1.9vw, 1.28rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.35;
@@ -11198,9 +11286,25 @@ html:has(.landing-emerald) body {
 }
 
 @media (max-width: 639px) {
+  .landing-emerald .lp-voices__head {
+    text-align: left;
+    align-items: stretch;
+  }
+
+  .landing-emerald .lp-voices__title,
+  .landing-emerald .lp-voices__lead {
+    max-width: none;
+  }
+
   .landing-emerald .lp-voices__footer .landing-btn-primary {
     width: 100%;
     justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-emerald .lp-voices__railWrap.is-reduced .lp-voices__rail {
+    scroll-behavior: smooth;
   }
 }
 
@@ -11210,8 +11314,36 @@ html:has(.landing-emerald) body {
   background: #ffffff;
 }
 
+.landing-emerald .lp-plans__shell {
+  max-width: 52rem;
+  margin-inline: auto;
+}
+
 .landing-emerald .lp-plans__head {
-  margin-bottom: clamp(2rem, 4vw, 3rem);
+  margin-bottom: clamp(1.75rem, 3.5vw, 2.5rem);
+  margin-inline: auto;
+  max-width: 36rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.landing-emerald .lp-plans__titleHead {
+  margin-top: 1.15rem;
+  text-wrap: balance;
+}
+
+.landing-emerald .lp-plans__lead {
+  margin-top: 1rem;
+  max-width: 28rem;
+}
+
+.landing-emerald .lp-plans__micro {
+  margin: 0.55rem 0 0;
+  color: #8a8a8a;
+  font-size: 0.875rem;
+  font-weight: 550;
 }
 
 .landing-emerald .lp-plans__grid {
@@ -11222,10 +11354,19 @@ html:has(.landing-emerald) body {
   align-items: stretch;
 }
 
+/* Mobile : offre annuelle en premier pour la conversion */
+.landing-emerald .lp-plans__card--featured {
+  order: -1;
+}
+
 @media (min-width: 820px) {
   .landing-emerald .lp-plans__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.15rem;
+  }
+
+  .landing-emerald .lp-plans__card--featured {
+    order: 0;
   }
 }
 
@@ -11276,12 +11417,14 @@ html:has(.landing-emerald) body {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  padding: 0.28rem 0.7rem;
+  padding: 0.3rem 0.75rem;
   background: rgba(59, 130, 246, 0.1);
   color: #2563eb;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+  max-width: calc(100% - 2rem);
+  white-space: nowrap;
 }
 
 .landing-emerald .lp-plans__title {
@@ -11603,4 +11746,19 @@ html.lp-restore .landing-emerald .landing-reveal:not(.landing-reveal--visible) {
   opacity: 1;
   transform: none;
   filter: none;
+}
+
+
+/* Hero orbit — preuve textuelle (sans pourcentage) */
+.landing-emerald .batimumHero__statBadge--proof .batimumHero__statBadgeHeadline {
+  display: block;
+  font-size: clamp(0.92rem, 1.15vw, 1.02rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: #111111;
+}
+
+.landing-emerald .batimumHero__statBadge--proof .batimumHero__statBadgeMain {
+  gap: 0;
 }

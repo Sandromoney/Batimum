@@ -1,45 +1,58 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { LandingReveal } from "@/components/landing/landing-reveal";
 import { LandingTrialCta } from "@/components/landing/landing-trial-cta";
 
 type CompareRow = {
   id: string;
-  today: string;
+  before: string;
   withBatimum: string;
-  note?: string;
 };
 
 const ROWS: CompareRow[] = [
   {
     id: "outils",
-    today: "Plusieurs logiciels, plusieurs onglets, plusieurs endroits.",
-    withBatimum: "Une seule plateforme pour tout piloter.",
+    before: "Plusieurs outils, fichiers et messages dispersés",
+    withBatimum: "Une seule plateforme pour centraliser votre entreprise",
   },
   {
     id: "devis",
-    today: "Les devis se font encore à la main, souvent le soir.",
-    withBatimum: "MUM IA prépare vos devis en quelques instants.",
+    before: "Chaque devis recommence presque depuis zéro",
+    withBatimum:
+      "MUM IA prépare un devis structuré, modifiable et adapté à vos prix",
+  },
+  {
+    id: "clients",
+    before: "Les informations clients sont réparties entre plusieurs supports",
+    withBatimum:
+      "Coordonnées, devis, factures et chantiers réunis dans une seule fiche",
   },
   {
     id: "planning",
-    today: "Le planning change sans cesse, et personne n’a la même version.",
-    withBatimum: "Un planning centralisé, toujours à jour.",
+    before:
+      "Le planning change et les salariés doivent être prévenus un par un",
+    withBatimum:
+      "Affectations centralisées et espace employé séparé avec planning et consignes",
   },
   {
-    id: "equipes",
-    today: "Vous appelez vos salariés juste pour savoir où ils sont.",
+    id: "chantiers",
+    before: "L’avancement d’un chantier reste difficile à mesurer",
     withBatimum:
-      "Chaque salarié a son espace : planning, chantiers et consignes.",
-    note: "Sans accès aux devis, aux marges ni aux données confidentielles.",
+      "Une progression calculée selon le poids réel de chaque étape",
   },
   {
     id: "marges",
-    today:
-      "Vous découvrez parfois trop tard qu’un chantier est moins rentable que prévu.",
+    before: "La marge est souvent découverte une fois le chantier terminé",
     withBatimum:
-      "Vos coûts, vos marges et votre rentabilité, suivis en temps réel.",
+      "Coûts, prévisionnel, réel et rentabilité visibles pendant le chantier",
+  },
+  {
+    id: "confidentialite",
+    before: "Les données sensibles peuvent être partagées par erreur",
+    withBatimum:
+      "Les salariés accèdent uniquement à leur espace, sans voir les marges ni les données du dirigeant",
   },
 ];
 
@@ -49,7 +62,7 @@ export function LandingBeforeAfterSection() {
   const reduced = useReducedMotion();
 
   const t = {
-    duration: reduced ? 0.01 : 0.48,
+    duration: reduced ? 0.01 : 0.45,
     ease: EASE,
   };
 
@@ -66,31 +79,31 @@ export function LandingBeforeAfterSection() {
               <span className="lp-eyebrow__dot" aria-hidden="true" />
               Pourquoi changer
             </p>
-            <h2 id="before-after-title" className="lp-title mt-5 max-w-3xl">
-              Pourquoi changer vos habitudes{" "}
-              <span className="lp-title-accent">aujourd’hui ?</span>
+            <h2 id="before-after-title" className="lp-title lp-ba__title">
+              Avant Batimum.{" "}
+              <span className="lp-title-accent">Avec Batimum.</span>
             </h2>
-            <p className="lp-subtitle mt-5 max-w-2xl">
-              Batimum remplace plusieurs outils, simplifie votre quotidien et
-              vous rend du temps — sur le chantier comme au bureau.
+            <p className="lp-subtitle lp-ba__lead">
+              Les écarts concrets que Batimum comble dans le quotidien d’une TPE
+              du BTP.
             </p>
           </div>
         </LandingReveal>
 
         <div className="lp-ba__rows" role="list">
           {ROWS.map((row, index) => {
-            const baseDelay = reduced ? 0 : index * 0.12;
+            const baseDelay = reduced ? 0 : index * 0.1;
             return (
               <div key={row.id} className="lp-ba__row" role="listitem">
                 <motion.article
                   className="lp-ba__card lp-ba__card--today"
-                  initial={reduced ? false : { opacity: 0, y: 14 }}
+                  initial={reduced ? false : { opacity: 0, y: 12 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.35 }}
+                  viewport={{ once: true, amount: 0.4 }}
                   transition={{ ...t, delay: baseDelay }}
                 >
-                  <p className="lp-ba__label">Aujourd’hui</p>
-                  <p className="lp-ba__text">{row.today}</p>
+                  <p className="lp-ba__label">Avant Batimum</p>
+                  <p className="lp-ba__text">{row.before}</p>
                 </motion.article>
 
                 <div className="lp-ba__arrow" aria-hidden="true">
@@ -100,21 +113,19 @@ export function LandingBeforeAfterSection() {
 
                 <motion.article
                   className="lp-ba__card lp-ba__card--batimum"
-                  initial={reduced ? false : { opacity: 0, y: 14 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.35 }}
+                  initial={reduced ? false : { opacity: 0, y: 12, scale: 0.99 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={{ once: true, amount: 0.4 }}
                   transition={{
                     ...t,
-                    delay: reduced ? 0 : baseDelay + 0.16,
+                    delay: reduced ? 0 : baseDelay + 0.22,
                   }}
                 >
                   <p className="lp-ba__label lp-ba__label--batimum">
+                    <Check size={12} strokeWidth={2.4} aria-hidden="true" />
                     Avec Batimum
                   </p>
                   <p className="lp-ba__text">{row.withBatimum}</p>
-                  {row.note ? (
-                    <p className="lp-ba__note">{row.note}</p>
-                  ) : null}
                 </motion.article>
               </div>
             );

@@ -17,13 +17,14 @@ const YEARLY_MONTHLY_PRICE = 29;
 const YEARLY_SAVINGS = 120;
 
 const FEATURES = [
-  "MUM IA",
-  "Gestion des devis",
-  "Gestion des clients",
-  "Planning",
-  "Chantiers",
-  "Pilotage",
+  "MUM IA et gestion complète des devis",
+  "Signature électronique",
+  "Clients et historique centralisé",
+  "Planning des équipes",
   "Espace employé sécurisé",
+  "Suivi des chantiers",
+  "Facturation",
+  "Pilotage et rentabilité",
   "Mises à jour incluses",
   "Support",
 ] as const;
@@ -43,7 +44,7 @@ export function LandingPricingSection() {
   const { restore } = useLandingExperience();
 
   const t = {
-    duration: reduced || restore ? 0.01 : 0.5,
+    duration: reduced || restore ? 0.01 : 0.48,
     ease: EASE,
   };
 
@@ -65,27 +66,30 @@ export function LandingPricingSection() {
       id: "yearly",
       title: "Engagement annuel",
       price: YEARLY_MONTHLY_PRICE,
-      hint: `Économisez ${YEARLY_SAVINGS} € par an.`,
+      hint: `Engagement de 12 mois · ${YEARLY_SAVINGS} € économisés.`,
       featured: true,
-      badge: "Le plus choisi",
+      badge: `${YEARLY_SAVINGS} € économisés par an`,
     },
   ];
 
   return (
     <section id="plans" className="lp-section lp-plans" aria-labelledby="plans-title">
-      <div className="lp-container">
+      <div className="lp-container lp-plans__shell">
         <LandingReveal>
           <div className="lp-section-head lp-plans__head">
             <p className="lp-eyebrow">
               <span className="lp-eyebrow__dot" aria-hidden="true" />
               Tarifs
             </p>
-            <h2 id="plans-title" className="lp-title mt-5 max-w-3xl">
-              Un tarif simple.{" "}
-              <span className="lp-title-accent">Sans surprise.</span>
+            <h2 id="plans-title" className="lp-title lp-plans__titleHead">
+              Une seule offre.{" "}
+              <span className="lp-title-accent">Tout Batimum.</span>
             </h2>
-            <p className="lp-subtitle mt-5 max-w-2xl">
-              Une seule offre, toutes les fonctionnalités incluses.
+            <p className="lp-subtitle lp-plans__lead">
+              Tout le logiciel, sans options cachées.
+            </p>
+            <p className="lp-plans__micro">
+              Choisissez simplement votre rythme de paiement.
             </p>
           </div>
         </LandingReveal>
@@ -105,15 +109,15 @@ export function LandingPricingSection() {
                   ? false
                   : {
                       opacity: 0,
-                      y: 18,
-                      scale: plan.featured ? 0.98 : 0.99,
+                      y: 16,
+                      scale: plan.featured ? 0.985 : 0.99,
                     }
               }
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
+              viewport={{ once: true, amount: 0.28 }}
               transition={{
                 ...t,
-                delay: reduced ? 0 : index * 0.12,
+                delay: reduced ? 0 : plan.featured ? 0.14 : index * 0.08,
               }}
             >
               {plan.badge ? (
@@ -135,13 +139,23 @@ export function LandingPricingSection() {
               />
 
               <ul className="lp-plans__features">
-                {FEATURES.map((feature) => (
-                  <li key={feature} className="lp-plans__feature">
+                {FEATURES.map((feature, fi) => (
+                  <motion.li
+                    key={feature}
+                    className="lp-plans__feature"
+                    initial={reduced ? false : { opacity: 0, y: 6 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.2 }}
+                    transition={{
+                      ...t,
+                      delay: reduced ? 0 : 0.18 + fi * 0.03,
+                    }}
+                  >
                     <span className="lp-plans__check" aria-hidden="true">
                       <Check size={14} strokeWidth={2.2} />
                     </span>
                     <span>{feature}</span>
-                  </li>
+                  </motion.li>
                 ))}
               </ul>
             </motion.article>
@@ -156,11 +170,11 @@ export function LandingPricingSection() {
             </li>
             <li>
               <Check size={14} strokeWidth={2.2} aria-hidden="true" />
-              Annulation possible avant la fin de l’essai
+              Toutes les fonctionnalités incluses
             </li>
             <li>
               <Check size={14} strokeWidth={2.2} aria-hidden="true" />
-              Une seule offre, tout inclus
+              Aucune option cachée
             </li>
           </ul>
           <p className="lp-plans__login">

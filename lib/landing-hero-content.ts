@@ -29,8 +29,8 @@ export const heroContent = {
       Icon: HardHat as LucideIcon,
     },
     {
-      highlight: "temps réel",
-      restBefore: "Vos coûts, vos marges et votre rentabilité pilotés en ",
+      highlight: "vos chiffres",
+      restBefore: "Pilotez coûts, marges et rentabilité avec ",
       rest: "",
       Icon: LineChart as LucideIcon,
     },

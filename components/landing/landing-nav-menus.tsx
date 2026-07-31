@@ -10,6 +10,7 @@ import {
   type LandingNavItem,
   type LandingNavMenu,
 } from "@/lib/landing-nav";
+import { markLandingPastIntro } from "@/components/landing/landing-experience";
 import { cn } from "@/lib/utils";
 
 type LandingNavMenusProps = {
@@ -138,7 +139,21 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
       const target = document.getElementById(hash);
       if (!target) return false;
 
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Clic volontaire vers une ancre : libérer le pin cinéma
+      // (Hero / post-Hero / hub) pour atteindre la section demandée.
+      markLandingPastIntro();
+      window.dispatchEvent(
+        new CustomEvent("batimum:landing-go-section", { detail: { id: hash } }),
+      );
+
+      window.requestAnimationFrame(() => {
+        window.setTimeout(() => {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 60);
+        window.setTimeout(() => {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 280);
+      });
       closeMenus();
       closeMobile();
       return true;

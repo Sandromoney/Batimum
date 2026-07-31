@@ -159,9 +159,21 @@ export function clearLandingIntroFlags() {
 }
 
 function consumeSoftReturn(): LandingDepartureSnapshot | null {
+  // Strict Mode : ne réutilise la mémoire que s’il reste une clé fraîche
+  // ou si on vient juste de la consommer dans le même montage.
   if (softReturnMemory !== undefined) return softReturnMemory;
 
   try {
+    const nav = performance.getEntriesByType(
+      "navigation",
+    )[0] as PerformanceNavigationTiming | undefined;
+    // Un F5 / reload ne doit jamais rejouer un soft-return.
+    if (nav?.type === "reload") {
+      sessionStorage.removeItem(SOFT_RETURN_KEY);
+      softReturnMemory = null;
+      return null;
+    }
+
     const raw = sessionStorage.getItem(SOFT_RETURN_KEY);
     if (!raw) {
       softReturnMemory = null;

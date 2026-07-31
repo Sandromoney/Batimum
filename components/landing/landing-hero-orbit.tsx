@@ -32,7 +32,7 @@ export type HeroFeatureId =
   | "clients"
   | "pilotage";
 
-type StatFormat = "percent" | "multiplier";
+type StatFormat = "percent" | "multiplier" | "proof";
 
 type HeroStat = {
   /** Prefixe avant le chiffre ("Jusqu’à", etc.) — vide si pure valeur */
@@ -41,7 +41,7 @@ type HeroStat = {
   lead: string;
   value: number;
   format: StatFormat;
-  /** Suite après la valeur ("de temps gagné", "plus vite", …) */
+  /** Suite après la valeur, ou phrase bénéfice si format "proof" */
   headline: string;
   subtext: string;
 };
@@ -76,10 +76,10 @@ export const HERO_FEATURES: HexFeature[] = [
   {
     id: "devis",
     title: "Devis avec MUM IA",
-    subtitle: "Prêts en quelques minutes",
-    panelTitle: "Devis IA ultra rapide",
+    subtitle: "Une base structurée, prête à ajuster",
+    panelTitle: "Devis avec MUM IA",
     panelText:
-      "Fini de passer des heures à rédiger vos devis. Décrivez simplement les travaux à réaliser et MUM IA génère un devis personnalisé en quelques secondes. Vous gardez toujours la main pour modifier les quantités, les prix et les prestations avant l’envoi au client.",
+      "Décrivez le chantier. MUM IA prépare les prestations et les prix. Vous gardez la main pour ajuster avant l’envoi au client.",
     ctaLabel: "Découvrir MUM IA",
     href: "#devis-ia",
     angle: 0,
@@ -87,20 +87,21 @@ export const HERO_FEATURES: HexFeature[] = [
     Icon: Bot,
     stat: {
       lead: "",
-      prefix: "Jusqu’à",
-      value: 90,
-      format: "percent",
-      headline: "de temps gagné",
-      subtext: "Créez vos devis en quelques secondes avec MUM IA",
+      prefix: "",
+      value: 0,
+      format: "proof",
+      headline: "Une base de devis créée en quelques instants",
+      subtext:
+        "Décrivez le chantier. MUM IA prépare les prestations et les prix.",
     },
   },
   {
     id: "planning",
     title: "Planning des équipes",
-    subtitle: "Tout le monde au bon endroit",
-    panelTitle: "Organisez vos équipes en quelques clics",
+    subtitle: "Chacun sait où aller et quoi faire",
+    panelTitle: "Planning des équipes",
     panelText:
-      "Attribuez vos salariés aux chantiers, visualisez les disponibilités et évitez les oublis. Toute votre équipe sait où aller, quand intervenir et quelles sont les informations importantes.",
+      "Affectations, périodes et consignes transmises dans l’espace employé. Toute l’équipe sait où intervenir.",
     ctaLabel: "Découvrir le planning",
     href: "#planning",
     angle: 60,
@@ -108,20 +109,21 @@ export const HERO_FEATURES: HexFeature[] = [
     Icon: Calendar,
     stat: {
       lead: "",
-      prefix: "Jusqu’à",
-      value: 70,
-      format: "percent",
-      headline: "d’échanges en moins",
-      subtext: "Toutes vos équipes et interventions dans un seul planning",
+      prefix: "",
+      value: 0,
+      format: "proof",
+      headline: "Une affectation, toutes les informations transmises",
+      subtext:
+        "Affectations, périodes et consignes transmises dans l’espace employé.",
     },
   },
   {
     id: "chantiers",
     title: "Suivi des chantiers",
-    subtitle: "Gardez toujours le contrôle",
-    panelTitle: "Gardez le contrôle de tous vos chantiers",
+    subtitle: "Une progression réellement représentative",
+    panelTitle: "Suivi des chantiers",
     panelText:
-      "Suivez chaque étape de vos chantiers en temps réel. Photos, avancement, documents et informations restent centralisés pour ne plus rien oublier.",
+      "L’avancement évolue selon l’importance de chaque étape. Vous savez où en est chaque chantier.",
     ctaLabel: "Découvrir le suivi chantier",
     href: "#chantiers",
     angle: 120,
@@ -130,40 +132,41 @@ export const HERO_FEATURES: HexFeature[] = [
     stat: {
       lead: "",
       prefix: "",
-      value: 100,
-      format: "percent",
-      headline: "de vos chantiers visibles",
-      subtext: "Avancement, documents, photos et informations en temps réel",
+      value: 0,
+      format: "proof",
+      headline: "Chaque étape contribue réellement à l’avancement",
+      subtext: "L’avancement évolue selon l’importance de chaque étape.",
     },
   },
   {
     id: "facturation",
     title: "Facturation simplifiée",
-    subtitle: "Du devis au paiement",
-    panelTitle: "Facturez plus vite",
+    subtitle: "Du devis signé au suivi du paiement",
+    panelTitle: "Facturation simplifiée",
     panelText:
-      "Transformez vos devis en factures en quelques secondes. Suivez facilement les règlements et gardez une vision claire des paiements en attente.",
+      "Documents, statuts et encaissements restent liés au même dossier, sans rupture.",
     ctaLabel: "Découvrir la facturation",
     href: "#facturation",
     angle: 180,
     accent: ICON_ACCENT,
     Icon: Receipt,
     stat: {
-      lead: "Facturez",
-      prefix: "jusqu’à",
-      value: 10,
-      format: "multiplier",
-      headline: "plus vite",
-      subtext: "Transformez un devis en facture sans aucune ressaisie",
+      lead: "",
+      prefix: "",
+      value: 0,
+      format: "proof",
+      headline: "Du devis signé au paiement, sans rupture",
+      subtext:
+        "Documents, statuts et encaissements restent liés au même dossier.",
     },
   },
   {
     id: "clients",
-    title: "Gestion client",
-    subtitle: "Tout est facile à retrouver",
-    panelTitle: "Toutes vos informations au même endroit",
+    title: "Clients centralisés",
+    subtitle: "Tout l’historique dans une seule fiche",
+    panelTitle: "Clients centralisés",
     panelText:
-      "Retrouvez instantanément les coordonnées, devis, factures, documents et historique de chaque client. Fini les recherches interminables.",
+      "Devis, factures, chantiers et coordonnées toujours disponibles dans une seule fiche.",
     ctaLabel: "Découvrir la gestion client",
     href: "#clients",
     angle: 240,
@@ -172,19 +175,19 @@ export const HERO_FEATURES: HexFeature[] = [
     stat: {
       lead: "",
       prefix: "",
-      value: 100,
-      format: "percent",
-      headline: "des informations centralisées",
-      subtext: "Devis, factures, coordonnées et documents toujours accessibles",
+      value: 0,
+      format: "proof",
+      headline: "Un seul dossier pour retrouver tout l’historique",
+      subtext: "Devis, factures, chantiers et coordonnées toujours disponibles.",
     },
   },
   {
     id: "pilotage",
     title: "Pilotage et rentabilité",
-    subtitle: "Vos marges sous contrôle",
-    panelTitle: "Analysez réellement vos marges",
+    subtitle: "Décidez avec vos vrais chiffres",
+    panelTitle: "Pilotage et rentabilité",
     panelText:
-      "Visualisez la rentabilité de chaque chantier, comparez le prévu au réalisé et identifiez rapidement les projets les plus rentables. Prenez de meilleures décisions grâce à des données claires.",
+      "Coûts, marges et écarts prévus/réels visibles pour piloter chaque chantier.",
     ctaLabel: "Découvrir le pilotage",
     href: "#pilotage",
     angle: 300,
@@ -193,10 +196,10 @@ export const HERO_FEATURES: HexFeature[] = [
     stat: {
       lead: "",
       prefix: "",
-      value: 100,
-      format: "percent",
-      headline: "de visibilité sur vos marges",
-      subtext: "Analysez la rentabilité réelle de chaque chantier",
+      value: 0,
+      format: "proof",
+      headline: "Prévisionnel et réel comparés au même endroit",
+      subtext: "Coûts, marges et écarts prévus/réels visibles clairement.",
     },
   },
 ];
@@ -341,7 +344,9 @@ function useCountUp(
 }
 
 function formatUnit(format: StatFormat) {
-  return format === "multiplier" ? "×" : "%";
+  if (format === "multiplier") return "×";
+  if (format === "proof") return "";
+  return "%";
 }
 
 function HeroNutSvg() {
@@ -559,12 +564,25 @@ function FeatureStatBadge({
   reduced: boolean;
   epoch: number;
 }) {
-  const count = useCountUp(stat.value, COUNTER_MS, true, reduced, epoch);
+  const isProof = stat.format === "proof";
+  const count = useCountUp(
+    isProof ? 0 : stat.value,
+    COUNTER_MS,
+    !isProof,
+    reduced,
+    epoch,
+  );
   const unit = formatUnit(stat.format);
 
   return (
     <span
-      className={`batimumHero__statBadge batimumHero__statBadge--${mode}`}
+      className={[
+        "batimumHero__statBadge",
+        `batimumHero__statBadge--${mode}`,
+        isProof ? "batimumHero__statBadge--proof" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       style={
         {
           "--batimum-stat-cycle": `${STAT_VISIBLE_MS}ms`,
@@ -574,17 +592,23 @@ function FeatureStatBadge({
       aria-hidden="true"
     >
       <span className="batimumHero__statBadgeMain">
-        {stat.lead ? (
-          <span className="batimumHero__statBadgeLead">{stat.lead}</span>
-        ) : null}
-        {stat.prefix ? (
-          <span className="batimumHero__statBadgePrefix">{stat.prefix}</span>
-        ) : null}
-        <span className="batimumHero__statBadgeValue">
-          <span className="batimumHero__statBadgeNumber">{count}</span>
-          <span className="batimumHero__statBadgeUnit">{unit}</span>
-        </span>
-        <span className="batimumHero__statBadgeHeadline">{stat.headline}</span>
+        {isProof ? (
+          <span className="batimumHero__statBadgeHeadline">{stat.headline}</span>
+        ) : (
+          <>
+            {stat.lead ? (
+              <span className="batimumHero__statBadgeLead">{stat.lead}</span>
+            ) : null}
+            {stat.prefix ? (
+              <span className="batimumHero__statBadgePrefix">{stat.prefix}</span>
+            ) : null}
+            <span className="batimumHero__statBadgeValue">
+              <span className="batimumHero__statBadgeNumber">{count}</span>
+              <span className="batimumHero__statBadgeUnit">{unit}</span>
+            </span>
+            <span className="batimumHero__statBadgeHeadline">{stat.headline}</span>
+          </>
+        )}
       </span>
       <span className="batimumHero__statBadgeSub">{stat.subtext}</span>
     </span>
