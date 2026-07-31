@@ -15,8 +15,8 @@ import {
 } from "@/lib/landing-hub-pauseable-timer";
 
 export const PILOTAGE_HIGHLIGHT_MS = 1400;
-export const PILOTAGE_ENTER_MS = 1320;
-export const PILOTAGE_RETURN_MS = 1600;
+export const PILOTAGE_ENTER_MS = 720;
+export const PILOTAGE_RETURN_MS = 820;
 export const PILOTAGE_DEMO_SAFETY_MS = 16000;
 
 type PilotBeat = "read" | "scan" | "warn" | "ok" | "done";
@@ -139,12 +139,12 @@ export function PilotageFilmPanel({
       seekMs,
       later,
       onFinish: finish,
-      finishAt: 6200,
+      finishAt: 3000,
       cues: [
-        { at: 400, apply: () => setBeat("scan") },
-        { at: 1600, apply: () => setBeat("warn") },
-        { at: 3200, apply: () => setBeat("ok") },
-        { at: 4800, apply: () => setBeat("done") },
+        { at: 194, apply: () => setBeat("scan") },
+        { at: 774, apply: () => setBeat("warn") },
+        { at: 1548, apply: () => setBeat("ok") },
+        { at: 2323, apply: () => setBeat("done") },
       ],
     });
     return clear;

@@ -16,14 +16,14 @@ import {
 } from "@/lib/landing-hub-pauseable-timer";
 
 /** Fusion modules → respiration → écrou → vissage → textes → CTAs */
-export const SIG_MERGE_MS = 1800;
-export const SIG_BREATH_MS = 2000;
-export const SIG_APPROACH_MS = 2800;
-export const SIG_SCREW_MS = 3200;
-export const SIG_PULSE_MS = 900;
-export const SIG_COPY_MS = 2200;
-export const SIG_CTA_MS = 900;
-export const SIG_HOLD_MS = 800;
+export const SIG_MERGE_MS = 1000;
+export const SIG_BREATH_MS = 1100;
+export const SIG_APPROACH_MS = 1500;
+export const SIG_SCREW_MS = 1700;
+export const SIG_PULSE_MS = 500;
+export const SIG_COPY_MS = 1100;
+export const SIG_CTA_MS = 500;
+export const SIG_HOLD_MS = 400;
 
 export const SIG_DEMO_SAFETY_MS =
   SIG_MERGE_MS +

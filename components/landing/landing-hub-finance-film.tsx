@@ -17,9 +17,9 @@ import {
 } from "@/lib/landing-hub-pauseable-timer";
 
 export const FIN_HIGHLIGHT_MS = 900;
-export const FIN_ENTER_MS = 1380;
-export const FIN_RETURN_MS = 1700;
-export const FIN_CONVERGE_MS = 1800;
+export const FIN_ENTER_MS = 780;
+export const FIN_RETURN_MS = 900;
+export const FIN_CONVERGE_MS = 1000;
 export const FIN_DEMO_SAFETY_MS = 45000;
 
 const DEVIS_TOTAL = 9845;
@@ -517,44 +517,44 @@ export function FinanceFilmPanel({
       seekMs,
       later,
       onFinish: finish,
-      finishAt: 15500,
+      finishAt: 7200,
       cues: [
         {
-          at: 700,
+          at: 325,
           apply: () => {
             setBeat("pipeline");
             setPipelineOn(true);
           },
         },
-        { at: 1300, apply: () => setInvoiceOn(true) },
+        { at: 604, apply: () => setInvoiceOn(true) },
         {
-          at: 2400,
+          at: 1115,
           apply: () => {
             setBeat("send");
             setSendPressed(true);
           },
         },
         {
-          at: 3100,
+          at: 1440,
           apply: () => {
             setBeat("pay");
             setPayStep(0);
           },
         },
-        { at: 3900, apply: () => setPayStep(1) },
-        { at: 4800, apply: () => setPayStep(2) },
+        { at: 1812, apply: () => setPayStep(1) },
+        { at: 2230, apply: () => setPayStep(2) },
         {
-          at: 5400,
+          at: 2508,
           apply: () => {
             setBeat("pulse");
             setBreathe(true);
             setDashOn(true);
           },
         },
-        { at: 7800, apply: () => setBeat("margeOk") },
-        { at: 9800, apply: () => setBeat("margeLow") },
-        { at: 11800, apply: () => setBeat("alive") },
-        { at: 13800, apply: () => setBeat("done") },
+        { at: 3623, apply: () => setBeat("margeOk") },
+        { at: 4552, apply: () => setBeat("margeLow") },
+        { at: 5481, apply: () => setBeat("alive") },
+        { at: 6410, apply: () => setBeat("done") },
       ],
     });
 
