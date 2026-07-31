@@ -14,8 +14,8 @@ import {
 } from "@/lib/landing-hub-pauseable-timer";
 
 export const CHANTIER_HIGHLIGHT_MS = 900;
-export const CHANTIER_ENTER_MS = 780;
-export const CHANTIER_RETURN_MS = 900;
+export const CHANTIER_ENTER_MS = 680;
+export const CHANTIER_RETURN_MS = 750;
 export const CHANTIER_DEMO_SAFETY_MS = 42000;
 
 type ChantierBeat =
@@ -368,14 +368,14 @@ export function ChantiersFilmPanel({
       seekMs,
       later,
       onFinish: finish,
-      finishAt: 6000,
+      finishAt: 5000,
       cues: [
-        { at: 500, apply: () => setBeat("steps") },
-        { at: 1182, apply: () => setBeat("progress") },
-        { at: 2000, apply: () => setBeat("faïence") },
-        { at: 3091, apply: bumpProgress },
-        { at: 4000, apply: () => setBeat("alive") },
-        { at: 5091, apply: () => setBeat("done") },
+        { at: 417, apply: () => setBeat("steps") },
+        { at: 985, apply: () => setBeat("progress") },
+        { at: 1667, apply: () => setBeat("faïence") },
+        { at: 2576, apply: bumpProgress },
+        { at: 3333, apply: () => setBeat("alive") },
+        { at: 4242, apply: () => setBeat("done") },
       ],
     });
 

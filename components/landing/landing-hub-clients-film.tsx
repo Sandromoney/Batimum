@@ -26,8 +26,8 @@ import {
 import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
 
 export const CLIENTS_HIGHLIGHT_MS = 900;
-export const CLIENTS_ENTER_MS = 780;
-export const CLIENTS_RETURN_MS = 900;
+export const CLIENTS_ENTER_MS = 680;
+export const CLIENTS_RETURN_MS = 750;
 export const CLIENTS_DEMO_SAFETY_MS = 28000;
 
 type ClientsBeat =
@@ -272,22 +272,22 @@ export function ClientsFilmPanel({
       seekMs,
       later,
       onFinish: finish,
-      finishAt: 4200,
+      finishAt: 3600,
       cues: [
         {
-          at: 250,
+          at: 214,
           apply: () => {
             setOpenId("martin");
             setBeat("hover");
           },
         },
-        { at: 550, apply: () => setBeat("open") },
-        { at: 850, apply: () => setBeat("identity") },
-        { at: 1300, apply: () => setBeat("contact") },
-        { at: 1800, apply: () => setBeat("history") },
-        { at: 2400, apply: () => setBeat("docs") },
-        { at: 3000, apply: () => setBeat("notes") },
-        { at: 3600, apply: () => setBeat("done") },
+        { at: 471, apply: () => setBeat("open") },
+        { at: 729, apply: () => setBeat("identity") },
+        { at: 1114, apply: () => setBeat("contact") },
+        { at: 1543, apply: () => setBeat("history") },
+        { at: 2057, apply: () => setBeat("docs") },
+        { at: 2571, apply: () => setBeat("notes") },
+        { at: 3086, apply: () => setBeat("done") },
       ],
     });
 

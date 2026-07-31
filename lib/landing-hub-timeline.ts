@@ -1,47 +1,48 @@
 /**
  * Timeline nominale de la présentation hub (autoplay).
- * Constantes numériques locales pour éviter d’importer des modules client.
+ * Cible durée totale ~1 min (plafond ~1 min 20).
  */
 
-export const MODULE_LOCK_MS = 1180;
-export const AUTO_BREATH_MS = 620;
-export const AUTO_PLAN_BREATH_MS = 420;
-export const HOLD_MS = 500;
-export const INTRO_MS = 1650;
+export const MODULE_LOCK_MS = 640;
+export const AUTO_BREATH_MS = 240;
+export const AUTO_PLAN_BREATH_MS = 180;
+export const HOLD_MS = 220;
+export const INTRO_MS = 700;
 
-const MUM_ENTER_MS = 1380;
-const MUM_RETURN_MS = 1700;
-const CLIENTS_ENTER_MS = 1380;
-const CLIENTS_RETURN_MS = 1700;
-const CHANTIER_ENTER_MS = 1380;
-const CHANTIER_RETURN_MS = 1700;
-const PLAN_ENTER_MS = 1380;
-const PLAN_RETURN_MS = 1700;
-const FIN_ENTER_MS = 1380;
-const FIN_RETURN_MS = 1700;
-const FIN_CONVERGE_MS = 1800;
-const PILOTAGE_ENTER_MS = 1320;
-const PILOTAGE_RETURN_MS = 1600;
-/** Aligné sur SIG_DEMO_SAFETY_MS du signature panel. */
-const SIG_DEMO_SAFETY_MS = 1800 + 2000 + 2800 + 3200 + 900 + 2200 + 900 + 800;
+const MUM_ENTER_MS = 680;
+const MUM_RETURN_MS = 750;
+const CLIENTS_ENTER_MS = 680;
+const CLIENTS_RETURN_MS = 750;
+const CHANTIER_ENTER_MS = 680;
+const CHANTIER_RETURN_MS = 750;
+const PLAN_ENTER_MS = 680;
+const PLAN_RETURN_MS = 750;
+const FIN_ENTER_MS = 680;
+const FIN_RETURN_MS = 750;
+const FIN_CONVERGE_MS = 900;
+const PILOTAGE_ENTER_MS = 640;
+const PILOTAGE_RETURN_MS = 700;
+/** Signature compressée (alignée sur landing-hub-signature, sans marge morte). */
+const SIG_DEMO_SAFETY_MS =
+  1000 + 1100 + 1500 + 1700 + 500 + 1100 + 500 + 400;
 
-/** Lecture module — alignée sur moduleReadMs du hub. */
+/** Lecture module — courte mais lisible. */
 function readMs(copyLen: number) {
-  return Math.round(Math.min(2100, Math.max(1650, 1180 + copyLen * 15)));
+  return Math.round(Math.min(1100, Math.max(750, 520 + copyLen * 8)));
 }
 
 function modulePreMs(enterMs: number, copyLen: number) {
   return MODULE_LOCK_MS + enterMs + readMs(copyLen);
 }
 
-/** Durées de démo observées (fin onDemoComplete / onPlanComplete). */
+/** Durées de démo alignées sur les cues des films. */
 export const DEMO_MS = {
-  mumPlans: [9600, 2200, 3400, 1600, 8200, 12800] as const,
-  clients: 8400,
-  chantiers: 13200,
-  planning: 8600,
-  finance: 15500,
-  pilotage: 6200,
+  mumPlans: [4000, 1200, 1800, 900, 3600, 5200] as const,
+  clients: 3600,
+  chantiers: 5000,
+  planning: 3800,
+  finance: 6000,
+  pilotage: 2800,
 } as const;
 
 export type HubFilmModule =
@@ -217,7 +218,7 @@ function buildSegments(): Seg[] {
   });
 
   push({
-    duration: SIG_DEMO_SAFETY_MS + 900,
+    duration: SIG_DEMO_SAFETY_MS + 300,
     scene: 16,
     kind: "signature",
     module: null,
@@ -273,7 +274,7 @@ export function resolveTimeline(timeMs: number): TimelineHit {
   if (seg.kind === "intro") {
     return {
       timeMs: t,
-      scene: offsetMs < 700 ? 1 : 2,
+      scene: offsetMs < 300 ? 1 : 2,
       offsetMs,
       kind: "intro",
       module: null,
@@ -375,7 +376,6 @@ export function formatFilmTime(ms: number) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-/** Synchronise l’horloge sur le début du prochain segment après une démo. */
 export function nextAnchorAfterDemo(
   module: HubFilmModule,
   mumPlan = 0,

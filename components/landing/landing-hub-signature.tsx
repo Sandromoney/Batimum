@@ -33,8 +33,7 @@ export const SIG_DEMO_SAFETY_MS =
   SIG_PULSE_MS +
   SIG_COPY_MS +
   SIG_CTA_MS +
-  SIG_HOLD_MS +
-  1500;
+  SIG_HOLD_MS;
 
 const BM_SRC = "/logo-batimum.png";
 const BM_SRC_W = 829;

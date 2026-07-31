@@ -540,7 +540,7 @@ export function MumFilmPanel({
     clear();
     setLinesVisible(LINES.length);
     setAnalyseDone(ANALYSIS.length);
-    if (seekMs >= 450) {
+    if (seekMs >= 400) {
       setBeat("ready");
       setShowReady(true);
       setDevisStatut("ready");
@@ -550,9 +550,9 @@ export function MumFilmPanel({
         setBeat("ready");
         setShowReady(true);
         setDevisStatut("ready");
-      }, 450 - seekMs);
+      }, 400 - seekMs);
     }
-    later(() => completePlan(3), Math.max(16, 1000 - seekMs));
+    later(() => completePlan(3), Math.max(16, 900 - seekMs));
     return clear;
   }, [active, reduced, plan, completePlan, later, clear, seekKey, seekMs]);
 
@@ -569,17 +569,17 @@ export function MumFilmPanel({
         apply: () => setSignBeat("send"),
       },
       {
-        at: 563,
+        at: 480,
         apply: () => {
           setSignBeat("sending");
           setDevisStatut("envoye");
         },
       },
-      { at: 1229, apply: () => setSignBeat("mail") },
-      { at: 1946, apply: () => setSignBeat("openMail") },
-      { at: 2663, apply: () => setSignBeat("consult") },
+      { at: 1050, apply: () => setSignBeat("mail") },
+      { at: 1670, apply: () => setSignBeat("openMail") },
+      { at: 2280, apply: () => setSignBeat("consult") },
       {
-        at: 3483,
+        at: 2980,
         apply: () => {
           setSignBeat("page");
           setDevisStatut("consulte");
@@ -590,7 +590,7 @@ export function MumFilmPanel({
       if (cue.at <= seekMs) cue.apply();
       else later(cue.apply, cue.at - seekMs);
     }
-    later(() => completePlan(4), Math.max(16, 4200 - seekMs));
+    later(() => completePlan(4), Math.max(16, 3600 - seekMs));
     return clear;
   }, [active, reduced, plan, completePlan, clear, later, seekKey, seekMs]);
 
@@ -603,32 +603,32 @@ export function MumFilmPanel({
 
     const cues: { at: number; apply: () => void }[] = [
       { at: 0, apply: () => setSignBeat("scroll") },
-      { at: 775, apply: () => setSignBeat("hoverSign") },
-      { at: 1453, apply: () => setSignBeat("signModal") },
-      { at: 2131, apply: () => setSignBeat("draw") },
-      { at: 3100, apply: () => setSignBeat("validate") },
-      { at: 3681, apply: () => setSignBeat("validating") },
+      { at: 650, apply: () => setSignBeat("hoverSign") },
+      { at: 1220, apply: () => setSignBeat("signModal") },
+      { at: 1790, apply: () => setSignBeat("draw") },
+      { at: 2600, apply: () => setSignBeat("validate") },
+      { at: 3090, apply: () => setSignBeat("validating") },
       {
-        at: 4263,
+        at: 3570,
         apply: () => {
           setSignBeat("pipeline");
           setDevisStatut("signe");
         },
       },
       {
-        at: 4941,
+        at: 4140,
         apply: () => {
           setSignBeat("commande");
           setDevisStatut("commande");
         },
       },
-      { at: 5619, apply: () => setSignBeat("back") },
+      { at: 4710, apply: () => setSignBeat("back") },
     ];
     for (const cue of cues) {
       if (cue.at <= seekMs) cue.apply();
       else later(cue.apply, cue.at - seekMs);
     }
-    later(() => completePlan(5), Math.max(16, 6200 - seekMs));
+    later(() => completePlan(5), Math.max(16, 5200 - seekMs));
     return clear;
   }, [active, reduced, plan, completePlan, clear, later, seekKey, seekMs]);
 
@@ -714,7 +714,7 @@ export function MumFilmShell({
 }
 
 export const MUM_HIGHLIGHT_MS = 900;
-export const MUM_ENTER_MS = 780;
-export const MUM_RETURN_MS = 900;
+export const MUM_ENTER_MS = 680;
+export const MUM_RETURN_MS = 750;
 /** Plafond de sécurité si la démo ne signale pas la fin */
 export const MUM_DEMO_SAFETY_MS = 78000;

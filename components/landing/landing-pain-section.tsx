@@ -28,15 +28,16 @@ const CLOSING_LINES = [
 const LAST_STEP = MICRO_LINES.length + CLOSING_LINES.length;
 
 const TRANSITION_S = 0.42;
-const WHEEL_THRESHOLD = 48;
+const WHEEL_THRESHOLD = 52;
 const TOUCH_THRESHOLD = 56;
-const ENGAGE_GRACE_MS = 280;
-/** Silence molette requis après une étape (anti-inertie trackpad). */
-const WHEEL_QUIET_MS = 340;
-/** Délai minimum entre deux avancées d’étape. */
-const STEP_COOLDOWN_MS = 920;
+/** Grâce à l’entrée en pin — le geste Hero ne doit jamais avancer une slide. */
+const ENTRY_CONSUME_MS = 900;
+/** Silence molette requis avant de réarmer (anti-inertie trackpad). */
+const WHEEL_QUIET_MS = 520;
+/** Délai minimum entre deux avancées d’étape (après fin du lock visuel). */
+const STEP_COOLDOWN_MS = 780;
 /** Wait for exit opacity → 0 before enter (mode="wait"). */
-const VISUAL_LOCK_MS = Math.round(TRANSITION_S * 1000) + 320;
+const VISUAL_LOCK_MS = Math.round(TRANSITION_S * 1000) + 380;
 /** Breath after last line before cinematic fade (sur geste explicite). */
 const HANDOFF_BREATH_MS = 420;
 /** Soft fade + depth toward hub gate. */
@@ -176,9 +177,11 @@ export function LandingPainSection() {
   const pinModeRef = useRef<PinMode>("before");
 
   const isTransitioningRef = useRef(false);
-  const wheelArmedRef = useRef(true);
+  const wheelArmedRef = useRef(false);
   const deltaAccumRef = useRef(0);
-  const engageAtRef = useRef(0);
+  /** Jusqu’à cette date, tout geste est consommé (entrée Hero → pin). */
+  const consumeUntilRef = useRef(0);
+  const lastWheelAtRef = useRef(0);
   const lastStepAtRef = useRef(0);
   const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -195,10 +198,21 @@ export function LandingPainSection() {
     setActiveStep(clamped);
   }, []);
 
+  /** Réarme uniquement après silence molette — jamais pendant l’inertie. */
   const scheduleWheelRearm = useCallback(() => {
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     settleTimerRef.current = setTimeout(() => {
       if (isTransitioningRef.current) {
+        scheduleWheelRearm();
+        return;
+      }
+      if (Date.now() < consumeUntilRef.current) {
+        scheduleWheelRearm();
+        return;
+      }
+      // Encore du mouvement récent → attendre davantage
+      const sinceWheel = Date.now() - lastWheelAtRef.current;
+      if (sinceWheel < WHEEL_QUIET_MS) {
         scheduleWheelRearm();
         return;
       }
@@ -208,18 +222,32 @@ export function LandingPainSection() {
     }, WHEEL_QUIET_MS);
   }, []);
 
+  const disarmGesture = useCallback(
+    (consumeMs = 0) => {
+      wheelArmedRef.current = false;
+      deltaAccumRef.current = 0;
+      if (consumeMs > 0) {
+        consumeUntilRef.current = Math.max(
+          consumeUntilRef.current,
+          Date.now() + consumeMs,
+        );
+      }
+      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+      scheduleWheelRearm();
+    },
+    [scheduleWheelRearm],
+  );
+
   const startLock = useCallback(() => {
     isTransitioningRef.current = true;
-    wheelArmedRef.current = false;
-    deltaAccumRef.current = 0;
     lastStepAtRef.current = Date.now();
+    disarmGesture();
     if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
-    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     lockTimerRef.current = setTimeout(() => {
       isTransitioningRef.current = false;
       scheduleWheelRearm();
     }, VISUAL_LOCK_MS);
-  }, [scheduleWheelRearm]);
+  }, [disarmGesture, scheduleWheelRearm]);
 
   const exitToCompact = useCallback(() => {
     storyCompletedRef.current = true;
@@ -292,7 +320,7 @@ export function LandingPainSection() {
     (direction: 1 | -1): "handled" | "exit" | "pass" => {
       if (!playing) return "pass";
       if (pinModeRef.current !== "pin") return "pass";
-      if (Date.now() < engageAtRef.current) return "handled";
+      if (Date.now() < consumeUntilRef.current) return "handled";
       if (isTransitioningRef.current) return "handled";
       if (Date.now() - lastStepAtRef.current < STEP_COOLDOWN_MS) {
         return "handled";
@@ -346,10 +374,10 @@ export function LandingPainSection() {
         window.scrollTo(0, targetY);
       }
 
+      // Premier ancrage : consommer entièrement le geste Hero / inertie
       if (pinModeRef.current !== "pin") {
-        engageAtRef.current = Date.now() + ENGAGE_GRACE_MS;
-        deltaAccumRef.current = 0;
-        wheelArmedRef.current = true;
+        lastWheelAtRef.current = Date.now();
+        disarmGesture(ENTRY_CONSUME_MS);
       }
       pinModeRef.current = "pin";
       setPinMode("pin");
@@ -362,7 +390,7 @@ export function LandingPainSection() {
       window.removeEventListener("scroll", syncPin);
       window.removeEventListener("resize", syncPin);
     };
-  }, [playing]);
+  }, [playing, disarmGesture]);
 
   useEffect(() => {
     if (!playing) return;
@@ -370,22 +398,27 @@ export function LandingPainSection() {
     const onWheel = (event: WheelEvent) => {
       if (pinModeRef.current !== "pin") return;
 
-      if (Date.now() < engageAtRef.current) {
-        event.preventDefault();
+      lastWheelAtRef.current = Date.now();
+      event.preventDefault();
+
+      // Entrée Hero / lock / inertie : tout absorber, zéro accumulation
+      if (Date.now() < consumeUntilRef.current) {
         deltaAccumRef.current = 0;
+        wheelArmedRef.current = false;
+        scheduleWheelRearm();
         return;
       }
 
       if (isTransitioningRef.current || !wheelArmedRef.current) {
-        event.preventDefault();
         deltaAccumRef.current = 0;
-        // Ne pas réarmer ici : l’inertie trackpad ne doit pas enchaîner les étapes
+        scheduleWheelRearm();
         return;
       }
 
       if (Date.now() - lastStepAtRef.current < STEP_COOLDOWN_MS) {
-        event.preventDefault();
         deltaAccumRef.current = 0;
+        wheelArmedRef.current = false;
+        scheduleWheelRearm();
         return;
       }
 
@@ -394,7 +427,6 @@ export function LandingPainSection() {
         return;
       }
 
-      event.preventDefault();
       deltaAccumRef.current += event.deltaY;
 
       if (Math.abs(deltaAccumRef.current) < WHEEL_THRESHOLD) return;
@@ -407,7 +439,7 @@ export function LandingPainSection() {
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [playing, applyIntent]);
+  }, [playing, applyIntent, scheduleWheelRearm]);
 
   useEffect(() => {
     if (!playing) return;
@@ -482,6 +514,12 @@ export function LandingPainSection() {
       const startY = touchStartYRef.current;
       touchStartYRef.current = null;
       if (startY == null) return;
+
+      if (Date.now() < consumeUntilRef.current || isTransitioningRef.current) {
+        return;
+      }
+      if (!wheelArmedRef.current) return;
+      if (Date.now() - lastStepAtRef.current < STEP_COOLDOWN_MS) return;
 
       const endY = event.changedTouches[0]?.clientY;
       if (endY == null) return;

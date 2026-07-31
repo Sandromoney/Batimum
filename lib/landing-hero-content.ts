@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Clock3, LineChart, Shield } from "lucide-react";
+import { Clock3, HardHat, LineChart } from "lucide-react";
 
 /**
  * Contenu du Hero landing — colonne gauche uniquement.
@@ -24,13 +24,13 @@ export const heroContent = {
       Icon: Clock3 as LucideIcon,
     },
     {
-      highlight: "Deux espaces",
-      rest: " — dirigeant et salarié séparés : vos équipes ne voient que leurs chantiers et consignes",
-      Icon: Shield as LucideIcon,
+      highlight: "Affectez",
+      rest: " vos équipes et suivez chaque chantier au même endroit",
+      Icon: HardHat as LucideIcon,
     },
     {
       highlight: "temps réel",
-      restBefore: "Vos coûts, vos marges et votre rentabilité suivis en ",
+      restBefore: "Vos coûts, vos marges et votre rentabilité pilotés en ",
       rest: "",
       Icon: LineChart as LucideIcon,
     },

@@ -17,9 +17,9 @@ import {
 } from "@/lib/landing-hub-pauseable-timer";
 
 export const FIN_HIGHLIGHT_MS = 900;
-export const FIN_ENTER_MS = 780;
-export const FIN_RETURN_MS = 900;
-export const FIN_CONVERGE_MS = 1000;
+export const FIN_ENTER_MS = 680;
+export const FIN_RETURN_MS = 750;
+export const FIN_CONVERGE_MS = 900;
 export const FIN_DEMO_SAFETY_MS = 45000;
 
 const DEVIS_TOTAL = 9845;
@@ -517,44 +517,44 @@ export function FinanceFilmPanel({
       seekMs,
       later,
       onFinish: finish,
-      finishAt: 7200,
+      finishAt: 6000,
       cues: [
         {
-          at: 325,
+          at: 271,
           apply: () => {
             setBeat("pipeline");
             setPipelineOn(true);
           },
         },
-        { at: 604, apply: () => setInvoiceOn(true) },
+        { at: 503, apply: () => setInvoiceOn(true) },
         {
-          at: 1115,
+          at: 929,
           apply: () => {
             setBeat("send");
             setSendPressed(true);
           },
         },
         {
-          at: 1440,
+          at: 1200,
           apply: () => {
             setBeat("pay");
             setPayStep(0);
           },
         },
-        { at: 1812, apply: () => setPayStep(1) },
-        { at: 2230, apply: () => setPayStep(2) },
+        { at: 1510, apply: () => setPayStep(1) },
+        { at: 1858, apply: () => setPayStep(2) },
         {
-          at: 2508,
+          at: 2090,
           apply: () => {
             setBeat("pulse");
             setBreathe(true);
             setDashOn(true);
           },
         },
-        { at: 3623, apply: () => setBeat("margeOk") },
-        { at: 4552, apply: () => setBeat("margeLow") },
-        { at: 5481, apply: () => setBeat("alive") },
-        { at: 6410, apply: () => setBeat("done") },
+        { at: 3019, apply: () => setBeat("margeOk") },
+        { at: 3793, apply: () => setBeat("margeLow") },
+        { at: 4568, apply: () => setBeat("alive") },
+        { at: 5342, apply: () => setBeat("done") },
       ],
     });
 

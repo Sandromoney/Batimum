@@ -51,8 +51,8 @@ const TEAM = [
 ] as const;
 
 export const PLAN_HIGHLIGHT_MS = 900;
-export const PLAN_ENTER_MS = 780;
-export const PLAN_RETURN_MS = 900;
+export const PLAN_ENTER_MS = 680;
+export const PLAN_RETURN_MS = 750;
 export const PLAN_DEMO_SAFETY_MS = 42000;
 export const PLAN_TEASE_MS = 1600;
 export const PLAN_BREATH_MS = 900;
@@ -296,14 +296,14 @@ export function PlanningFilmPanel({
       seekMs,
       later,
       onFinish: finish,
-      finishAt: 4400,
+      finishAt: 3800,
       cues: [
-        { at: 179, apply: () => setBeat("week") },
-        { at: 819, apply: () => setBeat("assign") },
-        { at: 1330, apply: () => setBeat("click") },
-        { at: 1740, apply: () => setBeat("notify") },
-        { at: 2353, apply: () => setBeat("employee") },
-        { at: 3581, apply: () => setBeat("done") },
+        { at: 155, apply: () => setBeat("week") },
+        { at: 707, apply: () => setBeat("assign") },
+        { at: 1149, apply: () => setBeat("click") },
+        { at: 1503, apply: () => setBeat("notify") },
+        { at: 2032, apply: () => setBeat("employee") },
+        { at: 3093, apply: () => setBeat("done") },
       ],
     });
 

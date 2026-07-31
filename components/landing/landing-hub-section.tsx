@@ -207,7 +207,7 @@ function moduleReadMs(focus: string): number {
     pilotage: 62,
   };
   const len = copyLen[focus] ?? 40;
-  return Math.round(Math.min(1300, Math.max(850, 620 + len * 9)));
+  return Math.round(Math.min(1100, Math.max(750, 520 + len * 8)));
 }
 
 /**
@@ -223,7 +223,7 @@ function moduleReadMs(focus: string): number {
 const LAST_SCENE = 16;
 /** Plans MUM internes (dictée → … → signature). */
 const MUM_PLAN_COUNT = 6;
-const INTRO_TO_MUM_MS = 1600;
+const INTRO_TO_MUM_MS = 1200;
 /** Marge sécurité = verrouillage + zoom + lecture max + démo. */
 const PRE_DEMO_MS = MODULE_LOCK_MS + 2100;
 const SCENE_LOCK_MS = [
@@ -1187,11 +1187,11 @@ export function LandingHubSection() {
         setRingRotation(0);
         setDemoSeekMs(0);
         startSceneLock(3, Math.max(16, INTRO_TO_MUM_MS - hit.offsetMs));
-        if (hit.offsetMs < 400) {
+        if (hit.offsetMs < 300) {
           filmLater(() => {
             sceneRef.current = 2;
             setScene(2);
-          }, 400 - hit.offsetMs);
+          }, 300 - hit.offsetMs);
         }
         filmLater(() => {
           sceneRef.current = 3;
@@ -1199,7 +1199,7 @@ export function LandingHubSection() {
           mumPlanRef.current = 0;
           setMumPlan(0);
           startMumFilmRef.current();
-        }, Math.max(16, 900 - hit.offsetMs));
+        }, Math.max(16, 700 - hit.offsetMs));
         return;
       }
 
@@ -1489,14 +1489,14 @@ export function LandingHubSection() {
           filmLater(() => {
             sceneRef.current = 2;
             setScene(2);
-          }, 400);
+          }, 300);
           filmLater(() => {
             sceneRef.current = 3;
             setScene(3);
             mumPlanRef.current = 0;
             setMumPlan(0);
             startMumFilm();
-          }, 900);
+          }, 700);
           return "handled";
         }
         return "handled";

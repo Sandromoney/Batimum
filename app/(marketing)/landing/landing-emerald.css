@@ -3989,6 +3989,7 @@ html:has(.landing-emerald) body {
   position: fixed;
   top: 0;
   bottom: auto;
+  z-index: 40;
 }
 
 .landing-emerald .lp-hub__atmosphere {
@@ -4258,21 +4259,21 @@ html:has(.landing-emerald) body {
 /* ——— Contrôles film premium (barre + pause) ——— */
 .landing-emerald .lp-hub__filmControls {
   position: absolute;
-  inset: 0 0 auto 0;
+  inset: 0;
   z-index: 14;
   pointer-events: none;
 }
 
 .landing-emerald .lp-hub__scrub {
   position: absolute;
-  top: 0;
+  top: var(--hub-safe-top, 5.5rem);
   left: 0;
   right: 0;
-  height: 18px;
+  height: 22px;
   pointer-events: auto;
   cursor: pointer;
   touch-action: none;
-  opacity: 0.55;
+  opacity: 0.7;
   transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -4287,7 +4288,7 @@ html:has(.landing-emerald) body {
   left: 0;
   right: 0;
   height: 2px;
-  background: rgba(17, 17, 17, 0.1);
+  background: rgba(17, 17, 17, 0.12);
   transform-origin: left center;
   transition: height 0.2s ease, background 0.2s ease;
 }
@@ -4295,7 +4296,7 @@ html:has(.landing-emerald) body {
 .landing-emerald .lp-hub__scrub.is-hot .lp-hub__scrubTrack,
 .landing-emerald .lp-hub__scrub:focus-visible .lp-hub__scrubTrack {
   height: 3px;
-  background: rgba(17, 17, 17, 0.16);
+  background: rgba(17, 17, 17, 0.18);
 }
 
 .landing-emerald .lp-hub__scrubFill {
@@ -4310,7 +4311,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-hub__scrubTime {
   position: absolute;
-  top: 10px;
+  top: 12px;
   transform: translateX(-50%);
   font-size: 0.68rem;
   font-weight: 500;
@@ -4320,7 +4321,7 @@ html:has(.landing-emerald) body {
   white-space: nowrap;
   pointer-events: none;
   padding: 0.15rem 0.35rem;
-  background: rgba(247, 245, 241, 0.82);
+  background: rgba(247, 245, 241, 0.88);
   backdrop-filter: blur(6px);
   border-radius: 4px;
 }
@@ -4333,14 +4334,14 @@ html:has(.landing-emerald) body {
   pointer-events: none;
   appearance: none;
   border: 0;
-  width: 2.15rem;
-  height: 2.15rem;
+  width: 2.35rem;
+  height: 2.35rem;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: rgba(247, 245, 241, 0.72);
+  background: rgba(247, 245, 241, 0.78);
   backdrop-filter: blur(8px);
-  color: rgba(17, 17, 17, 0.72);
+  color: rgba(17, 17, 17, 0.78);
   cursor: pointer;
   opacity: 0;
   transition:
@@ -4349,7 +4350,8 @@ html:has(.landing-emerald) body {
     opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.landing-emerald .lp-hub__filmControls.is-visible .lp-hub__pause {
+.landing-emerald .lp-hub__filmControls.is-visible .lp-hub__pause,
+.landing-emerald .lp-hub__filmControls.is-paused .lp-hub__pause {
   opacity: 1;
   pointer-events: auto;
 }
@@ -4386,7 +4388,12 @@ html:has(.landing-emerald) body {
   animation-play-state: paused !important;
 }
 
-/* L’atmosphère continue à vivre légèrement — ne pas pauser son canvas */
+/* Curseur film figé en pause */
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubFilm__cursor,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubFilm__cursor * {
+  animation-play-state: paused !important;
+  transition: none !important;
+}
 
 .landing-emerald .lp-hub__skip:hover {
   color: #111111;
