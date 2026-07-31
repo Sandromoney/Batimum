@@ -86,6 +86,7 @@ export default function LandingPage() {
       <LandingDiagnosticSection />
       <LandingBeforeAfterSection />
       <LandingTestimonialsSection />
+      <LandingPricingSection />
       <LandingJourneySection />
       <LandingProofsSection />
       <LandingDevisSection />
@@ -96,7 +97,6 @@ export default function LandingPage() {
       <LandingVoiceSection />
       <LandingStepsSection />
       <LandingRoadmapSection />
-      <LandingPricingSection />
       <LandingFaqSection faqs={faqs} />
       <LandingFinalCtaSection />
       <LandingFooter />

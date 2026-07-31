@@ -11100,9 +11100,210 @@ html:has(.landing-emerald) body {
   }
 }
 
+/* ——— Plans / tarifs simplifiés ——— */
+.landing-emerald .lp-plans {
+  scroll-margin-top: 88px;
+  background: #ffffff;
+}
+
+.landing-emerald .lp-plans__head {
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.landing-emerald .lp-plans__grid {
+  display: grid;
+  gap: 1rem;
+  max-width: 52rem;
+  margin-inline: auto;
+  align-items: stretch;
+}
+
+@media (min-width: 820px) {
+  .landing-emerald .lp-plans__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.15rem;
+  }
+}
+
+.landing-emerald .lp-plans__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.07);
+  border-radius: 22px;
+  padding: 1.55rem 1.4rem 1.45rem;
+  box-shadow: 0 10px 28px rgba(17, 17, 17, 0.03);
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+}
+
+.landing-emerald .lp-plans__card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(17, 17, 17, 0.1);
+  box-shadow: 0 14px 34px rgba(17, 17, 17, 0.055);
+}
+
+.landing-emerald .lp-plans__card--featured {
+  background: linear-gradient(165deg, #ffffff 0%, #f7faff 100%);
+  border-color: rgba(59, 130, 246, 0.18);
+  box-shadow:
+    0 14px 36px rgba(17, 17, 17, 0.045),
+    0 0 0 1px rgba(59, 130, 246, 0.05);
+}
+
+@media (min-width: 820px) {
+  .landing-emerald .lp-plans__card--featured {
+    transform: translateY(-4px);
+  }
+
+  .landing-emerald .lp-plans__card--featured:hover {
+    transform: translateY(-7px);
+  }
+}
+
+.landing-emerald .lp-plans__badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.landing-emerald .lp-plans__title {
+  margin: 0.15rem 0 0;
+  color: #111111;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.landing-emerald .lp-plans__price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin-top: 0.15rem;
+}
+
+.landing-emerald .lp-plans__amount {
+  color: #111111;
+  font-size: clamp(2.4rem, 4vw, 2.85rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.landing-emerald .lp-plans__period {
+  color: #8a8a8a;
+  font-size: 0.95rem;
+  font-weight: 550;
+}
+
+.landing-emerald .lp-plans__hint {
+  margin: 0;
+  color: #666666;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.landing-emerald .lp-plans__cta {
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  padding: 0.85rem 1.2rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  width: 100%;
+}
+
+.landing-emerald .lp-plans__features {
+  list-style: none;
+  margin: 0.55rem 0 0;
+  padding: 0.85rem 0 0;
+  border-top: 1px solid rgba(17, 17, 17, 0.06);
+  display: grid;
+  gap: 0.55rem;
+}
+
+.landing-emerald .lp-plans__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  color: #111111;
+  font-size: 0.94rem;
+  font-weight: 550;
+  line-height: 1.35;
+}
+
+.landing-emerald .lp-plans__check {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  margin-top: 0.05rem;
+}
+
+.landing-emerald .lp-plans__trust {
+  list-style: none;
+  margin: clamp(1.75rem, 4vw, 2.35rem) auto 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem 1.35rem;
+  max-width: 44rem;
+  color: #666666;
+  font-size: 0.875rem;
+  font-weight: 550;
+}
+
+.landing-emerald .lp-plans__trust li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.landing-emerald .lp-plans__trust svg {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.landing-emerald .lp-plans__login {
+  margin: 1rem 0 0;
+  text-align: center;
+  color: #8a8a8a;
+  font-size: 0.8125rem;
+}
+
+.landing-emerald .lp-plans__loginLink {
+  color: #111111;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(17, 17, 17, 0.2);
+}
+
+.landing-emerald .lp-plans__loginLink:hover {
+  text-decoration-color: rgba(17, 17, 17, 0.5);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-emerald .lp-ba__card,
   .landing-emerald .lp-voices__card,
+  .landing-emerald .lp-plans__card,
   .landing-emerald .lp-devis-demo__block,
   .landing-emerald .lp-devis-demo__lots li,
   .landing-emerald .lp-devis-demo__ready,
