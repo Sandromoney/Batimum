@@ -948,11 +948,11 @@ export function LandingHubSection() {
     setExperiencePhase,
   ]);
 
-  const snapClockAfterDemo = useCallback((module: HubFilmModule) => {
+  const snapClockAfterDemo = useCallback((filmModule: HubFilmModule) => {
     const plan = mumPlanRef.current;
     const snap =
-      nextAnchorAfterDemo(module, plan) -
-      (module === "mum" && plan < MUM_PLAN_COUNT - 1
+      nextAnchorAfterDemo(filmModule, plan) -
+      (filmModule === "mum" && plan < MUM_PLAN_COUNT - 1
         ? AUTO_PLAN_BREATH_MS
         : AUTO_BREATH_MS);
     if (clockRef.current.now() < snap) {
@@ -964,8 +964,8 @@ export function LandingHubSection() {
   }, [clearLockJob]);
 
   const holdThenUnlock = useCallback(
-    (module: HubFilmModule) => {
-      snapClockAfterDemo(module);
+    (filmModule: HubFilmModule) => {
+      snapClockAfterDemo(filmModule);
       setFilm("hold");
       filmLater(() => unlockScroll(), HOLD_MS);
     },
@@ -1154,28 +1154,28 @@ export function LandingHubSection() {
     startMumFilmRef.current = startMumFilm;
   }, [startMumFilm]);
 
-  const enterMsForModule = (module: HubFilmModule) => {
-    if (module === "mum") return MUM_ENTER_MS;
-    if (module === "clients") return CLIENTS_ENTER_MS;
-    if (module === "chantiers") return CHANTIER_ENTER_MS;
-    if (module === "planning") return PLAN_ENTER_MS;
-    if (module === "finance") return FIN_ENTER_MS;
+  const enterMsForModule = (mod: HubFilmModule) => {
+    if (mod === "mum") return MUM_ENTER_MS;
+    if (mod === "clients") return CLIENTS_ENTER_MS;
+    if (mod === "chantiers") return CHANTIER_ENTER_MS;
+    if (mod === "planning") return PLAN_ENTER_MS;
+    if (mod === "finance") return FIN_ENTER_MS;
     return PILOTAGE_ENTER_MS;
   };
 
-  const returnMsForModule = (module: HubFilmModule) => {
-    if (module === "mum") return MUM_RETURN_MS;
-    if (module === "clients") return CLIENTS_RETURN_MS;
-    if (module === "chantiers") return CHANTIER_RETURN_MS;
-    if (module === "planning") return PLAN_RETURN_MS;
-    if (module === "finance") return FIN_RETURN_MS;
+  const returnMsForModule = (mod: HubFilmModule) => {
+    if (mod === "mum") return MUM_RETURN_MS;
+    if (mod === "clients") return CLIENTS_RETURN_MS;
+    if (mod === "chantiers") return CHANTIER_RETURN_MS;
+    if (mod === "planning") return PLAN_RETURN_MS;
+    if (mod === "finance") return FIN_RETURN_MS;
     return PILOTAGE_RETURN_MS;
   };
 
   const applySeekHit = useCallback(
     (hit: TimelineHit) => {
-      const module = hit.module;
-      const focus = module as Exclude<FocusId, null> | null;
+      const filmModule = hit.module;
+      const focus = filmModule as Exclude<FocusId, null> | null;
 
       if (hit.kind === "intro") {
         setFilm("idle");
@@ -1201,15 +1201,15 @@ export function LandingHubSection() {
         return;
       }
 
-      if (hit.kind === "modulePre" && module && focus) {
-        const enterMs = enterMsForModule(module);
+      if (hit.kind === "modulePre" && filmModule && focus) {
+        const enterMs = enterMsForModule(filmModule);
         const readMs = moduleReadMs(focus);
         const pre = hit.preOffsetMs;
         const lockAt = Math.max(240, MODULE_LOCK_MS - 260);
         const enterAt = MODULE_LOCK_MS;
         const demoAt = MODULE_LOCK_MS + enterMs + readMs;
 
-        setFilmKind(module);
+        setFilmKind(filmModule);
         setFocus(focus);
         setRingRotation(ringRotationForModule(focus));
         setFilm(hit.filmPhase);
@@ -1232,8 +1232,8 @@ export function LandingHubSection() {
         return;
       }
 
-      if (hit.kind === "moduleDemo" && module && focus) {
-        setFilmKind(module);
+      if (hit.kind === "moduleDemo" && filmModule && focus) {
+        setFilmKind(filmModule);
         setFocus(focus);
         setRingRotation(ringRotationForModule(focus));
         setFilm(hit.filmPhase);
@@ -1257,11 +1257,11 @@ export function LandingHubSection() {
         return;
       }
 
-      if (hit.kind === "moduleReturn" && module && focus) {
-        const returnMs = returnMsForModule(module);
+      if (hit.kind === "moduleReturn" && filmModule && focus) {
+        const returnMs = returnMsForModule(filmModule);
         const rem = Math.max(16, returnMs - hit.offsetMs);
         setModuleLocked(false);
-        setFilmKind(module);
+        setFilmKind(filmModule);
         setFocus(focus);
         setFilm("returning");
         setDemoSeekMs(0);

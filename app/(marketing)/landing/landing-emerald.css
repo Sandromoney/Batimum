@@ -4249,8 +4249,144 @@ html:has(.landing-emerald) body {
   padding: 0.45rem 0.75rem;
   border-radius: 999px;
   cursor: pointer;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    opacity 0.35s ease;
 }
+
+/* ——— Contrôles film premium (barre + pause) ——— */
+.landing-emerald .lp-hub__filmControls {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 14;
+  pointer-events: none;
+}
+
+.landing-emerald .lp-hub__scrub {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 18px;
+  pointer-events: auto;
+  cursor: pointer;
+  touch-action: none;
+  opacity: 0.55;
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hub__filmControls.is-visible .lp-hub__scrub,
+.landing-emerald .lp-hub__scrub.is-hot {
+  opacity: 1;
+}
+
+.landing-emerald .lp-hub__scrubTrack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(17, 17, 17, 0.1);
+  transform-origin: left center;
+  transition: height 0.2s ease, background 0.2s ease;
+}
+
+.landing-emerald .lp-hub__scrub.is-hot .lp-hub__scrubTrack,
+.landing-emerald .lp-hub__scrub:focus-visible .lp-hub__scrubTrack {
+  height: 3px;
+  background: rgba(17, 17, 17, 0.16);
+}
+
+.landing-emerald .lp-hub__scrubFill {
+  height: 100%;
+  width: 100%;
+  background: #111111;
+  transform-origin: left center;
+  transform: scaleX(0);
+  will-change: transform;
+  transition: none;
+}
+
+.landing-emerald .lp-hub__scrubTime {
+  position: absolute;
+  top: 10px;
+  transform: translateX(-50%);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(17, 17, 17, 0.55);
+  white-space: nowrap;
+  pointer-events: none;
+  padding: 0.15rem 0.35rem;
+  background: rgba(247, 245, 241, 0.82);
+  backdrop-filter: blur(6px);
+  border-radius: 4px;
+}
+
+.landing-emerald .lp-hub__pause {
+  position: absolute;
+  left: max(1rem, env(safe-area-inset-left, 0px) + 0.85rem);
+  bottom: max(1.35rem, env(safe-area-inset-bottom, 0px) + 1rem);
+  z-index: 14;
+  pointer-events: none;
+  appearance: none;
+  border: 0;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(247, 245, 241, 0.72);
+  backdrop-filter: blur(8px);
+  color: rgba(17, 17, 17, 0.72);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-hub__filmControls.is-visible .lp-hub__pause {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.landing-emerald .lp-hub__pause:hover {
+  color: #111111;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.landing-emerald .lp-hub__pause:focus-visible {
+  outline: 2px solid #111111;
+  outline-offset: 2px;
+}
+
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hub__stage,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubMum,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubClients,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubChantier,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubPlan,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubFin,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubPilot,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubSig {
+  animation-play-state: paused !important;
+}
+
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hub__stage *,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubMum *,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubClients *,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubChantier *,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubPlan *,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubFin *,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubPilot *,
+.landing-emerald .lp-hub[data-film-paused="true"] .lp-hubSig * {
+  animation-play-state: paused !important;
+}
+
+/* L’atmosphère continue à vivre légèrement — ne pas pauser son canvas */
 
 .landing-emerald .lp-hub__skip:hover {
   color: #111111;
