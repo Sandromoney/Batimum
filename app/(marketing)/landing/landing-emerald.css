@@ -10583,6 +10583,308 @@ html:has(.landing-emerald) body {
   }
 }
 
+/* ——— Diagnostic interactif (mini-audit) ——— */
+.landing-emerald .lp-diag {
+  scroll-margin-top: 88px;
+  background: #ffffff;
+}
+
+.landing-emerald .lp-diag__head {
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.landing-emerald .lp-diag__shell {
+  max-width: 42rem;
+  margin-inline: auto;
+}
+
+.landing-emerald .lp-diag__progress {
+  margin-bottom: 1.15rem;
+}
+
+.landing-emerald .lp-diag__progressMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.55rem;
+  color: var(--landing-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.landing-emerald .lp-diag__progressTrack {
+  height: 4px;
+  border-radius: 999px;
+  background: #f0f1f3;
+  overflow: hidden;
+}
+
+.landing-emerald .lp-diag__progressFill {
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #171717 0%, #3b82f6 100%);
+  transform: scaleX(0.06);
+}
+
+.landing-emerald .lp-diag__stage {
+  position: relative;
+  min-height: 22rem;
+}
+
+.landing-emerald .lp-diag__card {
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.07);
+  border-radius: 22px;
+  padding: clamp(1.35rem, 3vw, 1.85rem);
+  box-shadow:
+    0 10px 28px rgba(17, 17, 17, 0.035),
+    0 1px 0 rgba(255, 255, 255, 0.8) inset;
+}
+
+.landing-emerald .lp-diag__card--result {
+  background: linear-gradient(165deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.landing-emerald .lp-diag__prompt {
+  margin: 0;
+  color: #111111;
+  font-size: clamp(1.2rem, 2.2vw, 1.45rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.landing-emerald .lp-diag__hint {
+  margin: 0.55rem 0 0;
+  color: var(--landing-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.landing-emerald .lp-diag__options {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1.35rem;
+}
+
+.landing-emerald .lp-diag__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.95rem 1.05rem;
+  border-radius: 14px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  background: #ffffff;
+  color: #111111;
+  font-size: 0.98rem;
+  font-weight: 550;
+  line-height: 1.35;
+  cursor: pointer;
+  transition:
+    border-color 0.22s ease,
+    background-color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .lp-diag__option:hover:not(:disabled) {
+  border-color: rgba(17, 17, 17, 0.16);
+  background: #fafbfc;
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.04);
+  transform: translateY(-1px);
+}
+
+.landing-emerald .lp-diag__option:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.45);
+  outline-offset: 2px;
+}
+
+.landing-emerald .lp-diag__option.is-selected {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%);
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.12),
+    0 10px 22px rgba(17, 17, 17, 0.045);
+}
+
+.landing-emerald .lp-diag__option:disabled {
+  cursor: default;
+}
+
+.landing-emerald .lp-diag__optionLabel {
+  flex: 1;
+  min-width: 0;
+}
+
+.landing-emerald .lp-diag__check {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  display: grid;
+  place-items: center;
+  color: transparent;
+  flex-shrink: 0;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.landing-emerald .lp-diag__check.is-on {
+  background: #111111;
+  border-color: #111111;
+  color: #ffffff;
+}
+
+.landing-emerald .lp-diag__actions {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.landing-emerald .lp-diag__continue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  padding: 0.7rem 1.2rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.landing-emerald .lp-diag__continue:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
+.landing-emerald .lp-diag__resultEyebrow {
+  margin: 0;
+  color: #3b82f6;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.landing-emerald .lp-diag__resultTitle {
+  margin: 0.65rem 0 0;
+  color: #111111;
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.landing-emerald .lp-diag__pains {
+  list-style: none;
+  margin: 1.35rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.landing-emerald .lp-diag__pain {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid rgba(17, 17, 17, 0.06);
+  background: #ffffff;
+}
+
+.landing-emerald .lp-diag__painIcon {
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.landing-emerald .lp-diag__painLabel {
+  flex: 1;
+  min-width: 0;
+  color: #111111;
+  font-size: 0.98rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.landing-emerald .lp-diag__painGlyph {
+  color: #8a8a8a;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.landing-emerald .lp-diag__resultLead {
+  margin: 1.35rem 0 0;
+  color: var(--landing-muted);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.landing-emerald .lp-diag__resultCtas {
+  margin-top: 1.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem 1.25rem;
+}
+
+.landing-emerald .lp-diag__resultCtas .landing-btn-primary {
+  border-radius: 999px;
+  padding: 0.8rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.landing-emerald .lp-diag__restart {
+  background: transparent;
+  border: none;
+  padding: 0.35rem 0;
+  color: var(--landing-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(17, 17, 17, 0.18);
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+.landing-emerald .lp-diag__restart:hover {
+  color: #111111;
+  text-decoration-color: rgba(17, 17, 17, 0.45);
+}
+
+@media (max-width: 639px) {
+  .landing-emerald .lp-diag__stage {
+    min-height: 18rem;
+  }
+
+  .landing-emerald .lp-diag__resultCtas {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .landing-emerald .lp-diag__resultCtas .landing-btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-emerald .lp-ba__item,
   .landing-emerald .lp-devis-demo__block,
@@ -10593,7 +10895,8 @@ html:has(.landing-emerald) body {
   .landing-emerald .lp-admin__card,
   .landing-emerald .lp-future__card,
   .landing-emerald .lp-theme-card,
-  .landing-emerald .lp-dual__panel {
+  .landing-emerald .lp-dual__panel,
+  .landing-emerald .lp-diag__option {
     transition: none !important;
     transform: none !important;
   }

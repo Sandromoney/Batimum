@@ -280,7 +280,7 @@ const FILM_ENTRY_SCENES = new Set([3, 5, 7, 9, 11, 13]);
 /** idle → gate (choix) → tour (scroll) → finished */
 type ExperiencePhase = "idle" | "gate" | "tour" | "finished";
 
-const NEXT_SECTION_ID = "avant-apres";
+const NEXT_SECTION_ID = "diagnostic";
 
 function BmMark({ className }: { className?: string }) {
   return (
