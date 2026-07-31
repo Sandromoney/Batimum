@@ -1,96 +1,187 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Plus } from "lucide-react";
-import {
-  LandingReveal,
-  LandingRevealItem,
-  LandingRevealStagger,
-} from "@/components/landing/landing-reveal";
-import { cn } from "@/lib/utils";
+import { LandingReveal } from "@/components/landing/landing-reveal";
 
 type FaqItem = {
   question: string;
-  answer: string;
+  answer: ReactNode;
 };
 
-type LandingFaqSectionProps = {
-  faqs: readonly FaqItem[];
-  variant?: "dark" | "light";
-};
+const FAQS: FaqItem[] = [
+  {
+    question: "Est-ce que Batimum est adapté à une petite entreprise ?",
+    answer: (
+      <>
+        <p>Oui.</p>
+        <p>
+          Batimum a été conçu en priorité pour les TPE du BTP. Que vous soyez
+          seul, avec quelques salariés ou une petite équipe, toutes les
+          fonctionnalités restent accessibles et simples à utiliser.
+        </p>
+      </>
+    ),
+  },
+  {
+    question:
+      "Mes salariés auront-ils accès à toutes les informations de l’entreprise ?",
+    answer: (
+      <>
+        <p>Non.</p>
+        <p>
+          Chaque salarié possède un espace employé totalement séparé. Ils
+          accèdent uniquement :
+        </p>
+        <ul>
+          <li>à leur planning ;</li>
+          <li>à leurs chantiers ;</li>
+          <li>à leurs consignes.</li>
+        </ul>
+        <p>
+          Les devis, les marges, les clients, les coûts et les informations
+          sensibles restent exclusivement accessibles au dirigeant.
+        </p>
+      </>
+    ),
+  },
+  {
+    question: "Faut-il être à l’aise avec l’informatique ?",
+    answer: (
+      <>
+        <p>Non.</p>
+        <p>
+          Batimum a été pensé pour être simple. L’objectif est de vous faire
+          gagner du temps, pas de vous faire apprendre un logiciel compliqué.
+        </p>
+      </>
+    ),
+  },
+  {
+    question: "Puis-je essayer Batimum gratuitement ?",
+    answer: (
+      <>
+        <p>Oui.</p>
+        <p>
+          Vous bénéficiez de 7 jours d’essai afin de découvrir toutes les
+          fonctionnalités.
+        </p>
+      </>
+    ),
+  },
+  {
+    question: "Mes données sont-elles sécurisées ?",
+    answer: (
+      <>
+        <p>Oui.</p>
+        <p>
+          Vos données sont protégées et hébergées de manière sécurisée.
+        </p>
+      </>
+    ),
+  },
+  {
+    question: "Puis-je résilier quand je le souhaite ?",
+    answer: (
+      <>
+        <p>Oui, si vous choisissez l’offre mensuelle.</p>
+        <p>
+          L’offre annuelle bénéficie d’un tarif réduit en échange d’un
+          engagement.
+        </p>
+      </>
+    ),
+  },
+];
 
-export function LandingFaqSection({
-  faqs,
-  variant = "light",
-}: LandingFaqSectionProps) {
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+export function LandingFaqSection() {
+  const reduced = useReducedMotion();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const isLight = variant === "light";
 
   return (
     <section
       id="faq"
-      className={cn(
-        "lp-section",
-        isLight ? "text-[#0F172A]" : "bg-[#111827] text-white",
-      )}
+      className="lp-section lp-faq"
+      aria-labelledby="faq-title"
     >
       <div className="lp-container">
         <LandingReveal>
-          <header className="mx-auto mb-10 max-w-2xl text-center">
-            <h2 className="lp-title text-3xl sm:text-4xl">
-              Questions fréquentes
+          <div className="lp-section-head lp-faq__head">
+            <p className="lp-eyebrow">
+              <span className="lp-eyebrow__dot" aria-hidden="true" />
+              FAQ
+            </p>
+            <h2 id="faq-title" className="lp-title mt-5 max-w-3xl">
+              Les questions que se posent{" "}
+              <span className="lp-title-accent">les dirigeants</span>
             </h2>
-          </header>
+            <p className="lp-subtitle mt-5 max-w-2xl">
+              Les réponses essentielles avant de créer votre compte.
+            </p>
+          </div>
         </LandingReveal>
 
-        <LandingRevealStagger className="mx-auto max-w-3xl space-y-3">
-          {faqs.map((faq, index) => {
+        <div className="lp-faq__list">
+          {FAQS.map((faq, index) => {
             const open = openIndex === index;
             return (
-              <LandingRevealItem key={faq.question}>
+              <LandingReveal key={faq.question} delay={40 + index * 40}>
                 <div
-                  className={cn(
-                    "overflow-hidden rounded-2xl border",
-                    isLight
-                      ? "border-[#E6EAED] bg-white"
-                      : "border-white/10 bg-white/5",
-                  )}
+                  className={[
+                    "lp-faq__item",
+                    open ? "is-open" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                 >
                   <button
                     type="button"
                     id={`faq-trigger-${index}`}
-                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+                    className="lp-faq__trigger"
                     aria-expanded={open}
                     aria-controls={`faq-panel-${index}`}
                     onClick={() => setOpenIndex(open ? null : index)}
                   >
-                    <span className="font-semibold">{faq.question}</span>
-                    <Plus
-                      className={cn(
-                        "h-4 w-4 shrink-0 transition-transform",
-                        open && "rotate-45",
-                      )}
-                      aria-hidden="true"
-                    />
+                    <span className="lp-faq__question">{faq.question}</span>
+                    <span className="lp-faq__icon" aria-hidden="true">
+                      <Plus
+                        size={16}
+                        strokeWidth={2.2}
+                        className={open ? "is-open" : ""}
+                      />
+                    </span>
                   </button>
-                  <div
-                    id={`faq-panel-${index}`}
-                    role="region"
-                    aria-labelledby={`faq-trigger-${index}`}
-                    hidden={!open}
-                    className={cn(
-                      "px-5 pb-4 text-sm leading-6",
-                      isLight ? "text-[#667085]" : "text-white/70",
-                      !open && "hidden",
-                    )}
-                  >
-                    {open ? faq.answer : null}
-                  </div>
+                  <AnimatePresence initial={false}>
+                    {open ? (
+                      <motion.div
+                        id={`faq-panel-${index}`}
+                        role="region"
+                        aria-labelledby={`faq-trigger-${index}`}
+                        className="lp-faq__panel"
+                        initial={
+                          reduced
+                            ? false
+                            : { height: 0, opacity: 0 }
+                        }
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{
+                          duration: reduced ? 0.01 : 0.32,
+                          ease: EASE,
+                        }}
+                      >
+                        <div className="lp-faq__answer">{faq.answer}</div>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
                 </div>
-              </LandingRevealItem>
+              </LandingReveal>
             );
           })}
-        </LandingRevealStagger>
+        </div>
       </div>
     </section>
   );
