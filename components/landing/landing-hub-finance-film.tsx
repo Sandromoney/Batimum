@@ -22,7 +22,7 @@ export const FIN_RETURN_MS = 750;
 export const FIN_CONVERGE_MS = 900;
 export const FIN_DEMO_SAFETY_MS = 45000;
 
-const DEVIS_TOTAL = 9845;
+const PRICE_MASK = "••• €";
 const CA_STEPS = [24860, 26140, 29580, 32940] as const;
 const MARGIN_STEPS = [22, 24, 27] as const;
 
@@ -196,7 +196,7 @@ function FinanceCopy() {
     <div className="lp-hubFin__copy">
       <h3 className="lp-hubFin__title">Facturation</h3>
       <p className="lp-hubFin__subtitle">
-        De la signature au paiement — sans courir après les documents.
+        Du devis signé au paiement — sans rupture.
       </p>
     </div>
   );
@@ -253,7 +253,7 @@ function FinanceBoard({
             <Check size={12} strokeWidth={2.4} />
           </div>
         </div>
-        <p className="lp-hubFin__amount">{formatEuro(DEVIS_TOTAL)} HT</p>
+        <p className="lp-hubFin__amount">{PRICE_MASK} HT</p>
       </div>
 
       {/* Scène 2 — pipeline devis → facture */}
@@ -267,7 +267,7 @@ function FinanceBoard({
 
       {invoiceOn ? (
         <div className="lp-hubFin__card lp-hubFin__invoice is-on">
-          <p className="lp-hubFin__label">Facture créée automatiquement</p>
+          <p className="lp-hubFin__label">Facture créée depuis le devis</p>
           <ul className="lp-hubFin__meta">
             <li className="is-on">
               <span>Numéro</span>
@@ -279,7 +279,7 @@ function FinanceBoard({
             </li>
             <li className="is-on">
               <span>Montant</span>
-              <strong>{formatEuro(DEVIS_TOTAL)} HT</strong>
+              <strong>{PRICE_MASK} HT</strong>
             </li>
           </ul>
 

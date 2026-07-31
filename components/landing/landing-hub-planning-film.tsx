@@ -71,7 +71,7 @@ function PlanningCopy() {
     <div className="lp-hubPlan__copy">
       <h3 className="lp-hubPlan__title">Planning</h3>
       <p className="lp-hubPlan__subtitle">
-        Placez la bonne équipe. Chacun voit son chantier et ses tâches.
+        Affectez l’équipe. Chacun voit son chantier.
       </p>
     </div>
   );
@@ -229,7 +229,7 @@ function PlanningBoard({
       {showNotify ? (
         <div className="lp-hubPlan__toast is-on">
           <Bell size={13} strokeWidth={1.9} />
-          <span>Notification envoyée à Lucas</span>
+          <span>Affectation visible pour Lucas</span>
           <Check size={13} strokeWidth={2.4} />
         </div>
       ) : null}
@@ -238,7 +238,7 @@ function PlanningBoard({
 
       {beat === "done" ? (
         <p className="lp-hubPlan__calm">
-          Planning et Espace Employé — synchronisés.
+          Lucas consulte son chantier dans l’Espace Employé.
         </p>
       ) : null}
 

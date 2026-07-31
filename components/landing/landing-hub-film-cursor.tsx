@@ -15,6 +15,10 @@ import { MousePointer2 } from "lucide-react";
 const TIP_OFFSET_X = 6;
 const TIP_OFFSET_Y = 3;
 
+/** Approche depuis un point logique (bas-droite) avant de verrouiller la cible. */
+const APPROACH_DX = 36;
+const APPROACH_DY = 28;
+
 type Pos = { x: number; y: number };
 
 /**
@@ -67,6 +71,8 @@ export function FilmCursor({
   const [ready, setReady] = useState(false);
   const [animateMove, setAnimateMove] = useState(false);
   const hadPos = useRef(false);
+  const lastTarget = useRef<string | null>(null);
+  const approaching = useRef(false);
 
   useLayoutEffect(() => {
     if (!visible || !target) {
@@ -75,6 +81,8 @@ export function FilmCursor({
         setPos(null);
         hadPos.current = false;
         setAnimateMove(false);
+        lastTarget.current = null;
+        approaching.current = false;
       }
       return;
     }
@@ -87,6 +95,12 @@ export function FilmCursor({
 
     let frames = 0;
     let raf = 0;
+    const targetChanged = lastTarget.current !== target;
+    if (targetChanged) {
+      hadPos.current = false;
+      approaching.current = false;
+      lastTarget.current = target;
+    }
 
     const apply = () => {
       const next = measureTargetLocal(root, target);
@@ -96,18 +110,28 @@ export function FilmCursor({
         return;
       }
       if (!hadPos.current) {
+        // Snap hors cible, puis glisse jusqu’à la pointe active.
+        approaching.current = true;
         setAnimateMove(false);
-        setPos(next);
+        setPos({
+          x: next.x + APPROACH_DX,
+          y: next.y + APPROACH_DY,
+        });
         hadPos.current = true;
         setReady(true);
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => setAnimateMove(true));
+          requestAnimationFrame(() => {
+            setAnimateMove(true);
+            setPos(next);
+            approaching.current = false;
+          });
         });
-      } else {
-        setAnimateMove(true);
-        setPos(next);
-        setReady(true);
+        return;
       }
+      if (approaching.current) return;
+      setAnimateMove(true);
+      setPos(next);
+      setReady(true);
     };
 
     const tick = () => {
@@ -140,6 +164,7 @@ export function FilmCursor({
         hadPos.current = false;
         setAnimateMove(false);
         setPos(null);
+        lastTarget.current = null;
       }, 220);
       return () => window.clearTimeout(t);
     }
@@ -161,8 +186,7 @@ export function FilmCursor({
       style={
         pos
           ? {
-              left: pos.x,
-              top: pos.y,
+              transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
             }
           : undefined
       }

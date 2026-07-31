@@ -98,7 +98,7 @@ function ChantiersCopy() {
     <div className="lp-hubChantier__copy">
       <h3 className="lp-hubChantier__title">Chantiers</h3>
       <p className="lp-hubChantier__subtitle">
-        Suivez chaque étape. Savoir où en est le chantier, en un coup d’œil.
+        Étapes et avancement — en un coup d’œil.
       </p>
     </div>
   );
@@ -242,7 +242,7 @@ function ChantiersBoard({
 
       {beat === "alive" || beat === "done" ? (
         <p className="lp-hubChantier__calm">
-          Étapes, progression et affectations — au même endroit.
+          Progression calculée selon le poids des étapes.
         </p>
       ) : null}
 

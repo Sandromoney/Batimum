@@ -3,25 +3,26 @@
  * Cible durée totale ~2 min 05–2 min 15 (plafond 2 min 20).
  */
 
-export const MODULE_LOCK_MS = 880;
-export const AUTO_BREATH_MS = 420;
-export const AUTO_PLAN_BREATH_MS = 280;
-export const HOLD_MS = 950;
-export const INTRO_MS = 11000;
+export const MODULE_LOCK_MS = 620;
+export const AUTO_BREATH_MS = 320;
+export const AUTO_PLAN_BREATH_MS = 220;
+export const HOLD_MS = 780;
+/** Intro hub : ~5,5 s (logo + écosystème) — cible totale intro+approche MUM ≤ 7–8 s. */
+export const INTRO_MS = 5600;
 
-export const MUM_ENTER_MS = 880;
-export const MUM_RETURN_MS = 1000;
-export const CLIENTS_ENTER_MS = 880;
-export const CLIENTS_RETURN_MS = 1000;
-export const CHANTIER_ENTER_MS = 880;
-export const CHANTIER_RETURN_MS = 1000;
-export const PLAN_ENTER_MS = 880;
-export const PLAN_RETURN_MS = 1000;
-export const FIN_ENTER_MS = 880;
-export const FIN_RETURN_MS = 1000;
-export const FIN_CONVERGE_MS = 1600;
-export const PILOTAGE_ENTER_MS = 840;
-export const PILOTAGE_RETURN_MS = 980;
+export const MUM_ENTER_MS = 620;
+export const MUM_RETURN_MS = 780;
+export const CLIENTS_ENTER_MS = 620;
+export const CLIENTS_RETURN_MS = 780;
+export const CHANTIER_ENTER_MS = 620;
+export const CHANTIER_RETURN_MS = 780;
+export const PLAN_ENTER_MS = 620;
+export const PLAN_RETURN_MS = 780;
+export const FIN_ENTER_MS = 620;
+export const FIN_RETURN_MS = 780;
+export const FIN_CONVERGE_MS = 1200;
+export const PILOTAGE_ENTER_MS = 600;
+export const PILOTAGE_RETURN_MS = 760;
 
 /** Conclusion : disparition horaire → écrou → verrouillage → CTA */
 export const SIG_DISMISS_EACH_MS = 820;
@@ -45,9 +46,9 @@ export const SIG_DEMO_SAFETY_MS =
   SIG_CTA_MS +
   SIG_HOLD_MS;
 
-/** Lecture module — assez longue pour une TPE BTP. */
+/** Lecture module — assez longue pour une TPE BTP, sans temps mort. */
 function readMs(copyLen: number) {
-  return Math.round(Math.min(2400, Math.max(1400, 900 + copyLen * 14)));
+  return Math.round(Math.min(1800, Math.max(900, 700 + copyLen * 12)));
 }
 
 function modulePreMs(enterMs: number, copyLen: number) {
@@ -59,12 +60,12 @@ function modulePreMs(enterMs: number, copyLen: number) {
  * (pas un ralenti artificiel de chaque tween).
  */
 export const DEMO_MS = {
-  mumPlans: [5000, 1500, 2200, 1300, 4500, 6400] as const,
-  clients: 6800,
-  chantiers: 8500,
-  planning: 9800,
-  finance: 8200,
-  pilotage: 7200,
+  mumPlans: [3400, 1200, 1800, 1100, 3600, 5200] as const,
+  clients: 5600,
+  chantiers: 7200,
+  planning: 8200,
+  finance: 7000,
+  pilotage: 6000,
 } as const;
 
 export type HubFilmModule =
@@ -121,7 +122,7 @@ function buildSegments(): Seg[] {
 
   push({ duration: INTRO_MS, scene: 1, kind: "intro", module: null, mumPlan: 0 });
 
-  const mumPre = modulePreMs(MUM_ENTER_MS, 56);
+  const mumPre = modulePreMs(MUM_ENTER_MS, 42);
   push({
     duration: mumPre,
     scene: 3,
@@ -165,7 +166,7 @@ function buildSegments(): Seg[] {
       enter: CLIENTS_ENTER_MS,
       demo: DEMO_MS.clients,
       ret: CLIENTS_RETURN_MS,
-      copyLen: 62,
+      copyLen: 36,
       sceneIn: 5,
       sceneOut: 6,
     },
@@ -174,7 +175,7 @@ function buildSegments(): Seg[] {
       enter: CHANTIER_ENTER_MS,
       demo: DEMO_MS.chantiers,
       ret: CHANTIER_RETURN_MS,
-      copyLen: 58,
+      copyLen: 40,
       sceneIn: 7,
       sceneOut: 8,
     },
@@ -183,7 +184,7 @@ function buildSegments(): Seg[] {
       enter: PLAN_ENTER_MS,
       demo: DEMO_MS.planning,
       ret: PLAN_RETURN_MS,
-      copyLen: 62,
+      copyLen: 48,
       sceneIn: 9,
       sceneOut: 10,
     },
@@ -192,7 +193,7 @@ function buildSegments(): Seg[] {
       enter: FIN_ENTER_MS,
       demo: DEMO_MS.finance,
       ret: FIN_RETURN_MS,
-      copyLen: 58,
+      copyLen: 38,
       sceneIn: 11,
       sceneOut: 12,
     },
@@ -201,7 +202,7 @@ function buildSegments(): Seg[] {
       enter: PILOTAGE_ENTER_MS,
       demo: DEMO_MS.pilotage,
       ret: PILOTAGE_RETURN_MS,
-      copyLen: 62,
+      copyLen: 36,
       sceneIn: 13,
       sceneOut: 14,
     },
@@ -267,10 +268,12 @@ function phaseForPre(
 }
 
 function copyLenFor(module: HubFilmModule | null) {
-  if (module === "mum") return 56;
-  if (module === "clients" || module === "planning" || module === "pilotage")
-    return 62;
-  return 58;
+  if (module === "mum") return 42;
+  if (module === "clients" || module === "pilotage") return 36;
+  if (module === "planning") return 48;
+  if (module === "chantiers") return 40;
+  if (module === "finance") return 38;
+  return 40;
 }
 
 function enterMsFor(module: HubFilmModule | null) {

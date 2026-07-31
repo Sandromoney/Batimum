@@ -319,7 +319,7 @@ function MumFilmCopy({ signing }: { signing: boolean }) {
           className="lp-hubMum__subtitle is-swap"
         >
           {signing
-            ? "Relisez, envoyez, faites signer — sans quitter Batimum."
+            ? "Relisez, envoyez, faites signer."
             : "Décrivez le chantier. Obtenez un devis prêt à envoyer."}
         </p>
       </div>

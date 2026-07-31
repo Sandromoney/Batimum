@@ -26,7 +26,7 @@ function PilotageCopy() {
     <div className="lp-hubPilot__copy">
       <h3 className="lp-hubPilot__title">Pilotage</h3>
       <p className="lp-hubPilot__subtitle">
-        Voyez ce qui rapporte — et ce qui vous coûte — tout de suite.
+        Coûts, marges, alertes — pour piloter sans surprise.
       </p>
     </div>
   );
@@ -78,14 +78,14 @@ function PilotageBoard({ beat }: { beat: PilotBeat }) {
               : "Marge sous les prévisions"}
           </p>
           <p className="lp-hubPilot__alertText">
-            Cuisine — M. Bernard · écart de 380&nbsp;€
+            Salle de bain — Famille Martin · écart de marge
           </p>
         </div>
       </article>
 
       {beat === "done" ? (
           <p className="lp-hubPilot__calm">
-            Coûts, marges, rentabilité — en temps réel.
+            Indicateurs mis à jour avec vos données.
           </p>
       ) : null}
 

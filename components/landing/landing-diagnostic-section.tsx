@@ -97,7 +97,7 @@ export function LandingDiagnosticSection() {
   };
 
   const t = {
-    duration: reduced ? 0.01 : 0.42,
+    duration: reduced ? 0.01 : 0.32,
     ease: EASE,
   };
 
@@ -114,11 +114,11 @@ export function LandingDiagnosticSection() {
               <span className="lp-eyebrow__dot" aria-hidden="true" />
               Questionnaire Batimum
             </p>
-            <h2 id="diagnostic-title" className="lp-title mt-5 max-w-3xl">
+            <h2 id="diagnostic-title" className="lp-title lp-diag__title">
               En moins d’une minute, voyez où votre entreprise{" "}
               <span className="lp-title-accent">perd le plus de temps.</span>
             </h2>
-            <p className="lp-subtitle mt-5 max-w-2xl">
+            <p className="lp-subtitle lp-diag__lead">
               Répondez à quelques questions simples. Batimum repère vos habitudes
               de travail et met en lumière les points où vous pouvez gagner du
               temps dès demain.
@@ -152,9 +152,9 @@ export function LandingDiagnosticSection() {
                   <motion.div
                     key={question.id}
                     className="lp-diag__card"
-                    initial={reduced ? false : { opacity: 0, y: 16 }}
+                    initial={reduced ? false : { opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -12 }}
+                    exit={{ opacity: 0, y: -6 }}
                     transition={t}
                   >
                     <p className="lp-diag__prompt">{question.prompt}</p>
@@ -239,9 +239,9 @@ export function LandingDiagnosticSection() {
                   <motion.div
                     key="result"
                     className="lp-diag__card lp-diag__card--result"
-                    initial={reduced ? false : { opacity: 0, y: 18 }}
+                    initial={reduced ? false : { opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -12 }}
+                    exit={{ opacity: 0, y: -6 }}
                     transition={t}
                   >
                     <p className="lp-diag__resultEyebrow">Votre diagnostic.</p>

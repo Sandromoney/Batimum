@@ -52,7 +52,7 @@ function ClientsCopy() {
     <div className="lp-hubClients__copy">
       <h3 className="lp-hubClients__title">Clients</h3>
       <p className="lp-hubClients__subtitle">
-        Un client, tout son historique — devis, factures, chantiers.
+        Un client, tout l’historique — devis, factures, chantiers.
       </p>
     </div>
   );
@@ -198,17 +198,17 @@ function ClientsBoard({
 
           {showDocs ? (
             <div className="lp-hubClients__block is-on">
-              <p className="lp-hubClients__blockLabel">Historique &amp; notes</p>
+              <p className="lp-hubClients__blockLabel">Historique</p>
               <p className="lp-hubClients__note">
                 <NotebookPen size={13} strokeWidth={1.8} />
-                Accès parking · RDV préférés sur WhatsApp
+                Devis signé · Salle de bain · 29 juil.
               </p>
             </div>
           ) : null}
 
           {beat === "done" ? (
             <p className="lp-hubClients__calm">
-              Une fiche client. Toute l’activité regroupée.
+              Une fiche. Devis, factures et chantiers au même endroit.
             </p>
           ) : null}
         </div>
