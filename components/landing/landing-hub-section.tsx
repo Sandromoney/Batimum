@@ -71,6 +71,7 @@ import {
 } from "@/components/landing/landing-hub-signature";
 import {
   HubExperienceGate,
+  HubFilmControls,
   HubReplayLink,
   HubScrollHint,
   HubSkipControl,
@@ -78,8 +79,21 @@ import {
   clearHubSkippedSession,
   hubChapterFromScene,
   readHubSkippedSession,
+  useHubControlsVisibility,
   writeHubSkippedSession,
 } from "@/components/landing/landing-hub-experience-ui";
+import { FilmClock } from "@/lib/landing-hub-film-clock";
+import {
+  AUTO_BREATH_MS,
+  AUTO_PLAN_BREATH_MS,
+  HOLD_MS,
+  HUB_FILM_TOTAL_MS,
+  MODULE_LOCK_MS,
+  nextAnchorAfterDemo,
+  resolveTimeline,
+  type HubFilmModule,
+  type TimelineHit,
+} from "@/lib/landing-hub-timeline";
 
 const BM_SRC = "/logo-batimum.png";
 const BM_SRC_W = 829;
@@ -210,11 +224,6 @@ const LAST_SCENE = 16;
 /** Plans MUM internes (dictée → … → signature). */
 const MUM_PLAN_COUNT = 6;
 const INTRO_TO_MUM_MS = 2800;
-/** Verrouillage mécanique du module en haut. */
-const MODULE_LOCK_MS = 1180;
-/** Respiration entre scènes du film automatique. */
-const AUTO_BREATH_MS = 620;
-const AUTO_PLAN_BREATH_MS = 420;
 /** Marge sécurité = verrouillage + zoom + lecture max + démo. */
 const PRE_DEMO_MS = MODULE_LOCK_MS + 2100;
 const SCENE_LOCK_MS = [
@@ -654,7 +663,13 @@ export function LandingHubSection() {
   const focusIdRef = useRef<FocusId>(null);
   const [activeFilm, setActiveFilm] = useState<ActiveFilm>(null);
   const activeFilmRef = useRef<ActiveFilm>(null);
-  const filmTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const clockRef = useRef(new FilmClock());
+  const lockJobRef = useRef<number | null>(null);
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [filmPaused, setFilmPaused] = useState(false);
+  const filmPausedRef = useRef(false);
+  const [demoSeekMs, setDemoSeekMs] = useState(0);
+  const [seekKey, setSeekKey] = useState(0);
   /** Signature jouée une seule fois par chargement de page. */
   const signaturePlayedRef = useRef(false);
   const [signatureSealed, setSignatureSealed] = useState(false);
@@ -674,8 +689,16 @@ export function LandingHubSection() {
   const autoPlayRef = useRef(false);
   const [autoPlaying, setAutoPlaying] = useState(false);
   const advanceFilmRef = useRef<() => void>(() => {});
+  const startMumFilmRef = useRef<() => void>(() => {});
   const [ringRotation, setRingRotation] = useState(0);
   const [moduleLocked, setModuleLocked] = useState(false);
+
+  useEffect(() => {
+    const unsub = clockRef.current.subscribe((t) => setElapsedMs(t));
+    return () => {
+      unsub();
+    };
+  }, []);
 
   /** Parcours scroll interactif (hors gate / finished / reduced simplifié). */
   const active = !reduced && !done && experience === "tour";
@@ -701,14 +724,32 @@ export function LandingHubSection() {
     setExperience(phase);
   }, []);
 
+  const clearLockJob = useCallback(() => {
+    if (lockJobRef.current != null) {
+      clockRef.current.clear(lockJobRef.current);
+      lockJobRef.current = null;
+    }
+    if (lockTimerRef.current) {
+      clearTimeout(lockTimerRef.current);
+      lockTimerRef.current = null;
+    }
+  }, []);
+
   const clearFilmTimers = useCallback(() => {
-    filmTimersRef.current.forEach(clearTimeout);
-    filmTimersRef.current = [];
+    clockRef.current.clear();
+    lockJobRef.current = null;
   }, []);
 
   const filmLater = useCallback((fn: () => void, ms: number) => {
-    const id = setTimeout(fn, ms);
-    filmTimersRef.current.push(id);
+    clockRef.current.later(fn, ms);
+  }, []);
+
+  const resetFilmClock = useCallback(() => {
+    clockRef.current.reset();
+    filmPausedRef.current = false;
+    setFilmPaused(false);
+    setElapsedMs(0);
+    setDemoSeekMs(0);
   }, []);
 
   const setFilm = useCallback((phase: MumFilmPhase) => {
@@ -752,14 +793,13 @@ export function LandingHubSection() {
   );
 
   const unlockScroll = useCallback(() => {
-    if (lockTimerRef.current) {
-      clearTimeout(lockTimerRef.current);
-      lockTimerRef.current = null;
-    }
+    clearLockJob();
     isPlayingRef.current = false;
     if (autoPlayRef.current && !doneRef.current) {
       const breath =
-        sceneRef.current === 3 ? AUTO_PLAN_BREATH_MS : AUTO_BREATH_MS;
+        sceneRef.current === 3 && mumPlanRef.current < MUM_PLAN_COUNT - 1
+          ? AUTO_PLAN_BREATH_MS
+          : AUTO_BREATH_MS;
       continueAuto(breath);
     } else if (
       experienceRef.current === "tour" &&
@@ -770,7 +810,7 @@ export function LandingHubSection() {
       setHintMode("start");
     }
     scheduleWheelRearm();
-  }, [scheduleWheelRearm, continueAuto]);
+  }, [scheduleWheelRearm, continueAuto, clearLockJob]);
 
   const startSceneLock = useCallback(
     (sceneIndex: number, overrideMs?: number) => {
@@ -779,15 +819,15 @@ export function LandingHubSection() {
       touchArmedRef.current = false;
       deltaAccumRef.current = 0;
       setAwaitingGesture(false);
-      if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
+      clearLockJob();
       if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
       const ms = overrideMs ?? SCENE_LOCK_MS[sceneIndex] ?? 1200;
-      lockTimerRef.current = setTimeout(() => {
-        // Filet de sécurité : même les films démo doivent pouvoir débloquer
+      lockJobRef.current = clockRef.current.later(() => {
+        lockJobRef.current = null;
         unlockScroll();
       }, ms);
     },
-    [unlockScroll],
+    [unlockScroll, clearLockJob],
   );
 
   const resetToEcosystem = useCallback(() => {
@@ -805,12 +845,13 @@ export function LandingHubSection() {
     setDone(true);
     autoPlayRef.current = false;
     setAutoPlaying(false);
+    resetFilmClock();
     pinModeRef.current = "before";
     setPinMode("before");
     setAwaitingGesture(false);
     setExperiencePhase("finished");
     resetToEcosystem();
-  }, [resetToEcosystem, setExperiencePhase]);
+  }, [resetToEcosystem, setExperiencePhase, resetFilmClock]);
 
   const scrollToNextSection = useCallback(() => {
     const go = () => {
@@ -824,9 +865,10 @@ export function LandingHubSection() {
   const skipPresentation = useCallback(() => {
     writeHubSkippedSession();
     setSessionSkipped(true);
-    if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
+    clearLockJob();
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     clearFilmTimers();
+    resetFilmClock();
     isPlayingRef.current = false;
     wheelArmedRef.current = true;
     touchArmedRef.current = true;
@@ -835,7 +877,14 @@ export function LandingHubSection() {
     setFilm("sealed");
     exitHub();
     scrollToNextSection();
-  }, [clearFilmTimers, exitHub, scrollToNextSection, setFilm]);
+  }, [
+    clearFilmTimers,
+    clearLockJob,
+    exitHub,
+    resetFilmClock,
+    scrollToNextSection,
+    setFilm,
+  ]);
 
   const beginExperience = useCallback(() => {
     if (reduced) {
@@ -846,6 +895,7 @@ export function LandingHubSection() {
     }
     autoPlayRef.current = false;
     setAutoPlaying(false);
+    resetFilmClock();
     setHintMode("start");
     setAwaitingGesture(true);
     sceneRef.current = 0;
@@ -858,14 +908,15 @@ export function LandingHubSection() {
     deltaAccumRef.current = 0;
     engageAtRef.current = Date.now() + ENGAGE_GRACE_MS;
     setExperiencePhase("tour");
-  }, [reduced, exitHub, setFilm, setExperiencePhase]);
+  }, [reduced, exitHub, setFilm, setExperiencePhase, resetFilmClock]);
 
   const replayPresentation = useCallback(() => {
     clearHubSkippedSession();
     setSessionSkipped(false);
-    if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
+    clearLockJob();
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     clearFilmTimers();
+    resetFilmClock();
     doneRef.current = false;
     setDone(false);
     sceneRef.current = 0;
@@ -888,41 +939,67 @@ export function LandingHubSection() {
         .getElementById("ecosysteme")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-  }, [clearFilmTimers, resetToEcosystem, setFilm, setExperiencePhase]);
+  }, [
+    clearFilmTimers,
+    clearLockJob,
+    resetFilmClock,
+    resetToEcosystem,
+    setFilm,
+    setExperiencePhase,
+  ]);
 
-  const holdThenUnlock = useCallback(() => {
-    setFilm("hold");
-    filmLater(() => unlockScroll(), 500);
-  }, [setFilm, filmLater, unlockScroll]);
+  const snapClockAfterDemo = useCallback((module: HubFilmModule) => {
+    const plan = mumPlanRef.current;
+    const snap =
+      nextAnchorAfterDemo(module, plan) -
+      (module === "mum" && plan < MUM_PLAN_COUNT - 1
+        ? AUTO_PLAN_BREATH_MS
+        : AUTO_BREATH_MS);
+    if (clockRef.current.now() < snap) {
+      clockRef.current.seek(snap);
+      lockJobRef.current = null;
+    } else {
+      clearLockJob();
+    }
+  }, [clearLockJob]);
+
+  const holdThenUnlock = useCallback(
+    (module: HubFilmModule) => {
+      snapClockAfterDemo(module);
+      setFilm("hold");
+      filmLater(() => unlockScroll(), HOLD_MS);
+    },
+    [setFilm, filmLater, unlockScroll, snapClockAfterDemo],
+  );
 
   const onMumPlanComplete = useCallback(() => {
     if (sceneRef.current !== 3) return;
-    holdThenUnlock();
+    holdThenUnlock("mum");
   }, [holdThenUnlock]);
 
   const onClientsDemoComplete = useCallback(() => {
     if (sceneRef.current !== 5) return;
-    holdThenUnlock();
+    holdThenUnlock("clients");
   }, [holdThenUnlock]);
 
   const onChantiersDemoComplete = useCallback(() => {
     if (sceneRef.current !== 7) return;
-    holdThenUnlock();
+    holdThenUnlock("chantiers");
   }, [holdThenUnlock]);
 
   const onPlanDemoComplete = useCallback(() => {
     if (sceneRef.current !== 9) return;
-    holdThenUnlock();
+    holdThenUnlock("planning");
   }, [holdThenUnlock]);
 
   const onFinDemoComplete = useCallback(() => {
     if (sceneRef.current !== 11) return;
-    holdThenUnlock();
+    holdThenUnlock("finance");
   }, [holdThenUnlock]);
 
   const onPilotageDemoComplete = useCallback(() => {
     if (sceneRef.current !== 13) return;
-    holdThenUnlock();
+    holdThenUnlock("pilotage");
   }, [holdThenUnlock]);
 
   const startModuleFilm = useCallback(
@@ -1073,6 +1150,242 @@ export function LandingHubSection() {
     exitHub,
   ]);
 
+  useEffect(() => {
+    startMumFilmRef.current = startMumFilm;
+  }, [startMumFilm]);
+
+  const enterMsForModule = (module: HubFilmModule) => {
+    if (module === "mum") return MUM_ENTER_MS;
+    if (module === "clients") return CLIENTS_ENTER_MS;
+    if (module === "chantiers") return CHANTIER_ENTER_MS;
+    if (module === "planning") return PLAN_ENTER_MS;
+    if (module === "finance") return FIN_ENTER_MS;
+    return PILOTAGE_ENTER_MS;
+  };
+
+  const returnMsForModule = (module: HubFilmModule) => {
+    if (module === "mum") return MUM_RETURN_MS;
+    if (module === "clients") return CLIENTS_RETURN_MS;
+    if (module === "chantiers") return CHANTIER_RETURN_MS;
+    if (module === "planning") return PLAN_RETURN_MS;
+    if (module === "finance") return FIN_RETURN_MS;
+    return PILOTAGE_RETURN_MS;
+  };
+
+  const applySeekHit = useCallback(
+    (hit: TimelineHit) => {
+      const module = hit.module;
+      const focus = module as Exclude<FocusId, null> | null;
+
+      if (hit.kind === "intro") {
+        setFilm("idle");
+        setFocus(null);
+        setFilmKind(null);
+        setModuleLocked(false);
+        setRingRotation(0);
+        setDemoSeekMs(0);
+        startSceneLock(3, Math.max(16, INTRO_TO_MUM_MS - hit.offsetMs));
+        if (hit.offsetMs < 700) {
+          filmLater(() => {
+            sceneRef.current = 2;
+            setScene(2);
+          }, 700 - hit.offsetMs);
+        }
+        filmLater(() => {
+          sceneRef.current = 3;
+          setScene(3);
+          mumPlanRef.current = 0;
+          setMumPlan(0);
+          startMumFilmRef.current();
+        }, Math.max(16, 1650 - hit.offsetMs));
+        return;
+      }
+
+      if (hit.kind === "modulePre" && module && focus) {
+        const enterMs = enterMsForModule(module);
+        const readMs = moduleReadMs(focus);
+        const pre = hit.preOffsetMs;
+        const lockAt = Math.max(240, MODULE_LOCK_MS - 260);
+        const enterAt = MODULE_LOCK_MS;
+        const demoAt = MODULE_LOCK_MS + enterMs + readMs;
+
+        setFilmKind(module);
+        setFocus(focus);
+        setRingRotation(ringRotationForModule(focus));
+        setFilm(hit.filmPhase);
+        setModuleLocked(pre >= lockAt);
+        setDemoSeekMs(hit.demoOffsetMs);
+
+        if (pre < lockAt) {
+          filmLater(() => setModuleLocked(true), lockAt - pre);
+        }
+        if (hit.filmPhase === "highlight" && pre < enterAt) {
+          filmLater(() => setFilm("enter"), enterAt - pre);
+        }
+        if (hit.filmPhase !== "demo" && pre < demoAt) {
+          filmLater(() => setFilm("demo"), demoAt - pre);
+        }
+
+        const safety =
+          (SCENE_LOCK_MS[hit.scene] ?? PRE_DEMO_MS) - Math.min(pre, PRE_DEMO_MS);
+        startSceneLock(hit.scene, Math.max(120, safety));
+        return;
+      }
+
+      if (hit.kind === "moduleDemo" && module && focus) {
+        setFilmKind(module);
+        setFocus(focus);
+        setRingRotation(ringRotationForModule(focus));
+        setFilm(hit.filmPhase);
+        setModuleLocked(true);
+        setDemoSeekMs(hit.demoOffsetMs);
+        isPlayingRef.current = true;
+
+        if (hit.filmPhase === "hold") {
+          // Offset past demo duration — finish hold then breathe
+          const holdElapsed = hit.offsetMs - hit.demoOffsetMs;
+          const remHold = Math.max(16, HOLD_MS - holdElapsed);
+          clearLockJob();
+          filmLater(() => unlockScroll(), remHold);
+        } else {
+          const safety = Math.max(
+            400,
+            (SCENE_LOCK_MS[hit.scene] ?? 4000) - PRE_DEMO_MS - hit.demoOffsetMs,
+          );
+          startSceneLock(hit.scene, safety);
+        }
+        return;
+      }
+
+      if (hit.kind === "moduleReturn" && module && focus) {
+        const returnMs = returnMsForModule(module);
+        const rem = Math.max(16, returnMs - hit.offsetMs);
+        setModuleLocked(false);
+        setFilmKind(module);
+        setFocus(focus);
+        setFilm("returning");
+        setDemoSeekMs(0);
+        if (hit.offsetMs >= returnMs) {
+          setFilmKind(null);
+          setFocus(null);
+          setFilm("idle");
+          const breathRem = Math.max(
+            16,
+            returnMs + AUTO_BREATH_MS - hit.offsetMs,
+          );
+          isPlayingRef.current = false;
+          filmLater(() => {
+            if (!autoPlayRef.current || doneRef.current) return;
+            advanceFilmRef.current();
+          }, breathRem);
+        } else {
+          startSceneLock(hit.scene, rem);
+          filmLater(() => {
+            setFilmKind(null);
+            setFocus(null);
+            setFilm("idle");
+          }, rem);
+        }
+        return;
+      }
+
+      if (hit.kind === "converge") {
+        setModuleLocked(false);
+        setFilmKind(null);
+        setFocus(null);
+        setRingRotation(0);
+        setFilm("converge");
+        setDemoSeekMs(0);
+        const rem = Math.max(16, FIN_CONVERGE_MS - hit.offsetMs);
+        if (hit.offsetMs >= FIN_CONVERGE_MS) {
+          isPlayingRef.current = false;
+          filmLater(() => {
+            if (!autoPlayRef.current || doneRef.current) return;
+            advanceFilmRef.current();
+          }, Math.max(16, FIN_CONVERGE_MS + AUTO_BREATH_MS - hit.offsetMs));
+        } else {
+          startSceneLock(15, rem);
+        }
+        return;
+      }
+
+      // signature
+      setModuleLocked(false);
+      setFilmKind(null);
+      setFocus(null);
+      setRingRotation(0);
+      setSignatureSealed(false);
+      setFilm("signature");
+      setDemoSeekMs(hit.demoOffsetMs);
+      startSceneLock(
+        16,
+        Math.max(200, SIG_DEMO_SAFETY_MS - hit.offsetMs),
+      );
+    },
+    [
+      setFilm,
+      setFocus,
+      setFilmKind,
+      filmLater,
+      startSceneLock,
+      clearLockJob,
+      unlockScroll,
+    ],
+  );
+
+  const seekTo = useCallback(
+    (ms: number) => {
+      if (!autoPlayRef.current && !autoPlaying) return;
+      const clamped = Math.max(0, Math.min(ms, HUB_FILM_TOTAL_MS - 1));
+      clearFilmTimers();
+      clearLockJob();
+
+      const hit = resolveTimeline(clamped);
+      clockRef.current.seek(clamped);
+      setDemoSeekMs(hit.demoOffsetMs);
+      setSeekKey((k) => k + 1);
+
+      autoPlayRef.current = true;
+      setAutoPlaying(true);
+      doneRef.current = false;
+      setDone(false);
+      setExperiencePhase("tour");
+      setAwaitingGesture(false);
+      setSignatureSealed(false);
+
+      sceneRef.current = hit.scene;
+      setScene(hit.scene);
+      mumPlanRef.current = hit.mumPlan;
+      setMumPlan(hit.mumPlan);
+
+      applySeekHit(hit);
+
+      if (!filmPausedRef.current) {
+        clockRef.current.play();
+      }
+    },
+    [
+      autoPlaying,
+      clearFilmTimers,
+      clearLockJob,
+      setExperiencePhase,
+      applySeekHit,
+    ],
+  );
+
+  const togglePause = useCallback(() => {
+    if (!autoPlayRef.current) return;
+    if (filmPausedRef.current) {
+      filmPausedRef.current = false;
+      setFilmPaused(false);
+      clockRef.current.play();
+    } else {
+      filmPausedRef.current = true;
+      setFilmPaused(true);
+      clockRef.current.pause();
+    }
+  }, []);
+
   const advanceFilm = useCallback(() => {
     if (doneRef.current || experienceRef.current !== "tour") return;
     if (isPlayingRef.current) return;
@@ -1156,6 +1469,13 @@ export function LandingHubSection() {
         if (current === 0) {
           autoPlayRef.current = true;
           setAutoPlaying(true);
+          filmPausedRef.current = false;
+          setFilmPaused(false);
+          clockRef.current.reset();
+          clockRef.current.play();
+          setDemoSeekMs(0);
+          setSeekKey((k) => k + 1);
+          setElapsedMs(0);
           setAwaitingGesture(false);
           setHintMode("start");
           clearFilmTimers();
@@ -1204,6 +1524,11 @@ export function LandingHubSection() {
       setDone(false);
       autoPlayRef.current = false;
       setAutoPlaying(false);
+      clockRef.current.reset();
+      filmPausedRef.current = false;
+      setFilmPaused(false);
+      setElapsedMs(0);
+      setDemoSeekMs(0);
       signaturePlayedRef.current = false;
       setSignatureSealed(false);
       sceneRef.current = 0;
@@ -1441,11 +1766,11 @@ export function LandingHubSection() {
 
   useEffect(() => {
     return () => {
-      if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
+      clearLockJob();
       if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
       clearFilmTimers();
     };
-  }, [clearFilmTimers]);
+  }, [clearFilmTimers, clearLockJob]);
 
   useEffect(() => {
     const compact = document.querySelector(
@@ -1504,6 +1829,9 @@ export function LandingHubSection() {
 
   const chapter = hubChapterFromScene(scene);
   const showTourChrome = experience === "tour" && pinMode === "pin" && !done;
+  const { controlsVisible, bumpControls } = useHubControlsVisibility(
+    autoPlaying && showTourChrome,
+  );
   const showHint =
     showTourChrome &&
     awaitingGesture &&
@@ -1518,6 +1846,23 @@ export function LandingHubSection() {
     filmPhase !== "signature" &&
     filmPhase !== "converge" &&
     filmPhase !== "sealed";
+
+  useEffect(() => {
+    if (!autoPlaying || !showTourChrome) return;
+    const el = stickyRef.current;
+    if (!el) return;
+    const onMove = () => bumpControls();
+    el.addEventListener("pointermove", onMove, { passive: true });
+    el.addEventListener("mousemove", onMove);
+    return () => {
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("mousemove", onMove);
+    };
+  }, [autoPlaying, showTourChrome, bumpControls]);
+
+  useEffect(() => {
+    if (filmPaused && autoPlaying) bumpControls();
+  }, [filmPaused, autoPlaying, bumpControls]);
 
   const restingBlock = (
     <div className="lp-hub__resting lp-hub__resting--signature">
@@ -1555,6 +1900,7 @@ export function LandingHubSection() {
       data-focus={focusId ?? ""}
       data-active-film={activeFilm ?? ""}
       data-signature={signatureSealed ? "sealed" : signatureActive ? "playing" : ""}
+      data-film-paused={filmPaused ? "true" : "false"}
     >
       <h2 id="hub-title" className="sr-only">
         Le cœur de Batimum : MUM IA, Clients, Planning, Chantiers,
@@ -1582,6 +1928,7 @@ export function LandingHubSection() {
                 focusId={focusId}
                 reduced={reduced}
                 enabled={true}
+                paused={filmPaused}
               />
             </LandingSafeBoundary>
 
@@ -1604,6 +1951,16 @@ export function LandingHubSection() {
                         />
                       </>
                     ) : null}
+                    {autoPlaying ? (
+                      <HubFilmControls
+                        visible={controlsVisible || filmPaused}
+                        elapsedMs={elapsedMs}
+                        paused={filmPaused}
+                        onSeek={seekTo}
+                        onPauseToggle={togglePause}
+                        onUserActivity={bumpControls}
+                      />
+                    ) : null}
                     <HubScrollHint visible={showHint} mode="start" />
                   </>
                 ) : null}
@@ -1624,6 +1981,9 @@ export function LandingHubSection() {
                     reduced={!!reduced}
                     plan={mumPlan}
                     onPlanComplete={onMumPlanComplete}
+                    paused={filmPaused}
+                    seekMs={demoSeekMs}
+                    seekKey={seekKey}
                   />
                 </MumFilmShell>
 
@@ -1635,6 +1995,9 @@ export function LandingHubSection() {
                     active={clientsDemoActive}
                     reduced={!!reduced}
                     onDemoComplete={onClientsDemoComplete}
+                    paused={filmPaused}
+                    seekMs={demoSeekMs}
+                    seekKey={seekKey}
                   />
                 </ModuleFilmShell>
 
@@ -1646,6 +2009,9 @@ export function LandingHubSection() {
                     active={chantiersDemoActive}
                     reduced={!!reduced}
                     onDemoComplete={onChantiersDemoComplete}
+                    paused={filmPaused}
+                    seekMs={demoSeekMs}
+                    seekKey={seekKey}
                   />
                 </ModuleFilmShell>
 
@@ -1657,6 +2023,9 @@ export function LandingHubSection() {
                     active={planDemoActive}
                     reduced={!!reduced}
                     onDemoComplete={onPlanDemoComplete}
+                    paused={filmPaused}
+                    seekMs={demoSeekMs}
+                    seekKey={seekKey}
                   />
                 </ModuleFilmShell>
 
@@ -1667,6 +2036,9 @@ export function LandingHubSection() {
                     active={finDemoActive}
                     reduced={!!reduced}
                     onDemoComplete={onFinDemoComplete}
+                    paused={filmPaused}
+                    seekMs={demoSeekMs}
+                    seekKey={seekKey}
                   />
                 </FinanceFilmShell>
 
@@ -1677,6 +2049,9 @@ export function LandingHubSection() {
                     active={pilotageDemoActive}
                     reduced={!!reduced}
                     onDemoComplete={onPilotageDemoComplete}
+                    paused={filmPaused}
+                    seekMs={demoSeekMs}
+                    seekKey={seekKey}
                   />
                 </PilotageFilmShell>
 
@@ -1686,6 +2061,9 @@ export function LandingHubSection() {
                     sealed={signatureSealed || filmPhase === "sealed"}
                     reduced={!!reduced}
                     onComplete={onSignatureComplete}
+                    paused={filmPaused}
+                    seekMs={demoSeekMs}
+                    seekKey={seekKey}
                   />
                 ) : null}
               </>

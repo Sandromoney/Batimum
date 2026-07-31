@@ -203,6 +203,7 @@ export function HubAtmosphere({
   focusId,
   reduced,
   enabled = true,
+  paused = false,
 }: {
   containerRef: RefObject<HTMLElement | null>;
   scene: number;
@@ -210,10 +211,13 @@ export function HubAtmosphere({
   focusId: FocusId;
   reduced: boolean | null;
   enabled?: boolean;
+  /** Ralentit la dérive des particules sans les figer. */
+  paused?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 });
   const moodRef = useRef<AtmosphereMood>(moodFromScene(scene, filmPhase, focusId));
+  const pausedRef = useRef(paused);
   const rafRef = useRef(0);
   const [canvasFailed, setCanvasFailed] = useState(false);
 
@@ -222,6 +226,10 @@ export function HubAtmosphere({
   useEffect(() => {
     moodRef.current = moodFromScene(scene, filmPhase, focusId);
   }, [scene, filmPhase, focusId]);
+
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
 
   useEffect(() => {
     if (!showCanvas) return;
@@ -424,13 +432,15 @@ export function HubAtmosphere({
             }
           }
 
+          const speedScale = pausedRef.current ? 0.22 : 1;
+
           for (let i = 0; i < particles.length; i++) {
             const p = particles[i];
-            p.phase += p.breatheSpeed;
+            p.phase += p.breatheSpeed * speedScale;
 
             // Home dérive très lentement (champ vivant, sans amas)
-            p.hx += p.vx + mood.driftX * (0.008 + p.z * 0.012);
-            p.hy += p.vy + mood.driftY * (0.008 + p.z * 0.012);
+            p.hx += (p.vx + mood.driftX * (0.008 + p.z * 0.012)) * speedScale;
+            p.hy += (p.vy + mood.driftY * (0.008 + p.z * 0.012)) * speedScale;
 
             // Soft wrap du home
             if (p.hx < -12) p.hx = w + 12;
