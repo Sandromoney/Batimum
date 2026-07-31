@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { AuthCloseButton } from "@/components/marketing/auth-close-button";
 import { Card } from "@/components/ui/card";
 import { useStore } from "@/lib/store";
 import {
@@ -55,8 +56,11 @@ function GoogleLoginCompleteContent() {
   }, [router, searchParams, setData]);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
-      <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-10">
+    <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
+      <div className="auth-close-bar">
+        <AuthCloseButton />
+      </div>
+      <section className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-6xl items-center justify-center px-6 py-10">
         <Card className="w-full max-w-lg text-center">
           <BrandLogo variant="marketing" showSubtitle={false} />
           <h1 className="mt-8 text-2xl font-semibold tracking-tight">

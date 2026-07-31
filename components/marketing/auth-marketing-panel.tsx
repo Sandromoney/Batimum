@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useState,
+  type CSSProperties,
+} from "react";
 import {
   Brain,
   LayoutDashboard,
@@ -20,7 +24,7 @@ const ASPIRATION_CARDS: {
     icon: Rocket,
     title: "Prêt à changer le rythme de votre entreprise ?",
     text: "Passez moins de temps dans l'administratif et plus de temps à produire.",
-    badge: "+ 5h gagnées par semaine en moyenne",
+    badge: "Gagnez plusieurs heures sur votre administratif",
   },
   {
     icon: Brain,
@@ -52,6 +56,10 @@ const ROTATING_PHRASES = [
 
 const ROTATE_MS = 4000;
 
+/** Bleu Batimum landing — accent uniquement. */
+const ACCENT = "#3b82f6";
+const ACCENT_SOFT = "rgba(59, 130, 246, 0.1)";
+
 export function AuthMarketingPanel() {
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -82,30 +90,19 @@ export function AuthMarketingPanel() {
         </p>
 
         <ul className="mt-3 space-y-2 text-sm leading-6 text-[#666666]">
-          <li className="flex gap-2">
-            <span className="text-[#22a06b]" aria-hidden="true">
-              •
-            </span>
-            ressaisir des devis
-          </li>
-          <li className="flex gap-2">
-            <span className="text-[#22a06b]" aria-hidden="true">
-              •
-            </span>
-            gérer des plannings sur WhatsApp
-          </li>
-          <li className="flex gap-2">
-            <span className="text-[#22a06b]" aria-hidden="true">
-              •
-            </span>
-            calculer leurs marges sur Excel
-          </li>
-          <li className="flex gap-2">
-            <span className="text-[#22a06b]" aria-hidden="true">
-              •
-            </span>
-            répondre aux appels des équipes
-          </li>
+          {[
+            "ressaisir des devis",
+            "gérer des plannings sur WhatsApp",
+            "calculer leurs marges sur Excel",
+            "répondre aux appels des équipes",
+          ].map((item) => (
+            <li key={item} className="flex gap-2">
+              <span style={{ color: ACCENT }} aria-hidden="true">
+                •
+              </span>
+              {item}
+            </li>
+          ))}
         </ul>
 
         <p className="mt-4 text-sm font-medium text-[#111111]">
@@ -123,7 +120,8 @@ export function AuthMarketingPanel() {
                 style={{ "--card-delay": `${index * 80}ms` } as CSSProperties}
               >
                 <span
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[rgba(34,160,107,0.1)] text-[#22a06b]"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl"
+                  style={{ background: ACCENT_SOFT, color: ACCENT }}
                   aria-hidden="true"
                 >
                   <Icon className="h-4 w-4" strokeWidth={2} />

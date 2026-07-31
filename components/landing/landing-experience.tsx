@@ -9,18 +9,35 @@ import {
   type ReactNode,
 } from "react";
 
-const STORAGE_KEY = "batimum-landing-restore-v1";
+/**
+ * Soft-return landing state.
+ *
+ * Cause du bug précédent : `pastIntro` / hub-skip en sessionStorage étaient
+ * appliqués trop largement (scroll, back_forward), ce qui bloquait le film
+ * même sur un vrai chargement.
+ *
+ * Règle :
+ * - chargement / F5 → animation autorisée ;
+ * - Fermer (auth) → flag soft-return → restore sans rejouer ;
+ * - « Revoir la présentation » → clear + relance (côté hub).
+ */
 
-export type LandingRestoreSnapshot = {
+const DEPARTURE_KEY = "batimum-landing-departure-v2";
+const SOFT_RETURN_KEY = "batimum-landing-soft-return-v2";
+const INTRO_DONE_KEY = "batimum-landing-intro-done-v2";
+const LEGACY_KEYS = [
+  "batimum-landing-restore-v1",
+  "batimum-hub-presentation-skipped",
+] as const;
+
+export type LandingDepartureSnapshot = {
   scrollY: number;
-  pastIntro: boolean;
+  introDone: boolean;
   savedAt: number;
 };
 
 type LandingExperienceValue = {
-  /** Retour navigateur : restaurer scroll + sauter les entrées animées. */
   restore: boolean;
-  /** L’utilisateur était déjà passé l’intro (pain + hub). */
   pastIntro: boolean;
   ready: boolean;
 };
@@ -35,68 +52,128 @@ export function useLandingExperience() {
   return useContext(LandingExperienceContext);
 }
 
-function readNavType(): string {
-  const entry = performance.getEntriesByType(
-    "navigation",
-  )[0] as PerformanceNavigationTiming | undefined;
-  return entry?.type ?? "navigate";
-}
+/** Survive React Strict Mode double-mount in the same document. */
+let softReturnMemory: LandingDepartureSnapshot | null | undefined;
 
-function readSnapshot(): LandingRestoreSnapshot | null {
+function safeParse<T>(raw: string | null): T | null {
+  if (!raw) return null;
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as LandingRestoreSnapshot;
+    return JSON.parse(raw) as T;
   } catch {
     return null;
   }
 }
 
-export function writeLandingSnapshot(partial?: {
-  pastIntro?: boolean;
+function clearLegacyKeys() {
+  for (const key of LEGACY_KEYS) {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+export function isLandingIntroDone(): boolean {
+  try {
+    return sessionStorage.getItem(INTRO_DONE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function markLandingPastIntro() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(INTRO_DONE_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+  window.dispatchEvent(new Event("batimum:landing-past-intro"));
+}
+
+/** Snapshot avant départ vers Connexion / Inscription. */
+export function writeLandingSnapshot(partial?: { pastIntro?: boolean }) {
+  if (typeof window === "undefined") return;
+  try {
+    const introDone = partial?.pastIntro ?? isLandingIntroDone();
+    const snapshot: LandingDepartureSnapshot = {
+      scrollY: Math.max(0, window.scrollY),
+      introDone,
+      savedAt: Date.now(),
+    };
+    sessionStorage.setItem(DEPARTURE_KEY, JSON.stringify(snapshot));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Appelé par le bouton Fermer juste avant la navigation client. */
+export function prepareSoftReturnToLanding(override?: {
+  scrollY?: number;
+  introDone?: boolean;
 }) {
   if (typeof window === "undefined") return;
   try {
-    const prev = readSnapshot();
-    const pastIntro =
-      partial?.pastIntro ??
-      prev?.pastIntro ??
-      Boolean(document.getElementById("diagnostic") &&
-        window.scrollY >=
-          (document.getElementById("diagnostic")?.offsetTop ?? Number.MAX_SAFE_INTEGER) -
-            window.innerHeight * 0.35);
+    const departure = safeParse<LandingDepartureSnapshot>(
+      sessionStorage.getItem(DEPARTURE_KEY),
+    );
 
-    const snapshot: LandingRestoreSnapshot = {
-      scrollY: Math.max(0, window.scrollY),
-      pastIntro,
+    const snapshot: LandingDepartureSnapshot = {
+      scrollY: Math.max(
+        0,
+        override?.scrollY ?? departure?.scrollY ?? 0,
+      ),
+      introDone:
+        override?.introDone ??
+        departure?.introDone ??
+        isLandingIntroDone(),
       savedAt: Date.now(),
     };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    sessionStorage.setItem(SOFT_RETURN_KEY, JSON.stringify(snapshot));
+    sessionStorage.setItem(DEPARTURE_KEY, JSON.stringify(snapshot));
+    softReturnMemory = undefined;
   } catch {
-    /* ignore quota */
+    /* ignore */
   }
 }
 
 export function clearLandingSnapshot() {
   try {
-    sessionStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(DEPARTURE_KEY);
+    sessionStorage.removeItem(SOFT_RETURN_KEY);
+    sessionStorage.removeItem(INTRO_DONE_KEY);
+    softReturnMemory = undefined;
   } catch {
     /* ignore */
   }
 }
 
-/** Marque l’intro (pain + hub) comme déjà vue pour cette session de visite. */
-export function markLandingPastIntro() {
-  if (typeof window === "undefined") return;
-  writeLandingSnapshot({ pastIntro: true });
-  window.dispatchEvent(new Event("batimum:landing-past-intro"));
-}
-
-function clearHubSkipOnReload() {
+export function clearLandingIntroFlags() {
   try {
+    sessionStorage.removeItem(INTRO_DONE_KEY);
     sessionStorage.removeItem("batimum-hub-presentation-skipped");
   } catch {
     /* ignore */
+  }
+}
+
+function consumeSoftReturn(): LandingDepartureSnapshot | null {
+  if (softReturnMemory !== undefined) return softReturnMemory;
+
+  try {
+    const raw = sessionStorage.getItem(SOFT_RETURN_KEY);
+    if (!raw) {
+      softReturnMemory = null;
+      return null;
+    }
+    sessionStorage.removeItem(SOFT_RETURN_KEY);
+    const parsed = safeParse<LandingDepartureSnapshot>(raw);
+    softReturnMemory = parsed;
+    return parsed;
+  } catch {
+    softReturnMemory = null;
+    return null;
   }
 }
 
@@ -112,34 +189,34 @@ export function LandingExperienceProvider({
   });
 
   useEffect(() => {
-    const navType = readNavType();
-    const isBackForward = navType === "back_forward";
-    const isReload = navType === "reload";
+    clearLegacyKeys();
 
-    if (isReload) {
-      clearLandingSnapshot();
-      clearHubSkipOnReload();
-      setValue({ restore: false, pastIntro: false, ready: true });
-      return;
-    }
+    const soft = consumeSoftReturn();
+    const validSoft =
+      soft != null && Date.now() - soft.savedAt < 1000 * 60 * 60;
 
-    const snapshot = readSnapshot();
-    const shouldRestore =
-      isBackForward && snapshot != null && Date.now() - snapshot.savedAt < 1000 * 60 * 60;
+    if (validSoft && soft) {
+      if (soft.introDone) {
+        try {
+          sessionStorage.setItem(INTRO_DONE_KEY, "1");
+        } catch {
+          /* ignore */
+        }
+      }
 
-    if (shouldRestore && snapshot) {
       document.documentElement.classList.add("lp-restore");
-      if (snapshot.pastIntro) {
+      if (soft.introDone) {
         document.documentElement.classList.add("lp-restore-past-intro");
       }
+
       setValue({
         restore: true,
-        pastIntro: snapshot.pastIntro,
+        pastIntro: soft.introDone,
         ready: true,
       });
 
       const applyScroll = () => {
-        window.scrollTo(0, snapshot.scrollY);
+        window.scrollTo(0, soft.scrollY);
       };
       applyScroll();
       requestAnimationFrame(applyScroll);
@@ -153,45 +230,37 @@ export function LandingExperienceProvider({
       };
     }
 
+    try {
+      sessionStorage.removeItem(INTRO_DONE_KEY);
+      sessionStorage.removeItem("batimum-hub-presentation-skipped");
+    } catch {
+      /* ignore */
+    }
+
     setValue({ restore: false, pastIntro: false, ready: true });
   }, []);
 
   useEffect(() => {
     if (!value.ready) return;
 
-    const persist = () => writeLandingSnapshot();
     const onPastIntro = () => {
-      writeLandingSnapshot({ pastIntro: true });
+      try {
+        sessionStorage.setItem(INTRO_DONE_KEY, "1");
+      } catch {
+        /* ignore */
+      }
       setValue((prev) =>
         prev.pastIntro ? prev : { ...prev, pastIntro: true },
       );
     };
 
-    let scrollT: number | null = null;
-    const onScroll = () => {
-      if (scrollT != null) return;
-      scrollT = window.setTimeout(() => {
-        scrollT = null;
-        const diagnostic = document.getElementById("diagnostic");
-        if (diagnostic) {
-          const top =
-            diagnostic.getBoundingClientRect().top + window.scrollY;
-          if (window.scrollY + window.innerHeight * 0.4 >= top) {
-            onPastIntro();
-          }
-        }
-        writeLandingSnapshot();
-      }, 250);
-    };
+    const persistDeparture = () => writeLandingSnapshot();
 
-    window.addEventListener("pagehide", persist);
+    window.addEventListener("pagehide", persistDeparture);
     window.addEventListener("batimum:landing-past-intro", onPastIntro);
-    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      window.removeEventListener("pagehide", persist);
+      window.removeEventListener("pagehide", persistDeparture);
       window.removeEventListener("batimum:landing-past-intro", onPastIntro);
-      window.removeEventListener("scroll", onScroll);
-      if (scrollT != null) window.clearTimeout(scrollT);
     };
   }, [value.ready]);
 

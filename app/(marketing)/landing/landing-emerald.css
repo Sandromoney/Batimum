@@ -3625,11 +3625,17 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-nav__desktop {
-  gap: 22px;
+  gap: 1.85rem;
   flex-wrap: nowrap;
   white-space: nowrap;
   justify-content: center;
   max-width: 100%;
+}
+
+@media (min-width: 1280px) {
+  .landing-emerald .landing-nav__desktop {
+    gap: 2.15rem;
+  }
 }
 
 .landing-emerald .landing-nav__trigger,
@@ -10837,8 +10843,10 @@ html:has(.landing-emerald) body {
   height: 100%;
   width: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #171717 0%, #3b82f6 100%);
+  background: #3b82f6;
   transform: scaleX(0.06);
+  transform-origin: left center;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .landing-emerald .lp-diag__stage {

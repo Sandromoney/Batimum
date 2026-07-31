@@ -4,8 +4,7 @@ import {
   CalendarDays,
   FileText,
   FolderKanban,
-  HelpCircle,
-  MessageSquareQuote,
+  Lock,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -75,43 +74,31 @@ const EQUIPES_MENU: LandingNavMenu = {
   id: "equipes",
   label: "Pour les équipes",
   intro:
-    "Le dirigeant garde le contrôle. Les salariés retrouvent planning et consignes.",
+    "Espace dirigeant et espace employé, avec des droits clairement séparés.",
   items: [
+    {
+      label: "Espace dirigeant",
+      href: "/landing#faq",
+      description:
+        "Devis, marges, clients et données sensibles restent privés.",
+      icon: Lock,
+    },
     {
       label: "Espace employé",
       href: "/landing#faq",
-      description: "Accès séparé, sans données sensibles.",
+      description: "Planning, chantiers et consignes — rien de plus.",
       icon: Users,
     },
     {
-      label: "Connexion",
-      href: "/login",
-      description: "Accès dirigeant ou salarié, détecté automatiquement.",
+      label: "Confidentialité",
+      href: "/landing#faq",
+      description: "Droits séparés pour protéger votre entreprise.",
       icon: Sparkles,
     },
   ],
 };
 
-const RESSOURCES_MENU: LandingNavMenu = {
-  id: "ressources",
-  label: "Ressources",
-  items: [
-    {
-      label: "FAQ",
-      href: "/landing#faq",
-      description: "Réponses aux questions fréquentes.",
-      icon: HelpCircle,
-    },
-    {
-      label: "Témoignages",
-      href: "/landing#temoignages",
-      description: "Retours d’entreprises du BTP.",
-      icon: MessageSquareQuote,
-    },
-  ],
-};
-
-/** Ordre d'affichage dans la navbar. */
+/** Ordre d'affichage dans la navbar — Ressources masqué (pas de hub contenu dédié). */
 export const LANDING_NAV_ENTRIES: LandingNavEntry[] = [
   { type: "menu", menu: FONCTIONNALITES_MENU },
   { type: "menu", menu: EQUIPES_MENU },
@@ -122,12 +109,11 @@ export const LANDING_NAV_ENTRIES: LandingNavEntry[] = [
   {
     type: "link",
     link: {
-      id: "temoignages",
-      label: "Témoignages",
+      id: "avis",
+      label: "Avis",
       href: "/landing#temoignages",
     },
   },
-  { type: "menu", menu: RESSOURCES_MENU },
 ];
 
 /** @deprecated Utiliser LANDING_NAV_ENTRIES — conservé pour compatibilité. */

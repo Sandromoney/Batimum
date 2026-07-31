@@ -83,6 +83,7 @@ import {
 import {
   markLandingPastIntro,
   useLandingExperience,
+  clearLandingIntroFlags,
 } from "@/components/landing/landing-experience";
 import { FilmClock } from "@/lib/landing-hub-film-clock";
 import {
@@ -926,6 +927,7 @@ export function LandingHubSection() {
 
   const replayPresentation = useCallback(() => {
     clearHubSkippedSession();
+    clearLandingIntroFlags();
     setSessionSkipped(false);
     clearLockJob();
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);

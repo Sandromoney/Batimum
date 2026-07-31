@@ -1,6 +1,6 @@
-/* Batimum — thème clair premium B&W (auth, onboarding, légal)
+/* Batimum — thème clair premium B&W + accent bleu (auth, onboarding, légal)
    Aligné sur la landing : blanc / noir / gris clair.
-   Vert Batimum uniquement en accent discret. */
+   Bleu Batimum (#3b82f6) uniquement en accent discret. */
 
 .marketing-emerald {
   --color-primary: 23 23 23;
@@ -19,8 +19,9 @@
   --shadow-card-hover: 0 12px 28px rgba(17, 17, 17, 0.07);
   --shadow-input: none;
   --body-gradient: none;
-  --bm-accent: #22a06b;
-  --bm-accent-soft: rgba(34, 160, 107, 0.1);
+  --bm-accent: #3b82f6;
+  --bm-accent-hover: #2563eb;
+  --bm-accent-soft: rgba(59, 130, 246, 0.1);
   background-color: #ffffff;
   background-image: none;
   color: #111111;
@@ -33,6 +34,69 @@
 .marketing-emerald main {
   background-color: transparent !important;
   color: inherit;
+}
+
+/* ——— Bouton Fermer (auth) ——— */
+
+.marketing-emerald .auth-close-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  padding: 0.85rem 1rem 0.35rem;
+  background: transparent;
+  pointer-events: none;
+}
+
+.marketing-emerald .auth-close-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.75rem;
+  margin: 0;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: 10px;
+  background: transparent;
+  color: #111111;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.marketing-emerald .auth-close-btn__icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.marketing-emerald .auth-close-btn:hover {
+  background: #f6f7f9;
+  border-color: rgba(17, 17, 17, 0.14);
+}
+
+.marketing-emerald .auth-close-btn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .marketing-emerald .auth-close-bar {
+    padding: 0.75rem 0.75rem 0.25rem;
+  }
+
+  .marketing-emerald .auth-close-btn {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.85rem;
+  }
 }
 
 /* ——— Cartes ——— */
@@ -87,13 +151,13 @@
 .marketing-emerald input:not([type="checkbox"]):not([type="radio"]):focus,
 .marketing-emerald textarea:focus,
 .marketing-emerald select:focus {
-  border-color: rgba(17, 17, 17, 0.35) !important;
+  border-color: rgba(59, 130, 246, 0.45) !important;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.06) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
 }
 
 .marketing-emerald input[type="checkbox"] {
-  accent-color: #22a06b;
+  accent-color: #3b82f6;
 }
 
 /* ——— Boutons ——— */
@@ -217,7 +281,7 @@
   background: #ffffff !important;
 }
 
-/* ——— Logo auth (même rendu que landing header) ——— */
+/* ——— Logo auth ——— */
 
 .marketing-emerald .logo-topbar__img {
   width: 160px;
@@ -238,18 +302,19 @@
 }
 
 .marketing-emerald .marketing-onboarding-progress__fill {
-  background: #171717;
+  background: #3b82f6;
 }
 
-/* ——— Messages de succès (accent vert discret) ——— */
+/* ——— Messages de succès (accent bleu discret) ——— */
 
 .marketing-emerald .border-emerald-500\/30.bg-emerald-500\/10 {
-  border-color: rgba(34, 160, 107, 0.22) !important;
-  background: rgba(34, 160, 107, 0.08) !important;
+  border-color: rgba(59, 130, 246, 0.22) !important;
+  background: rgba(59, 130, 246, 0.08) !important;
 }
 
-.marketing-emerald .text-emerald-200 {
-  color: #1a7a52 !important;
+.marketing-emerald .text-emerald-200,
+.marketing-emerald .text-emerald-700 {
+  color: #1d4ed8 !important;
 }
 
 /* ——— CTA inline (pages OAuth) ——— */
@@ -266,10 +331,11 @@
   box-shadow: 0 8px 20px rgba(17, 17, 17, 0.12) !important;
 }
 
-/* ——— Auth split (connexion / inscription) ——— */
+/* ——— Auth split ——— */
 
 .marketing-emerald .auth-split {
   background: #ffffff;
+  position: relative;
 }
 
 .marketing-emerald .auth-split__form {

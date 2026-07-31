@@ -17,7 +17,7 @@ type LandingNavMenusProps = {
 };
 
 const navTriggerClass =
-  "landing-nav__trigger inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-[#0f172a] transition-colors hover:bg-black/[0.03]";
+  "landing-nav__trigger inline-flex items-center gap-1 rounded-lg px-3.5 py-2 text-sm font-medium text-[#111111] transition-colors hover:bg-black/[0.03]";
 
 function DropdownPanel({
   menu,

@@ -45,7 +45,7 @@ export function LandingDiagnosticSection() {
   const total = QUESTIONS.length;
   const question = QUESTIONS[step];
   const progressLabel = done
-    ? "Diagnostic terminé"
+    ? "Questionnaire terminé"
     : `Question ${step + 1} sur ${total}`;
   const progressRatio = done ? 1 : (step + 1) / total;
 
@@ -112,7 +112,7 @@ export function LandingDiagnosticSection() {
           <div className="lp-section-head lp-diag__head">
             <p className="lp-eyebrow">
               <span className="lp-eyebrow__dot" aria-hidden="true" />
-              Mini-audit Batimum
+              Questionnaire Batimum
             </p>
             <h2 id="diagnostic-title" className="lp-title mt-5 max-w-3xl">
               En moins d’une minute, voyez où votre entreprise{" "}

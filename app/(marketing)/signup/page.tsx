@@ -180,19 +180,19 @@ function SignupForm() {
   return (
     <AuthSplitLayout footer={<MarketingFooter />}>
       <Card className="w-full">
-        <Link href="/" className="mb-8 flex justify-center">
+        <Link href="/landing" className="mb-8 flex justify-center">
           <BrandLogo variant="marketing" showSubtitle={false} />
         </Link>
 
         <header className="mb-8">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#666666]">
             Inscription · Étape 1 sur 7
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">
             Créer votre compte
           </h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Quelques informations pour démarrer votre essai gratuit de 7 jours.
+            Quelques informations pour démarrer vos 7 jours d&apos;essai gratuit.
           </p>
         </header>
 

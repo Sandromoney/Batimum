@@ -11,7 +11,7 @@ type LandingTrialCtaProps = {
   className?: string;
   buttonClassName?: string;
   noteClassName?: string;
-  /** Affiche la note « Essai gratuit de 7 jours » sous le bouton. */
+  /** Affiche la note « 7 jours d'essai gratuit » sous le bouton. */
   showTrialNote?: boolean;
   fullWidth?: boolean;
   onNavigate?: () => void;
@@ -19,7 +19,7 @@ type LandingTrialCtaProps = {
 
 /**
  * Règle unique des CTA principaux landing :
- * bouton « Essayer gratuitement » + note discrète 7 jours.
+ * bouton « Essayer gratuitement » + note discrète « 7 jours d'essai gratuit ».
  */
 export function LandingTrialCta({
   href,
@@ -62,7 +62,7 @@ export function LandingTrialCta({
       </Link>
       {showTrialNote && !beta ? (
         <p className={cn("lp-trial-cta__note", noteClassName)}>
-          Essai gratuit de 7 jours
+          7 jours d&apos;essai gratuit
         </p>
       ) : null}
     </div>

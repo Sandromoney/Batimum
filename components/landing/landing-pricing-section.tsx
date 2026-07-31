@@ -152,7 +152,7 @@ export function LandingPricingSection() {
           <ul className="lp-plans__trust">
             <li>
               <Check size={14} strokeWidth={2.2} aria-hidden="true" />
-              Essai gratuit de 7 jours
+              7 jours d&apos;essai gratuit
             </li>
             <li>
               <Check size={14} strokeWidth={2.2} aria-hidden="true" />

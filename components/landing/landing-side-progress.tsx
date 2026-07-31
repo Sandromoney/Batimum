@@ -8,31 +8,38 @@ type ProgressSection = {
   label: string;
 };
 
+/** Libellés commerciaux — Hero + post-hero regroupés sous Présentation. */
 const SECTIONS: ProgressSection[] = [
-  { id: "hero", label: "Hero" },
-  { id: "ecosysteme", label: "Présentation" },
-  { id: "diagnostic", label: "Diagnostic" },
+  { id: "presentation", label: "Présentation" },
+  { id: "diagnostic", label: "Questionnaire Batimum" },
   { id: "avant-apres", label: "Comparaison" },
   { id: "temoignages", label: "Avis" },
   { id: "plans", label: "Tarifs" },
   { id: "faq", label: "FAQ" },
-  { id: "commencer", label: "Commencer" },
+  { id: "commencer", label: "Essai gratuit" },
 ];
+
+function sectionElement(id: string): HTMLElement | null {
+  if (id === "presentation") {
+    return (
+      (document.getElementById("batimum-hero") as HTMLElement | null) ||
+      (document.querySelector(".batimumHero") as HTMLElement | null) ||
+      (document.querySelector(".landing-top") as HTMLElement | null) ||
+      (document.getElementById("ecosysteme") as HTMLElement | null)
+    );
+  }
+  if (id === "commencer") {
+    return document.querySelector(".lp-final") as HTMLElement | null;
+  }
+  return document.getElementById(id);
+}
 
 function resolveActiveId(scrollY: number, viewportH: number): string {
   const marker = scrollY + viewportH * 0.32;
-  let active = SECTIONS[0]?.id ?? "hero";
+  let active = SECTIONS[0]?.id ?? "presentation";
 
   for (const section of SECTIONS) {
-    const el =
-      section.id === "hero"
-        ? document.getElementById("batimum-hero") ||
-          document.querySelector(".batimumHero") ||
-          document.querySelector(".landing-top")
-        : section.id === "commencer"
-          ? document.querySelector(".lp-final")
-          : document.getElementById(section.id);
-
+    const el = sectionElement(section.id);
     if (!(el instanceof HTMLElement)) continue;
     const top = el.getBoundingClientRect().top + window.scrollY;
     if (marker >= top - 8) active = section.id;
@@ -64,14 +71,7 @@ export function LandingSideProgress() {
   }, []);
 
   const jumpTo = (id: string) => {
-    const el =
-      id === "hero"
-        ? document.getElementById("batimum-hero") ||
-          document.querySelector(".batimumHero") ||
-          document.querySelector(".landing-top")
-        : id === "commencer"
-          ? document.querySelector(".lp-final")
-          : document.getElementById(id);
+    const el = sectionElement(id);
     if (!(el instanceof HTMLElement)) return;
     el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
