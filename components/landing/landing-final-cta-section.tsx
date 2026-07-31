@@ -46,6 +46,7 @@ export function LandingFinalCtaSection() {
           <LandingTrialCta
             className="lp-final__trial"
             buttonClassName="lp-final__cta"
+            label="Démarrer mes 7 jours gratuits"
           />
           <ul className="lp-final__trust">
             {TRUST.map((item) => (

@@ -14,45 +14,33 @@ type CompareRow = {
 const ROWS: CompareRow[] = [
   {
     id: "outils",
-    before: "Plusieurs outils, fichiers et messages dispersés",
-    withBatimum: "Une seule plateforme pour centraliser votre entreprise",
+    before: "Plusieurs outils dispersés",
+    withBatimum: "Toute votre entreprise dans une seule plateforme",
   },
   {
     id: "devis",
-    before: "Chaque devis recommence presque depuis zéro",
-    withBatimum:
-      "MUM IA prépare un devis structuré, modifiable et adapté à vos prix",
+    before: "Devis recommencés manuellement",
+    withBatimum: "MUM IA prépare une base complète et modifiable",
   },
   {
     id: "clients",
-    before: "Les informations clients sont réparties entre plusieurs supports",
-    withBatimum:
-      "Coordonnées, devis, factures et chantiers réunis dans une seule fiche",
+    before: "Informations clients difficiles à retrouver",
+    withBatimum: "Tout l’historique dans une seule fiche",
   },
   {
     id: "planning",
-    before:
-      "Le planning change et les salariés doivent être prévenus un par un",
-    withBatimum:
-      "Affectations centralisées et espace employé séparé avec planning et consignes",
+    before: "Planning modifié et salariés prévenus un par un",
+    withBatimum: "Planning centralisé et espace employé connecté",
   },
   {
     id: "chantiers",
-    before: "L’avancement d’un chantier reste difficile à mesurer",
-    withBatimum:
-      "Une progression calculée selon le poids réel de chaque étape",
+    before: "Avancement du chantier estimé approximativement",
+    withBatimum: "Progression calculée selon le poids des étapes",
   },
   {
     id: "marges",
-    before: "La marge est souvent découverte une fois le chantier terminé",
-    withBatimum:
-      "Coûts, prévisionnel, réel et rentabilité visibles pendant le chantier",
-  },
-  {
-    id: "confidentialite",
-    before: "Les données sensibles peuvent être partagées par erreur",
-    withBatimum:
-      "Les salariés accèdent uniquement à leur espace, sans voir les marges ni les données du dirigeant",
+    before: "Marges découvertes trop tard",
+    withBatimum: "Coûts, prévisionnel et rentabilité suivis en direct",
   },
 ];
 
@@ -62,7 +50,7 @@ export function LandingBeforeAfterSection() {
   const reduced = useReducedMotion();
 
   const t = {
-    duration: reduced ? 0.01 : 0.45,
+    duration: reduced ? 0.01 : 0.4,
     ease: EASE,
   };
 
@@ -90,47 +78,50 @@ export function LandingBeforeAfterSection() {
           </div>
         </LandingReveal>
 
-        <div className="lp-ba__rows" role="list">
-          {ROWS.map((row, index) => {
-            const baseDelay = reduced ? 0 : index * 0.1;
-            return (
-              <div key={row.id} className="lp-ba__row" role="listitem">
-                <motion.article
-                  className="lp-ba__card lp-ba__card--today"
-                  initial={reduced ? false : { opacity: 0, y: 12 }}
+        <LandingReveal delay={80}>
+          <div className="lp-ba__table" role="table" aria-label="Avant et avec Batimum">
+            <div className="lp-ba__tableHead" role="row">
+              <div className="lp-ba__colHead lp-ba__colHead--before" role="columnheader">
+                Avant Batimum
+              </div>
+              <div className="lp-ba__colHead lp-ba__colHead--after" role="columnheader">
+                <Check size={13} strokeWidth={2.4} aria-hidden="true" />
+                Avec Batimum
+              </div>
+            </div>
+
+            <div className="lp-ba__tableBody" role="rowgroup">
+              {ROWS.map((row, index) => (
+                <motion.div
+                  key={row.id}
+                  className="lp-ba__tableRow"
+                  role="row"
+                  initial={reduced ? false : { opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.4 }}
-                  transition={{ ...t, delay: baseDelay }}
-                >
-                  <p className="lp-ba__label">Avant Batimum</p>
-                  <p className="lp-ba__text">{row.before}</p>
-                </motion.article>
-
-                <div className="lp-ba__arrow" aria-hidden="true">
-                  <span className="lp-ba__arrowLine" />
-                  <span className="lp-ba__arrowTip" />
-                </div>
-
-                <motion.article
-                  className="lp-ba__card lp-ba__card--batimum"
-                  initial={reduced ? false : { opacity: 0, y: 12, scale: 0.99 }}
-                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                  viewport={{ once: true, amount: 0.4 }}
+                  viewport={{ once: true, amount: 0.35 }}
                   transition={{
                     ...t,
-                    delay: reduced ? 0 : baseDelay + 0.22,
+                    delay: reduced ? 0 : index * 0.07,
                   }}
                 >
-                  <p className="lp-ba__label lp-ba__label--batimum">
-                    <Check size={12} strokeWidth={2.4} aria-hidden="true" />
-                    Avec Batimum
-                  </p>
-                  <p className="lp-ba__text">{row.withBatimum}</p>
-                </motion.article>
-              </div>
-            );
-          })}
-        </div>
+                  <div className="lp-ba__cell lp-ba__cell--before" role="cell">
+                    <span className="lp-ba__mobileLabel">Avant Batimum</span>
+                    <p>{row.before}</p>
+                  </div>
+                  <div className="lp-ba__cellArrow" aria-hidden="true">
+                    <span />
+                  </div>
+                  <div className="lp-ba__cell lp-ba__cell--after" role="cell">
+                    <span className="lp-ba__mobileLabel lp-ba__mobileLabel--after">
+                      Avec Batimum
+                    </span>
+                    <p>{row.withBatimum}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </LandingReveal>
 
         <LandingReveal delay={120}>
           <div className="lp-ba__footer">
@@ -139,7 +130,10 @@ export function LandingBeforeAfterSection() {
               <br />
               Plus de temps sur vos chantiers.
             </p>
-            <LandingTrialCta className="lp-ba__trial" />
+            <LandingTrialCta
+              className="lp-ba__trial"
+              label="Découvrir Batimum gratuitement"
+            />
           </div>
         </LandingReveal>
       </div>

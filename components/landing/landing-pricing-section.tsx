@@ -82,11 +82,11 @@ export function LandingPricingSection() {
               Tarifs
             </p>
             <h2 id="plans-title" className="lp-title lp-plans__titleHead">
-              Une seule offre.{" "}
-              <span className="lp-title-accent">Tout Batimum.</span>
+              Un tarif simple.{" "}
+              <span className="lp-title-accent">Sans surprise.</span>
             </h2>
             <p className="lp-subtitle lp-plans__lead">
-              Tout le logiciel, sans options cachées.
+              Une seule offre, toutes les fonctionnalités incluses.
             </p>
             <p className="lp-plans__micro">
               Choisissez simplement votre rythme de paiement.
@@ -120,22 +120,22 @@ export function LandingPricingSection() {
                 delay: reduced ? 0 : plan.featured ? 0.14 : index * 0.08,
               }}
             >
-              {plan.badge ? (
-                <span className="lp-plans__badge">{plan.badge}</span>
-              ) : null}
-
               <h3 className="lp-plans__title">{plan.title}</h3>
 
               <div className="lp-plans__price">
                 <span className="lp-plans__amount">{plan.price}&nbsp;€</span>
                 <span className="lp-plans__period">par mois</span>
               </div>
+              {plan.badge ? (
+                <span className="lp-plans__badge">{plan.badge}</span>
+              ) : null}
               <p className="lp-plans__hint">{plan.hint}</p>
 
               <LandingTrialCta
                 href={checkoutHrefFor(plan.id)}
                 fullWidth
                 buttonClassName="lp-plans__cta"
+                label="Commencer mon essai gratuit"
               />
 
               <ul className="lp-plans__features">

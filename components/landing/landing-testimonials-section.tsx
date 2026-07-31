@@ -17,8 +17,6 @@ import {
   type LandingTestimonial,
 } from "@/lib/landing-testimonials";
 
-const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
-
 function Stars() {
   return (
     <p className="lp-voices__stars" aria-hidden="true">
@@ -52,13 +50,32 @@ function VoiceCard({ item }: { item: LandingTestimonial }) {
 export function LandingTestimonialsSection() {
   const reduced = useReducedMotion();
   const trackRef = useRef<HTMLDivElement>(null);
-  const [paused, setPaused] = useState(false);
+  const offsetRef = useRef(0);
+  const pausedRef = useRef(false);
   const dragging = useRef(false);
   const dragStartX = useRef(0);
-  const dragStartScroll = useRef(0);
+  const dragStartOffset = useRef(0);
+  const [paused, setPaused] = useState(false);
 
   // Boucle : contenu doublé pour un défilement continu sans saut.
   const loopItems = [...LANDING_TESTIMONIALS, ...LANDING_TESTIMONIALS];
+
+  const applyOffset = useCallback((value: number) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const half = el.scrollWidth / 2;
+    let next = value;
+    if (half > 0) {
+      while (next >= half) next -= half;
+      while (next < 0) next += half;
+    }
+    offsetRef.current = next;
+    el.style.transform = `translate3d(${-next}px, 0, 0)`;
+  }, []);
+
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
 
   useEffect(() => {
     const el = trackRef.current;
@@ -66,32 +83,31 @@ export function LandingTestimonialsSection() {
 
     let raf = 0;
     let last = performance.now();
-    const speed = 0.28; // px / ms — très lent
+    const speed = 0.032; // px / ms — très lent et continu
 
     const tick = (now: number) => {
-      const dt = Math.min(32, now - last);
+      const dt = Math.min(40, now - last);
       last = now;
-      if (!paused && !dragging.current) {
-        el.scrollLeft += speed * dt;
-        const half = el.scrollWidth / 2;
-        if (half > 0 && el.scrollLeft >= half) {
-          el.scrollLeft -= half;
-        }
+      if (!pausedRef.current && !dragging.current) {
+        applyOffset(offsetRef.current + speed * dt);
       }
       raf = requestAnimationFrame(tick);
     };
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [paused, reduced]);
+  }, [reduced, applyOffset]);
 
-  const nudge = useCallback((dir: -1 | 1) => {
-    const el = trackRef.current;
-    if (!el) return;
-    const card = el.querySelector<HTMLElement>(".lp-voices__card");
-    const step = (card?.offsetWidth ?? 320) + 16;
-    el.scrollBy({ left: dir * step, behavior: "smooth" });
-  }, []);
+  const nudge = useCallback(
+    (dir: -1 | 1) => {
+      const el = trackRef.current;
+      if (!el) return;
+      const card = el.querySelector<HTMLElement>(".lp-voices__card");
+      const step = (card?.offsetWidth ?? 320) + 16;
+      applyOffset(offsetRef.current + dir * step);
+    },
+    [applyOffset],
+  );
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     const el = trackRef.current;
@@ -99,21 +115,20 @@ export function LandingTestimonialsSection() {
     dragging.current = true;
     setPaused(true);
     dragStartX.current = e.clientX;
-    dragStartScroll.current = el.scrollLeft;
+    dragStartOffset.current = offsetRef.current;
     el.setPointerCapture(e.pointerId);
   };
 
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const el = trackRef.current;
-    if (!el || !dragging.current) return;
-    el.scrollLeft = dragStartScroll.current - (e.clientX - dragStartX.current);
+    if (!dragging.current) return;
+    applyOffset(dragStartOffset.current - (e.clientX - dragStartX.current));
   };
 
   const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
     const el = trackRef.current;
     dragging.current = false;
     el?.releasePointerCapture(e.pointerId);
-    window.setTimeout(() => setPaused(false), 900);
+    window.setTimeout(() => setPaused(false), 700);
   };
 
   return (
@@ -162,21 +177,22 @@ export function LandingTestimonialsSection() {
           if (!dragging.current) setPaused(false);
         }}
       >
-        <div
-          ref={trackRef}
-          className="lp-voices__rail"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-          style={{ transitionTimingFunction: EASE }}
-        >
-          {loopItems.map((item, index) => (
-            <VoiceCard key={`${item.id}-${index}`} item={item} />
-          ))}
+        <div className="lp-voices__railViewport">
+          <div
+            ref={trackRef}
+            className="lp-voices__rail"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          >
+            {loopItems.map((item, index) => (
+              <VoiceCard key={`${item.id}-${index}`} item={item} />
+            ))}
+          </div>
         </div>
 
-        <div className="lp-voices__railControls" aria-hidden="false">
+        <div className="lp-voices__railControls">
           <button
             type="button"
             className="lp-voices__railBtn"
@@ -203,7 +219,10 @@ export function LandingTestimonialsSection() {
               Et si votre entreprise était la prochaine à gagner plusieurs
               heures chaque semaine ?
             </p>
-            <LandingTrialCta className="lp-voices__trial" />
+            <LandingTrialCta
+              className="lp-voices__trial"
+              label="Essayer Batimum"
+            />
           </div>
         </LandingReveal>
       </div>

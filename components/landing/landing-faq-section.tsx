@@ -114,16 +114,17 @@ export function LandingFaqSection() {
               <span className="lp-eyebrow__dot" aria-hidden="true" />
               FAQ
             </p>
-            <h2 id="faq-title" className="lp-title mt-5 max-w-3xl">
+            <h2 id="faq-title" className="lp-title lp-faq__title">
               Les questions que se posent{" "}
               <span className="lp-title-accent">les dirigeants</span>
             </h2>
-            <p className="lp-subtitle mt-5 max-w-2xl">
+            <p className="lp-subtitle lp-faq__lead">
               Les réponses essentielles avant de créer votre compte.
             </p>
           </div>
         </LandingReveal>
 
+        <div className="lp-faq__shell">
         <div className="lp-faq__list">
           {FAQS.map((faq, index) => {
             const open = openIndex === index;
@@ -181,6 +182,7 @@ export function LandingFaqSection() {
               </LandingReveal>
             );
           })}
+        </div>
         </div>
       </div>
     </section>

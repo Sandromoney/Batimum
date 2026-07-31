@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
-  ArrowRight,
   Bot,
   Calendar,
   HardHat,
@@ -76,12 +75,11 @@ export const HERO_FEATURES: HexFeature[] = [
   {
     id: "devis",
     title: "Devis avec MUM IA",
-    subtitle: "Une base structurée, prête à ajuster",
+    subtitle: "Une base complète en quelques instants",
     panelTitle: "Devis avec MUM IA",
-    panelText:
-      "Décrivez le chantier. MUM IA prépare les prestations et les prix. Vous gardez la main pour ajuster avant l’envoi au client.",
-    ctaLabel: "Découvrir MUM IA",
-    href: "#devis-ia",
+    panelText: "Description, prestations et prix prêts à ajuster",
+    ctaLabel: "",
+    href: "#",
     angle: 0,
     accent: ICON_ACCENT,
     Icon: Bot,
@@ -90,20 +88,18 @@ export const HERO_FEATURES: HexFeature[] = [
       prefix: "",
       value: 0,
       format: "proof",
-      headline: "Une base de devis créée en quelques instants",
-      subtext:
-        "Décrivez le chantier. MUM IA prépare les prestations et les prix.",
+      headline: "Une base de devis prête à modifier",
+      subtext: "Gardez la main avant l’envoi au client",
     },
   },
   {
     id: "planning",
     title: "Planning des équipes",
-    subtitle: "Chacun sait où aller et quoi faire",
+    subtitle: "Chacun sait où aller",
     panelTitle: "Planning des équipes",
-    panelText:
-      "Affectations, périodes et consignes transmises dans l’espace employé. Toute l’équipe sait où intervenir.",
-    ctaLabel: "Découvrir le planning",
-    href: "#planning",
+    panelText: "Affectations et consignes dans l’espace employé",
+    ctaLabel: "",
+    href: "#",
     angle: 60,
     accent: ICON_ACCENT,
     Icon: Calendar,
@@ -113,19 +109,17 @@ export const HERO_FEATURES: HexFeature[] = [
       value: 0,
       format: "proof",
       headline: "Une affectation, toutes les informations transmises",
-      subtext:
-        "Affectations, périodes et consignes transmises dans l’espace employé.",
+      subtext: "Planning et consignes au même endroit",
     },
   },
   {
     id: "chantiers",
     title: "Suivi des chantiers",
-    subtitle: "Une progression réellement représentative",
+    subtitle: "Visualisez l’avancement réel",
     panelTitle: "Suivi des chantiers",
-    panelText:
-      "L’avancement évolue selon l’importance de chaque étape. Vous savez où en est chaque chantier.",
-    ctaLabel: "Découvrir le suivi chantier",
-    href: "#chantiers",
+    panelText: "Chaque étape compte selon son importance",
+    ctaLabel: "",
+    href: "#",
     angle: 120,
     accent: ICON_ACCENT,
     Icon: HardHat,
@@ -134,19 +128,18 @@ export const HERO_FEATURES: HexFeature[] = [
       prefix: "",
       value: 0,
       format: "proof",
-      headline: "Chaque étape contribue réellement à l’avancement",
-      subtext: "L’avancement évolue selon l’importance de chaque étape.",
+      headline: "Une progression calculée selon chaque étape",
+      subtext: "Un pourcentage vraiment représentatif",
     },
   },
   {
     id: "facturation",
     title: "Facturation simplifiée",
-    subtitle: "Du devis signé au suivi du paiement",
+    subtitle: "Du devis signé au paiement",
     panelTitle: "Facturation simplifiée",
-    panelText:
-      "Documents, statuts et encaissements restent liés au même dossier, sans rupture.",
-    ctaLabel: "Découvrir la facturation",
-    href: "#facturation",
+    panelText: "Tous les statuts restent liés",
+    ctaLabel: "",
+    href: "#",
     angle: 180,
     accent: ICON_ACCENT,
     Icon: Receipt,
@@ -155,20 +148,18 @@ export const HERO_FEATURES: HexFeature[] = [
       prefix: "",
       value: 0,
       format: "proof",
-      headline: "Du devis signé au paiement, sans rupture",
-      subtext:
-        "Documents, statuts et encaissements restent liés au même dossier.",
+      headline: "Signature, facture et paiement au même endroit",
+      subtext: "Sans rupture dans le dossier",
     },
   },
   {
     id: "clients",
     title: "Clients centralisés",
-    subtitle: "Tout l’historique dans une seule fiche",
+    subtitle: "Tout l’historique au même endroit",
     panelTitle: "Clients centralisés",
-    panelText:
-      "Devis, factures, chantiers et coordonnées toujours disponibles dans une seule fiche.",
-    ctaLabel: "Découvrir la gestion client",
-    href: "#clients",
+    panelText: "Devis, factures et chantiers réunis",
+    ctaLabel: "",
+    href: "#",
     angle: 240,
     accent: ICON_ACCENT,
     Icon: Users,
@@ -177,19 +168,18 @@ export const HERO_FEATURES: HexFeature[] = [
       prefix: "",
       value: 0,
       format: "proof",
-      headline: "Un seul dossier pour retrouver tout l’historique",
-      subtext: "Devis, factures, chantiers et coordonnées toujours disponibles.",
+      headline: "Un dossier unique par client",
+      subtext: "Coordonnées et documents toujours disponibles",
     },
   },
   {
     id: "pilotage",
-    title: "Pilotage et rentabilité",
+    title: "Pilotage précis",
     subtitle: "Décidez avec vos vrais chiffres",
-    panelTitle: "Pilotage et rentabilité",
-    panelText:
-      "Coûts, marges et écarts prévus/réels visibles pour piloter chaque chantier.",
-    ctaLabel: "Découvrir le pilotage",
-    href: "#pilotage",
+    panelTitle: "Pilotage précis",
+    panelText: "Coûts, marges et prévisionnel en temps réel",
+    ctaLabel: "",
+    href: "#",
     angle: 300,
     accent: ICON_ACCENT,
     Icon: LineChart,
@@ -198,8 +188,8 @@ export const HERO_FEATURES: HexFeature[] = [
       prefix: "",
       value: 0,
       format: "proof",
-      headline: "Prévisionnel et réel comparés au même endroit",
-      subtext: "Coûts, marges et écarts prévus/réels visibles clairement.",
+      headline: "Prévisionnel et réel comparés en direct",
+      subtext: "Pilotez chaque chantier sans surprise",
     },
   },
 ];
@@ -258,13 +248,6 @@ function useSceneSize(ref: RefObject<HTMLDivElement | null>) {
 function vertexPoint(angleDeg: number, radius: number) {
   const pt = polarPoint(0, 0, angleDeg, radius);
   return { x: pt.x, y: pt.y };
-}
-
-function scrollToAnchor(href: string) {
-  const id = href.replace(/^#/, "");
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function computePanelPos(card: HTMLElement, wrap: HTMLElement): PanelPos {
@@ -618,7 +601,6 @@ function FeatureStatBadge({
 function FeaturePanel({
   feature,
   onClose,
-  onNavigate,
   panelRef,
   positioned,
   pos,
@@ -628,7 +610,6 @@ function FeaturePanel({
 }: {
   feature: HexFeature;
   onClose: () => void;
-  onNavigate: () => void;
   panelRef?: RefObject<HTMLDivElement | null>;
   positioned?: boolean;
   pos?: PanelPos | null;
@@ -642,6 +623,7 @@ function FeaturePanel({
       className={[
         "batimumHero__featurePopover",
         "batimumHero__featurePanel",
+        "batimumHero__featurePanel--info",
         mobile ? "batimumHero__featurePopover--mobile" : "",
         pos ? `batimumHero__featurePopover--arrow-${pos.arrow}` : "",
       ]
@@ -660,9 +642,9 @@ function FeaturePanel({
             }
           : undefined
       }
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 6, scale: 0.99 }}
       transition={{ duration: BUBBLE_EXIT_S, ease: [0.22, 1, 0.36, 1] }}
       onMouseEnter={onPanelEnter}
       onMouseLeave={onPanelLeave}
@@ -688,14 +670,6 @@ function FeaturePanel({
         {feature.panelTitle}
       </h3>
       <p className="batimumHero__featurePanelText">{feature.panelText}</p>
-      <button
-        type="button"
-        className="batimumHero__featurePanelCta"
-        onClick={onNavigate}
-      >
-        {feature.ctaLabel}
-        <ArrowRight size={14} strokeWidth={1.8} aria-hidden />
-      </button>
     </motion.div>
   );
 }
@@ -757,7 +731,7 @@ function FeatureVertexCard({
           className={`batimumHero__featureButton${isActive ? " is-active" : ""}`}
           aria-expanded={showBubble}
           aria-controls={`batimum-hero-panel-${feature.id}`}
-          aria-label={`${feature.panelTitle} — en savoir plus`}
+          aria-label={feature.panelTitle}
           onClick={(e) => {
             e.stopPropagation();
             onActivate();
@@ -1086,12 +1060,6 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
     HERO_FEATURES.find((f) => f.id === activeId) ?? HERO_FEATURES[0];
   const statMode: "auto" | "held" = paused ? "held" : "auto";
 
-  const handleNavigate = () => {
-    const href = activeFeature.href;
-    closePanel();
-    requestAnimationFrame(() => scrollToAnchor(href));
-  };
-
   const canHover = () =>
     typeof window !== "undefined" &&
     window.matchMedia("(hover: hover)").matches;
@@ -1237,7 +1205,6 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
                   positioned
                   pos={panelPos}
                   onClose={closePanel}
-                  onNavigate={handleNavigate}
                   onPanelEnter={onTooltipEnter}
                   onPanelLeave={onTooltipLeave}
                 />
@@ -1257,7 +1224,6 @@ export function LandingHeroOrbit({ enableOrbit }: LandingHeroOrbitProps) {
                 panelRef={panelRef}
                 mobile
                 onClose={closePanel}
-                onNavigate={handleNavigate}
               />
             ) : null}
           </AnimatePresence>

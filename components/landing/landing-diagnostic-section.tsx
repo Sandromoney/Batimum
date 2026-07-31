@@ -283,7 +283,10 @@ export function LandingDiagnosticSection() {
                       Passez à l’action en quelques minutes.
                     </p>
                     <div className="lp-diag__resultCtas">
-                      <LandingTrialCta className="lp-diag__trial" />
+                      <LandingTrialCta
+                        className="lp-diag__trial"
+                        label="Démarrer dès aujourd’hui"
+                      />
                       <button
                         type="button"
                         className="lp-diag__restart"

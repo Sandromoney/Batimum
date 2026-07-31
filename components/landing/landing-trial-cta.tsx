@@ -8,6 +8,8 @@ import { writeLandingSnapshot } from "@/components/landing/landing-experience";
 
 type LandingTrialCtaProps = {
   href?: string;
+  /** Libellé du bouton — même destination, formulations adaptées au contexte. */
+  label?: string;
   className?: string;
   buttonClassName?: string;
   noteClassName?: string;
@@ -18,11 +20,12 @@ type LandingTrialCtaProps = {
 };
 
 /**
- * Règle unique des CTA principaux landing :
- * bouton « Essayer gratuitement » + note discrète « 7 jours d'essai gratuit ».
+ * CTA principaux landing — même parcours d’inscription / essai.
+ * Le libellé peut varier selon la section.
  */
 export function LandingTrialCta({
   href,
+  label,
   className,
   buttonClassName,
   noteClassName,
@@ -32,7 +35,7 @@ export function LandingTrialCta({
 }: LandingTrialCtaProps) {
   const beta = isPrivateBetaEnabled();
   const target = href ?? getPublicSignupHref();
-  const label = beta ? "Se connecter" : "Essayer gratuitement";
+  const buttonLabel = beta ? "Se connecter" : label ?? "Essayer gratuitement";
 
   return (
     <div
@@ -54,7 +57,7 @@ export function LandingTrialCta({
           onNavigate?.();
         }}
       >
-        {label}
+        {buttonLabel}
         <ArrowRight
           className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
           aria-hidden="true"

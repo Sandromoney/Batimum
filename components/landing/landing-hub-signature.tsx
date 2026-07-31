@@ -367,6 +367,7 @@ export function HubSignaturePanel({
           <LandingTrialCta
             className="lp-hubSig__trial"
             buttonClassName="rounded-xl px-6 py-3.5 text-sm font-semibold"
+            label="Commencer maintenant"
           />
         </div>
       </div>
