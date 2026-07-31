@@ -43,7 +43,9 @@ export function LandingDevisSection() {
   const [stepIndex, setStepIndex] = useState(0);
   const step = STEP_ORDER[stepIndex] ?? "demande";
   const signupHref = getPublicSignupHref();
-  const ctaLabel = isPrivateBetaEnabled() ? "Se connecter" : "Découvrir MUM IA";
+  const ctaLabel = isPrivateBetaEnabled()
+    ? "Se connecter"
+    : "Essayer gratuitement";
 
   useEffect(() => {
     if (reduced) {

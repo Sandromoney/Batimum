@@ -14,8 +14,8 @@ export const heroContent = {
   support:
     "Batimum centralise vos devis, vos équipes, vos chantiers, vos clients et votre rentabilité dans un seul logiciel pensé pour le quotidien du BTP.",
   primaryCta: "Essayer gratuitement",
-  secondaryCta: "Découvrir Batimum",
-  secondaryHref: "/landing#fonctionnalites",
+  secondaryCta: "Voir comment ça marche",
+  secondaryHref: "/landing#ecosysteme",
   trust: "Sans engagement · Mise en route rapide · Données sécurisées",
   benefits: [
     {

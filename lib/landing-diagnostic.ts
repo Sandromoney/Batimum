@@ -144,39 +144,6 @@ export const QUESTIONS: Question[] = [
       },
     ],
   },
-  {
-    id: "remove",
-    kind: "single",
-    prompt: "Si vous pouviez supprimer UNE tâche demain matin…",
-    hint: "Que choisiriez-vous ?",
-    options: [
-      {
-        id: "quotes",
-        label: "La création des devis",
-        pains: ["devis"],
-      },
-      {
-        id: "planning",
-        label: "L’organisation du planning",
-        pains: ["equipes"],
-      },
-      {
-        id: "follow",
-        label: "Le suivi des chantiers",
-        pains: ["chantiers"],
-      },
-      {
-        id: "relances",
-        label: "Les relances et la paperasse",
-        pains: ["admin", "clients"],
-      },
-      {
-        id: "numbers",
-        label: "Le suivi des marges",
-        pains: ["rentabilite"],
-      },
-    ],
-  },
 ];
 
 /** Agrège les réponses et retourne jusqu’à 4 axes prioritaires. */
@@ -194,9 +161,7 @@ export function collectPains(
     const selected = Array.isArray(raw) ? raw : [raw];
     for (const optId of selected) {
       const opt = q.options.find((o) => o.id === optId);
-      opt?.pains?.forEach((p) =>
-        bump(p, q.id === "biggest" || q.id === "remove" ? 2 : 1),
-      );
+      opt?.pains?.forEach((p) => bump(p, q.id === "biggest" ? 2 : 1));
     }
   }
 

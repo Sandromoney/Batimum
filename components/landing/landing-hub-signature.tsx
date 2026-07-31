@@ -382,13 +382,6 @@ export function HubSignaturePanel({
               aria-hidden="true"
             />
           </Link>
-          <Link
-            href="/landing#plans"
-            className="landing-btn-secondary landing-btn-interactive inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold no-underline"
-            tabIndex={showCta ? 0 : -1}
-          >
-            Réserver une démonstration
-          </Link>
         </div>
       </div>
     </div>

@@ -37,12 +37,6 @@ export function LandingFinalCtaSection() {
                   aria-hidden="true"
                 />
               </Link>
-              <Link
-                href="/landing#fonctionnalites"
-                className="landing-btn-secondary landing-btn-interactive inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold no-underline"
-              >
-                Découvrir les fonctionnalités
-              </Link>
             </div>
             <p className="lp-final__trust">
               Sans engagement · Mise en route rapide

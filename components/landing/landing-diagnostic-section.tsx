@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
@@ -19,6 +20,7 @@ import {
   QUESTIONS,
   type PainId,
 } from "@/lib/landing-diagnostic";
+import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 
 const PAIN_ICONS: Record<PainId, typeof FileText> = {
   devis: FileText,
@@ -33,6 +35,10 @@ const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export function LandingDiagnosticSection() {
   const reduced = useReducedMotion();
+  const signupHref = getPublicSignupHref();
+  const primaryCtaLabel = isPrivateBetaEnabled()
+    ? "Se connecter"
+    : "Essayer gratuitement";
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>(
     {},
@@ -85,18 +91,6 @@ export function LandingDiagnosticSection() {
     if (!question || question.kind !== "multi") return;
     if (multiDraft.length < (question.minSelect ?? 1)) return;
     goNext({ ...answers, [question.id]: multiDraft });
-  };
-
-  const scrollToSolutions = () => {
-    const el = document.getElementById("avant-apres");
-    if (!el) return;
-    const headerOffset = 88;
-    const top =
-      el.getBoundingClientRect().top + window.scrollY - headerOffset;
-    window.scrollTo({
-      top: Math.max(0, top),
-      behavior: reduced ? "auto" : "smooth",
-    });
   };
 
   const restart = () => {
@@ -290,20 +284,20 @@ export function LandingDiagnosticSection() {
                       })}
                     </ul>
                     <p className="lp-diag__resultLead">
-                      Découvrez comment Batimum règle chacun de ces problèmes.
+                      Batimum est conçu pour résoudre exactement ces points.
+                      Passez à l’action en quelques minutes.
                     </p>
                     <div className="lp-diag__resultCtas">
-                      <button
-                        type="button"
-                        className="landing-btn-primary landing-btn-interactive group inline-flex items-center justify-center gap-2"
-                        onClick={scrollToSolutions}
+                      <Link
+                        href={signupHref}
+                        className="landing-btn-primary landing-btn-interactive group inline-flex items-center justify-center gap-2 no-underline"
                       >
-                        Voir les solutions Batimum
+                        {primaryCtaLabel}
                         <ArrowRight
                           className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
                           aria-hidden="true"
                         />
-                      </button>
+                      </Link>
                       <button
                         type="button"
                         className="lp-diag__restart"
