@@ -18,6 +18,10 @@ import {
   UserRound,
 } from "lucide-react";
 import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
+import {
+  runCueTimeline,
+  usePauseableTimers,
+} from "@/lib/landing-hub-pauseable-timer";
 
 export type HubFilmPhase =
   | "idle"
@@ -254,25 +258,21 @@ function PlanningBoard({
 export function PlanningFilmPanel({
   active,
   reduced,
+  paused = false,
+  seekMs = 0,
+  seekKey = 0,
   onDemoComplete,
 }: {
   active: boolean;
   reduced: boolean;
+  paused?: boolean;
+  seekMs?: number;
+  seekKey?: number;
   onDemoComplete: () => void;
 }) {
   const [beat, setBeat] = useState<PlanBeat>("empty");
   const finishedRef = useRef(false);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  const clearTimers = () => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-  };
-
-  const later = (fn: () => void, ms: number) => {
-    const id = setTimeout(fn, ms);
-    timersRef.current.push(id);
-  };
+  const { later, clear } = usePauseableTimers(paused);
 
   const finish = useCallback(() => {
     if (finishedRef.current) return;
@@ -281,7 +281,7 @@ export function PlanningFilmPanel({
   }, [onDemoComplete]);
 
   useEffect(() => {
-    clearTimers();
+    clear();
     finishedRef.current = false;
     setBeat("empty");
     if (!active) return;
@@ -289,19 +289,26 @@ export function PlanningFilmPanel({
     if (reduced) {
       setBeat("done");
       later(finish, 400);
-      return clearTimers;
+      return clear;
     }
 
-    later(() => setBeat("week"), 350);
-    later(() => setBeat("assign"), 1600);
-    later(() => setBeat("click"), 2600);
-    later(() => setBeat("notify"), 3400);
-    later(() => setBeat("employee"), 4600);
-    later(() => setBeat("done"), 7000);
-    later(finish, 8600);
+    runCueTimeline({
+      seekMs,
+      later,
+      onFinish: finish,
+      finishAt: 8600,
+      cues: [
+        { at: 350, apply: () => setBeat("week") },
+        { at: 1600, apply: () => setBeat("assign") },
+        { at: 2600, apply: () => setBeat("click") },
+        { at: 3400, apply: () => setBeat("notify") },
+        { at: 4600, apply: () => setBeat("employee") },
+        { at: 7000, apply: () => setBeat("done") },
+      ],
+    });
 
-    return clearTimers;
-  }, [active, reduced, finish]);
+    return clear;
+  }, [active, reduced, seekKey, seekMs, finish, later, clear]);
 
   return (
     <div className="lp-hubPlan__panel">

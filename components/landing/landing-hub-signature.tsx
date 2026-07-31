@@ -10,6 +10,10 @@ import {
 } from "react";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 import { hexPoints, polarPoint, svgPair } from "@/lib/svg-stable";
+import {
+  runCueTimeline,
+  usePauseableTimers,
+} from "@/lib/landing-hub-pauseable-timer";
 
 /** Fusion modules → respiration → écrou → vissage → textes → CTAs */
 export const SIG_MERGE_MS = 1800;
@@ -234,6 +238,9 @@ export function HubSignaturePanel({
   active,
   sealed,
   reduced,
+  paused = false,
+  seekMs = 0,
+  seekKey = 0,
   onComplete,
 }: {
   /** Joue la séquence complète une fois. */
@@ -241,21 +248,14 @@ export function HubSignaturePanel({
   /** État final déjà assemblé (revisit / reduced). */
   sealed: boolean;
   reduced: boolean;
+  paused?: boolean;
+  seekMs?: number;
+  seekKey?: number;
   onComplete: () => void;
 }) {
   const [beat, setBeat] = useState<SigBeat>(sealed ? "sealed" : "merge");
   const finishedRef = useRef(false);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  const clearTimers = () => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-  };
-
-  const later = (fn: () => void, ms: number) => {
-    const id = setTimeout(fn, ms);
-    timersRef.current.push(id);
-  };
+  const { later, clear } = usePauseableTimers(paused);
 
   const finish = useCallback(() => {
     if (finishedRef.current) return;
@@ -265,39 +265,66 @@ export function HubSignaturePanel({
   }, [onComplete]);
 
   useEffect(() => {
-    clearTimers();
+    clear();
     finishedRef.current = false;
 
     if (sealed || reduced) {
       setBeat("sealed");
       if (active) later(finish, 400);
-      return clearTimers;
+      return clear;
     }
 
     if (!active) {
       setBeat("merge");
-      return clearTimers;
+      return clear;
     }
 
-    let t = 0;
-    setBeat("merge");
-    t += SIG_MERGE_MS;
-    later(() => setBeat("breath"), t);
-    t += SIG_BREATH_MS;
-    later(() => setBeat("approach"), t);
-    t += SIG_APPROACH_MS;
-    later(() => setBeat("screw"), t);
-    t += SIG_SCREW_MS;
-    later(() => setBeat("pulse"), t);
-    t += SIG_PULSE_MS;
-    later(() => setBeat("copy"), t);
-    t += SIG_COPY_MS;
-    later(() => setBeat("cta"), t);
-    t += SIG_CTA_MS + SIG_HOLD_MS;
-    later(finish, t);
+    const cues: { at: number; apply: () => void }[] = [
+      { at: 0, apply: () => setBeat("merge") },
+      { at: SIG_MERGE_MS, apply: () => setBeat("breath") },
+      {
+        at: SIG_MERGE_MS + SIG_BREATH_MS,
+        apply: () => setBeat("approach"),
+      },
+      {
+        at: SIG_MERGE_MS + SIG_BREATH_MS + SIG_APPROACH_MS,
+        apply: () => setBeat("screw"),
+      },
+      {
+        at: SIG_MERGE_MS + SIG_BREATH_MS + SIG_APPROACH_MS + SIG_SCREW_MS,
+        apply: () => setBeat("pulse"),
+      },
+      {
+        at:
+          SIG_MERGE_MS +
+          SIG_BREATH_MS +
+          SIG_APPROACH_MS +
+          SIG_SCREW_MS +
+          SIG_PULSE_MS,
+        apply: () => setBeat("copy"),
+      },
+      {
+        at:
+          SIG_MERGE_MS +
+          SIG_BREATH_MS +
+          SIG_APPROACH_MS +
+          SIG_SCREW_MS +
+          SIG_PULSE_MS +
+          SIG_COPY_MS,
+        apply: () => setBeat("cta"),
+      },
+    ];
 
-    return clearTimers;
-  }, [active, sealed, reduced, finish]);
+    runCueTimeline({
+      cues,
+      seekMs,
+      later,
+      onFinish: finish,
+      finishAt: SIG_DEMO_SAFETY_MS,
+    });
+
+    return clear;
+  }, [active, sealed, reduced, finish, later, clear, seekKey, seekMs]);
 
   const signupHref = getPublicSignupHref();
   const primaryLabel = isPrivateBetaEnabled()

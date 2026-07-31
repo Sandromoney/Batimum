@@ -13,6 +13,7 @@ import {
   MumSignJourney,
   type MumSignBeat,
 } from "@/components/landing/landing-hub-mum-sign-overlay";
+import { usePauseableTimers } from "@/lib/landing-hub-pauseable-timer";
 
 const PROMPT =
   "Création d'une salle de bain complète de 18 m² avec remplacement de la douche existante par une douche à l'italienne 120 × 90 cm, meuble double vasque de 120 cm, faïence murale 30 × 60 sur 42 m², carrelage au sol 18 m², création des alimentations PER, remplacement des évacuations PVC, pose d'un sèche-serviettes et peinture du plafond.";
@@ -335,11 +336,17 @@ export function MumFilmPanel({
   active,
   reduced,
   plan = 0,
+  paused = false,
+  seekMs = 0,
+  seekKey = 0,
   onPlanComplete,
 }: {
   active: boolean;
   reduced: boolean;
   plan?: number;
+  paused?: boolean;
+  seekMs?: number;
+  seekKey?: number;
   onPlanComplete: () => void;
 }) {
   const [beat, setBeat] = useState<DemoBeat>("empty");
@@ -352,33 +359,12 @@ export function MumFilmPanel({
     "ready" | "envoye" | "consulte" | "signe" | "commande" | null
   >(null);
   const planDoneRef = useRef(-1);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const signTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const planRef = useRef(plan);
+  const { later, every, clear } = usePauseableTimers(paused);
 
   useEffect(() => {
     planRef.current = plan;
   }, [plan]);
-
-  const clearTimers = () => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-  };
-
-  const clearSignTimers = () => {
-    signTimersRef.current.forEach(clearTimeout);
-    signTimersRef.current = [];
-  };
-
-  const later = (fn: () => void, ms: number) => {
-    const id = setTimeout(fn, ms);
-    timersRef.current.push(id);
-  };
-
-  const signLater = (fn: () => void, ms: number) => {
-    const id = setTimeout(fn, ms);
-    signTimersRef.current.push(id);
-  };
 
   const completePlan = useCallback(
     (n: number) => {
@@ -394,8 +380,7 @@ export function MumFilmPanel({
   // Reset when film becomes inactive
   useEffect(() => {
     if (active) return;
-    clearTimers();
-    clearSignTimers();
+    clear();
     planDoneRef.current = -1;
     setBeat("empty");
     setTyped("");
@@ -404,12 +389,12 @@ export function MumFilmPanel({
     setShowReady(false);
     setSignBeat("idle");
     setDevisStatut(null);
-  }, [active]);
+  }, [active, clear]);
 
   // Reduced: jump to final
   useEffect(() => {
     if (!active || !reduced) return;
-    clearTimers();
+    clear();
     setTyped(PROMPT);
     setAnalyseDone(ANALYSIS.length);
     setLinesVisible(LINES.length);
@@ -418,13 +403,13 @@ export function MumFilmPanel({
     setDevisStatut("commande");
     setSignBeat("back");
     later(() => completePlan(5), 400);
-    return clearTimers;
-  }, [active, reduced, completePlan]);
+    return clear;
+  }, [active, reduced, completePlan, later, clear, seekKey]);
 
   // Plan 0 — dictée
   useEffect(() => {
     if (!active || reduced || plan !== 0) return;
-    clearTimers();
+    clear();
     planDoneRef.current = -1;
     setBeat("empty");
     setTyped("");
@@ -433,18 +418,52 @@ export function MumFilmPanel({
     setShowReady(false);
     setSignBeat("idle");
     setDevisStatut(null);
-    later(() => setBeat("listen"), 350);
-    later(() => setBeat("speak"), 900);
-    return clearTimers;
-  }, [active, reduced, plan]);
 
-  // Transcription — stop at pause, complete plan 0
+    if (seekMs >= 900) {
+      setBeat("speak");
+    } else {
+      later(() => setBeat("listen"), Math.max(0, 350 - seekMs));
+      later(() => setBeat("speak"), Math.max(0, 900 - seekMs));
+    }
+    return clear;
+  }, [active, reduced, plan, seekKey, seekMs, later, clear]);
+
+  // Transcription — délais déterministes (timeline seekable)
   useEffect(() => {
     if (!active || reduced || plan !== 0 || beat !== "speak") return;
-    let i = 0;
-    let timer: ReturnType<typeof setTimeout>;
+    clear();
+
+    const tokenDelay = (token: string) =>
+      /^\s+$/.test(token) ? 50 : token.length > 7 ? 110 : 80;
+
+    // Temps média depuis le début du plan au moment où speak démarre
+    const speakAt = 900;
+    const localSeek = Math.max(0, seekMs - speakAt);
+    let elapsed = 180;
+    let startIndex = 0;
     let acc = "";
 
+    if (localSeek > 0) {
+      elapsed = 0;
+      for (let i = 0; i < PROMPT_WORDS.length; i++) {
+        const d = i === 0 ? 180 : tokenDelay(PROMPT_WORDS[i - 1]);
+        if (elapsed + d > localSeek) {
+          startIndex = i;
+          break;
+        }
+        elapsed += d;
+        acc += PROMPT_WORDS[i];
+        startIndex = i + 1;
+      }
+      setTyped(acc);
+      if (startIndex >= PROMPT_WORDS.length) {
+        setBeat("pause");
+        later(() => completePlan(0), 600);
+        return clear;
+      }
+    }
+
+    let i = startIndex;
     const tick = () => {
       if (i >= PROMPT_WORDS.length) {
         setBeat("pause");
@@ -455,132 +474,163 @@ export function MumFilmPanel({
       acc += token;
       setTyped(acc);
       i += 1;
-      const isSpace = /^\s+$/.test(token);
-      const delay = isSpace
-        ? 40 + Math.random() * 30
-        : token.length > 7
-          ? 100 + Math.random() * 40
-          : 65 + Math.random() * 45;
-      timer = setTimeout(tick, delay);
+      later(tick, tokenDelay(token));
     };
 
-    timer = setTimeout(tick, 180);
-    return () => clearTimeout(timer);
-  }, [active, reduced, plan, beat, completePlan]);
+    later(tick, localSeek > 0 ? Math.max(16, tokenDelay(PROMPT_WORDS[Math.max(0, startIndex - 1)])) : 180);
+    return clear;
+  }, [active, reduced, plan, beat, completePlan, later, clear, seekKey, seekMs]);
 
   // Plan 1 — analyse
   useEffect(() => {
     if (!active || reduced || plan !== 1) return;
-    clearTimers();
+    clear();
     setBeat("analyse");
-    setAnalyseDone(0);
-    let n = 0;
-    const id = setInterval(() => {
+    const startN = Math.min(
+      ANALYSIS.length,
+      Math.floor(Math.max(0, seekMs) / 420),
+    );
+    setAnalyseDone(startN);
+    if (startN >= ANALYSIS.length) {
+      later(() => completePlan(1), 500);
+      return clear;
+    }
+    let n = startN;
+    every(() => {
       n += 1;
       setAnalyseDone(n);
       if (n >= ANALYSIS.length) {
-        clearInterval(id);
+        clear();
         later(() => completePlan(1), 500);
       }
     }, 420);
-    return () => {
-      clearInterval(id);
-      clearTimers();
-    };
-  }, [active, reduced, plan, completePlan]);
+    return clear;
+  }, [active, reduced, plan, completePlan, later, every, clear, seekKey, seekMs]);
 
   // Plan 2 — lignes devis
   useEffect(() => {
     if (!active || reduced || plan !== 2) return;
-    clearTimers();
+    clear();
     setBeat("lines");
-    setLinesVisible(0);
     setAnalyseDone(ANALYSIS.length);
-    let n = 0;
-    const id = setInterval(() => {
+    const startN = Math.min(
+      LINES.length,
+      Math.floor(Math.max(0, seekMs) / 320),
+    );
+    setLinesVisible(startN);
+    if (startN >= LINES.length) {
+      later(() => completePlan(2), 520);
+      return clear;
+    }
+    let n = startN;
+    every(() => {
       n += 1;
       setLinesVisible(n);
       if (n >= LINES.length) {
-        clearInterval(id);
+        clear();
         later(() => completePlan(2), 520);
       }
     }, 320);
-    return () => {
-      clearInterval(id);
-      clearTimers();
-    };
-  }, [active, reduced, plan, completePlan]);
+    return clear;
+  }, [active, reduced, plan, completePlan, later, every, clear, seekKey, seekMs]);
 
   // Plan 3 — totaux + prêt
   useEffect(() => {
     if (!active || reduced || plan !== 3) return;
-    clearTimers();
+    clear();
     setLinesVisible(LINES.length);
     setAnalyseDone(ANALYSIS.length);
-    setBeat("total");
-    later(() => {
+    if (seekMs >= 700) {
       setBeat("ready");
       setShowReady(true);
       setDevisStatut("ready");
-    }, 700);
-    later(() => completePlan(3), 1600);
-    return clearTimers;
-  }, [active, reduced, plan, completePlan]);
+    } else {
+      setBeat("total");
+      later(() => {
+        setBeat("ready");
+        setShowReady(true);
+        setDevisStatut("ready");
+      }, 700 - seekMs);
+    }
+    later(() => completePlan(3), Math.max(16, 1600 - seekMs));
+    return clear;
+  }, [active, reduced, plan, completePlan, later, clear, seekKey, seekMs]);
 
   // Plan 4 — envoi + mail + consulter
   useEffect(() => {
     if (!active || reduced || plan !== 4) return;
-    clearTimers();
-    clearSignTimers();
+    clear();
     setShowReady(true);
     setBeat("signflow");
-    setSignBeat("send");
-    signLater(() => {
-      setSignBeat("sending");
-      setDevisStatut("envoye");
-    }, 1100);
-    signLater(() => setSignBeat("mail"), 2400);
-    signLater(() => setSignBeat("openMail"), 3800);
-    signLater(() => setSignBeat("consult"), 5200);
-    signLater(() => {
-      setSignBeat("page");
-      setDevisStatut("consulte");
-    }, 6800);
-    signLater(() => completePlan(4), 8200);
-    return () => {
-      clearTimers();
-      clearSignTimers();
-    };
-  }, [active, reduced, plan, completePlan]);
+
+    const cues: { at: number; apply: () => void }[] = [
+      {
+        at: 0,
+        apply: () => setSignBeat("send"),
+      },
+      {
+        at: 1100,
+        apply: () => {
+          setSignBeat("sending");
+          setDevisStatut("envoye");
+        },
+      },
+      { at: 2400, apply: () => setSignBeat("mail") },
+      { at: 3800, apply: () => setSignBeat("openMail") },
+      { at: 5200, apply: () => setSignBeat("consult") },
+      {
+        at: 6800,
+        apply: () => {
+          setSignBeat("page");
+          setDevisStatut("consulte");
+        },
+      },
+    ];
+    for (const cue of cues) {
+      if (cue.at <= seekMs) cue.apply();
+      else later(cue.apply, cue.at - seekMs);
+    }
+    later(() => completePlan(4), Math.max(16, 8200 - seekMs));
+    return clear;
+  }, [active, reduced, plan, completePlan, clear, later, seekKey, seekMs]);
 
   // Plan 5 — signature + commande
   useEffect(() => {
     if (!active || reduced || plan !== 5) return;
-    clearTimers();
-    clearSignTimers();
+    clear();
     setBeat("signflow");
     setDevisStatut("consulte");
-    setSignBeat("scroll");
-    signLater(() => setSignBeat("hoverSign"), 1600);
-    signLater(() => setSignBeat("signModal"), 3000);
-    signLater(() => setSignBeat("draw"), 4400);
-    signLater(() => setSignBeat("validate"), 6400);
-    signLater(() => setSignBeat("validating"), 7600);
-    signLater(() => {
-      setSignBeat("pipeline");
-      setDevisStatut("signe");
-    }, 8800);
-    signLater(() => {
-      setSignBeat("commande");
-      setDevisStatut("commande");
-    }, 10200);
-    signLater(() => setSignBeat("back"), 11600);
-    signLater(() => completePlan(5), 12800);
-    return () => {
-      clearTimers();
-      clearSignTimers();
-    };
-  }, [active, reduced, plan, completePlan]);
+
+    const cues: { at: number; apply: () => void }[] = [
+      { at: 0, apply: () => setSignBeat("scroll") },
+      { at: 1600, apply: () => setSignBeat("hoverSign") },
+      { at: 3000, apply: () => setSignBeat("signModal") },
+      { at: 4400, apply: () => setSignBeat("draw") },
+      { at: 6400, apply: () => setSignBeat("validate") },
+      { at: 7600, apply: () => setSignBeat("validating") },
+      {
+        at: 8800,
+        apply: () => {
+          setSignBeat("pipeline");
+          setDevisStatut("signe");
+        },
+      },
+      {
+        at: 10200,
+        apply: () => {
+          setSignBeat("commande");
+          setDevisStatut("commande");
+        },
+      },
+      { at: 11600, apply: () => setSignBeat("back") },
+    ];
+    for (const cue of cues) {
+      if (cue.at <= seekMs) cue.apply();
+      else later(cue.apply, cue.at - seekMs);
+    }
+    later(() => completePlan(5), Math.max(16, 12800 - seekMs));
+    return clear;
+  }, [active, reduced, plan, completePlan, clear, later, seekKey, seekMs]);
 
   const signing = plan >= 4 && [
     "mail",

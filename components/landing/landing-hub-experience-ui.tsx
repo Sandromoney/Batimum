@@ -1,6 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
+import { Pause, Play } from "lucide-react";
+import {
+  formatFilmTime,
+  HUB_FILM_TOTAL_MS,
+} from "@/lib/landing-hub-timeline";
 
 /** Session only — cleared on full page reload. */
 export const HUB_SKIP_SESSION_KEY = "batimum-hub-presentation-skipped";
@@ -128,6 +139,189 @@ export function HubSkipControl({ onSkip }: { onSkip: () => void }) {
       Passer la présentation
     </button>
   );
+}
+
+const CONTROLS_IDLE_MS = 2600;
+
+/**
+ * Contrôles premium discrets : barre fine, hover temps, pause, auto-hide.
+ * Le skip reste un composant séparé (inchangé).
+ */
+export function HubFilmControls({
+  visible,
+  elapsedMs,
+  totalMs = HUB_FILM_TOTAL_MS,
+  paused,
+  onPauseToggle,
+  onSeek,
+  onUserActivity,
+}: {
+  visible: boolean;
+  elapsedMs: number;
+  totalMs?: number;
+  paused: boolean;
+  onPauseToggle: () => void;
+  onSeek: (ms: number) => void;
+  onUserActivity: () => void;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [hovering, setHovering] = useState(false);
+  const [hoverRatio, setHoverRatio] = useState(0);
+  const draggingRef = useRef(false);
+
+  const ratio = totalMs > 0 ? Math.min(1, Math.max(0, elapsedMs / totalMs)) : 0;
+  const hoverMs = hoverRatio * totalMs;
+
+  const ratioFromClientX = useCallback((clientX: number) => {
+    const el = trackRef.current;
+    if (!el) return 0;
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0) return 0;
+    return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+  }, []);
+
+  const seekFromClientX = useCallback(
+    (clientX: number) => {
+      const r = ratioFromClientX(clientX);
+      onSeek(r * totalMs);
+      onUserActivity();
+    },
+    [onSeek, onUserActivity, ratioFromClientX, totalMs],
+  );
+
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    draggingRef.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setHovering(true);
+    setHoverRatio(ratioFromClientX(e.clientX));
+    seekFromClientX(e.clientX);
+  };
+
+  const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const r = ratioFromClientX(e.clientX);
+    setHoverRatio(r);
+    if (draggingRef.current) seekFromClientX(e.clientX);
+  };
+
+  const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+  };
+
+  return (
+    <div
+      className={[
+        "lp-hub__filmControls",
+        visible ? "is-visible" : "",
+        paused ? "is-paused" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      onPointerMove={onUserActivity}
+    >
+      <div
+        ref={trackRef}
+        className={[
+          "lp-hub__scrub",
+          hovering || draggingRef.current ? "is-hot" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        role="slider"
+        aria-label="Progression de la présentation"
+        aria-valuemin={0}
+        aria-valuemax={Math.round(totalMs / 1000)}
+        aria-valuenow={Math.round(elapsedMs / 1000)}
+        tabIndex={0}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onPointerEnter={() => {
+          setHovering(true);
+          onUserActivity();
+        }}
+        onPointerLeave={() => {
+          if (!draggingRef.current) setHovering(false);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            onSeek(Math.min(totalMs, elapsedMs + 2000));
+            onUserActivity();
+          } else if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            onSeek(Math.max(0, elapsedMs - 2000));
+            onUserActivity();
+          }
+        }}
+      >
+        <div className="lp-hub__scrubTrack" aria-hidden="true">
+          <div
+            className="lp-hub__scrubFill"
+            style={{ transform: `scaleX(${ratio})` }}
+          />
+        </div>
+        {hovering ? (
+          <span
+            className="lp-hub__scrubTime"
+            style={{ left: `${hoverRatio * 100}%` }}
+            aria-hidden="true"
+          >
+            {formatFilmTime(hoverMs)} / {formatFilmTime(totalMs)}
+          </span>
+        ) : null}
+      </div>
+
+      <button
+        type="button"
+        className="lp-hub__pause"
+        onClick={() => {
+          onPauseToggle();
+          onUserActivity();
+        }}
+        aria-label={paused ? "Reprendre la présentation" : "Mettre en pause"}
+      >
+        {paused ? (
+          <Play size={14} strokeWidth={2.2} fill="currentColor" />
+        ) : (
+          <Pause size={14} strokeWidth={2.2} fill="currentColor" />
+        )}
+      </button>
+    </div>
+  );
+}
+
+export function useHubControlsVisibility(active: boolean) {
+  const [visible, setVisible] = useState(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const bump = useCallback(() => {
+    if (!active) return;
+    setVisible(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setVisible(false), CONTROLS_IDLE_MS);
+  }, [active]);
+
+  useEffect(() => {
+    if (!active) {
+      setVisible(false);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      return;
+    }
+    bump();
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [active, bump]);
+
+  return { controlsVisible: visible, bumpControls: bump };
 }
 
 /** Progression légère 01 / 06. */

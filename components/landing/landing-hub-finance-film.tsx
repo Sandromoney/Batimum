@@ -11,6 +11,10 @@ import {
 import { Check, LineChart, Receipt } from "lucide-react";
 import { animate, useMotionValue } from "framer-motion";
 import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
+import {
+  runCueTimeline,
+  usePauseableTimers,
+} from "@/lib/landing-hub-pauseable-timer";
 
 export const FIN_HIGHLIGHT_MS = 900;
 export const FIN_ENTER_MS = 1380;
@@ -457,10 +461,16 @@ function FinanceBoard({
 export function FinanceFilmPanel({
   active,
   reduced,
+  paused = false,
+  seekMs = 0,
+  seekKey = 0,
   onDemoComplete,
 }: {
   active: boolean;
   reduced: boolean;
+  paused?: boolean;
+  seekMs?: number;
+  seekKey?: number;
   onDemoComplete: () => void;
 }) {
   const [beat, setBeat] = useState<FinBeat>("devis");
@@ -471,17 +481,7 @@ export function FinanceFilmPanel({
   const [dashOn, setDashOn] = useState(false);
   const [breathe, setBreathe] = useState(false);
   const finishedRef = useRef(false);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  const clearTimers = () => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-  };
-
-  const later = (fn: () => void, ms: number) => {
-    const id = setTimeout(fn, ms);
-    timersRef.current.push(id);
-  };
+  const { later, clear } = usePauseableTimers(paused);
 
   const finish = useCallback(() => {
     if (finishedRef.current) return;
@@ -490,7 +490,7 @@ export function FinanceFilmPanel({
   }, [onDemoComplete]);
 
   useEffect(() => {
-    clearTimers();
+    clear();
     finishedRef.current = false;
     setBeat("devis");
     setPipelineOn(false);
@@ -510,51 +510,56 @@ export function FinanceFilmPanel({
       setDashOn(true);
       setBeat("done");
       later(finish, 500);
-      return clearTimers;
+      return clear;
     }
 
-    // 1 — devis signé (déjà visible)
-    // 2 — pipeline + facture
-    later(() => {
-      setBeat("pipeline");
-      setPipelineOn(true);
-    }, 700);
-    later(() => setInvoiceOn(true), 1300);
+    runCueTimeline({
+      seekMs,
+      later,
+      onFinish: finish,
+      finishAt: 15500,
+      cues: [
+        {
+          at: 700,
+          apply: () => {
+            setBeat("pipeline");
+            setPipelineOn(true);
+          },
+        },
+        { at: 1300, apply: () => setInvoiceOn(true) },
+        {
+          at: 2400,
+          apply: () => {
+            setBeat("send");
+            setSendPressed(true);
+          },
+        },
+        {
+          at: 3100,
+          apply: () => {
+            setBeat("pay");
+            setPayStep(0);
+          },
+        },
+        { at: 3900, apply: () => setPayStep(1) },
+        { at: 4800, apply: () => setPayStep(2) },
+        {
+          at: 5400,
+          apply: () => {
+            setBeat("pulse");
+            setBreathe(true);
+            setDashOn(true);
+          },
+        },
+        { at: 7800, apply: () => setBeat("margeOk") },
+        { at: 9800, apply: () => setBeat("margeLow") },
+        { at: 11800, apply: () => setBeat("alive") },
+        { at: 13800, apply: () => setBeat("done") },
+      ],
+    });
 
-    // 3 — envoyer
-    later(() => {
-      setBeat("send");
-      setSendPressed(true);
-    }, 2400);
-
-    // 4 — statuts paiement
-    later(() => {
-      setBeat("pay");
-      setPayStep(0);
-    }, 3100);
-    later(() => setPayStep(1), 3900);
-    later(() => setPayStep(2), 4800);
-
-    // 5 — respiration + dashboard
-    later(() => {
-      setBeat("pulse");
-      setBreathe(true);
-      setDashOn(true);
-    }, 5400);
-
-    // 6 — marge OK
-    later(() => setBeat("margeOk"), 7800);
-
-    // 7 — marge basse
-    later(() => setBeat("margeLow"), 9800);
-
-    // 8 — vivant + silence
-    later(() => setBeat("alive"), 11800);
-    later(() => setBeat("done"), 13800);
-    later(finish, 15500);
-
-    return clearTimers;
-  }, [active, reduced, finish]);
+    return clear;
+  }, [active, reduced, seekKey, seekMs, finish, later, clear]);
 
   return (
     <div className="lp-hubFin__panel">

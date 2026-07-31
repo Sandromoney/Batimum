@@ -7,6 +7,10 @@ import {
   useState,
 } from "react";
 import {
+  runCueTimeline,
+  usePauseableTimers,
+} from "@/lib/landing-hub-pauseable-timer";
+import {
   Building2,
   Check,
   FileText,
@@ -226,26 +230,22 @@ function ClientsBoard({
 export function ClientsFilmPanel({
   active,
   reduced,
+  paused = false,
+  seekMs = 0,
+  seekKey = 0,
   onDemoComplete,
 }: {
   active: boolean;
   reduced: boolean;
+  paused?: boolean;
+  seekMs?: number;
+  seekKey?: number;
   onDemoComplete: () => void;
 }) {
   const [beat, setBeat] = useState<ClientsBeat>("list");
   const [openId, setOpenId] = useState<string | null>(null);
   const finishedRef = useRef(false);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  const clearTimers = () => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-  };
-
-  const later = (fn: () => void, ms: number) => {
-    const id = setTimeout(fn, ms);
-    timersRef.current.push(id);
-  };
+  const { later, clear } = usePauseableTimers(paused);
 
   const finish = useCallback(() => {
     if (finishedRef.current) return;
@@ -254,7 +254,7 @@ export function ClientsFilmPanel({
   }, [onDemoComplete]);
 
   useEffect(() => {
-    clearTimers();
+    clear();
     finishedRef.current = false;
     setBeat("list");
     setOpenId(null);
@@ -265,24 +265,34 @@ export function ClientsFilmPanel({
       setOpenId("martin");
       setBeat("done");
       later(finish, 400);
-      return clearTimers;
+      return clear;
     }
 
-    later(() => {
-      setOpenId("martin");
-      setBeat("hover");
-    }, 500);
-    later(() => setBeat("open"), 1100);
-    later(() => setBeat("identity"), 1700);
-    later(() => setBeat("contact"), 2600);
-    later(() => setBeat("history"), 3600);
-    later(() => setBeat("docs"), 4800);
-    later(() => setBeat("notes"), 6000);
-    later(() => setBeat("done"), 7200);
-    later(finish, 8400);
+    runCueTimeline({
+      seekMs,
+      later,
+      onFinish: finish,
+      finishAt: 8400,
+      cues: [
+        {
+          at: 500,
+          apply: () => {
+            setOpenId("martin");
+            setBeat("hover");
+          },
+        },
+        { at: 1100, apply: () => setBeat("open") },
+        { at: 1700, apply: () => setBeat("identity") },
+        { at: 2600, apply: () => setBeat("contact") },
+        { at: 3600, apply: () => setBeat("history") },
+        { at: 4800, apply: () => setBeat("docs") },
+        { at: 6000, apply: () => setBeat("notes") },
+        { at: 7200, apply: () => setBeat("done") },
+      ],
+    });
 
-    return clearTimers;
-  }, [active, reduced, finish]);
+    return clear;
+  }, [active, reduced, seekKey, seekMs, finish, later, clear]);
 
   return (
     <div className="lp-hubClients__panel">

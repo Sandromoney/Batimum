@@ -9,6 +9,10 @@ import {
 } from "react";
 import { AlertTriangle, Check, LineChart } from "lucide-react";
 import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
+import {
+  runCueTimeline,
+  usePauseableTimers,
+} from "@/lib/landing-hub-pauseable-timer";
 
 export const PILOTAGE_HIGHLIGHT_MS = 1400;
 export const PILOTAGE_ENTER_MS = 1320;
@@ -22,7 +26,7 @@ function PilotageCopy() {
     <div className="lp-hubPilot__copy">
       <h3 className="lp-hubPilot__title">Pilotage</h3>
       <p className="lp-hubPilot__subtitle">
-        Marges, prévisionnel vs réel, chantiers rentables — en un regard.
+        Coûts, marges et rentabilité — suivis en temps réel, au plus près.
       </p>
     </div>
   );
@@ -38,16 +42,16 @@ function PilotageBoard({ beat }: { beat: PilotBeat }) {
 
       <div className="lp-hubPilot__kpis">
         <article className="lp-hubPilot__kpi is-on">
-          <p>CA mensuel</p>
-          <strong>48 200 €</strong>
+          <p>Coûts du mois</p>
+          <strong>37 600 €</strong>
         </article>
         <article className="lp-hubPilot__kpi is-on">
           <p>Marge moyenne</p>
           <strong>22&nbsp;%</strong>
         </article>
         <article className="lp-hubPilot__kpi is-on">
-          <p>Chantiers actifs</p>
-          <strong>8</strong>
+          <p>Rentabilité</p>
+          <strong>+10 600 €</strong>
         </article>
       </div>
 
@@ -80,9 +84,9 @@ function PilotageBoard({ beat }: { beat: PilotBeat }) {
       </article>
 
       {beat === "done" ? (
-        <p className="lp-hubPilot__calm">
-          Pilotez avant que la marge s’échappe.
-        </p>
+          <p className="lp-hubPilot__calm">
+            Coûts, marges, rentabilité — en temps réel.
+          </p>
       ) : null}
 
       <FilmCursor
@@ -97,25 +101,21 @@ function PilotageBoard({ beat }: { beat: PilotBeat }) {
 export function PilotageFilmPanel({
   active,
   reduced,
+  paused = false,
+  seekMs = 0,
+  seekKey = 0,
   onDemoComplete,
 }: {
   active: boolean;
   reduced: boolean;
+  paused?: boolean;
+  seekMs?: number;
+  seekKey?: number;
   onDemoComplete: () => void;
 }) {
   const [beat, setBeat] = useState<PilotBeat>("read");
   const finishedRef = useRef(false);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  const clearTimers = () => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-  };
-
-  const later = (fn: () => void, ms: number) => {
-    const id = setTimeout(fn, ms);
-    timersRef.current.push(id);
-  };
+  const { later, clear } = usePauseableTimers(paused);
 
   const finish = useCallback(() => {
     if (finishedRef.current) return;
@@ -124,7 +124,7 @@ export function PilotageFilmPanel({
   }, [onDemoComplete]);
 
   useEffect(() => {
-    clearTimers();
+    clear();
     finishedRef.current = false;
     setBeat("read");
     if (!active) return;
@@ -132,16 +132,23 @@ export function PilotageFilmPanel({
     if (reduced) {
       setBeat("done");
       later(finish, 400);
-      return clearTimers;
+      return clear;
     }
 
-    later(() => setBeat("scan"), 400);
-    later(() => setBeat("warn"), 1600);
-    later(() => setBeat("ok"), 3200);
-    later(() => setBeat("done"), 4800);
-    later(finish, 6200);
-    return clearTimers;
-  }, [active, reduced, finish]);
+    runCueTimeline({
+      seekMs,
+      later,
+      onFinish: finish,
+      finishAt: 6200,
+      cues: [
+        { at: 400, apply: () => setBeat("scan") },
+        { at: 1600, apply: () => setBeat("warn") },
+        { at: 3200, apply: () => setBeat("ok") },
+        { at: 4800, apply: () => setBeat("done") },
+      ],
+    });
+    return clear;
+  }, [active, reduced, seekKey, seekMs, finish, later, clear]);
 
   return (
     <div className="lp-hubPilot__panel">

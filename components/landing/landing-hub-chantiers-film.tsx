@@ -8,6 +8,10 @@ import {
 } from "react";
 import { Calendar, Check, HardHat, MapPin, User } from "lucide-react";
 import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
+import {
+  runCueTimeline,
+  usePauseableTimers,
+} from "@/lib/landing-hub-pauseable-timer";
 
 export const CHANTIER_HIGHLIGHT_MS = 900;
 export const CHANTIER_ENTER_MS = 1380;
@@ -264,10 +268,16 @@ function initialStates(): Record<string, StepState> {
 export function ChantiersFilmPanel({
   active,
   reduced,
+  paused = false,
+  seekMs = 0,
+  seekKey = 0,
   onDemoComplete,
 }: {
   active: boolean;
   reduced: boolean;
+  paused?: boolean;
+  seekMs?: number;
+  seekKey?: number;
   onDemoComplete: () => void;
 }) {
   const [beat, setBeat] = useState<ChantierBeat>("fiche");
@@ -276,17 +286,10 @@ export function ChantiersFilmPanel({
     weightedProgress(initialStates()),
   );
   const finishedRef = useRef(false);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  const clearTimers = () => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-  };
-
-  const later = (fn: () => void, ms: number) => {
-    const id = setTimeout(fn, ms);
-    timersRef.current.push(id);
-  };
+  const { later, clear } = usePauseableTimers(paused);
+  const rafRef = useRef(0);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
 
   const finish = useCallback(() => {
     if (finishedRef.current) return;
@@ -295,7 +298,8 @@ export function ChantiersFilmPanel({
   }, [onDemoComplete]);
 
   useEffect(() => {
-    clearTimers();
+    clear();
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
     finishedRef.current = false;
     const base = initialStates();
     setStates(base);
@@ -314,14 +318,10 @@ export function ChantiersFilmPanel({
       setPercent(weightedProgress(done));
       setBeat("done");
       later(finish, 400);
-      return clearTimers;
+      return clear;
     }
 
-    // Rythme ralenti — lisible à l’export vidéo
-    later(() => setBeat("steps"), 1100);
-    later(() => setBeat("progress"), 2600);
-    later(() => setBeat("faïence"), 4400);
-    later(() => {
+    const bumpProgress = () => {
       setBeat("bump");
       setStates((prev) => {
         const next = {
@@ -331,24 +331,59 @@ export function ChantiersFilmPanel({
         };
         const target = weightedProgress(next);
         const from = weightedProgress(prev);
-        const start = performance.now();
+        let start = performance.now();
+        let frozen = 0;
         const dur = 1200;
         const step = (now: number) => {
+          if (pausedRef.current) {
+            frozen = now;
+            rafRef.current = requestAnimationFrame(step);
+            return;
+          }
+          if (frozen) {
+            start += now - frozen;
+            frozen = 0;
+          }
           const t = Math.min(1, (now - start) / dur);
           const eased = 1 - Math.pow(1 - t, 3);
           setPercent(Math.round(from + (target - from) * eased));
-          if (t < 1) requestAnimationFrame(step);
+          if (t < 1) rafRef.current = requestAnimationFrame(step);
         };
-        requestAnimationFrame(step);
+        rafRef.current = requestAnimationFrame(step);
         return next;
       });
-    }, 6800);
-    later(() => setBeat("alive"), 8800);
-    later(() => setBeat("done"), 11200);
-    later(finish, 13200);
+    };
 
-    return clearTimers;
-  }, [active, reduced, finish]);
+    if (seekMs >= 6800) {
+      const done = {
+        ...base,
+        faience: "done" as const,
+        peint: "active" as const,
+      };
+      setStates(done);
+      setPercent(weightedProgress(done));
+    }
+
+    runCueTimeline({
+      seekMs,
+      later,
+      onFinish: finish,
+      finishAt: 13200,
+      cues: [
+        { at: 1100, apply: () => setBeat("steps") },
+        { at: 2600, apply: () => setBeat("progress") },
+        { at: 4400, apply: () => setBeat("faïence") },
+        { at: 6800, apply: bumpProgress },
+        { at: 8800, apply: () => setBeat("alive") },
+        { at: 11200, apply: () => setBeat("done") },
+      ],
+    });
+
+    return () => {
+      clear();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [active, reduced, seekKey, seekMs, finish, later, clear]);
 
   return (
     <div className="lp-hubChantier__panel">
