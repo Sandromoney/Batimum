@@ -24,7 +24,7 @@ export const heroContent = {
       Icon: Clock3 as LucideIcon,
     },
     {
-      highlight: "Affectez",
+      highlight: "Planifiez",
       rest: " vos équipes et suivez chaque chantier au même endroit",
       Icon: HardHat as LucideIcon,
     },

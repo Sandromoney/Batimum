@@ -88,6 +88,7 @@ import {
   AUTO_PLAN_BREATH_MS,
   HOLD_MS,
   HUB_FILM_TOTAL_MS,
+  INTRO_MS,
   MODULE_LOCK_MS,
   nextAnchorAfterDemo,
   resolveTimeline,
@@ -223,7 +224,7 @@ function moduleReadMs(focus: string): number {
 const LAST_SCENE = 16;
 /** Plans MUM internes (dictée → … → signature). */
 const MUM_PLAN_COUNT = 6;
-const INTRO_TO_MUM_MS = 1200;
+const INTRO_TO_MUM_MS = INTRO_MS;
 /** Marge sécurité = verrouillage + zoom + lecture max + démo. */
 const PRE_DEMO_MS = MODULE_LOCK_MS + 2100;
 const SCENE_LOCK_MS = [
@@ -1388,6 +1389,13 @@ export function LandingHubSection() {
     }
   }, []);
 
+  const restartFilm = useCallback(() => {
+    if (!autoPlayRef.current && !autoPlaying) return;
+    filmPausedRef.current = false;
+    setFilmPaused(false);
+    seekTo(0);
+  }, [autoPlaying, seekTo]);
+
   const advanceFilm = useCallback(() => {
     if (doneRef.current || experienceRef.current !== "tour") return;
     if (isPlayingRef.current) return;
@@ -1489,14 +1497,14 @@ export function LandingHubSection() {
           filmLater(() => {
             sceneRef.current = 2;
             setScene(2);
-          }, 300);
+          }, Math.round(INTRO_MS * 0.42));
           filmLater(() => {
             sceneRef.current = 3;
             setScene(3);
             mumPlanRef.current = 0;
             setMumPlan(0);
             startMumFilm();
-          }, 700);
+          }, INTRO_MS);
           return "handled";
         }
         return "handled";
@@ -1960,6 +1968,7 @@ export function LandingHubSection() {
                         paused={filmPaused}
                         onSeek={seekTo}
                         onPauseToggle={togglePause}
+                        onRestart={restartFilm}
                         onUserActivity={bumpControls}
                       />
                     ) : null}

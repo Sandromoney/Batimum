@@ -7,9 +7,11 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { Pause, Play } from "lucide-react";
+import { Pause, Play, RotateCcw } from "lucide-react";
 import {
+  chapterAtTime,
   formatFilmTime,
+  HUB_FILM_CHAPTERS,
   HUB_FILM_TOTAL_MS,
 } from "@/lib/landing-hub-timeline";
 
@@ -144,7 +146,7 @@ export function HubSkipControl({ onSkip }: { onSkip: () => void }) {
 const CONTROLS_IDLE_MS = 2600;
 
 /**
- * Contrôles premium discrets : barre fine, hover temps, pause, auto-hide.
+ * Contrôles film : barre noire toujours visible + pause / restart discrets.
  * Le skip reste un composant séparé (inchangé).
  */
 export function HubFilmControls({
@@ -154,6 +156,7 @@ export function HubFilmControls({
   paused,
   onPauseToggle,
   onSeek,
+  onRestart,
   onUserActivity,
 }: {
   visible: boolean;
@@ -162,15 +165,19 @@ export function HubFilmControls({
   paused: boolean;
   onPauseToggle: () => void;
   onSeek: (ms: number) => void;
+  onRestart?: () => void;
   onUserActivity: () => void;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const tipRef = useRef<HTMLSpanElement>(null);
   const [hovering, setHovering] = useState(false);
   const [hoverRatio, setHoverRatio] = useState(0);
+  const [tipShift, setTipShift] = useState(0);
   const draggingRef = useRef(false);
 
   const ratio = totalMs > 0 ? Math.min(1, Math.max(0, elapsedMs / totalMs)) : 0;
   const hoverMs = hoverRatio * totalMs;
+  const hoverChapter = chapterAtTime(hoverMs);
 
   const ratioFromClientX = useCallback((clientX: number) => {
     const el = trackRef.current;
@@ -188,6 +195,29 @@ export function HubFilmControls({
     },
     [onSeek, onUserActivity, ratioFromClientX, totalMs],
   );
+
+  const clampTip = useCallback(() => {
+    const tip = tipRef.current;
+    const track = trackRef.current;
+    if (!tip || !track) return;
+    const tipRect = tip.getBoundingClientRect();
+    const pad = 8;
+    let shift = 0;
+    if (tipRect.left < pad) shift = pad - tipRect.left;
+    else if (tipRect.right > window.innerWidth - pad) {
+      shift = window.innerWidth - pad - tipRect.right;
+    }
+    setTipShift(shift);
+  }, []);
+
+  useEffect(() => {
+    if (!hovering) {
+      setTipShift(0);
+      return;
+    }
+    const id = requestAnimationFrame(clampTip);
+    return () => cancelAnimationFrame(id);
+  }, [hovering, hoverRatio, clampTip]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -267,33 +297,65 @@ export function HubFilmControls({
             className="lp-hub__scrubFill"
             style={{ transform: `scaleX(${ratio})` }}
           />
+          {HUB_FILM_CHAPTERS.filter((ch) => ch.startMs > 0 && ch.startMs < totalMs).map(
+            (ch) => (
+              <span
+                key={ch.id}
+                className="lp-hub__scrubMark"
+                style={{ left: `${(ch.startMs / totalMs) * 100}%` }}
+                title={ch.label}
+              />
+            ),
+          )}
         </div>
         {hovering ? (
           <span
+            ref={tipRef}
             className="lp-hub__scrubTime"
-            style={{ left: `${hoverRatio * 100}%` }}
+            style={{
+              left: `${hoverRatio * 100}%`,
+              transform: `translateX(calc(-50% + ${tipShift}px))`,
+            }}
             aria-hidden="true"
           >
-            {formatFilmTime(hoverMs)} / {formatFilmTime(totalMs)}
+            <span className="lp-hub__scrubTimeChapter">{hoverChapter.label}</span>
+            <span className="lp-hub__scrubTimeValue">
+              {formatFilmTime(hoverMs)} / {formatFilmTime(totalMs)}
+            </span>
           </span>
         ) : null}
       </div>
 
-      <button
-        type="button"
-        className="lp-hub__pause"
-        onClick={() => {
-          onPauseToggle();
-          onUserActivity();
-        }}
-        aria-label={paused ? "Reprendre la présentation" : "Mettre en pause"}
-      >
-        {paused ? (
-          <Play size={14} strokeWidth={2.2} fill="currentColor" />
-        ) : (
-          <Pause size={14} strokeWidth={2.2} fill="currentColor" />
-        )}
-      </button>
+      <div className="lp-hub__transport">
+        <button
+          type="button"
+          className="lp-hub__pause"
+          onClick={() => {
+            onPauseToggle();
+            onUserActivity();
+          }}
+          aria-label={paused ? "Reprendre la présentation" : "Mettre en pause"}
+        >
+          {paused ? (
+            <Play size={14} strokeWidth={2.2} fill="currentColor" />
+          ) : (
+            <Pause size={14} strokeWidth={2.2} fill="currentColor" />
+          )}
+        </button>
+        {onRestart ? (
+          <button
+            type="button"
+            className="lp-hub__restart"
+            onClick={() => {
+              onRestart();
+              onUserActivity();
+            }}
+            aria-label="Recommencer la présentation"
+          >
+            <RotateCcw size={13} strokeWidth={2.2} />
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

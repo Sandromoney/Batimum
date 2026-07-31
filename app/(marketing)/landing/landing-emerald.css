@@ -4260,48 +4260,54 @@ html:has(.landing-emerald) body {
 .landing-emerald .lp-hub__filmControls {
   position: absolute;
   inset: 0;
-  z-index: 14;
+  z-index: 46;
   pointer-events: none;
 }
 
+/* Barre toujours visible (pas uniquement au survol) — juste sous la navbar */
 .landing-emerald .lp-hub__scrub {
   position: absolute;
-  top: var(--hub-safe-top, 5.5rem);
-  left: 0;
-  right: 0;
+  /* Header emerald = 76px ; rester clairement sous la barre fixe z-50 */
+  top: calc(76px + 0.45rem);
+  left: max(1.15rem, env(safe-area-inset-left, 0px) + 1rem);
+  right: max(1.15rem, env(safe-area-inset-right, 0px) + 1rem);
   height: 22px;
   pointer-events: auto;
   cursor: pointer;
   touch-action: none;
-  opacity: 0.7;
-  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: 1;
+  z-index: 47;
 }
 
-.landing-emerald .lp-hub__filmControls.is-visible .lp-hub__scrub,
-.landing-emerald .lp-hub__scrub.is-hot {
-  opacity: 1;
+@media (max-width: 767px) {
+  .landing-emerald .lp-hub__scrub {
+    top: calc(5.25rem + 0.35rem);
+  }
 }
 
 .landing-emerald .lp-hub__scrubTrack {
   position: absolute;
-  top: 0;
+  top: 8px;
   left: 0;
   right: 0;
-  height: 2px;
-  background: rgba(17, 17, 17, 0.12);
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(17, 17, 17, 0.14);
   transform-origin: left center;
   transition: height 0.2s ease, background 0.2s ease;
+  overflow: visible;
 }
 
 .landing-emerald .lp-hub__scrub.is-hot .lp-hub__scrubTrack,
 .landing-emerald .lp-hub__scrub:focus-visible .lp-hub__scrubTrack {
   height: 3px;
-  background: rgba(17, 17, 17, 0.18);
+  background: rgba(17, 17, 17, 0.2);
 }
 
 .landing-emerald .lp-hub__scrubFill {
   height: 100%;
   width: 100%;
+  border-radius: inherit;
   background: #111111;
   transform-origin: left center;
   transform: scaleX(0);
@@ -4309,27 +4315,66 @@ html:has(.landing-emerald) body {
   transition: none;
 }
 
-.landing-emerald .lp-hub__scrubTime {
+.landing-emerald .lp-hub__scrubMark {
   position: absolute;
-  top: 12px;
-  transform: translateX(-50%);
-  font-size: 0.68rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-  color: rgba(17, 17, 17, 0.55);
-  white-space: nowrap;
+  top: 50%;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(17, 17, 17, 0.35);
+  transform: translate(-50%, -50%);
   pointer-events: none;
-  padding: 0.15rem 0.35rem;
-  background: rgba(247, 245, 241, 0.88);
-  backdrop-filter: blur(6px);
-  border-radius: 4px;
 }
 
-.landing-emerald .lp-hub__pause {
+.landing-emerald .lp-hub__scrubTime {
+  position: absolute;
+  top: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  white-space: nowrap;
+  pointer-events: none;
+  padding: 0.35rem 0.55rem;
+  background: #111111;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.18);
+  z-index: 48;
+}
+
+.landing-emerald .lp-hub__scrubTimeChapter {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.landing-emerald .lp-hub__scrubTimeValue {
+  color: #ffffff;
+}
+
+.landing-emerald .lp-hub__transport {
   position: absolute;
   left: max(1rem, env(safe-area-inset-left, 0px) + 0.85rem);
   bottom: max(1.35rem, env(safe-area-inset-bottom, 0px) + 1rem);
+  z-index: 47;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  pointer-events: none;
+}
+
+.landing-emerald .lp-hub__pause,
+.landing-emerald .lp-hub__restart {
+  position: relative;
+  left: auto;
+  bottom: auto;
   z-index: 14;
   pointer-events: none;
   appearance: none;
@@ -4339,11 +4384,11 @@ html:has(.landing-emerald) body {
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: rgba(247, 245, 241, 0.78);
+  background: rgba(247, 245, 241, 0.88);
   backdrop-filter: blur(8px);
-  color: rgba(17, 17, 17, 0.78);
+  color: rgba(17, 17, 17, 0.82);
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.42;
   transition:
     color 0.2s ease,
     background 0.2s ease,
@@ -4351,17 +4396,21 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-hub__filmControls.is-visible .lp-hub__pause,
-.landing-emerald .lp-hub__filmControls.is-paused .lp-hub__pause {
+.landing-emerald .lp-hub__filmControls.is-visible .lp-hub__restart,
+.landing-emerald .lp-hub__filmControls.is-paused .lp-hub__pause,
+.landing-emerald .lp-hub__filmControls.is-paused .lp-hub__restart {
   opacity: 1;
   pointer-events: auto;
 }
 
-.landing-emerald .lp-hub__pause:hover {
+.landing-emerald .lp-hub__pause:hover,
+.landing-emerald .lp-hub__restart:hover {
   color: #111111;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.94);
 }
 
-.landing-emerald .lp-hub__pause:focus-visible {
+.landing-emerald .lp-hub__pause:focus-visible,
+.landing-emerald .lp-hub__restart:focus-visible {
   outline: 2px solid #111111;
   outline-offset: 2px;
 }

@@ -7,7 +7,7 @@ export const MODULE_LOCK_MS = 640;
 export const AUTO_BREATH_MS = 240;
 export const AUTO_PLAN_BREATH_MS = 180;
 export const HOLD_MS = 220;
-export const INTRO_MS = 700;
+export const INTRO_MS = 6000;
 
 const MUM_ENTER_MS = 680;
 const MUM_RETURN_MS = 750;
@@ -274,7 +274,7 @@ export function resolveTimeline(timeMs: number): TimelineHit {
   if (seg.kind === "intro") {
     return {
       timeMs: t,
-      scene: offsetMs < 300 ? 1 : 2,
+      scene: offsetMs < INTRO_MS * 0.42 ? 1 : 2,
       offsetMs,
       kind: "intro",
       module: null,
@@ -374,6 +374,80 @@ export function formatFilmTime(ms: number) {
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+/** Chapitres affichés sur la barre (ordre réel du film). */
+export type HubFilmChapter = {
+  id: string;
+  label: string;
+  startMs: number;
+};
+
+function chapterStart(
+  predicate: (s: (typeof HUB_TIMELINE_SEGMENTS)[number]) => boolean,
+): number {
+  const seg = HUB_TIMELINE_SEGMENTS.find(predicate);
+  return seg?.start ?? 0;
+}
+
+export const HUB_FILM_CHAPTERS: HubFilmChapter[] = [
+  { id: "intro", label: "Introduction", startMs: 0 },
+  {
+    id: "mum",
+    label: "MUM IA",
+    startMs: chapterStart((s) => s.module === "mum" && s.kind === "modulePre"),
+  },
+  {
+    id: "clients",
+    label: "Clients",
+    startMs: chapterStart(
+      (s) => s.module === "clients" && s.kind === "modulePre",
+    ),
+  },
+  {
+    id: "chantiers",
+    label: "Chantiers",
+    startMs: chapterStart(
+      (s) => s.module === "chantiers" && s.kind === "modulePre",
+    ),
+  },
+  {
+    id: "planning",
+    label: "Planning",
+    startMs: chapterStart(
+      (s) => s.module === "planning" && s.kind === "modulePre",
+    ),
+  },
+  {
+    id: "facturation",
+    label: "Facturation",
+    startMs: chapterStart(
+      (s) => s.module === "finance" && s.kind === "modulePre",
+    ),
+  },
+  {
+    id: "pilotage",
+    label: "Pilotage",
+    startMs: chapterStart(
+      (s) => s.module === "pilotage" && s.kind === "modulePre",
+    ),
+  },
+  {
+    id: "conclusion",
+    label: "Conclusion",
+    startMs: chapterStart(
+      (s) => s.kind === "converge" || s.kind === "signature",
+    ),
+  },
+];
+
+export function chapterAtTime(ms: number): HubFilmChapter {
+  let current = HUB_FILM_CHAPTERS[0];
+  for (const ch of HUB_FILM_CHAPTERS) {
+    if (ms >= ch.startMs) current = ch;
+    else break;
+  }
+  return current;
 }
 
 export function nextAnchorAfterDemo(
