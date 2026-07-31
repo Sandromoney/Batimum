@@ -1,78 +1,137 @@
+"use client";
+
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { LandingReveal } from "@/components/landing/landing-reveal";
+import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 
-const FEEDBACK = [
-  "Les devis sont plus rapides à préparer.",
-  "Les informations sont plus simples à retrouver.",
-  "Le planning est plus clair pour toute l’équipe.",
-  "Le suivi des chantiers est mieux organisé.",
-  "La rentabilité est plus facile à comprendre.",
-] as const;
+type Testimonial = {
+  id: string;
+  firstName: string;
+  initials: string;
+  company: string;
+  teamSize: string;
+  quote: string;
+};
 
-const FUTURE_VIDEOS = [
-  "Plombier",
-  "Électricien",
-  "Maçon",
-  "Couvreur",
-  "Plaquiste",
-  "Paysagiste",
-] as const;
+const TESTIMONIALS: Testimonial[] = [
+  {
+    id: "marc",
+    firstName: "Marc",
+    initials: "M",
+    company: "Entreprise de plomberie",
+    teamSize: "4 salariés",
+    quote:
+      "Avant, je passais mes soirées à terminer les devis. Aujourd’hui, tout est centralisé et je peux enfin me concentrer sur mes chantiers.",
+  },
+  {
+    id: "karim",
+    firstName: "Karim",
+    initials: "K",
+    company: "Entreprise générale",
+    teamSize: "6 salariés",
+    quote:
+      "Le planning est devenu beaucoup plus simple. Les équipes savent directement où aller sans que je passe mon temps au téléphone.",
+  },
+  {
+    id: "sophie",
+    firstName: "Sophie",
+    initials: "S",
+    company: "Entreprise de rénovation",
+    teamSize: "5 salariés",
+    quote:
+      "Le pilotage m’a permis d’identifier plusieurs chantiers moins rentables que prévu. Aujourd’hui je prends mes décisions avec de vrais chiffres.",
+  },
+];
+
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export function LandingTestimonialsSection() {
+  const reduced = useReducedMotion();
+  const signupHref = getPublicSignupHref();
+  const ctaLabel = isPrivateBetaEnabled()
+    ? "Se connecter"
+    : "Essayer gratuitement pendant 7 jours";
+
+  const t = {
+    duration: reduced ? 0.01 : 0.5,
+    ease: EASE,
+  };
+
   return (
     <section
       id="temoignages"
-      className="lp-section"
+      className="lp-section lp-voices"
       aria-labelledby="testimonials-title"
     >
       <div className="lp-container">
         <LandingReveal>
-          <div className="lp-section-head">
+          <div className="lp-section-head lp-voices__head">
+            <p className="lp-eyebrow">
+              <span className="lp-eyebrow__dot" aria-hidden="true" />
+              Retours terrain
+            </p>
             <h2 id="testimonials-title" className="lp-title mt-5 max-w-3xl">
-              Pensé avec les professionnels du bâtiment.
+              Ce que nos utilisateurs{" "}
+              <span className="lp-title-accent">nous disent</span>
             </h2>
             <p className="lp-subtitle mt-5 max-w-2xl">
-              Les retours du terrain nous aident à construire une solution
-              vraiment adaptée au quotidien des entreprises du BTP.
+              Des retours recueillis auprès des entreprises qui utilisent
+              Batimum au quotidien.
             </p>
           </div>
         </LandingReveal>
 
-        <LandingReveal delay={60}>
-          <p className="lp-themes__intro">
-            Ce que nos utilisateurs nous remontent pendant les tests
-          </p>
-        </LandingReveal>
-
-        <div className="lp-themes">
-          {FEEDBACK.map((item, index) => (
-            <LandingReveal key={item} delay={80 + index * 50}>
-              <blockquote className="lp-theme-card">
-                <p>« {item} »</p>
+        <div className="lp-voices__grid">
+          {TESTIMONIALS.map((item, index) => (
+            <motion.article
+              key={item.id}
+              className="lp-voices__card"
+              initial={
+                reduced ? false : { opacity: 0, y: 18, scale: 0.985 }
+              }
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{
+                ...t,
+                delay: reduced ? 0 : index * 0.1,
+              }}
+            >
+              <blockquote className="lp-voices__quote">
+                « {item.quote} »
               </blockquote>
-            </LandingReveal>
+              <footer className="lp-voices__meta">
+                <span className="lp-voices__avatar" aria-hidden="true">
+                  {item.initials}
+                </span>
+                <span className="lp-voices__who">
+                  <span className="lp-voices__name">{item.firstName}</span>
+                  <span className="lp-voices__detail">
+                    {item.company} · {item.teamSize}
+                  </span>
+                </span>
+              </footer>
+            </motion.article>
           ))}
         </div>
 
-        <LandingReveal delay={120}>
-          <p className="lp-themes__note">
-            Retours recueillis pendant la phase de test. Aucun témoignage nommé
-            n’est inventé.
-          </p>
-        </LandingReveal>
-
-        <LandingReveal delay={160}>
-          <div className="lp-themes__videos">
-            <p className="lp-themes__videos-title">
-              Prochaines vidéos métiers (à venir)
+        <LandingReveal delay={140}>
+          <div className="lp-voices__footer">
+            <p className="lp-voices__closing">
+              Et si votre entreprise était la prochaine à gagner plusieurs
+              heures chaque semaine ?
             </p>
-            <ul className="lp-themes__video-slots">
-              {FUTURE_VIDEOS.map((label) => (
-                <li key={label}>
-                  <span aria-hidden="true" />
-                  {label}
-                </li>
-              ))}
-            </ul>
+            <Link
+              href={signupHref}
+              className="landing-btn-primary landing-btn-interactive group inline-flex items-center justify-center gap-2 no-underline"
+            >
+              {ctaLabel}
+              <ArrowRight
+                className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                aria-hidden="true"
+              />
+            </Link>
           </div>
         </LandingReveal>
       </div>

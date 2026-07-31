@@ -10953,8 +10953,156 @@ html:has(.landing-emerald) body {
   }
 }
 
+/* ——— Voices / témoignages premium ——— */
+.landing-emerald .lp-voices {
+  scroll-margin-top: 88px;
+  background: #ffffff;
+}
+
+.landing-emerald .lp-voices__head {
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.landing-emerald .lp-voices__grid {
+  display: grid;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+@media (min-width: 900px) {
+  .landing-emerald .lp-voices__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.15rem;
+  }
+}
+
+@media (max-width: 899px) {
+  .landing-emerald .lp-voices__grid {
+    display: flex;
+    gap: 0.9rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0.15rem;
+    padding-bottom: 0.35rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .landing-emerald .lp-voices__card {
+    flex: 0 0 min(86vw, 22rem);
+    scroll-snap-align: start;
+  }
+}
+
+.landing-emerald .lp-voices__card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.35rem;
+  height: 100%;
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.07);
+  border-radius: 22px;
+  padding: 1.45rem 1.35rem 1.3rem;
+  box-shadow: 0 10px 28px rgba(17, 17, 17, 0.03);
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+}
+
+.landing-emerald .lp-voices__card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(17, 17, 17, 0.1);
+  box-shadow: 0 14px 34px rgba(17, 17, 17, 0.055);
+}
+
+.landing-emerald .lp-voices__quote {
+  margin: 0;
+  color: #111111;
+  font-size: clamp(1rem, 1.35vw, 1.08rem);
+  font-weight: 550;
+  letter-spacing: -0.015em;
+  line-height: 1.55;
+}
+
+.landing-emerald .lp-voices__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.landing-emerald .lp-voices__avatar {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #f3f4f6;
+  color: #111111;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(17, 17, 17, 0.06);
+}
+
+.landing-emerald .lp-voices__who {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.landing-emerald .lp-voices__name {
+  color: #111111;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.landing-emerald .lp-voices__detail {
+  color: #8a8a8a;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.landing-emerald .lp-voices__footer {
+  margin-top: clamp(2.25rem, 5vw, 3.25rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+}
+
+.landing-emerald .lp-voices__closing {
+  margin: 0;
+  max-width: 32rem;
+  color: #111111;
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
+.landing-emerald .lp-voices__footer .landing-btn-primary {
+  border-radius: 999px;
+  padding: 0.85rem 1.35rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+@media (max-width: 639px) {
+  .landing-emerald .lp-voices__footer .landing-btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-emerald .lp-ba__card,
+  .landing-emerald .lp-voices__card,
   .landing-emerald .lp-devis-demo__block,
   .landing-emerald .lp-devis-demo__lots li,
   .landing-emerald .lp-devis-demo__ready,
