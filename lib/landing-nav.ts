@@ -84,9 +84,9 @@ const EQUIPES_MENU: LandingNavMenu = {
       icon: Users,
     },
     {
-      label: "Connexion employé",
-      href: "/login-employe",
-      description: "Accès sécurisé dédié au terrain.",
+      label: "Connexion",
+      href: "/login",
+      description: "Accès dirigeant ou salarié, détecté automatiquement.",
       icon: Sparkles,
     },
   ],

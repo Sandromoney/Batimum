@@ -80,6 +80,10 @@ import {
   useHubControlsVisibility,
   writeHubSkippedSession,
 } from "@/components/landing/landing-hub-experience-ui";
+import {
+  markLandingPastIntro,
+  useLandingExperience,
+} from "@/components/landing/landing-experience";
 import { FilmClock } from "@/lib/landing-hub-film-clock";
 import {
   AUTO_BREATH_MS,
@@ -622,6 +626,7 @@ export function LandingHubSection() {
   const [motionReady, setMotionReady] = useState(false);
   useEffect(() => setMotionReady(true), []);
   const reduced = motionReady ? prefersReduced : false;
+  const { pastIntro, ready } = useLandingExperience();
   const pinRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
 
@@ -710,6 +715,22 @@ export function LandingHubSection() {
     experienceRef.current = "finished";
     setExperience("finished");
   }, []);
+
+  /** Retour navigateur après intro : ne pas rejouer le film hub. */
+  useEffect(() => {
+    if (!ready || !pastIntro) return;
+    if (doneRef.current) return;
+    setSessionSkipped(true);
+    doneRef.current = true;
+    setDone(true);
+    experienceRef.current = "finished";
+    setExperience("finished");
+    setSignatureSealed(true);
+    setFilmPhase("sealed");
+    filmPhaseRef.current = "sealed";
+    pinModeRef.current = "before";
+    setPinMode("before");
+  }, [ready, pastIntro]);
 
   const setExperiencePhase = useCallback((phase: ExperiencePhase) => {
     experienceRef.current = phase;
@@ -843,6 +864,7 @@ export function LandingHubSection() {
     setAwaitingGesture(false);
     setExperiencePhase("finished");
     resetToEcosystem();
+    markLandingPastIntro();
   }, [resetToEcosystem, setExperiencePhase, resetFilmClock]);
 
   const scrollToNextSection = useCallback(() => {

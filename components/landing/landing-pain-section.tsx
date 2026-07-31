@@ -10,6 +10,10 @@ import {
   type RefObject,
 } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+  markLandingPastIntro,
+  useLandingExperience,
+} from "@/components/landing/landing-experience";
 
 const MICRO_LINES = [
   "À chaque devis créé manuellement.",
@@ -168,6 +172,7 @@ export function LandingPainSection() {
   const [motionReady, setMotionReady] = useState(false);
   useEffect(() => setMotionReady(true), []);
   const reduced = motionReady ? prefersReduced : false;
+  const { pastIntro, ready } = useLandingExperience();
   const pinRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const compactRef = useRef<HTMLDivElement>(null);
@@ -246,6 +251,7 @@ export function LandingPainSection() {
     setStoryCompleted(true);
     pinModeRef.current = "after";
     setPinMode("after");
+    markLandingPastIntro();
 
     window.dispatchEvent(
       new CustomEvent("batimum:open-hub-gate", {
@@ -258,6 +264,18 @@ export function LandingPainSection() {
       window.scrollTo({ top: Math.max(0, top - 4), behavior: "auto" });
     }
   }, []);
+
+  /** Retour navigateur : intro déjà vue — état compact sans rejouer. */
+  useEffect(() => {
+    if (!ready || !pastIntro) return;
+    storyCompletedRef.current = true;
+    setStoryCompleted(true);
+    setStoryCompact(true);
+    pinModeRef.current = "after";
+    setPinMode("after");
+    cinematicStartedRef.current = true;
+    handoffRef.current = true;
+  }, [ready, pastIntro]);
 
   /** Transition douce vers le hub — uniquement sur geste après la dernière phrase. */
   const beginCinematicHandoff = useCallback(() => {

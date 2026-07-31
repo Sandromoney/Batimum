@@ -20,7 +20,7 @@ export function AuthSplitLayout({
           <div className="w-full max-w-md">{children}</div>
         </section>
 
-        <aside className="auth-split__panel hidden border-l border-[rgba(15,23,42,0.06)] bg-[#f8faf8] lg:block">
+        <aside className="auth-split__panel hidden border-l border-[rgba(17,17,17,0.06)] bg-[#f6f7f9] lg:block">
           <AuthMarketingPanel />
         </aside>
       </div>

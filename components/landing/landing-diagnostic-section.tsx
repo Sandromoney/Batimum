@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
@@ -14,13 +13,13 @@ import {
   Calendar,
 } from "lucide-react";
 import { LandingReveal } from "@/components/landing/landing-reveal";
+import { LandingTrialCta } from "@/components/landing/landing-trial-cta";
 import {
   collectPains,
   PAIN_LABELS,
   QUESTIONS,
   type PainId,
 } from "@/lib/landing-diagnostic";
-import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 
 const PAIN_ICONS: Record<PainId, typeof FileText> = {
   devis: FileText,
@@ -35,10 +34,6 @@ const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export function LandingDiagnosticSection() {
   const reduced = useReducedMotion();
-  const signupHref = getPublicSignupHref();
-  const primaryCtaLabel = isPrivateBetaEnabled()
-    ? "Se connecter"
-    : "Essayer gratuitement";
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>(
     {},
@@ -288,16 +283,7 @@ export function LandingDiagnosticSection() {
                       Passez à l’action en quelques minutes.
                     </p>
                     <div className="lp-diag__resultCtas">
-                      <Link
-                        href={signupHref}
-                        className="landing-btn-primary landing-btn-interactive group inline-flex items-center justify-center gap-2 no-underline"
-                      >
-                        {primaryCtaLabel}
-                        <ArrowRight
-                          className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                          aria-hidden="true"
-                        />
-                      </Link>
+                      <LandingTrialCta className="lp-diag__trial" />
                       <button
                         type="button"
                         className="lp-diag__restart"

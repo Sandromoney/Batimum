@@ -1,16 +1,29 @@
 "use client";
 
 import { useEffect } from "react";
+import { useLandingExperience } from "@/components/landing/landing-experience";
 
 /**
- * Landing only: arrive always on the Hero after a normal load/refresh.
- * Keeps intentional hash anchors (navbar / deep links) working.
+ * Arrive en haut après un chargement normal / refresh.
+ * Conserve le scroll lors d’un retour navigateur (back/forward).
  */
 export function LandingScrollReset() {
+  const { restore, ready } = useLandingExperience();
+
   useEffect(() => {
+    if (!ready) return;
+
     const previous = history.scrollRestoration;
     if ("scrollRestoration" in history) {
       history.scrollRestoration = "manual";
+    }
+
+    if (restore) {
+      return () => {
+        if ("scrollRestoration" in history) {
+          history.scrollRestoration = previous;
+        }
+      };
     }
 
     const hash = window.location.hash;
@@ -18,7 +31,6 @@ export function LandingScrollReset() {
 
     if (!hasAnchor) {
       window.scrollTo(0, 0);
-      // Catch late browser restoration after paint
       const t0 = window.setTimeout(() => window.scrollTo(0, 0), 0);
       const t1 = window.setTimeout(() => {
         if (!window.location.hash || window.location.hash.length <= 1) {
@@ -39,7 +51,7 @@ export function LandingScrollReset() {
         history.scrollRestoration = previous;
       }
     };
-  }, []);
+  }, [ready, restore]);
 
   return null;
 }

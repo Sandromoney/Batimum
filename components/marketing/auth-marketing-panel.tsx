@@ -71,44 +71,44 @@ export function AuthMarketingPanel() {
   return (
     <div className="auth-marketing-panel flex h-full flex-col justify-center px-10 py-12 xl:px-14">
       <div className="auth-marketing-panel__content mx-auto w-full max-w-lg">
-        <h2 className="text-3xl font-semibold leading-tight tracking-tight text-[#0f172a] xl:text-[2rem]">
+        <h2 className="text-3xl font-semibold leading-tight tracking-tight text-[#111111] xl:text-[2rem]">
           Votre entreprise continue de perdre du temps.
           <br />
-          <span className="text-[#10b981]">Pas Batimum.</span>
+          <span className="text-[#111111]">Pas Batimum.</span>
         </h2>
 
-        <p className="mt-5 text-sm leading-7 text-[#64748b]">
+        <p className="mt-5 text-sm leading-7 text-[#666666]">
           Chaque semaine, les artisans perdent des heures à :
         </p>
 
-        <ul className="mt-3 space-y-2 text-sm leading-6 text-[#64748b]">
+        <ul className="mt-3 space-y-2 text-sm leading-6 text-[#666666]">
           <li className="flex gap-2">
-            <span className="text-[#10b981]" aria-hidden="true">
+            <span className="text-[#22a06b]" aria-hidden="true">
               •
             </span>
             ressaisir des devis
           </li>
           <li className="flex gap-2">
-            <span className="text-[#10b981]" aria-hidden="true">
+            <span className="text-[#22a06b]" aria-hidden="true">
               •
             </span>
             gérer des plannings sur WhatsApp
           </li>
           <li className="flex gap-2">
-            <span className="text-[#10b981]" aria-hidden="true">
+            <span className="text-[#22a06b]" aria-hidden="true">
               •
             </span>
             calculer leurs marges sur Excel
           </li>
           <li className="flex gap-2">
-            <span className="text-[#10b981]" aria-hidden="true">
+            <span className="text-[#22a06b]" aria-hidden="true">
               •
             </span>
             répondre aux appels des équipes
           </li>
         </ul>
 
-        <p className="mt-4 text-sm font-medium text-[#0f172a]">
+        <p className="mt-4 text-sm font-medium text-[#111111]">
           Batimum automatise tout cela.
         </p>
 
@@ -119,22 +119,22 @@ export function AuthMarketingPanel() {
             return (
               <article
                 key={card.title}
-                className="auth-marketing-card rounded-[18px] border border-[rgba(15,23,42,0.06)] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]"
+                className="auth-marketing-card rounded-[16px] border border-[rgba(17,17,17,0.06)] bg-white p-4 shadow-[0_8px_24px_rgba(17,17,17,0.04)]"
                 style={{ "--card-delay": `${index * 80}ms` } as CSSProperties}
               >
                 <span
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#10b981]/12 text-[#10b981]"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[rgba(34,160,107,0.1)] text-[#22a06b]"
                   aria-hidden="true"
                 >
                   <Icon className="h-4 w-4" strokeWidth={2} />
                 </span>
-                <p className="mt-2 text-sm font-semibold text-[#0f172a]">
+                <p className="mt-2 text-sm font-semibold text-[#111111]">
                   {card.title}
                 </p>
-                <p className="mt-1 text-xs leading-5 text-[#64748b]">
+                <p className="mt-1 text-xs leading-5 text-[#666666]">
                   {card.text}
                 </p>
-                <p className="mt-2 text-[0.65rem] font-semibold leading-5 tracking-wide text-[#10b981]">
+                <p className="mt-2 text-[0.65rem] font-semibold leading-5 tracking-wide text-[#666666]">
                   {card.badge}
                 </p>
               </article>
@@ -142,7 +142,7 @@ export function AuthMarketingPanel() {
           })}
         </div>
 
-        <p className="mt-6 text-sm leading-6 text-[#64748b]">
+        <p className="mt-6 text-sm leading-6 text-[#666666]">
           Les entreprises qui pilotent mieux gagnent plus de temps pour
           produire.
         </p>
@@ -150,7 +150,7 @@ export function AuthMarketingPanel() {
         <div className="auth-marketing-panel__rotator mt-8 min-h-[3.5rem]">
           <p
             className={cn(
-              "auth-marketing-panel__phrase text-base font-medium leading-7 text-[#0f172a] transition-all duration-300",
+              "auth-marketing-panel__phrase text-base font-medium leading-7 text-[#111111] transition-all duration-300",
               visible
                 ? "translate-y-0 opacity-100"
                 : "translate-y-2 opacity-0",

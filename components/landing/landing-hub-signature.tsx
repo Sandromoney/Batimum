@@ -1,14 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import {
   useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
-import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
+import { LandingTrialCta } from "@/components/landing/landing-trial-cta";
 import { hexPoints, polarPoint, svgPair } from "@/lib/svg-stable";
 import {
   runCueTimeline,
@@ -264,11 +262,6 @@ export function HubSignaturePanel({
     return clear;
   }, [active, sealed, reduced, finish, later, clear, seekKey, seekMs]);
 
-  const signupHref = getPublicSignupHref();
-  const primaryLabel = isPrivateBetaEnabled()
-    ? "Se connecter"
-    : "Essayer gratuitement";
-
   const showStage =
     beat === "solo" ||
     beat === "approach" ||
@@ -371,17 +364,10 @@ export function HubSignaturePanel({
             .filter(Boolean)
             .join(" ")}
         >
-          <Link
-            href={signupHref}
-            className="landing-btn-primary landing-btn-interactive group inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold no-underline"
-            tabIndex={showCta ? 0 : -1}
-          >
-            {primaryLabel}
-            <ArrowRight
-              className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-              aria-hidden="true"
-            />
-          </Link>
+          <LandingTrialCta
+            className="lp-hubSig__trial"
+            buttonClassName="rounded-xl px-6 py-3.5 text-sm font-semibold"
+          />
         </div>
       </div>
     </div>

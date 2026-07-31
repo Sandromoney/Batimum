@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { LandingNavMenus } from "@/components/landing/landing-nav-menus";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
+import { writeLandingSnapshot } from "@/components/landing/landing-experience";
 import { cn } from "@/lib/utils";
 
 const btnHeaderPrimaryClass =
@@ -12,9 +13,6 @@ const btnHeaderPrimaryClass =
 
 const btnHeaderSecondaryClass =
   "landing-header-btn landing-header-btn--secondary landing-btn-interactive inline-flex items-center justify-center rounded-[0.625rem] border font-semibold no-underline transition-all active:scale-[0.98]";
-
-const headerEmployeeLinkClass =
-  "landing-header-employee-link inline-flex shrink-0 items-center whitespace-nowrap no-underline transition-colors";
 
 export function LandingHeader() {
   const [scrolled, setScrolled] = useState(false);
@@ -52,13 +50,18 @@ export function LandingHeader() {
           <LandingNavMenus className="landing-header-nav flex min-w-0 items-center justify-center" />
 
           <div className="landing-header-actions flex items-center gap-3">
-            <Link href="/login-employe" className={headerEmployeeLinkClass}>
-              Connexion employé
-            </Link>
-            <Link href="/login" className={btnHeaderSecondaryClass}>
+            <Link
+              href="/login"
+              className={btnHeaderSecondaryClass}
+              onClick={() => writeLandingSnapshot()}
+            >
               Connexion
             </Link>
-            <Link href={getPublicSignupHref()} className={btnHeaderPrimaryClass}>
+            <Link
+              href={getPublicSignupHref()}
+              className={btnHeaderPrimaryClass}
+              onClick={() => writeLandingSnapshot()}
+            >
               <span className="hidden sm:inline">
                 {isPrivateBetaEnabled()
                   ? "Se connecter"

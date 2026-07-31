@@ -2,20 +2,20 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
 import { useEffect, useState, type CSSProperties } from "react";
 import {
   HERO_FEATURES,
   HERO_BM_SYMBOL_SRC,
   LandingHeroOrbit,
 } from "@/components/landing/landing-hero-orbit";
+import { LandingTrialCta } from "@/components/landing/landing-trial-cta";
 import { heroContent } from "@/lib/landing-hero-content";
-import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
+import { useLandingExperience } from "@/components/landing/landing-experience";
 
 const enterEase = [0.22, 1, 0.36, 1] as const;
 
-function enterProps(reduced: boolean, delay: number) {
-  if (reduced) {
+function enterProps(reduced: boolean, delay: number, restore: boolean) {
+  if (reduced || restore) {
     return {
       initial: false as const,
       animate: { opacity: 1, y: 0 },
@@ -33,10 +33,7 @@ function enterProps(reduced: boolean, delay: number) {
  * Ne pas modifier l’orbit ici (LandingHeroOrbit).
  */
 export function LandingHero() {
-  const signupHref = getPublicSignupHref();
-  const primaryLabel = isPrivateBetaEnabled()
-    ? "Se connecter"
-    : heroContent.primaryCta;
+  const { restore } = useLandingExperience();
   // SSR + premier paint client : toujours false → même HTML.
   // Après montage seulement, respecter prefers-reduced-motion.
   const prefersReduced = useReducedMotion();
@@ -54,7 +51,7 @@ export function LandingHero() {
           <div className="batimumHero__content batimumHero__copy">
             <motion.h1
               className="batimumHero__title"
-              {...enterProps(reduced, 0)}
+              {...enterProps(reduced, 0, restore)}
             >
               <span>La solution</span>
               <span>
@@ -67,14 +64,14 @@ export function LandingHero() {
 
             <motion.p
               className="batimumHero__lead"
-              {...enterProps(reduced, 0.12)}
+              {...enterProps(reduced, 0.12, restore)}
             >
               {heroContent.lead}
             </motion.p>
 
             <motion.p
               className="batimumHero__support"
-              {...enterProps(reduced, 0.22)}
+              {...enterProps(reduced, 0.22, restore)}
             >
               {heroContent.support}
             </motion.p>
@@ -88,7 +85,7 @@ export function LandingHero() {
                   <motion.li
                     key={item.highlight}
                     className="batimumHero__benefit"
-                    {...enterProps(reduced, 0.32 + index * 0.08)}
+                    {...enterProps(reduced, 0.32 + index * 0.08, restore)}
                   >
                     <span className="batimumHero__benefitIcon" aria-hidden>
                       <Icon size={18} strokeWidth={1.75} />
@@ -117,18 +114,12 @@ export function LandingHero() {
 
             <motion.div
               className="batimumHero__ctas"
-              {...enterProps(reduced, 0.58)}
+              {...enterProps(reduced, 0.58, restore)}
             >
-              <Link
-                href={signupHref}
-                className="landing-btn-primary batimumHero__ctaPrimary group inline-flex items-center justify-center gap-2 no-underline"
-              >
-                {primaryLabel}
-                <ArrowRight
-                  className="batimumHero__ctaArrow h-4 w-4"
-                  aria-hidden="true"
-                />
-              </Link>
+              <LandingTrialCta
+                className="batimumHero__trial"
+                buttonClassName="batimumHero__ctaPrimary"
+              />
               <Link
                 href={heroContent.secondaryHref}
                 className="landing-btn-secondary batimumHero__ctaSecondary inline-flex items-center justify-center gap-2 no-underline"
@@ -139,7 +130,7 @@ export function LandingHero() {
 
             <motion.p
               className="batimumHero__trust"
-              {...enterProps(reduced, 0.68)}
+              {...enterProps(reduced, 0.68, restore)}
             >
               {heroContent.trust}
             </motion.p>

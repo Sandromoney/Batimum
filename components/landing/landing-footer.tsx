@@ -1,10 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { writeLandingSnapshot } from "@/components/landing/landing-experience";
 
 const NAV = [
   { href: "/landing#ecosysteme", label: "Fonctionnalités" },
   { href: "/landing#plans", label: "Tarifs" },
   { href: "/landing#faq", label: "Ressources" },
-  { href: "/login", label: "Connexion" },
+  { href: "/login", label: "Connexion", persist: true },
 ] as const;
 
 const LEGAL = [
@@ -36,7 +39,16 @@ export function LandingFooter() {
 
           <nav className="lp-footer__nav" aria-label="Navigation pied de page">
             {NAV.map((link) => (
-              <Link key={link.href} href={link.href} className="no-underline">
+              <Link
+                key={link.href}
+                href={link.href}
+                className="no-underline"
+                onClick={
+                  "persist" in link && link.persist
+                    ? () => writeLandingSnapshot()
+                    : undefined
+                }
+              >
                 {link.label}
               </Link>
             ))}

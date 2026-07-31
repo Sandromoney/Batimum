@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { LandingReveal } from "@/components/landing/landing-reveal";
-import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
+import { LandingTrialCta } from "@/components/landing/landing-trial-cta";
 
 type Testimonial = {
   id: string;
@@ -49,10 +47,6 @@ const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export function LandingTestimonialsSection() {
   const reduced = useReducedMotion();
-  const signupHref = getPublicSignupHref();
-  const ctaLabel = isPrivateBetaEnabled()
-    ? "Se connecter"
-    : "Essayer gratuitement pendant 7 jours";
 
   const t = {
     duration: reduced ? 0.01 : 0.5,
@@ -122,16 +116,7 @@ export function LandingTestimonialsSection() {
               Et si votre entreprise était la prochaine à gagner plusieurs
               heures chaque semaine ?
             </p>
-            <Link
-              href={signupHref}
-              className="landing-btn-primary landing-btn-interactive group inline-flex items-center justify-center gap-2 no-underline"
-            >
-              {ctaLabel}
-              <ArrowRight
-                className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                aria-hidden="true"
-              />
-            </Link>
+            <LandingTrialCta className="lp-voices__trial" />
           </div>
         </LandingReveal>
       </div>

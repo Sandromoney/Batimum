@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { LandingReveal } from "@/components/landing/landing-reveal";
+import { LandingTrialCta } from "@/components/landing/landing-trial-cta";
+import {
+  useLandingExperience,
+  writeLandingSnapshot,
+} from "@/components/landing/landing-experience";
 import { isStripeConfigured } from "@/lib/dev-access";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 
@@ -35,12 +40,10 @@ function checkoutHrefFor(plan: PlanId): string {
 
 export function LandingPricingSection() {
   const reduced = useReducedMotion();
-  const ctaLabel = isPrivateBetaEnabled()
-    ? "Se connecter"
-    : "Essayer gratuitement pendant 7 jours";
+  const { restore } = useLandingExperience();
 
   const t = {
-    duration: reduced ? 0.01 : 0.5,
+    duration: reduced || restore ? 0.01 : 0.5,
     ease: EASE,
   };
 
@@ -125,16 +128,11 @@ export function LandingPricingSection() {
               </div>
               <p className="lp-plans__hint">{plan.hint}</p>
 
-              <Link
+              <LandingTrialCta
                 href={checkoutHrefFor(plan.id)}
-                className="landing-btn-primary landing-btn-interactive lp-plans__cta group inline-flex items-center justify-center gap-2 no-underline"
-              >
-                {ctaLabel}
-                <ArrowRight
-                  className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </Link>
+                fullWidth
+                buttonClassName="lp-plans__cta"
+              />
 
               <ul className="lp-plans__features">
                 {FEATURES.map((feature) => (
@@ -167,7 +165,11 @@ export function LandingPricingSection() {
           </ul>
           <p className="lp-plans__login">
             Déjà inscrit ?{" "}
-            <Link href="/login" className="lp-plans__loginLink">
+            <Link
+              href="/login"
+              className="lp-plans__loginLink"
+              onClick={() => writeLandingSnapshot()}
+            >
               Se connecter
             </Link>
           </p>
