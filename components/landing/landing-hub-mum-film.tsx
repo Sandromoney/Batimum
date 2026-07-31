@@ -144,7 +144,7 @@ function MumInterface({
         ) : (
           <span className="lp-hubMum__uiHeadMeta">
             {planDictation
-              ? "Dictée"
+              ? "Description"
               : planAnalyse
                 ? "Analyse"
                 : planLines
