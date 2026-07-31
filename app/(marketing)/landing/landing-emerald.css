@@ -6823,6 +6823,25 @@ html:has(.landing-emerald) body {
     transform 160ms ease;
 }
 
+/* Films inactifs : hors vue (évite superpositions DOM / lecteurs d’écran) */
+.landing-emerald .lp-hubMum:not(.is-open),
+.landing-emerald .lp-hubClients:not(.is-open),
+.landing-emerald .lp-hubPlan:not(.is-open),
+.landing-emerald .lp-hubChantier:not(.is-open),
+.landing-emerald .lp-hubFin:not(.is-open),
+.landing-emerald .lp-hubPilot:not(.is-open) {
+  visibility: hidden;
+}
+
+.landing-emerald .lp-hubMum.is-open,
+.landing-emerald .lp-hubClients.is-open,
+.landing-emerald .lp-hubPlan.is-open,
+.landing-emerald .lp-hubChantier.is-open,
+.landing-emerald .lp-hubFin.is-open,
+.landing-emerald .lp-hubPilot.is-open {
+  visibility: visible;
+}
+
 /* Curseur film — absolute dans l’UI, translate3d = pointe active */
 .landing-emerald .lp-hubFilm__cursor {
   position: absolute;
