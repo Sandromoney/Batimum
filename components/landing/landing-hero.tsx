@@ -43,6 +43,7 @@ export function LandingHero() {
 
   return (
     <section
+      id="batimum-hero"
       className="batimumHero batimumHero--static"
       aria-label="Présentation Batimum"
     >

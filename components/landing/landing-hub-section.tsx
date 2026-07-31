@@ -676,6 +676,8 @@ export function LandingHubSection() {
   /** Film automatique après le premier geste. */
   const autoPlayRef = useRef(false);
   const [autoPlaying, setAutoPlaying] = useState(false);
+  const autoStartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startFilmPlaybackRef = useRef<() => void>(() => {});
   const advanceFilmRef = useRef<() => void>(() => {});
   const startMumFilmRef = useRef<() => void>(() => {});
   const [ringRotation, setRingRotation] = useState(0);
@@ -879,6 +881,11 @@ export function LandingHubSection() {
 
   const skipPresentation = useCallback(() => {
     writeHubSkippedSession();
+    markLandingPastIntro();
+    if (autoStartTimerRef.current) {
+      clearTimeout(autoStartTimerRef.current);
+      autoStartTimerRef.current = null;
+    }
     setSessionSkipped(true);
     clearLockJob();
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
@@ -928,6 +935,10 @@ export function LandingHubSection() {
   const replayPresentation = useCallback(() => {
     clearHubSkippedSession();
     clearLandingIntroFlags();
+    if (autoStartTimerRef.current) {
+      clearTimeout(autoStartTimerRef.current);
+      autoStartTimerRef.current = null;
+    }
     setSessionSkipped(false);
     clearLockJob();
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
@@ -1482,6 +1493,37 @@ export function LandingHubSection() {
     advanceFilmRef.current = advanceFilm;
   }, [advanceFilm]);
 
+  /** Lance le film hub une seule fois (auto après post-hero, ou geste de secours). */
+  const startFilmPlayback = useCallback(() => {
+    if (doneRef.current || autoPlayRef.current || isPlayingRef.current) return;
+    if (readHubSkippedSession()) return;
+
+    autoPlayRef.current = true;
+    setAutoPlaying(true);
+    filmPausedRef.current = false;
+    setFilmPaused(false);
+    exitArmedRef.current = false;
+    signaturePlayedRef.current = false;
+    clearFilmTimers();
+    clearLockJob();
+    clockRef.current.reset();
+    setDemoSeekMs(0);
+    setElapsedMs(0);
+    setAwaitingGesture(false);
+    setHintMode("start");
+    mumPlanRef.current = 0;
+    setMumPlan(0);
+    isPlayingRef.current = true;
+    lastSegKeyRef.current = "";
+    lastPhaseKeyRef.current = "";
+    syncFromTime(0, true);
+    clockRef.current.play();
+  }, [clearFilmTimers, clearLockJob, syncFromTime]);
+
+  useEffect(() => {
+    startFilmPlaybackRef.current = startFilmPlayback;
+  }, [startFilmPlayback]);
+
   const applyIntent = useCallback(
     (direction: 1 | -1): "handled" | "exit" | "pass" => {
       if (!active) return "pass";
@@ -1495,28 +1537,9 @@ export function LandingHubSection() {
       const current = sceneRef.current;
 
       if (direction > 0) {
-        // Premier et unique geste : lancer tout le film
+        // Premier geste de secours : lancer le film si l’auto-start n’a pas tiré
         if (current === 0) {
-          autoPlayRef.current = true;
-          setAutoPlaying(true);
-          filmPausedRef.current = false;
-          setFilmPaused(false);
-          exitArmedRef.current = false;
-          signaturePlayedRef.current = false;
-          clearFilmTimers();
-          clearLockJob();
-          clockRef.current.reset();
-          setDemoSeekMs(0);
-          setElapsedMs(0);
-          setAwaitingGesture(false);
-          setHintMode("start");
-          mumPlanRef.current = 0;
-          setMumPlan(0);
-          isPlayingRef.current = true;
-          lastSegKeyRef.current = "";
-          lastPhaseKeyRef.current = "";
-          syncFromTime(0, true);
-          clockRef.current.play();
+          startFilmPlayback();
           return "handled";
         }
         return "handled";
@@ -1526,15 +1549,12 @@ export function LandingHubSection() {
       if (current === 0) return "pass";
       return "handled";
     },
-    [
-      active,
-      clearFilmTimers,
-      clearLockJob,
-      syncFromTime,
-    ],
+    [active, startFilmPlayback],
   );
 
   const [gateCinematic, setGateCinematic] = useState(false);
+  /** Délai après handoff post-hero → lancement auto du film. */
+  const POST_HERO_AUTO_START_MS = 980;
 
   useEffect(() => {
     const onOpenStart = (event: Event) => {
@@ -1545,6 +1565,7 @@ export function LandingHubSection() {
       setDone(false);
       autoPlayRef.current = false;
       setAutoPlaying(false);
+      isPlayingRef.current = false;
       clockRef.current.reset();
       filmPausedRef.current = false;
       setFilmPaused(false);
@@ -1557,7 +1578,7 @@ export function LandingHubSection() {
       mumPlanRef.current = 0;
       setMumPlan(0);
       setHintMode("start");
-      setAwaitingGesture(true);
+      setAwaitingGesture(false);
       setGateCinematic(detail?.cinematic !== false);
       setExperiencePhase("tour");
       pinModeRef.current = "before";
@@ -1568,10 +1589,18 @@ export function LandingHubSection() {
         const top = el.getBoundingClientRect().top + window.scrollY;
         window.scrollTo({ top: Math.max(0, top), behavior: "auto" });
       });
+
+      if (autoStartTimerRef.current) clearTimeout(autoStartTimerRef.current);
+      autoStartTimerRef.current = setTimeout(() => {
+        autoStartTimerRef.current = null;
+        startFilmPlaybackRef.current();
+      }, POST_HERO_AUTO_START_MS);
     };
     window.addEventListener("batimum:open-hub-gate", onOpenStart);
-    return () =>
+    return () => {
       window.removeEventListener("batimum:open-hub-gate", onOpenStart);
+      if (autoStartTimerRef.current) clearTimeout(autoStartTimerRef.current);
+    };
   }, [setExperiencePhase]);
 
   useEffect(() => {

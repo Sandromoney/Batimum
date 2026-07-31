@@ -33,9 +33,9 @@ export type LandingNavEntry =
   | { type: "menu"; menu: LandingNavMenu }
   | { type: "link"; link: LandingNavSimpleLink };
 
-const FONCTIONNALITES_MENU: LandingNavMenu = {
-  id: "fonctionnalites",
-  label: "Fonctionnalités",
+const DECOUVRIR_MENU: LandingNavMenu = {
+  id: "decouvrir",
+  label: "Découvrir Batimum",
   items: [
     {
       label: "Présentation",
@@ -98,10 +98,18 @@ const EQUIPES_MENU: LandingNavMenu = {
   ],
 };
 
-/** Ordre d'affichage dans la navbar — Ressources masqué (pas de hub contenu dédié). */
+/** Top bar — liens utiles uniquement. */
 export const LANDING_NAV_ENTRIES: LandingNavEntry[] = [
-  { type: "menu", menu: FONCTIONNALITES_MENU },
+  { type: "menu", menu: DECOUVRIR_MENU },
   { type: "menu", menu: EQUIPES_MENU },
+  {
+    type: "link",
+    link: {
+      id: "questionnaire",
+      label: "Questionnaire",
+      href: "/landing#diagnostic",
+    },
+  },
   {
     type: "link",
     link: { id: "tarifs", label: "Tarifs", href: "/landing#plans" },

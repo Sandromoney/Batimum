@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 type ProgressSection = {
@@ -8,7 +8,11 @@ type ProgressSection = {
   label: string;
 };
 
-/** Libellés commerciaux — Hero + post-hero regroupés sous Présentation. */
+/**
+ * Libellés commerciaux uniquement.
+ * « Présentation » couvre Hero + post-Hero + film hub (libellé seul —
+ * les sections restent séparées visuellement).
+ */
 const SECTIONS: ProgressSection[] = [
   { id: "presentation", label: "Présentation" },
   { id: "diagnostic", label: "Questionnaire Batimum" },
@@ -24,8 +28,7 @@ function sectionElement(id: string): HTMLElement | null {
     return (
       (document.getElementById("batimum-hero") as HTMLElement | null) ||
       (document.querySelector(".batimumHero") as HTMLElement | null) ||
-      (document.querySelector(".landing-top") as HTMLElement | null) ||
-      (document.getElementById("ecosysteme") as HTMLElement | null)
+      (document.querySelector(".landing-top") as HTMLElement | null)
     );
   }
   if (id === "commencer") {
@@ -38,7 +41,16 @@ function resolveActiveId(scrollY: number, viewportH: number): string {
   const marker = scrollY + viewportH * 0.32;
   let active = SECTIONS[0]?.id ?? "presentation";
 
+  // Présentation reste active jusqu’au questionnaire (hero + pain + hub).
+  const diagnostic = document.getElementById("diagnostic");
+  if (diagnostic) {
+    const diagTop =
+      diagnostic.getBoundingClientRect().top + window.scrollY;
+    if (marker < diagTop - 8) return "presentation";
+  }
+
   for (const section of SECTIONS) {
+    if (section.id === "presentation") continue;
     const el = sectionElement(section.id);
     if (!(el instanceof HTMLElement)) continue;
     const top = el.getBoundingClientRect().top + window.scrollY;
@@ -48,25 +60,83 @@ function resolveActiveId(scrollY: number, viewportH: number): string {
   return active;
 }
 
+function contentOverlapsLabels(navEl: HTMLElement): boolean {
+  const navRect = navEl.getBoundingClientRect();
+  // Dot (6) + gap + label max (~8.5rem) + marge
+  const estimatedLabelRight = navRect.left + 6 + 10 + 136;
+
+  const selectors = [
+    ".landing-emerald .batimumHero__content",
+    ".landing-emerald .batimumHero__inner",
+    ".landing-emerald .lp-container",
+    ".landing-emerald .lp-story__sticky",
+    ".landing-emerald .lp-hub__stage",
+  ];
+
+  let minContentLeft = Infinity;
+  for (const sel of selectors) {
+    document.querySelectorAll(sel).forEach((node) => {
+      const el = node as HTMLElement;
+      const r = el.getBoundingClientRect();
+      if (r.width < 48) return;
+      if (r.bottom < 80 || r.top > window.innerHeight - 40) return;
+      minContentLeft = Math.min(minContentLeft, r.left);
+    });
+  }
+
+  if (!Number.isFinite(minContentLeft)) {
+    return window.innerWidth < 1320;
+  }
+
+  return minContentLeft < estimatedLabelRight + 14;
+}
+
 export function LandingSideProgress() {
   const [activeId, setActiveId] = useState(SECTIONS[0].id);
   const [visible, setVisible] = useState(false);
-
+  const [labelsSafe, setLabelsSafe] = useState(true);
+  const navRef = useRef<HTMLElement>(null);
+  const overlapStableRef = useRef(false);
   const items = useMemo(() => SECTIONS, []);
 
   useEffect(() => {
+    let raf = 0;
+    let overlapTimer: ReturnType<typeof setTimeout> | null = null;
+
     const update = () => {
       const y = window.scrollY;
-      setVisible(y > 120);
+      setVisible(y > 80);
       setActiveId(resolveActiveId(y, window.innerHeight));
+
+      const nav = navRef.current;
+      if (!nav || window.innerWidth < 1100) {
+        setLabelsSafe(false);
+        return;
+      }
+
+      const overlaps = contentOverlapsLabels(nav);
+      // Hystérésis anti-clignotement
+      if (overlaps === overlapStableRef.current) return;
+      if (overlapTimer) clearTimeout(overlapTimer);
+      overlapTimer = setTimeout(() => {
+        overlapStableRef.current = overlaps;
+        setLabelsSafe(!overlaps);
+      }, overlaps ? 40 : 120);
+    };
+
+    const onScrollOrResize = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
     };
 
     update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
+    window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    window.addEventListener("resize", onScrollOrResize);
     return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", onScrollOrResize);
+      window.removeEventListener("resize", onScrollOrResize);
+      if (raf) cancelAnimationFrame(raf);
+      if (overlapTimer) clearTimeout(overlapTimer);
     };
   }, []);
 
@@ -78,7 +148,12 @@ export function LandingSideProgress() {
 
   return (
     <nav
-      className={cn("lp-side-progress", visible && "is-visible")}
+      ref={navRef}
+      className={cn(
+        "lp-side-progress",
+        visible && "is-visible",
+        labelsSafe ? "is-labels-on" : "is-labels-off",
+      )}
       aria-label="Progression dans la page"
     >
       <ol className="lp-side-progress__list">
@@ -93,6 +168,7 @@ export function LandingSideProgress() {
                   active && "is-active",
                 )}
                 aria-current={active ? "true" : undefined}
+                title={section.label}
                 onClick={() => jumpTo(section.id)}
               >
                 <span className="lp-side-progress__dot" aria-hidden="true" />

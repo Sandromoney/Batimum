@@ -3625,7 +3625,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-nav__desktop {
-  gap: 1.85rem;
+  gap: 1.05rem;
   flex-wrap: nowrap;
   white-space: nowrap;
   justify-content: center;
@@ -3634,7 +3634,7 @@ html:has(.landing-emerald) body {
 
 @media (min-width: 1280px) {
   .landing-emerald .landing-nav__desktop {
-    gap: 2.15rem;
+    gap: 1.25rem;
   }
 }
 
@@ -11532,19 +11532,31 @@ html:has(.landing-emerald) body {
   opacity: 0;
   transform: translateX(-4px);
   transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
+    opacity 0.28s ease,
+    transform 0.28s ease,
+    max-width 0.28s ease;
   white-space: nowrap;
   max-width: 0;
   overflow: hidden;
+  pointer-events: none;
 }
 
-.landing-emerald .lp-side-progress__item:hover .lp-side-progress__label,
-.landing-emerald .lp-side-progress__item.is-active .lp-side-progress__label,
-.landing-emerald .lp-side-progress:hover .lp-side-progress__label {
+/* Libellés autorisés : actifs / hover — sans chevauchement contenu */
+.landing-emerald .lp-side-progress.is-labels-on .lp-side-progress__item:hover .lp-side-progress__label,
+.landing-emerald .lp-side-progress.is-labels-on .lp-side-progress__item.is-active .lp-side-progress__label,
+.landing-emerald .lp-side-progress.is-labels-on:hover .lp-side-progress__label {
   opacity: 1;
   transform: translateX(0);
-  max-width: 7rem;
+  max-width: 8.5rem;
+  pointer-events: auto;
+}
+
+/* Chevauchement détecté : points seuls, libellés invisibles */
+.landing-emerald .lp-side-progress.is-labels-off .lp-side-progress__label {
+  opacity: 0 !important;
+  max-width: 0 !important;
+  transform: translateX(-4px) !important;
+  pointer-events: none !important;
 }
 
 .landing-emerald .lp-side-progress__item:hover .lp-side-progress__dot {
@@ -11561,7 +11573,7 @@ html:has(.landing-emerald) body {
   box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.08);
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1099px) {
   .landing-emerald .lp-side-progress {
     display: none;
   }

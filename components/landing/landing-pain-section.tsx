@@ -11,7 +11,6 @@ import {
 } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
-  markLandingPastIntro,
   useLandingExperience,
 } from "@/components/landing/landing-experience";
 
@@ -251,7 +250,7 @@ export function LandingPainSection() {
     setStoryCompleted(true);
     pinModeRef.current = "after";
     setPinMode("after");
-    markLandingPastIntro();
+    // Ne PAS marquer l’intro ici : sinon pastIntro saute la présentation hub.
 
     window.dispatchEvent(
       new CustomEvent("batimum:open-hub-gate", {
@@ -277,7 +276,7 @@ export function LandingPainSection() {
     handoffRef.current = true;
   }, [ready, pastIntro]);
 
-  /** Transition douce vers le hub — uniquement sur geste après la dernière phrase. */
+  /** Transition douce vers le hub — hold dernière phrase puis fade. */
   const beginCinematicHandoff = useCallback(() => {
     if (cinematicStartedRef.current || handoffRef.current) return;
     cinematicStartedRef.current = true;
@@ -285,15 +284,18 @@ export function LandingPainSection() {
     gesturePhaseRef.current = "locked";
     storyCompletedRef.current = true;
     setStoryCompleted(true);
-    setCinematicOut(true);
 
+    const LAST_PHRASE_HOLD_MS = 720;
     if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
     handoffTimerRef.current = setTimeout(() => {
-      openHubGate(true);
-      window.setTimeout(() => {
-        exitToCompact();
-      }, Math.round(HANDOFF_FADE_MS * 0.55));
-    }, Math.round(HANDOFF_FADE_MS * 0.35));
+      setCinematicOut(true);
+      handoffTimerRef.current = setTimeout(() => {
+        openHubGate(true);
+        window.setTimeout(() => {
+          exitToCompact();
+        }, Math.round(HANDOFF_FADE_MS * 0.55));
+      }, Math.round(HANDOFF_FADE_MS * 0.4));
+    }, LAST_PHRASE_HOLD_MS);
   }, [openHubGate, exitToCompact]);
 
   useEffect(() => {

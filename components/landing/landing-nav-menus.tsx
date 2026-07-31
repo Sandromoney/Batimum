@@ -17,7 +17,7 @@ type LandingNavMenusProps = {
 };
 
 const navTriggerClass =
-  "landing-nav__trigger inline-flex items-center gap-1 rounded-lg px-3.5 py-2 text-sm font-medium text-[#111111] transition-colors hover:bg-black/[0.03]";
+  "landing-nav__trigger inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-sm font-medium text-[#111111] transition-colors hover:bg-black/[0.03]";
 
 function DropdownPanel({
   menu,
@@ -226,9 +226,10 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
                 {menu.label}
                 <ChevronDown
                   className={cn(
-                    "h-3.5 w-3.5 text-[#64748b] transition-transform duration-200",
-                    isOpen && "rotate-180",
+                    "landing-nav__chevron h-3 w-3 shrink-0 text-[#8a8a8a] transition-transform duration-200 ease-out",
+                    isOpen && "rotate-180 text-[#111111]",
                   )}
+                  strokeWidth={2.25}
                   aria-hidden="true"
                 />
               </button>
