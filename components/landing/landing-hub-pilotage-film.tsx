@@ -20,13 +20,9 @@ type PilotBeat = "read" | "scan" | "warn" | "ok" | "done";
 function PilotageCopy() {
   return (
     <div className="lp-hubPilot__copy">
-      <span className="lp-eyebrow">
-        <span className="lp-eyebrow__dot" aria-hidden="true" />
-        Pilotage
-      </span>
       <h3 className="lp-hubPilot__title">Pilotage</h3>
       <p className="lp-hubPilot__subtitle">
-        Visualisez vos marges avant qu’il soit trop tard.
+        Marges, prévisionnel vs réel, chantiers rentables — en un regard.
       </p>
     </div>
   );
@@ -84,7 +80,9 @@ function PilotageBoard({ beat }: { beat: PilotBeat }) {
       </article>
 
       {beat === "done" ? (
-        <p className="lp-hubPilot__calm">Décidez avant que la marge parte.</p>
+        <p className="lp-hubPilot__calm">
+          Pilotez avant que la marge s’échappe.
+        </p>
       ) : null}
 
       <FilmCursor

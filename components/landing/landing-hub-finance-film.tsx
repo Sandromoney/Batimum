@@ -190,13 +190,9 @@ function CountUp({
 function FinanceCopy() {
   return (
     <div className="lp-hubFin__copy">
-      <span className="lp-eyebrow">
-        <span className="lp-eyebrow__dot" aria-hidden="true" />
-        Facturation
-      </span>
       <h3 className="lp-hubFin__title">Facturation</h3>
       <p className="lp-hubFin__subtitle">
-        Envoyez, signez et suivez vos documents.
+        Devis envoyés, signatures et règlements — suivis sans dispersion.
       </p>
     </div>
   );
@@ -440,7 +436,7 @@ function FinanceBoard({
       ) : null}
 
       {beat === "alive" || beat === "done" ? (
-        <p className="lp-hubFin__calm">Votre entreprise, en un coup d’œil.</p>
+        <p className="lp-hubFin__calm">Du devis au paiement, sans rupture.</p>
       ) : null}
 
       <FilmCursor

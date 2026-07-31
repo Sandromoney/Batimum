@@ -11,7 +11,6 @@ import {
   Check,
   FileText,
   HardHat,
-  ImageIcon,
   Mail,
   MapPin,
   NotebookPen,
@@ -47,13 +46,9 @@ const CLIENTS = [
 function ClientsCopy() {
   return (
     <div className="lp-hubClients__copy">
-      <span className="lp-eyebrow">
-        <span className="lp-eyebrow__dot" aria-hidden="true" />
-        Clients
-      </span>
       <h3 className="lp-hubClients__title">Clients</h3>
       <p className="lp-hubClients__subtitle">
-        Toutes les informations au même endroit.
+        Coordonnées, devis, factures et chantiers — tout au même endroit.
       </p>
     </div>
   );
@@ -86,9 +81,7 @@ function ClientsBoard({
     beat === "docs" ||
     beat === "notes" ||
     beat === "done";
-  const showDocs =
-    beat === "docs" || beat === "notes" || beat === "done";
-  const showNotes = beat === "notes" || beat === "done";
+  const showDocs = beat === "docs" || beat === "notes" || beat === "done";
 
   return (
     <div className="lp-hubClients__ui" aria-hidden="true">
@@ -176,7 +169,9 @@ function ClientsBoard({
 
           {showHistory ? (
             <div className="lp-hubClients__block is-on">
-              <p className="lp-hubClients__blockLabel">Historique</p>
+              <p className="lp-hubClients__blockLabel">
+                Devis · Factures · Chantiers
+              </p>
               <ul className="lp-hubClients__hist">
                 <li className="is-on">
                   <FileText size={13} strokeWidth={1.8} />
@@ -193,44 +188,23 @@ function ClientsBoard({
                   <span>Chantier — Salle de bain</span>
                   <span className="lp-hubClients__pill">En cours</span>
                 </li>
-                <li className="is-on">
-                  <Receipt size={13} strokeWidth={1.8} />
-                  <span>Acompte reçu — 29 juil.</span>
-                  <Check size={12} strokeWidth={2.4} className="is-ok" />
-                </li>
               </ul>
             </div>
           ) : null}
 
           {showDocs ? (
             <div className="lp-hubClients__block is-on">
-              <p className="lp-hubClients__blockLabel">Documents &amp; photos</p>
-              <div className="lp-hubClients__docs">
-                <span>
-                  <FileText size={14} strokeWidth={1.8} />
-                  Devis signé
-                </span>
-                <span>
-                  <ImageIcon size={14} strokeWidth={1.8} />
-                  Photos chantier
-                </span>
-              </div>
-            </div>
-          ) : null}
-
-          {showNotes ? (
-            <div className="lp-hubClients__block is-on">
-              <p className="lp-hubClients__blockLabel">Notes internes</p>
+              <p className="lp-hubClients__blockLabel">Historique &amp; notes</p>
               <p className="lp-hubClients__note">
                 <NotebookPen size={13} strokeWidth={1.8} />
-                Accès parking rue Garibaldi. Préférer WhatsApp pour les RDV.
+                Accès parking · RDV préférés sur WhatsApp
               </p>
             </div>
           ) : null}
 
           {beat === "done" ? (
             <p className="lp-hubClients__calm">
-              Une fiche. Toute l’activité client.
+              Une fiche client. Toute l’activité regroupée.
             </p>
           ) : null}
         </div>

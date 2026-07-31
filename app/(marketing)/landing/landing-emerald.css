@@ -4632,8 +4632,17 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-hub__halo.is-soft {
-  opacity: 0.72;
+  opacity: 0.78;
   transform: scale(1.03);
+}
+
+.landing-emerald .lp-hub__halo.is-soft .lp-hub__haloGlow {
+  animation-duration: 2.8s;
+  opacity: 1;
+}
+
+.landing-emerald .lp-hub__halo.is-soft .lp-hub__haloDots > i {
+  opacity: 0.55;
 }
 
 .landing-emerald .lp-hub__haloGlow {
@@ -5149,7 +5158,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-hubMum__title {
-  margin: 1.15rem 0 0;
+  margin: 0;
   color: #111111;
   font-size: clamp(1.85rem, 3.4vw, 3rem);
   font-weight: 700;
@@ -5157,12 +5166,43 @@ html:has(.landing-emerald) body {
   line-height: 1.12;
 }
 
+.landing-emerald .lp-hubMum__copySlot {
+  position: relative;
+  min-height: 3.2em;
+  margin-top: 1rem;
+}
+
 .landing-emerald .lp-hubMum__subtitle {
-  margin: 1rem 0 0;
-  max-width: 28ch;
+  margin: 0;
+  max-width: 30ch;
   color: #666666;
   font-size: clamp(0.98rem, 1.3vw, 1.08rem);
   line-height: 1.55;
+}
+
+.landing-emerald .lp-hubMum__subtitle.is-swap {
+  animation: lp-hub-copy-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.landing-emerald .lp-hubMum__hint {
+  margin: 0.85rem 0 0;
+  max-width: 28ch;
+  color: #9ca3af;
+  font-size: 0.78rem;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+
+@keyframes lp-hub-copy-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .landing-emerald .lp-hubMum__ui {
@@ -7255,6 +7295,120 @@ html:has(.landing-emerald) body {
   width: 2.5rem;
   height: 1px;
   background: linear-gradient(90deg, #171717, rgba(17, 17, 17, 0.08));
+}
+
+.landing-emerald .lp-hubPlan__toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  align-self: flex-start;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  color: #111111;
+  font-size: 0.78rem;
+  font-weight: 650;
+  box-shadow: 0 8px 20px -12px rgba(15, 23, 42, 0.18);
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-emerald .lp-hubPlan__toast.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-emerald .lp-hubPlan__empApp {
+  position: absolute;
+  right: 0.85rem;
+  bottom: 0.85rem;
+  width: min(240px, 46%);
+  padding: 0.75rem 0.8rem 0.85rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  box-shadow:
+    0 16px 36px -16px rgba(15, 23, 42, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  transform: translateY(12px) scale(0.96);
+  transition:
+    opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 4;
+}
+
+.landing-emerald .lp-hubPlan__empApp.is-on {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.landing-emerald .lp-hubPlan__empAppHead {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #111111;
+  font-size: 0.72rem;
+  font-weight: 650;
+  margin-bottom: 0.55rem;
+}
+
+.landing-emerald .lp-hubPlan__empCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 0.75rem;
+  background: #f7f8fa;
+  margin-bottom: 0.55rem;
+}
+
+.landing-emerald .lp-hubPlan__empCardLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.64rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.landing-emerald .lp-hubPlan__empCard strong {
+  color: #111111;
+  font-size: 0.8rem;
+}
+
+.landing-emerald .lp-hubPlan__empCard span {
+  color: #6b7280;
+  font-size: 0.7rem;
+}
+
+.landing-emerald .lp-hubPlan__empList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.landing-emerald .lp-hubPlan__empList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  color: #374151;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.landing-emerald .lp-hubPlan__job.is-filled {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.12);
 }
 
 .landing-emerald .lp-hubPlan__calm {

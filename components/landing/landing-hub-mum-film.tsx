@@ -311,18 +311,22 @@ function MumInterface({
 function MumFilmCopy({ signing }: { signing: boolean }) {
   return (
     <div className="lp-hubMum__copy">
-      <span className="lp-eyebrow">
-        <span className="lp-eyebrow__dot" aria-hidden="true" />
-        MUM IA
-      </span>
-      <h3 className="lp-hubMum__title">
-        {signing ? "Envoyez. Le client signe." : "MUM IA"}
-      </h3>
-      <p className="lp-hubMum__subtitle">
-        {signing
-          ? "Signature électronique, statut mis à jour."
-          : "Décrivez le chantier. Le devis se construit."}
-      </p>
+      <h3 className="lp-hubMum__title">MUM IA</h3>
+      <div className="lp-hubMum__copySlot" aria-live="polite">
+        <p
+          key={signing ? "sign" : "build"}
+          className="lp-hubMum__subtitle is-swap"
+        >
+          {signing
+            ? "Vérifiez, envoyez, faites signer — vous gardez la main."
+            : "Décrivez le chantier. Devis structuré en quelques secondes."}
+        </p>
+      </div>
+      {!signing ? (
+        <p className="lp-hubMum__hint">
+          Modifiable · basés sur vos prix, métiers et région
+        </p>
+      ) : null}
     </div>
   );
 }

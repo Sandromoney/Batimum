@@ -185,12 +185,12 @@ function ringRotationForModule(moduleId: string): number {
 /** Pause lecture adaptée à la longueur du sous-titre (jamais < 1,65 s). */
 function moduleReadMs(focus: string): number {
   const copyLen: Record<string, number> = {
-    mum: 48,
-    clients: 40,
-    chantiers: 34,
-    planning: 48,
-    finance: 42,
-    pilotage: 48,
+    mum: 56,
+    clients: 62,
+    chantiers: 58,
+    planning: 62,
+    finance: 58,
+    pilotage: 62,
   };
   const len = copyLen[focus] ?? 40;
   return Math.round(Math.min(2100, Math.max(1650, 1180 + len * 15)));

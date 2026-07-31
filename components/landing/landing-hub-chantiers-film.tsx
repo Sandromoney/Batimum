@@ -92,13 +92,9 @@ function weightedProgress(states: Record<string, StepState>) {
 function ChantiersCopy() {
   return (
     <div className="lp-hubChantier__copy">
-      <span className="lp-eyebrow">
-        <span className="lp-eyebrow__dot" aria-hidden="true" />
-        Chantiers
-      </span>
       <h3 className="lp-hubChantier__title">Chantiers</h3>
       <p className="lp-hubChantier__subtitle">
-        Suivez chaque étape en temps réel.
+        Avancement, étapes, affectations et historique — centralisés.
       </p>
     </div>
   );
@@ -242,7 +238,7 @@ function ChantiersBoard({
 
       {beat === "alive" || beat === "done" ? (
         <p className="lp-hubChantier__calm">
-          Faïence terminée · avancement recalculé.
+          Étapes, progression et affectations — au même endroit.
         </p>
       ) : null}
 

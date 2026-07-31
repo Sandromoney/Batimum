@@ -28,16 +28,19 @@ const CLOSING_LINES = [
 const LAST_STEP = MICRO_LINES.length + CLOSING_LINES.length;
 
 const TRANSITION_S = 0.42;
-const WHEEL_THRESHOLD = 40;
-const TOUCH_THRESHOLD = 52;
+const WHEEL_THRESHOLD = 48;
+const TOUCH_THRESHOLD = 56;
 const ENGAGE_GRACE_MS = 280;
-const WHEEL_QUIET_MS = 200;
+/** Silence molette requis après une étape (anti-inertie trackpad). */
+const WHEEL_QUIET_MS = 340;
+/** Délai minimum entre deux avancées d’étape. */
+const STEP_COOLDOWN_MS = 920;
 /** Wait for exit opacity → 0 before enter (mode="wait"). */
-const VISUAL_LOCK_MS = Math.round(TRANSITION_S * 1000) + 160;
-/** Breath after last line before cinematic fade. */
-const HANDOFF_BREATH_MS = 520;
-/** Soft fade + depth toward hub gate (~500–800 ms felt). */
-const HANDOFF_FADE_MS = 680;
+const VISUAL_LOCK_MS = Math.round(TRANSITION_S * 1000) + 320;
+/** Breath after last line before cinematic fade (sur geste explicite). */
+const HANDOFF_BREATH_MS = 420;
+/** Soft fade + depth toward hub gate. */
+const HANDOFF_FADE_MS = 720;
 
 const STEP_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -176,6 +179,7 @@ export function LandingPainSection() {
   const wheelArmedRef = useRef(true);
   const deltaAccumRef = useRef(0);
   const engageAtRef = useRef(0);
+  const lastStepAtRef = useRef(0);
   const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handoffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -208,6 +212,7 @@ export function LandingPainSection() {
     isTransitioningRef.current = true;
     wheelArmedRef.current = false;
     deltaAccumRef.current = 0;
+    lastStepAtRef.current = Date.now();
     if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     lockTimerRef.current = setTimeout(() => {
@@ -230,7 +235,6 @@ export function LandingPainSection() {
   }, []);
 
   const openHubGate = useCallback((cinematic = true) => {
-    // Libérer immédiatement le pin post-hero pour ne pas combattre le hub
     storyCompletedRef.current = true;
     setStoryCompleted(true);
     pinModeRef.current = "after";
@@ -248,31 +252,28 @@ export function LandingPainSection() {
     }
   }, []);
 
-  /** Breath → fade texte → gate soft enter → compact. */
+  /** Transition douce vers « Défilez pour commencer » — uniquement sur geste. */
   const beginCinematicHandoff = useCallback(() => {
     if (cinematicStartedRef.current || handoffRef.current) return;
     cinematicStartedRef.current = true;
     handoffRef.current = true;
     isTransitioningRef.current = true;
     wheelArmedRef.current = false;
-    // Couper les listeners wheel/pin tout de suite
     storyCompletedRef.current = true;
     setStoryCompleted(true);
 
     if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
     handoffTimerRef.current = setTimeout(() => {
       setCinematicOut(true);
-      // Mid-fade : ouvrir le gate pendant que le texte disparaît
       window.setTimeout(() => {
         openHubGate(true);
-      }, Math.round(HANDOFF_FADE_MS * 0.35));
+      }, Math.round(HANDOFF_FADE_MS * 0.4));
       window.setTimeout(() => {
         exitToCompact();
       }, HANDOFF_FADE_MS);
     }, HANDOFF_BREATH_MS);
   }, [openHubGate, exitToCompact]);
 
-  // Si le hub s’ouvre depuis l’extérieur, ne plus capturer le scroll
   useEffect(() => {
     const onHubOpen = () => {
       storyCompletedRef.current = true;
@@ -287,34 +288,26 @@ export function LandingPainSection() {
     return () => window.removeEventListener("batimum:open-hub-gate", onHubOpen);
   }, [exitToCompact]);
 
-  const scheduleHandoff = useCallback(() => {
-    beginCinematicHandoff();
-  }, [beginCinematicHandoff]);
-
   const applyIntent = useCallback(
     (direction: 1 | -1): "handled" | "exit" | "pass" => {
       if (!playing) return "pass";
       if (pinModeRef.current !== "pin") return "pass";
       if (Date.now() < engageAtRef.current) return "handled";
       if (isTransitioningRef.current) return "handled";
+      if (Date.now() - lastStepAtRef.current < STEP_COOLDOWN_MS) {
+        return "handled";
+      }
 
       const step = activeStepRef.current;
 
       if (direction > 0) {
+        // Une étape à la fois — jamais de saut, jamais d’auto-handoff
         if (step < LAST_STEP) {
-          const next = step + 1;
-          setStep(next);
+          setStep(step + 1);
           startLock();
-          if (next >= LAST_STEP) {
-            // Last line shown — auto gate after settle (no extra scroll)
-            if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
-            handoffTimerRef.current = setTimeout(() => {
-              scheduleHandoff();
-            }, VISUAL_LOCK_MS);
-          }
           return "handled";
         }
-        // Already on last line: any further intent → cinematic handoff
+        // Dernière phrase déjà affichée : prochain geste → hub
         startLock();
         beginCinematicHandoff();
         return "exit";
@@ -332,7 +325,7 @@ export function LandingPainSection() {
 
       return "pass";
     },
-    [playing, setStep, startLock, beginCinematicHandoff, scheduleHandoff],
+    [playing, setStep, startLock, beginCinematicHandoff],
   );
 
   useEffect(() => {
@@ -386,7 +379,13 @@ export function LandingPainSection() {
       if (isTransitioningRef.current || !wheelArmedRef.current) {
         event.preventDefault();
         deltaAccumRef.current = 0;
-        scheduleWheelRearm();
+        // Ne pas réarmer ici : l’inertie trackpad ne doit pas enchaîner les étapes
+        return;
+      }
+
+      if (Date.now() - lastStepAtRef.current < STEP_COOLDOWN_MS) {
+        event.preventDefault();
+        deltaAccumRef.current = 0;
         return;
       }
 
@@ -402,12 +401,13 @@ export function LandingPainSection() {
 
       const direction: 1 | -1 = deltaAccumRef.current > 0 ? 1 : -1;
       deltaAccumRef.current = 0;
+      wheelArmedRef.current = false;
       applyIntent(direction);
     };
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [playing, applyIntent, scheduleWheelRearm]);
+  }, [playing, applyIntent]);
 
   useEffect(() => {
     if (!playing) return;
