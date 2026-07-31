@@ -660,7 +660,7 @@ export function MumFilmShell({
 }
 
 export const MUM_HIGHLIGHT_MS = 900;
-export const MUM_ENTER_MS = 1750;
+export const MUM_ENTER_MS = 1380;
 export const MUM_RETURN_MS = 1700;
 /** Plafond de sécurité si la démo ne signale pas la fin */
 export const MUM_DEMO_SAFETY_MS = 78000;

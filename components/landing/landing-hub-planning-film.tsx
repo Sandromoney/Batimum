@@ -74,7 +74,7 @@ const JOBS = [
 ] as const;
 
 export const PLAN_HIGHLIGHT_MS = 900;
-export const PLAN_ENTER_MS = 1750;
+export const PLAN_ENTER_MS = 1380;
 export const PLAN_RETURN_MS = 1700;
 export const PLAN_DEMO_SAFETY_MS = 48000;
 export const PLAN_TEASE_MS = 1600;

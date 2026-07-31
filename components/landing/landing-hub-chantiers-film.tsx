@@ -10,7 +10,7 @@ import { Calendar, Check, HardHat, MapPin, User } from "lucide-react";
 import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
 
 export const CHANTIER_HIGHLIGHT_MS = 900;
-export const CHANTIER_ENTER_MS = 1750;
+export const CHANTIER_ENTER_MS = 1380;
 export const CHANTIER_RETURN_MS = 1700;
 export const CHANTIER_DEMO_SAFETY_MS = 42000;
 

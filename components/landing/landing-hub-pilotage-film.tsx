@@ -11,7 +11,7 @@ import { AlertTriangle, Check, LineChart } from "lucide-react";
 import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
 
 export const PILOTAGE_HIGHLIGHT_MS = 1400;
-export const PILOTAGE_ENTER_MS = 1600;
+export const PILOTAGE_ENTER_MS = 1320;
 export const PILOTAGE_RETURN_MS = 1600;
 export const PILOTAGE_DEMO_SAFETY_MS = 16000;
 

@@ -23,7 +23,7 @@ import {
 import { FilmCursor } from "@/components/landing/landing-hub-film-cursor";
 
 export const CLIENTS_HIGHLIGHT_MS = 900;
-export const CLIENTS_ENTER_MS = 1750;
+export const CLIENTS_ENTER_MS = 1380;
 export const CLIENTS_RETURN_MS = 1700;
 export const CLIENTS_DEMO_SAFETY_MS = 28000;
 

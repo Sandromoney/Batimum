@@ -163,8 +163,9 @@ const HUB_MODULES: HubModule[] = [
 ];
 
 function polarModulePos(index: number, ringRotDeg: number, radius = 34) {
-  // -90° = haut ; rotation horaire positive
-  const angle = ((-90 + index * 60 + ringRotDeg) * Math.PI) / 180;
+  // Index croissant = sens antihoraire depuis le haut,
+  // pour qu’une rotation horaire positive amène le suivant en haut.
+  const angle = ((-90 - index * 60 + ringRotDeg) * Math.PI) / 180;
   return {
     x: Math.cos(angle) * radius,
     y: Math.sin(angle) * radius,
@@ -177,9 +178,22 @@ function ringRotationForModule(moduleId: string): number {
     id as (typeof MODULE_RING_ORDER)[number],
   );
   if (idx < 0) return 0;
-  // Modules ordonnés horaire ; rotation CCW amène le suivant en haut
-  // (progression circulaire cohérente, sans retour arrière).
-  return -idx * 60;
+  // Rotation horaire cumulative (0 → 60 → 120…)
+  return idx * 60;
+}
+
+/** Pause lecture adaptée à la longueur du sous-titre (jamais < 1,65 s). */
+function moduleReadMs(focus: string): number {
+  const copyLen: Record<string, number> = {
+    mum: 48,
+    clients: 40,
+    chantiers: 34,
+    planning: 48,
+    finance: 42,
+    pilotage: 48,
+  };
+  const len = copyLen[focus] ?? 40;
+  return Math.round(Math.min(2100, Math.max(1650, 1180 + len * 15)));
 }
 
 /**
@@ -195,16 +209,14 @@ function ringRotationForModule(moduleId: string): number {
 const LAST_SCENE = 16;
 /** Plans MUM internes (dictée → … → signature). */
 const MUM_PLAN_COUNT = 6;
-const INTRO_TO_MUM_MS = 3200;
+const INTRO_TO_MUM_MS = 2800;
 /** Verrouillage mécanique du module en haut. */
-const MODULE_LOCK_MS = 1400;
-/** Pause lecture titre + phrase avant la démo. */
-const MODULE_READ_MS = 2600;
+const MODULE_LOCK_MS = 1180;
 /** Respiration entre scènes du film automatique. */
-const AUTO_BREATH_MS = 800;
-const AUTO_PLAN_BREATH_MS = 520;
-/** Marge sécurité = verrouillage + zoom + lecture + démo. */
-const PRE_DEMO_MS = MODULE_LOCK_MS + MODULE_READ_MS;
+const AUTO_BREATH_MS = 620;
+const AUTO_PLAN_BREATH_MS = 420;
+/** Marge sécurité = verrouillage + zoom + lecture max + démo. */
+const PRE_DEMO_MS = MODULE_LOCK_MS + 2100;
 const SCENE_LOCK_MS = [
   500,
   700,
@@ -273,6 +285,42 @@ function BmMark({ className }: { className?: string }) {
         draggable={false}
       />
     </div>
+  );
+}
+
+function BmIntelligenceHalo({
+  active,
+  soft,
+}: {
+  active: boolean;
+  soft?: boolean;
+}) {
+  return (
+    <span
+      className={[
+        "lp-hub__halo",
+        "lp-hub__halo--intel",
+        active ? "is-on" : "",
+        soft ? "is-soft" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-hidden="true"
+    >
+      <span className="lp-hub__haloGlow" />
+      <span className="lp-hub__haloOrbit lp-hub__haloOrbit--a" />
+      <span className="lp-hub__haloOrbit lp-hub__haloOrbit--b" />
+      <span className="lp-hub__haloDots">
+        {Array.from({ length: 12 }, (_, i) => (
+          <i key={i} style={{ "--i": i } as CSSProperties} />
+        ))}
+      </span>
+      <span className="lp-hub__haloSparks">
+        {Array.from({ length: 7 }, (_, i) => (
+          <i key={i} style={{ "--s": i } as CSSProperties} />
+        ))}
+      </span>
+    </span>
   );
 }
 
@@ -403,22 +451,16 @@ function HubStage({
               duration: reduced
                 ? 0.01
                 : merging
-                  ? 1.6
+                  ? 1.4
                   : showLogo && scene === 1
-                    ? 0.85
-                    : 0.7,
-              ease: [0.22, 1, 0.36, 1],
+                    ? 0.75
+                    : 0.6,
+              ease: [0.16, 1, 0.3, 1],
             }}
           >
-            <span
-              className={[
-                "lp-hub__halo",
-                logoAwake && !hierarchy ? "is-on" : "",
-                highlight ? "is-soft" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              aria-hidden="true"
+            <BmIntelligenceHalo
+              active={Boolean(logoAwake && !hierarchy) || Boolean(highlight)}
+              soft={Boolean(highlight)}
             />
             <BmMark />
           </motion.div>
@@ -471,11 +513,11 @@ function HubStage({
                           scale: merging
                             ? 0.55
                             : locked
-                              ? 1.16
+                              ? 1.08
                               : active
-                                ? 1.1
+                                ? 1.04
                                 : converging
-                                  ? 0.94
+                                  ? 0.96
                                   : dimmed
                                     ? 0.94
                                     : 1,
@@ -486,15 +528,15 @@ function HubStage({
                     duration: reduced
                       ? 0.01
                       : merging
-                        ? 1.75
+                        ? 1.55
                         : highlight
-                          ? 1.15
-                          : 0.75,
+                          ? 1.05
+                          : 0.7,
                     delay:
                       reduced || hierarchy || !showModules || merging
                         ? 0
-                        : 0.12 + index * 0.1,
-                    ease: [0.22, 1, 0.36, 1],
+                        : 0.08 + index * 0.07,
+                    ease: [0.16, 1, 0.3, 1],
                   }}
                 >
                   <div
@@ -511,12 +553,12 @@ function HubStage({
                       } as CSSProperties
                     }
                   >
-                    <article className="lp-hub__nut" data-module={mod.id}>
-                      <span className="lp-hub__nutFace" aria-hidden="true">
-                        <span className="lp-hub__nutSheen" />
-                        <Icon size={16} strokeWidth={1.75} />
+                    <article className="lp-hub__chip" data-module={mod.id}>
+                      <span className="lp-hub__chipFace" aria-hidden="true">
+                        <span className="lp-hub__chipGlow" />
+                        <Icon size={15} strokeWidth={1.7} />
                       </span>
-                      <h3 className="lp-hub__nutLabel">{mod.title}</h3>
+                      <h3 className="lp-hub__chipLabel">{mod.title}</h3>
                     </article>
                   </div>
                 </motion.div>
@@ -548,7 +590,7 @@ function HubStatic() {
           <HubOrbitRings visible reduced />
           <div className="lp-hub__core">
             <div className="lp-hub__logoWrap lp-hub__logoWrap--awake">
-              <span className="lp-hub__halo is-on" aria-hidden="true" />
+              <BmIntelligenceHalo active />
               <BmMark />
             </div>
           </div>
@@ -567,12 +609,12 @@ function HubStatic() {
                     } as CSSProperties
                   }
                 >
-                  <article className="lp-hub__nut" data-module={mod.id}>
-                    <span className="lp-hub__nutFace" aria-hidden="true">
-                      <span className="lp-hub__nutSheen" />
-                      <Icon size={16} strokeWidth={1.75} />
+                  <article className="lp-hub__chip" data-module={mod.id}>
+                    <span className="lp-hub__chipFace" aria-hidden="true">
+                      <span className="lp-hub__chipGlow" />
+                      <Icon size={15} strokeWidth={1.7} />
                     </span>
-                    <h3 className="lp-hub__nutLabel">{mod.title}</h3>
+                    <h3 className="lp-hub__chipLabel">{mod.title}</h3>
                   </article>
                 </li>
               );
@@ -897,14 +939,15 @@ export function LandingHubSection() {
       setRingRotation(ringRotationForModule(focus));
       setFilm("highlight");
       startSceneLock(sceneIndex);
-      // Verrouillage mécanique en haut
-      filmLater(() => setModuleLocked(true), Math.max(280, MODULE_LOCK_MS - 320));
-      // Zoom vers le module → titre visible
+      const readMs = moduleReadMs(focus);
+      // Verrouillage en douceur à l’approche du haut
+      filmLater(() => setModuleLocked(true), Math.max(240, MODULE_LOCK_MS - 260));
+      // Léger zoom module → titre visible
       filmLater(() => setFilm("enter"), MODULE_LOCK_MS);
-      // Pause lecture (≥ 2,5 s) puis démo / curseur
+      // Lecture adaptée puis démo
       filmLater(
         () => setFilm("demo"),
-        MODULE_LOCK_MS + enterMs + MODULE_READ_MS,
+        MODULE_LOCK_MS + enterMs + readMs,
       );
     },
     [clearFilmTimers, setFilmKind, setFocus, setFilm, startSceneLock, filmLater],
