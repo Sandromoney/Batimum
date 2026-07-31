@@ -1,103 +1,151 @@
 "use client";
 
-import {
-  Check,
-  PhoneCall,
-  FileWarning,
-  FolderOpen,
-  Receipt,
-  HardHat,
-  LineChart,
-  Zap,
-  Share2,
-  Calendar,
-  Eye,
-  FileCheck,
-} from "lucide-react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { LandingReveal } from "@/components/landing/landing-reveal";
+import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
 
-const WITHOUT = [
-  { label: "Devis préparés le soir", Icon: FileWarning },
-  { label: "Informations dispersées", Icon: FolderOpen },
-  { label: "Appels répétés aux équipes", Icon: PhoneCall },
-  { label: "Factures et relances oubliées", Icon: Receipt },
-  { label: "Difficulté à suivre les chantiers", Icon: HardHat },
-  { label: "Marges découvertes trop tard", Icon: LineChart },
-] as const;
+type CompareRow = {
+  id: string;
+  today: string;
+  withBatimum: string;
+  note?: string;
+};
 
-const WITH = [
-  { label: "Devis préparés plus rapidement", Icon: Zap },
-  { label: "Informations centralisées", Icon: Share2 },
-  { label: "Planning partagé", Icon: Calendar },
-  { label: "Chantiers suivis en temps réel", Icon: Eye },
-  { label: "Facturation simplifiée", Icon: FileCheck },
-  { label: "Rentabilité visible", Icon: Check },
-] as const;
+const ROWS: CompareRow[] = [
+  {
+    id: "outils",
+    today: "Plusieurs logiciels, plusieurs onglets, plusieurs endroits.",
+    withBatimum: "Une seule plateforme pour tout piloter.",
+  },
+  {
+    id: "devis",
+    today: "Les devis se font encore à la main, souvent le soir.",
+    withBatimum: "MUM IA prépare vos devis en quelques instants.",
+  },
+  {
+    id: "planning",
+    today: "Le planning change sans cesse, et personne n’a la même version.",
+    withBatimum: "Un planning centralisé, toujours à jour.",
+  },
+  {
+    id: "equipes",
+    today: "Vous appelez vos salariés juste pour savoir où ils sont.",
+    withBatimum:
+      "Chaque salarié a son espace : planning, chantiers et consignes.",
+    note: "Sans accès aux devis, aux marges ni aux données confidentielles.",
+  },
+  {
+    id: "marges",
+    today:
+      "Vous découvrez parfois trop tard qu’un chantier est moins rentable que prévu.",
+    withBatimum:
+      "Vos coûts, vos marges et votre rentabilité, suivis en temps réel.",
+  },
+];
+
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export function LandingBeforeAfterSection() {
+  const reduced = useReducedMotion();
+  const signupHref = getPublicSignupHref();
+  const ctaLabel = isPrivateBetaEnabled()
+    ? "Se connecter"
+    : "Essayer gratuitement pendant 7 jours";
+
+  const t = {
+    duration: reduced ? 0.01 : 0.48,
+    ease: EASE,
+  };
+
   return (
     <section
-      className="lp-section lp-section--soft"
+      className="lp-section lp-ba"
       aria-labelledby="before-after-title"
       id="avant-apres"
     >
       <div className="lp-container">
         <LandingReveal>
-          <div className="lp-section-head">
-            <h2 id="before-after-title" className="lp-title max-w-3xl">
-              Votre entreprise aujourd&apos;hui.
-              <br />
-              <span className="lp-title-accent">
-                Votre entreprise avec Batimum.
-              </span>
+          <div className="lp-section-head lp-ba__head">
+            <p className="lp-eyebrow">
+              <span className="lp-eyebrow__dot" aria-hidden="true" />
+              Pourquoi changer
+            </p>
+            <h2 id="before-after-title" className="lp-title mt-5 max-w-3xl">
+              Pourquoi changer vos habitudes{" "}
+              <span className="lp-title-accent">aujourd’hui ?</span>
             </h2>
             <p className="lp-subtitle mt-5 max-w-2xl">
-              Moins de dispersion, moins de ressaisie et une vision plus claire
-              de toute votre activité.
+              Batimum remplace plusieurs outils, simplifie votre quotidien et
+              vous rend du temps — sur le chantier comme au bureau.
             </p>
           </div>
         </LandingReveal>
 
-        <div className="lp-ba">
-          <LandingReveal direction="left" delay={80}>
-            <article className="lp-ba__col lp-ba__col--before">
-              <h3 className="lp-ba__heading">Sans Batimum</h3>
-              <ul className="lp-ba__list">
-                {WITHOUT.map(({ label, Icon }) => (
-                  <li key={label} className="lp-ba__item">
-                    <span className="lp-ba__icon lp-ba__icon--muted" aria-hidden>
-                      <Icon size={16} strokeWidth={1.75} />
-                    </span>
-                    <span>{label}</span>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          </LandingReveal>
+        <div className="lp-ba__rows" role="list">
+          {ROWS.map((row, index) => {
+            const baseDelay = reduced ? 0 : index * 0.12;
+            return (
+              <div key={row.id} className="lp-ba__row" role="listitem">
+                <motion.article
+                  className="lp-ba__card lp-ba__card--today"
+                  initial={reduced ? false : { opacity: 0, y: 14 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.35 }}
+                  transition={{ ...t, delay: baseDelay }}
+                >
+                  <p className="lp-ba__label">Aujourd’hui</p>
+                  <p className="lp-ba__text">{row.today}</p>
+                </motion.article>
 
-          <div className="lp-ba__bridge" aria-hidden="true">
-            <span className="lp-ba__bridge-line" />
-            <span className="lp-ba__bridge-dot" />
-          </div>
+                <div className="lp-ba__arrow" aria-hidden="true">
+                  <span className="lp-ba__arrowLine" />
+                  <span className="lp-ba__arrowTip" />
+                </div>
 
-          <LandingReveal direction="right" delay={180}>
-            <article className="lp-ba__col lp-ba__col--after">
-              <h3 className="lp-ba__heading lp-ba__heading--after">
-                Avec Batimum
-              </h3>
-              <ul className="lp-ba__list">
-                {WITH.map(({ label, Icon }) => (
-                  <li key={label} className="lp-ba__item">
-                    <span className="lp-ba__icon lp-ba__icon--ok" aria-hidden>
-                      <Icon size={16} strokeWidth={1.75} />
-                    </span>
-                    <span>{label}</span>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          </LandingReveal>
+                <motion.article
+                  className="lp-ba__card lp-ba__card--batimum"
+                  initial={reduced ? false : { opacity: 0, y: 14 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.35 }}
+                  transition={{
+                    ...t,
+                    delay: reduced ? 0 : baseDelay + 0.16,
+                  }}
+                >
+                  <p className="lp-ba__label lp-ba__label--batimum">
+                    Avec Batimum
+                  </p>
+                  <p className="lp-ba__text">{row.withBatimum}</p>
+                  {row.note ? (
+                    <p className="lp-ba__note">{row.note}</p>
+                  ) : null}
+                </motion.article>
+              </div>
+            );
+          })}
         </div>
+
+        <LandingReveal delay={120}>
+          <div className="lp-ba__footer">
+            <p className="lp-ba__closing">
+              Moins de temps sur l’administratif.
+              <br />
+              Plus de temps sur vos chantiers.
+            </p>
+            <Link
+              href={signupHref}
+              className="landing-btn-primary landing-btn-interactive group inline-flex items-center justify-center gap-2 no-underline"
+            >
+              {ctaLabel}
+              <ArrowRight
+                className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                aria-hidden="true"
+              />
+            </Link>
+          </div>
+        </LandingReveal>
       </div>
     </section>
   );
