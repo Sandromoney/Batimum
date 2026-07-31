@@ -354,7 +354,7 @@ export function ChantiersFilmPanel({
       });
     };
 
-    if (seekMs >= 3091) {
+    if (seekMs >= 2576) {
       const done = {
         ...base,
         faience: "done" as const,
