@@ -52,7 +52,7 @@ function ClientsCopy() {
     <div className="lp-hubClients__copy">
       <h3 className="lp-hubClients__title">Clients</h3>
       <p className="lp-hubClients__subtitle">
-        Coordonnées, devis, factures et chantiers — tout au même endroit.
+        Un client, tout son historique — devis, factures, chantiers.
       </p>
     </div>
   );

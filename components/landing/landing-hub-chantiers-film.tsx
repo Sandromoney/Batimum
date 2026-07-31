@@ -98,7 +98,7 @@ function ChantiersCopy() {
     <div className="lp-hubChantier__copy">
       <h3 className="lp-hubChantier__title">Chantiers</h3>
       <p className="lp-hubChantier__subtitle">
-        Avancement, étapes, affectations et historique — centralisés.
+        Suivez chaque étape. Savoir où en est le chantier, en un coup d’œil.
       </p>
     </div>
   );

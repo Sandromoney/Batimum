@@ -26,7 +26,7 @@ function PilotageCopy() {
     <div className="lp-hubPilot__copy">
       <h3 className="lp-hubPilot__title">Pilotage</h3>
       <p className="lp-hubPilot__subtitle">
-        Coûts, marges et rentabilité — suivis en temps réel, au plus près.
+        Voyez ce qui rapporte — et ce qui vous coûte — tout de suite.
       </p>
     </div>
   );

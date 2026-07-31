@@ -71,7 +71,7 @@ function PlanningCopy() {
     <div className="lp-hubPlan__copy">
       <h3 className="lp-hubPlan__title">Planning</h3>
       <p className="lp-hubPlan__subtitle">
-        Affectez l’équipe — chacun retrouve chantier, tâches et infos.
+        Placez la bonne équipe. Chacun voit son chantier et ses tâches.
       </p>
     </div>
   );

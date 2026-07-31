@@ -319,13 +319,13 @@ function MumFilmCopy({ signing }: { signing: boolean }) {
           className="lp-hubMum__subtitle is-swap"
         >
           {signing
-            ? "Vérifiez, envoyez, faites signer — vous gardez la main."
-            : "Décrivez le chantier. Devis structuré en quelques secondes."}
+            ? "Relisez, envoyez, faites signer — sans quitter Batimum."
+            : "Décrivez le chantier. Obtenez un devis prêt à envoyer."}
         </p>
       </div>
       {!signing ? (
         <p className="lp-hubMum__hint">
-          Modifiable · basés sur vos prix, métiers et région
+          Basé sur vos prix, vos métiers et votre région
         </p>
       ) : null}
     </div>

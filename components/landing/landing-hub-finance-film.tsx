@@ -196,7 +196,7 @@ function FinanceCopy() {
     <div className="lp-hubFin__copy">
       <h3 className="lp-hubFin__title">Facturation</h3>
       <p className="lp-hubFin__subtitle">
-        Devis envoyés, signatures et règlements — suivis sans dispersion.
+        De la signature au paiement — sans courir après les documents.
       </p>
     </div>
   );

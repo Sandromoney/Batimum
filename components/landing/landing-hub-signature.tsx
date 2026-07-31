@@ -109,8 +109,8 @@ function SignatureNutSvg() {
           <stop offset="100%" stopColor="rgba(255,255,255,0)" />
         </linearGradient>
         <radialGradient id="sigNutBlue" cx="40%" cy="36%" r="52%">
-          <stop offset="0%" stopColor="rgba(37,99,235,0.14)" />
-          <stop offset="100%" stopColor="rgba(37,99,235,0)" />
+          <stop offset="0%" stopColor="rgba(17,17,17,0.03)" />
+          <stop offset="100%" stopColor="rgba(17,17,17,0)" />
         </radialGradient>
         <radialGradient id="sigNutHoleShade" cx="50%" cy="42%" r="58%">
           <stop offset="0%" stopColor="rgba(17,17,17,0)" />
@@ -315,8 +315,7 @@ export function HubSignaturePanel({
           <span
             className={[
               "lp-hubSig__halo",
-              beat === "pulse" ? "is-pulse" : "",
-              beat === "sealed" || beat === "cta" ? "is-soft" : "",
+              "is-hidden",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -357,10 +356,10 @@ export function HubSignaturePanel({
         >
           <p className="lp-hubSig__brand">BATIMUM</p>
           <p className="lp-hubSig__lead">
-            Les piliers pour piloter votre entreprise du BTP.
+            Tout votre BTP, centralisé. Simple. Efficace.
           </p>
           <p className="lp-hubSig__sub">
-            Ce qui fait avancer votre activité, au même endroit.
+            Devis, équipes, chantiers et marges — enfin au même endroit.
           </p>
         </div>
 

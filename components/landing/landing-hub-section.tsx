@@ -302,42 +302,6 @@ function BmMark({ className }: { className?: string }) {
   );
 }
 
-function BmIntelligenceHalo({
-  active,
-  soft,
-}: {
-  active: boolean;
-  soft?: boolean;
-}) {
-  return (
-    <span
-      className={[
-        "lp-hub__halo",
-        "lp-hub__halo--intel",
-        active ? "is-on" : "",
-        soft ? "is-soft" : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      aria-hidden="true"
-    >
-      <span className="lp-hub__haloGlow" />
-      <span className="lp-hub__haloOrbit lp-hub__haloOrbit--a" />
-      <span className="lp-hub__haloOrbit lp-hub__haloOrbit--b" />
-      <span className="lp-hub__haloDots">
-        {Array.from({ length: 12 }, (_, i) => (
-          <i key={i} style={{ "--i": i } as CSSProperties} />
-        ))}
-      </span>
-      <span className="lp-hub__haloSparks">
-        {Array.from({ length: 7 }, (_, i) => (
-          <i key={i} style={{ "--s": i } as CSSProperties} />
-        ))}
-      </span>
-    </span>
-  );
-}
-
 function HubStage({
   scene,
   filmPhase,
@@ -486,10 +450,6 @@ function HubStage({
               ease: [0.16, 1, 0.3, 1],
             }}
           >
-            <BmIntelligenceHalo
-              active={Boolean(logoAwake && !hierarchy) || Boolean(highlight)}
-              soft={Boolean(highlight)}
-            />
             <BmMark />
           </motion.div>
         </div>
@@ -622,7 +582,6 @@ function HubStatic() {
           <HubOrbitRings visible reduced />
           <div className="lp-hub__core">
             <div className="lp-hub__logoWrap lp-hub__logoWrap--awake">
-              <BmIntelligenceHalo active />
               <BmMark />
             </div>
           </div>

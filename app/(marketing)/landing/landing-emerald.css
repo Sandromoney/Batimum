@@ -802,23 +802,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .batimumHero__glow {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 1;
-  width: min(210px, 28%);
-  height: min(210px, 28%);
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(59, 130, 246, 0.055) 0%,
-    rgba(59, 130, 246, 0.028) 45%,
-    transparent 72%
-  );
-  filter: blur(48px);
-  pointer-events: none;
-  animation: batimumHero-logo-halo 8s ease-in-out infinite;
+  display: none !important;
 }
 
 @keyframes batimumHero-logo-halo {
@@ -3762,16 +3746,19 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-story__copySlot {
   position: relative;
-  width: 100%;
-  min-height: 1.4em;
+  width: min(42rem, 100%);
+  min-height: clamp(4.5rem, 12vh, 7rem);
   display: grid;
   place-items: center;
+  margin-inline: auto;
 }
 
 .landing-emerald .lp-story__copySlot > * {
   grid-area: 1 / 1;
   width: 100%;
   margin: 0;
+  /* Empêche tout chevauchement résiduel pendant le swap */
+  backface-visibility: hidden;
 }
 
 .landing-emerald .lp-story__micro--solo {
@@ -5369,8 +5356,9 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-hubMum__copySlot {
   position: relative;
-  min-height: 3.2em;
+  min-height: 3.6em;
   margin-top: 1rem;
+  display: grid;
 }
 
 .landing-emerald .lp-hubMum__subtitle {
@@ -5379,10 +5367,11 @@ html:has(.landing-emerald) body {
   color: #666666;
   font-size: clamp(0.98rem, 1.3vw, 1.08rem);
   line-height: 1.55;
+  grid-area: 1 / 1;
 }
 
 .landing-emerald .lp-hubMum__subtitle.is-swap {
-  animation: lp-hub-copy-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: lp-hub-copy-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .landing-emerald .lp-hubMum__hint {
@@ -9339,22 +9328,14 @@ html:has(.landing-emerald) body {
   }
 }
 
-.landing-emerald .lp-hubSig__halo {
-  position: absolute;
-  inset: 8%;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(17, 17, 17, 0.06) 0%,
-    rgba(17, 17, 17, 0.02) 42%,
-    rgba(17, 17, 17, 0) 70%
-  );
-  opacity: 0.55;
-  transform: scale(0.96);
-  pointer-events: none;
-  transition:
-    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+.landing-emerald .lp-hubSig__halo,
+.landing-emerald .lp-hubSig__halo.is-hidden {
+  display: none !important;
+}
+
+.landing-emerald .lp-hub__halo,
+.landing-emerald .lp-hub__halo--intel {
+  display: none !important;
 }
 
 .landing-emerald .lp-hubSig__halo.is-soft {

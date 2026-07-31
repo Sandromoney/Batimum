@@ -27,26 +27,20 @@ const CLOSING_LINES = [
 /** 0 = titre, 1–4 = micros, 5–6 = closings */
 const LAST_STEP = MICRO_LINES.length + CLOSING_LINES.length;
 
-const TRANSITION_S = 0.42;
-const WHEEL_THRESHOLD = 52;
-const TOUCH_THRESHOLD = 56;
-/** Grâce à l’entrée en pin — le geste Hero ne doit jamais avancer une slide. */
-const ENTRY_CONSUME_MS = 900;
-/** Silence molette requis avant de réarmer (anti-inertie trackpad). */
-const WHEEL_QUIET_MS = 520;
-/** Délai minimum entre deux avancées d’étape (après fin du lock visuel). */
-const STEP_COOLDOWN_MS = 780;
-/** Wait for exit opacity → 0 before enter (mode="wait"). */
-const VISUAL_LOCK_MS = Math.round(TRANSITION_S * 1000) + 380;
-/** Breath after last line before cinematic fade (sur geste explicite). */
-const HANDOFF_BREATH_MS = 420;
-/** Soft fade + depth toward hub gate. */
-const HANDOFF_FADE_MS = 720;
+const TRANSITION_S = 0.38;
+const WHEEL_THRESHOLD = 48;
+const TOUCH_THRESHOLD = 52;
+/** Delta sous lequel on considère le geste « levé » (fin d’inertie). */
+const LIFT_EPS = 6;
+/** Soft fade + depth toward hub gate (hors rythme inter-phrases). */
+const HANDOFF_FADE_MS = 680;
 
 const STEP_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 type StoryPhase = "playing" | "finishedPinned" | "compact";
 type PinMode = "before" | "pin" | "after";
+/** armed = prêt · locked = animation en cours · waitLift = attendre fin d’inertie */
+type GesturePhase = "armed" | "locked" | "waitLift";
 
 function stepTransition(reduced: boolean | null) {
   return {
@@ -58,12 +52,13 @@ function stepTransition(reduced: boolean | null) {
 function StoryPinnedSteps({
   activeStep,
   reduced,
+  onEnterComplete,
 }: {
   activeStep: number;
   reduced: boolean | null;
+  onEnterComplete: () => void;
 }) {
   const t = stepTransition(reduced);
-  const showLead = activeStep === 0;
   const microIndex =
     activeStep >= 1 && activeStep <= MICRO_LINES.length
       ? activeStep - 1
@@ -108,10 +103,25 @@ function StoryPinnedSteps({
           <motion.p
             key={key}
             className={className}
-            initial={reduced ? false : { opacity: 0, y: 12 }}
+            initial={reduced ? false : { opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8, transition: { duration: TRANSITION_S * 0.85 } }}
+            exit={{
+              opacity: 0,
+              y: -10,
+              transition: { duration: TRANSITION_S * 0.8 },
+            }}
             transition={t}
+            onAnimationComplete={(definition) => {
+              // Ignorer la fin d’exit (opacity 0) — débloquer seulement après apparition.
+              if (
+                definition &&
+                typeof definition === "object" &&
+                "opacity" in definition &&
+                Number((definition as { opacity?: number }).opacity) === 1
+              ) {
+                onEnterComplete();
+              }
+            }}
           >
             {content}
           </motion.p>
@@ -176,18 +186,13 @@ export function LandingPainSection() {
   const [pinMode, setPinMode] = useState<PinMode>("before");
   const pinModeRef = useRef<PinMode>("before");
 
-  const isTransitioningRef = useRef(false);
-  const wheelArmedRef = useRef(false);
+  const gesturePhaseRef = useRef<GesturePhase>("waitLift");
   const deltaAccumRef = useRef(0);
-  /** Jusqu’à cette date, tout geste est consommé (entrée Hero → pin). */
-  const consumeUntilRef = useRef(0);
-  const lastWheelAtRef = useRef(0);
-  const lastStepAtRef = useRef(0);
-  const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handoffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const touchHandledRef = useRef(false);
+  /** Empêche un double unlock si Framer fire plusieurs completes. */
+  const unlockArmedRef = useRef(false);
 
   const narrativeActive = !reduced && !storyCompact;
   const playing = narrativeActive && !storyCompleted;
@@ -198,56 +203,30 @@ export function LandingPainSection() {
     setActiveStep(clamped);
   }, []);
 
-  /** Réarme uniquement après silence molette — jamais pendant l’inertie. */
-  const scheduleWheelRearm = useCallback(() => {
-    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
-    settleTimerRef.current = setTimeout(() => {
-      if (isTransitioningRef.current) {
-        scheduleWheelRearm();
-        return;
-      }
-      if (Date.now() < consumeUntilRef.current) {
-        scheduleWheelRearm();
-        return;
-      }
-      // Encore du mouvement récent → attendre davantage
-      const sinceWheel = Date.now() - lastWheelAtRef.current;
-      if (sinceWheel < WHEEL_QUIET_MS) {
-        scheduleWheelRearm();
-        return;
-      }
-      wheelArmedRef.current = true;
-      deltaAccumRef.current = 0;
-      settleTimerRef.current = null;
-    }, WHEEL_QUIET_MS);
+  const lockForAnimation = useCallback(() => {
+    gesturePhaseRef.current = "locked";
+    deltaAccumRef.current = 0;
+    unlockArmedRef.current = true;
   }, []);
 
-  const disarmGesture = useCallback(
-    (consumeMs = 0) => {
-      wheelArmedRef.current = false;
-      deltaAccumRef.current = 0;
-      if (consumeMs > 0) {
-        consumeUntilRef.current = Math.max(
-          consumeUntilRef.current,
-          Date.now() + consumeMs,
-        );
-      }
-      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
-      scheduleWheelRearm();
-    },
-    [scheduleWheelRearm],
-  );
+  /** Appelé quand la phrase entrante a fini d’apparaître — aucun timer. */
+  const onPhraseEnterComplete = useCallback(() => {
+    if (!unlockArmedRef.current) return;
+    if (gesturePhaseRef.current !== "locked") return;
+    unlockArmedRef.current = false;
+    // Attendre la fin d’inertie du geste courant avant le prochain.
+    gesturePhaseRef.current = "waitLift";
+    deltaAccumRef.current = 0;
+  }, []);
 
-  const startLock = useCallback(() => {
-    isTransitioningRef.current = true;
-    lastStepAtRef.current = Date.now();
-    disarmGesture();
-    if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
-    lockTimerRef.current = setTimeout(() => {
-      isTransitioningRef.current = false;
-      scheduleWheelRearm();
-    }, VISUAL_LOCK_MS);
-  }, [disarmGesture, scheduleWheelRearm]);
+  const noteWheelActivity = useCallback((deltaY: number) => {
+    if (gesturePhaseRef.current !== "waitLift") return;
+    // Geste « levé » : deltas quasi nuls → prêt pour le prochain geste.
+    if (Math.abs(deltaY) <= LIFT_EPS) {
+      gesturePhaseRef.current = "armed";
+      deltaAccumRef.current = 0;
+    }
+  }, []);
 
   const exitToCompact = useCallback(() => {
     storyCompletedRef.current = true;
@@ -280,26 +259,23 @@ export function LandingPainSection() {
     }
   }, []);
 
-  /** Transition douce vers « Défilez pour commencer » — uniquement sur geste. */
+  /** Transition douce vers le hub — uniquement sur geste après la dernière phrase. */
   const beginCinematicHandoff = useCallback(() => {
     if (cinematicStartedRef.current || handoffRef.current) return;
     cinematicStartedRef.current = true;
     handoffRef.current = true;
-    isTransitioningRef.current = true;
-    wheelArmedRef.current = false;
+    gesturePhaseRef.current = "locked";
     storyCompletedRef.current = true;
     setStoryCompleted(true);
+    setCinematicOut(true);
 
     if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
     handoffTimerRef.current = setTimeout(() => {
-      setCinematicOut(true);
-      window.setTimeout(() => {
-        openHubGate(true);
-      }, Math.round(HANDOFF_FADE_MS * 0.4));
+      openHubGate(true);
       window.setTimeout(() => {
         exitToCompact();
-      }, HANDOFF_FADE_MS);
-    }, HANDOFF_BREATH_MS);
+      }, Math.round(HANDOFF_FADE_MS * 0.55));
+    }, Math.round(HANDOFF_FADE_MS * 0.35));
   }, [openHubGate, exitToCompact]);
 
   useEffect(() => {
@@ -310,7 +286,7 @@ export function LandingPainSection() {
       setPinMode("after");
       cinematicStartedRef.current = true;
       handoffRef.current = true;
-      window.setTimeout(() => exitToCompact(), 80);
+      exitToCompact();
     };
     window.addEventListener("batimum:open-hub-gate", onHubOpen);
     return () => window.removeEventListener("batimum:open-hub-gate", onHubOpen);
@@ -320,23 +296,18 @@ export function LandingPainSection() {
     (direction: 1 | -1): "handled" | "exit" | "pass" => {
       if (!playing) return "pass";
       if (pinModeRef.current !== "pin") return "pass";
-      if (Date.now() < consumeUntilRef.current) return "handled";
-      if (isTransitioningRef.current) return "handled";
-      if (Date.now() - lastStepAtRef.current < STEP_COOLDOWN_MS) {
-        return "handled";
-      }
+      if (gesturePhaseRef.current === "locked") return "handled";
+      if (gesturePhaseRef.current === "waitLift") return "handled";
 
       const step = activeStepRef.current;
 
       if (direction > 0) {
-        // Une étape à la fois — jamais de saut, jamais d’auto-handoff
         if (step < LAST_STEP) {
           setStep(step + 1);
-          startLock();
+          lockForAnimation();
           return "handled";
         }
-        // Dernière phrase déjà affichée : prochain geste → hub
-        startLock();
+        lockForAnimation();
         beginCinematicHandoff();
         return "exit";
       }
@@ -347,13 +318,13 @@ export function LandingPainSection() {
         handoffRef.current = false;
         setCinematicOut(false);
         setStep(step - 1);
-        startLock();
+        lockForAnimation();
         return "handled";
       }
 
       return "pass";
     },
-    [playing, setStep, startLock, beginCinematicHandoff],
+    [playing, setStep, lockForAnimation, beginCinematicHandoff],
   );
 
   useEffect(() => {
@@ -374,10 +345,10 @@ export function LandingPainSection() {
         window.scrollTo(0, targetY);
       }
 
-      // Premier ancrage : consommer entièrement le geste Hero / inertie
+      // Premier ancrage : absorber l’inertie Hero (waitLift, pas de timer).
       if (pinModeRef.current !== "pin") {
-        lastWheelAtRef.current = Date.now();
-        disarmGesture(ENTRY_CONSUME_MS);
+        gesturePhaseRef.current = "waitLift";
+        deltaAccumRef.current = 0;
       }
       pinModeRef.current = "pin";
       setPinMode("pin");
@@ -390,56 +361,45 @@ export function LandingPainSection() {
       window.removeEventListener("scroll", syncPin);
       window.removeEventListener("resize", syncPin);
     };
-  }, [playing, disarmGesture]);
+  }, [playing]);
 
   useEffect(() => {
     if (!playing) return;
 
     const onWheel = (event: WheelEvent) => {
       if (pinModeRef.current !== "pin") return;
-
-      lastWheelAtRef.current = Date.now();
       event.preventDefault();
 
-      // Entrée Hero / lock / inertie : tout absorber, zéro accumulation
-      if (Date.now() < consumeUntilRef.current) {
-        deltaAccumRef.current = 0;
-        wheelArmedRef.current = false;
-        scheduleWheelRearm();
-        return;
-      }
+      const dy = event.deltaY;
 
-      if (isTransitioningRef.current || !wheelArmedRef.current) {
-        deltaAccumRef.current = 0;
-        scheduleWheelRearm();
-        return;
-      }
-
-      if (Date.now() - lastStepAtRef.current < STEP_COOLDOWN_MS) {
-        deltaAccumRef.current = 0;
-        wheelArmedRef.current = false;
-        scheduleWheelRearm();
-        return;
-      }
-
-      if (activeStepRef.current === 0 && event.deltaY < 0) {
+      if (gesturePhaseRef.current === "locked") {
         deltaAccumRef.current = 0;
         return;
       }
 
-      deltaAccumRef.current += event.deltaY;
+      if (gesturePhaseRef.current === "waitLift") {
+        noteWheelActivity(dy);
+        deltaAccumRef.current = 0;
+        return;
+      }
 
+      // armed
+      if (activeStepRef.current === 0 && dy < 0) {
+        deltaAccumRef.current = 0;
+        return;
+      }
+
+      deltaAccumRef.current += dy;
       if (Math.abs(deltaAccumRef.current) < WHEEL_THRESHOLD) return;
 
       const direction: 1 | -1 = deltaAccumRef.current > 0 ? 1 : -1;
       deltaAccumRef.current = 0;
-      wheelArmedRef.current = false;
       applyIntent(direction);
     };
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [playing, applyIntent, scheduleWheelRearm]);
+  }, [playing, applyIntent, noteWheelActivity]);
 
   useEffect(() => {
     if (!playing) return;
@@ -463,7 +423,6 @@ export function LandingPainSection() {
       } else if (key === "ArrowUp" || key === "PageUp") {
         direction = -1;
       }
-
       if (!direction) return;
 
       if (
@@ -472,6 +431,12 @@ export function LandingPainSection() {
         /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/i.test(event.target.tagName)
       ) {
         return;
+      }
+
+      // Clavier : pas d’inertie — waitLift → armed immédiatement.
+      if (gesturePhaseRef.current === "waitLift") {
+        gesturePhaseRef.current = "armed";
+        deltaAccumRef.current = 0;
       }
 
       const result = applyIntent(direction);
@@ -492,13 +457,20 @@ export function LandingPainSection() {
       if (pinModeRef.current !== "pin") return;
       touchStartYRef.current = event.touches[0]?.clientY ?? null;
       touchHandledRef.current = false;
+      if (gesturePhaseRef.current === "waitLift") {
+        gesturePhaseRef.current = "armed";
+        deltaAccumRef.current = 0;
+      }
     };
 
     const onTouchMove = (event: TouchEvent) => {
       if (pinModeRef.current !== "pin") return;
       if (touchStartYRef.current == null) return;
 
-      if (activeStepRef.current > 0 || isTransitioningRef.current) {
+      if (
+        activeStepRef.current > 0 ||
+        gesturePhaseRef.current === "locked"
+      ) {
         event.preventDefault();
       } else {
         const y = event.touches[0]?.clientY;
@@ -514,17 +486,15 @@ export function LandingPainSection() {
       const startY = touchStartYRef.current;
       touchStartYRef.current = null;
       if (startY == null) return;
+      if (gesturePhaseRef.current === "locked") return;
 
-      if (Date.now() < consumeUntilRef.current || isTransitioningRef.current) {
-        return;
+      if (gesturePhaseRef.current === "waitLift") {
+        gesturePhaseRef.current = "armed";
       }
-      if (!wheelArmedRef.current) return;
-      if (Date.now() - lastStepAtRef.current < STEP_COOLDOWN_MS) return;
 
       const endY = event.changedTouches[0]?.clientY;
       if (endY == null) return;
       const dy = startY - endY;
-
       if (Math.abs(dy) < TOUCH_THRESHOLD) return;
 
       const direction: 1 | -1 = dy > 0 ? 1 : -1;
@@ -561,11 +531,17 @@ export function LandingPainSection() {
 
   useEffect(() => {
     return () => {
-      if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
-      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
       if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
     };
   }, []);
+
+  // Première phrase déjà visible au montage → pas de lock.
+  useEffect(() => {
+    if (playing && activeStep === 0 && pinMode === "pin") {
+      // Attendre lift de l’entrée Hero uniquement.
+      if (gesturePhaseRef.current === "locked") return;
+    }
+  }, [playing, activeStep, pinMode]);
 
   const phase: StoryPhase = storyCompact
     ? "compact"
@@ -615,7 +591,11 @@ export function LandingPainSection() {
               .filter(Boolean)
               .join(" ")}
           >
-            <StoryPinnedSteps activeStep={activeStep} reduced={reduced} />
+            <StoryPinnedSteps
+              activeStep={activeStep}
+              reduced={reduced}
+              onEnterComplete={onPhraseEnterComplete}
+            />
           </div>
         </div>
       )}

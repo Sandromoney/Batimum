@@ -8,15 +8,18 @@ import {
 } from "react";
 import { MousePointer2 } from "lucide-react";
 
-/** Pointe active du pictogramme (px depuis le coin haut-gauche de l’icône 18×18). */
-const TIP_OFFSET_X = 4;
-const TIP_OFFSET_Y = 2;
+/**
+ * Pointe active du pictogramme Lucide MousePointer2 (viewBox 24×24),
+ * ramenée à une icône 18×18 : tip ≈ (8, 4) en unités 24 → (6, 3) en 18.
+ */
+const TIP_OFFSET_X = 6;
+const TIP_OFFSET_Y = 3;
 
 type Pos = { x: number; y: number };
 
 /**
- * Coordonnées localesa du centre de la cible, dans le référentiel
- * du containing block (padding edge), même si un ancêtre est scale/transformé.
+ * Centre cliquable réel de la cible, dans le référentiel local du root
+ * (padding edge), même si un ancêtre est scale/transformé.
  */
 function measureTargetLocal(
   root: HTMLElement,
@@ -45,8 +48,8 @@ function measureTargetLocal(
 }
 
 /**
- * Curseur film — pointe active sur le centre cliquable réel.
- * Invisible hors action ; première apparition sans vol depuis (0,0).
+ * Curseur film — pointe exacte sur le centre cliquable.
+ * Visible uniquement pendant une action ; disparaît ensuite.
  */
 export function FilmCursor({
   visible,
@@ -82,6 +85,9 @@ export function FilmCursor({
       (cursor?.parentElement as HTMLElement | null);
     if (!root) return;
 
+    let frames = 0;
+    let raf = 0;
+
     const apply = () => {
       const next = measureTargetLocal(root, target);
       if (!next) {
@@ -104,18 +110,26 @@ export function FilmCursor({
       }
     };
 
+    const tick = () => {
+      frames += 1;
+      // Recalcule dense au démarrage (layout film), puis plus rare.
+      if (frames <= 12 || frames % 3 === 0) apply();
+      raf = requestAnimationFrame(tick);
+    };
+
     apply();
+    raf = requestAnimationFrame(tick);
 
     const el = root.querySelector(target) as HTMLElement | null;
     const ro = new ResizeObserver(() => apply());
     ro.observe(root);
     if (el) ro.observe(el);
     window.addEventListener("resize", apply);
-    const id = window.setInterval(apply, 100);
+
     return () => {
+      cancelAnimationFrame(raf);
       ro.disconnect();
       window.removeEventListener("resize", apply);
-      window.clearInterval(id);
     };
   }, [visible, target]);
 
@@ -125,7 +139,8 @@ export function FilmCursor({
         setReady(false);
         hadPos.current = false;
         setAnimateMove(false);
-      }, 280);
+        setPos(null);
+      }, 220);
       return () => window.clearTimeout(t);
     }
   }, [visible]);
