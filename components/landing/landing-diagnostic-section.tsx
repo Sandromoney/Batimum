@@ -88,9 +88,15 @@ export function LandingDiagnosticSection() {
   };
 
   const scrollToSolutions = () => {
-    document
-      .getElementById("avant-apres")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const el = document.getElementById("avant-apres");
+    if (!el) return;
+    const headerOffset = 88;
+    const top =
+      el.getBoundingClientRect().top + window.scrollY - headerOffset;
+    window.scrollTo({
+      top: Math.max(0, top),
+      behavior: reduced ? "auto" : "smooth",
+    });
   };
 
   const restart = () => {
