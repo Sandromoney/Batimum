@@ -203,84 +203,102 @@ export default function DashboardPage() {
         />
       </section>
 
-      <section className="btp-dashboard-panels mt-8 grid gap-6 lg:grid-cols-2 lg:gap-8">
-        <DashboardRevenueChart
-          revenueEntries={revenueEntries}
-          objectifCaMensuel={objectifCaMensuel}
-          objectifDraft={objectifDraft}
-          onObjectifDraftChange={setObjectifDraft}
-          onObjectifBlur={requestObjectifCaMensuelSave}
-        />
+      <section className="btp-dashboard-panels">
+        <div className="btp-dashboard-panel-chart min-w-0">
+          <DashboardRevenueChart
+            revenueEntries={revenueEntries}
+            objectifCaMensuel={objectifCaMensuel}
+            objectifDraft={objectifDraft}
+            onObjectifDraftChange={setObjectifDraft}
+            onObjectifBlur={requestObjectifCaMensuelSave}
+          />
+        </div>
 
-        <Card className="btp-card-interactive">
-          <header className="mb-5 flex items-center justify-between">
+        <Card className="btp-dashboard-panel-devis btp-card-interactive flex h-full min-h-0 flex-col">
+          <header className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-base font-semibold tracking-tight">
               Derniers devis
             </h2>
             <Link
               href="/devis"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
+              className="shrink-0 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground hover:underline"
             >
               Voir tout
             </Link>
           </header>
-          <ul className="space-y-3">
-            {recentDevis.map((d) => {
-              const client = data.clients.find((c) => c.id === d.clientId);
-              const displayStatut = getDevisDisplayStatut(d);
-              return (
-                <li key={d.id}>
-                  <Link
-                    href={`/devis/${d.id}`}
-                    className="group flex flex-col gap-3 rounded-2xl border border-border/60 bg-card-elevated/40 px-4 py-3.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:bg-card-hover/55 hover:shadow-card sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <section className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-foreground/85">
-                        {d.titre}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {getClientDisplayName(client)}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground/80">
-                        {formatDate(d.date)}
-                      </p>
-                    </section>
-                    <section className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-end sm:gap-2">
-                      <p className="text-sm font-semibold tabular-nums text-foreground">
-                        {formatCurrency(devisTotal(d))}
-                      </p>
-                      <Badge
-                        label={DEVIS_STATUT_LABELS[displayStatut]}
-                        status={displayStatut}
-                      />
-                    </section>
-                  </Link>
-                </li>
-              );
-            })}
+          <ul className="flex flex-1 flex-col gap-2.5">
+            {recentDevis.length === 0 ? (
+              <li className="rounded-xl border border-border/60 bg-card-elevated/40 px-4 py-3 text-sm text-muted-foreground">
+                Aucun devis pour le moment.
+              </li>
+            ) : (
+              recentDevis.map((d) => {
+                const client = data.clients.find((c) => c.id === d.clientId);
+                const displayStatut = getDevisDisplayStatut(d);
+                return (
+                  <li key={d.id}>
+                    <Link
+                      href={`/devis/${d.id}`}
+                      className="group flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card-elevated/40 px-3.5 py-3 transition-all duration-200 ease-out hover:-translate-y-px hover:border-border hover:bg-card-hover/55 hover:shadow-card"
+                    >
+                      <section className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {d.titre}
+                        </p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {getClientDisplayName(client)} · {formatDate(d.date)}
+                        </p>
+                      </section>
+                      <section className="flex shrink-0 flex-col items-end gap-1.5">
+                        <p className="text-sm font-semibold tabular-nums text-foreground">
+                          {formatCurrency(devisTotal(d))}
+                        </p>
+                        <Badge
+                          label={DEVIS_STATUT_LABELS[displayStatut]}
+                          status={displayStatut}
+                        />
+                      </section>
+                    </Link>
+                  </li>
+                );
+              })
+            )}
           </ul>
         </Card>
 
-        <Card className="btp-dashboard-panel-wide btp-card-interactive lg:col-span-2">
-          <header className="mb-5 flex items-center gap-2.5">
-            <TrendingUp className="h-5 w-5 text-muted-foreground" strokeWidth={2} />
-            <h2 className="text-base font-semibold tracking-tight">
-              Prochaines interventions
-            </h2>
+        <Card className="btp-dashboard-panel-interventions btp-card-interactive">
+          <header className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <TrendingUp
+                className="h-5 w-5 shrink-0 text-muted-foreground"
+                strokeWidth={2}
+              />
+              <h2 className="text-base font-semibold tracking-tight">
+                Prochaines interventions
+              </h2>
+            </div>
+            <Link
+              href="/planning"
+              className="shrink-0 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground hover:underline"
+            >
+              Planning
+            </Link>
           </header>
-          <ul className="space-y-3">
+          <ul className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
             {upcomingInterventions.length === 0 ? (
-              <li className="rounded-xl border border-border/60 bg-card-elevated/40 px-4 py-3 text-sm text-muted-foreground">
+              <li className="rounded-xl border border-border/60 bg-card-elevated/40 px-4 py-3 text-sm text-muted-foreground sm:col-span-2 xl:col-span-3">
                 Aucune intervention à venir.
               </li>
             ) : (
               upcomingInterventions.map((e) => (
                 <li
                   key={e.id}
-                  className="flex items-center justify-between rounded-xl border border-border/60 bg-card-elevated/40 px-4 py-3 transition-all duration-300 hover:border-border hover:bg-card-hover/50"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card-elevated/40 px-3.5 py-3 transition-all duration-200 ease-out hover:border-border hover:bg-card-hover/50"
                 >
-                  <section>
-                    <p className="text-sm font-medium text-foreground">{e.titre}</p>
+                  <section className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {e.titre}
+                    </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {formatDateTimeFR(e.date, e.heureDebut)}–
                       {formatTime24h(e.heureFin)}
@@ -291,12 +309,6 @@ export default function DashboardPage() {
               ))
             )}
           </ul>
-          <Link
-            href="/planning"
-            className="mt-5 inline-block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
-          >
-            Ouvrir le planning
-          </Link>
         </Card>
       </section>
 

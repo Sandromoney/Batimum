@@ -89,8 +89,14 @@ export default function DevisPage() {
 
   function handleCreateDevis(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const lockedDate = todayISO();
+    setDateDevis(lockedDate);
     const client = clients.find((item) => item.id === clientId);
-    const nextErrors = validateDevisCreation({ clientId, dateDevis, client });
+    const nextErrors = validateDevisCreation({
+      clientId,
+      dateDevis: lockedDate,
+      client,
+    });
 
     setErrors(nextErrors);
     if (hasValidationErrors(nextErrors)) {
@@ -100,7 +106,7 @@ export default function DevisPage() {
 
     const created = addDevisBrouillon({
       clientId,
-      dateDevis,
+      dateDevis: lockedDate,
       tauxTVA,
     });
 
@@ -298,9 +304,13 @@ export default function DevisPage() {
             </Label>
             <DateInput
               value={dateDevis}
-              onChangeValue={setDateDevis}
+              onChangeValue={() => undefined}
+              readOnly
               className={errors.dateDevis ? invalidClass : undefined}
             />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Date du jour — non modifiable à la création.
+            </p>
             {errors.dateDevis && (
               <p className="mt-1 text-sm text-danger-foreground">
                 {errors.dateDevis}

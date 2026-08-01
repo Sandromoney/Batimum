@@ -39,8 +39,8 @@ const KPI_ICONS: Record<string, LucideIcon> = {
 };
 
 const KPI_TONES: Record<string, string> = {
-  positive: "border-accent bg-gradient-to-br from-white to-accent/40",
-  warning: "border-amber-100 bg-gradient-to-br from-white to-amber-50/30",
+  positive: "border-accent/50 bg-white",
+  warning: "border-amber-200/80 bg-white",
   neutral: "border-border/60 bg-white",
 };
 
@@ -259,13 +259,11 @@ export function PilotageDashboardView() {
       ) : null}
 
       {/* Hero — compact premium */}
-      <section className="pilotage-reveal relative overflow-hidden rounded-[22px] border border-accent/80 bg-[linear-gradient(145deg,#ffffff_0%,#f0fdf4_48%,#ffffff_100%)] px-4 py-3.5 shadow-[0_8px_28px_rgba(59, 130, 246,0.06)] sm:px-5 sm:py-4">
-        <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-accent/15 blur-3xl" />
-
+      <section className="pilotage-reveal relative overflow-hidden rounded-[1.35rem] border border-accent bg-white px-4 py-3.5 shadow-[0_8px_28px_rgba(59,130,246,0.06)] sm:px-5 sm:py-4">
         <div className="relative flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
           <div className="min-w-0">
             <p className="text-xs font-medium text-accent">
-              Bonjour {model.greetingName} 👋
+              Bonjour {model.greetingName}
             </p>
             <h1 className="mt-0.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
               Aujourd&apos;hui votre entreprise fonctionne à{" "}
@@ -280,7 +278,7 @@ export function PilotageDashboardView() {
         </div>
 
         <div className="relative mt-3 grid gap-2 sm:grid-cols-3">
-          <div className="rounded-xl border border-white/80 bg-white/75 px-3 py-2 backdrop-blur-sm">
+          <div className="flex h-full min-h-[4.75rem] flex-col justify-between rounded-xl border border-border/70 bg-card-elevated/40 px-3 py-2.5">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               Objectif mensuel
             </p>
@@ -294,7 +292,7 @@ export function PilotageDashboardView() {
               {model.objectifPct} %
             </p>
           </div>
-          <div className="rounded-xl border border-white/80 bg-white/75 px-3 py-2 backdrop-blur-sm">
+          <div className="flex h-full min-h-[4.75rem] flex-col justify-between rounded-xl border border-border/70 bg-card-elevated/40 px-3 py-2.5">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               Prévision fin de mois
             </p>
@@ -309,7 +307,7 @@ export function PilotageDashboardView() {
               <p className="mt-0.5 text-[10px] text-muted-foreground">CA estimé</p>
             )}
           </div>
-          <div className="rounded-xl border border-white/80 bg-white/75 px-3 py-2 backdrop-blur-sm">
+          <div className="flex h-full min-h-[4.75rem] flex-col justify-between rounded-xl border border-border/70 bg-card-elevated/40 px-3 py-2.5">
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               Objectif CA
             </p>
@@ -332,16 +330,16 @@ export function PilotageDashboardView() {
             >
               <Card
                 className={cn(
-                  "border p-3.5 shadow-sm",
+                  "flex h-full min-h-[8.5rem] flex-col border p-3.5 shadow-sm",
                   KPI_TONES[kpi.tone] ?? KPI_TONES.neutral,
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-accent-hover shadow-sm ring-1 ring-accent">
-                      <Icon className="h-3.5 w-3.5" />
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card-elevated text-accent-hover ring-1 ring-accent/70">
+                      <Icon className="h-3.5 w-3.5" strokeWidth={2} />
                     </span>
-                    <p className="text-xs font-medium text-muted-foreground">
+                    <p className="truncate text-xs font-medium text-muted-foreground">
                       {kpi.label}
                     </p>
                   </div>
@@ -484,7 +482,7 @@ export function PilotageDashboardView() {
                       event.tone === "warning"
                         ? "border-amber-200 bg-amber-50/50"
                         : event.tone === "positive"
-                          ? "border-border bg-accent/5/40"
+                          ? "border-accent/30 bg-accent/[0.04]"
                           : "border-border/60 bg-white",
                     )}
                   >
@@ -497,8 +495,10 @@ export function PilotageDashboardView() {
         </Card>
 
         <Card className="pilotage-reveal border-border/60 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <div className="flex h-8 items-center gap-2.5">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card-elevated text-amber-600 ring-1 ring-amber-200/80">
+              <AlertTriangle className="h-3.5 w-3.5" strokeWidth={2} />
+            </span>
             <h2 className="text-sm font-semibold">Alertes importantes</h2>
           </div>
           <ul className="mt-4 space-y-2">
@@ -511,7 +511,7 @@ export function PilotageDashboardView() {
               </li>
             ))}
             {model.alertes.length === 0 ? (
-              <li className="rounded-xl border border-accent bg-accent/5/40 px-3 py-2.5 text-sm text-accent">
+              <li className="rounded-xl border border-accent/40 bg-accent/[0.04] px-3 py-2.5 text-sm text-accent">
                 Rien d&apos;urgent — bon rythme.
               </li>
             ) : null}
@@ -521,9 +521,11 @@ export function PilotageDashboardView() {
 
       {/* Employés */}
       <Card className="pilotage-reveal border-border/60 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-accent-hover" />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex h-8 items-center gap-2.5">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card-elevated text-accent-hover ring-1 ring-accent/70">
+              <Trophy className="h-3.5 w-3.5" strokeWidth={2} />
+            </span>
             <h2 className="text-sm font-semibold">Classement des employés</h2>
           </div>
           <p className="text-xs text-muted-foreground">Cliquez pour ouvrir la fiche</p>
@@ -545,7 +547,7 @@ export function PilotageDashboardView() {
               {model.employes.map((row) => (
                 <tr
                   key={row.employe.id}
-                  className="border-t border-border/50 transition-colors hover:bg-accent/5/30"
+                  className="border-t border-border/50 transition-colors duration-200 hover:bg-accent/[0.03]"
                 >
                   <td className="px-2 py-3">
                     <Link
@@ -585,8 +587,10 @@ export function PilotageDashboardView() {
 
       {/* Métiers */}
       <Card className="pilotage-reveal border-border/60 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-accent-hover" />
+        <div className="flex h-8 items-center gap-2.5">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card-elevated text-accent-hover ring-1 ring-accent/70">
+            <Users className="h-3.5 w-3.5" strokeWidth={2} />
+          </span>
           <h2 className="text-sm font-semibold">Meilleur employé par métier</h2>
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -628,8 +632,10 @@ export function PilotageDashboardView() {
       {/* Fournisseurs */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="pilotage-reveal border-border/60 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-accent-hover" />
+          <div className="flex h-8 items-center gap-2.5">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card-elevated text-accent-hover ring-1 ring-accent/70">
+              <Building2 className="h-3.5 w-3.5" strokeWidth={2} />
+            </span>
             <h2 className="text-sm font-semibold">Comparatif fournisseurs</h2>
           </div>
           <ul className="mt-4 space-y-2">
@@ -648,7 +654,7 @@ export function PilotageDashboardView() {
               </li>
             ) : null}
           </ul>
-          <div className="mt-4 rounded-xl border border-accent bg-accent/5/40 p-3">
+          <div className="mt-4 rounded-xl border border-accent/40 bg-accent/[0.04] p-3">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-accent">
               <Bot className="h-3.5 w-3.5" />
               Pilotage
@@ -668,8 +674,10 @@ export function PilotageDashboardView() {
         </Card>
 
         <Card className="pilotage-reveal border-border/60 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Wallet className="h-4 w-4 text-accent-hover" />
+          <div className="flex h-8 items-center gap-2.5">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card-elevated text-accent-hover ring-1 ring-accent/70">
+              <Wallet className="h-3.5 w-3.5" strokeWidth={2} />
+            </span>
             <h2 className="text-sm font-semibold">Prévision</h2>
           </div>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -705,8 +713,10 @@ export function PilotageDashboardView() {
 
       {/* Types */}
       <Card className="pilotage-reveal border-border/60 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-2">
-          <HardHat className="h-4 w-4 text-accent-hover" />
+        <div className="flex h-8 items-center gap-2.5">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card-elevated text-accent-hover ring-1 ring-accent/70">
+            <HardHat className="h-3.5 w-3.5" strokeWidth={2} />
+          </span>
           <h2 className="text-sm font-semibold">Rentabilité par type de chantier</h2>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -768,9 +778,11 @@ export function PilotageDashboardView() {
       </Card>
 
       {/* Assistant analyse */}
-      <Card className="pilotage-reveal overflow-hidden border-accent bg-[linear-gradient(160deg,#ffffff_0%,#f0fdf4_100%)] p-6 shadow-sm sm:p-8">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-accent-hover" />
+      <Card className="pilotage-reveal overflow-hidden border-accent bg-white p-6 shadow-sm sm:p-8">
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card-elevated text-accent-hover ring-1 ring-accent/70">
+            <Sparkles className="h-4 w-4" strokeWidth={2} />
+          </span>
           <h2 className="text-base font-semibold">
             Pilotage — Analyse du mois
           </h2>
@@ -779,7 +791,7 @@ export function PilotageDashboardView() {
           {model.assistantAnalyse.map((line) => (
             <li
               key={line}
-              className="rounded-xl border border-white/70 bg-white/70 px-3 py-2.5"
+              className="rounded-xl border border-border/60 bg-card-elevated/40 px-3 py-2.5"
             >
               {line}
             </li>

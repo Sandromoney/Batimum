@@ -89,7 +89,8 @@ export function createDevisBrouillon(
   const clientId = input.clientId ?? clients[0]?.id ?? "";
   const client = clients.find((item) => item.id === clientId);
   const tauxTVA = input.tauxTVA ?? 0;
-  const dateDevis = input.dateDevis ?? today;
+  // Date de création toujours = jour courant (non modifiable).
+  const dateDevis = today;
 
   return markDevisCreated(
     {

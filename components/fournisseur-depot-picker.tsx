@@ -141,8 +141,17 @@ export function FournisseurDepotPicker({
   const [sortKey, setSortKey] = useState<"distance" | "name">("distance");
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
   const [addSuccessAnim, setAddSuccessAnim] = useState(false);
+  const [successLeaving, setSuccessLeaving] = useState(false);
   const [addingLoading, setAddingLoading] = useState(false);
   const [mapRecenterKey, setMapRecenterKey] = useState(0);
+
+  const flashSuccess = useCallback((message: string) => {
+    setSuccessLeaving(false);
+    setAddSuccessAnim(false);
+    setSuccessNotice(message);
+    // Restart check animation on next frame
+    window.requestAnimationFrame(() => setAddSuccessAnim(true));
+  }, []);
 
   const resetSupplierSearch = useCallback(() => {
     setQuery("");
@@ -166,11 +175,17 @@ export function FournisseurDepotPicker({
 
   useEffect(() => {
     if (!successNotice) return;
-    const timer = window.setTimeout(() => {
+    setSuccessLeaving(false);
+    const leaveTimer = window.setTimeout(() => setSuccessLeaving(true), 1600);
+    const clearTimer = window.setTimeout(() => {
       setSuccessNotice(null);
       setAddSuccessAnim(false);
-    }, 3000);
-    return () => window.clearTimeout(timer);
+      setSuccessLeaving(false);
+    }, 1850);
+    return () => {
+      window.clearTimeout(leaveTimer);
+      window.clearTimeout(clearTimer);
+    };
   }, [successNotice]);
 
   const companyLabel = parametres.entreprise?.trim() || "Votre entreprise";
@@ -246,12 +261,6 @@ export function FournisseurDepotPicker({
       cancelled = true;
     };
   }, [parametres.adresse, parametres.codePostal, parametres.ville]);
-
-  useEffect(() => {
-    if (!successNotice) return;
-    const t = window.setTimeout(() => setSuccessNotice(null), 8000);
-    return () => window.clearTimeout(t);
-  }, [successNotice]);
 
   function normalizeForCompare(value: string): string {
     return (value ?? "")
@@ -454,6 +463,7 @@ export function FournisseurDepotPicker({
 
   function selectDepot(depot: OsmDepotResult) {
     setSelectedOsmId(depot.osmId);
+    flashSuccess("✓ Dépôt sélectionné");
   }
 
   function chooseDepot(depot: OsmDepotResult) {
@@ -475,6 +485,7 @@ export function FournisseurDepotPicker({
       commentaireInterne: "",
     });
     setApiError("");
+    flashSuccess("✓ Dépôt sélectionné");
   }
 
   function cancelChosenDepot() {
@@ -557,9 +568,10 @@ export function FournisseurDepotPicker({
 
       const depotName = pendingDepot.name || manual.nom.trim();
       const depotCity = pendingDepot.ville?.trim() || manual.ville.trim();
-      setAddSuccessAnim(true);
-      setSuccessNotice(
-        `${depotName}${depotCity ? ` ${depotCity}` : ""} a été ajouté à vos fournisseurs.`,
+      flashSuccess(
+        `✓ Fournisseur ajouté${depotName ? ` — ${depotName}` : ""}${
+          depotCity ? ` (${depotCity})` : ""
+        }`,
       );
 
       setPendingDepot(null);
@@ -596,6 +608,7 @@ export function FournisseurDepotPicker({
     setManual(EMPTY_MANUAL);
     setShowManual(false);
     setApiError("");
+    flashSuccess("✓ Fournisseur ajouté");
   }
 
   const mapProps: FournisseurMapProps = {
@@ -765,7 +778,7 @@ export function FournisseurDepotPicker({
             <button
               key={brand}
               type="button"
-              className="rounded-full border border-border/60 bg-white px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-accent/30 hover:bg-accent/5/50 hover:text-accent-hover"
+              className="rounded-full border border-border/60 bg-white px-2.5 py-1 text-xs text-muted-foreground transition-colors duration-200 hover:border-accent/40 hover:bg-accent/[0.05] hover:text-accent-hover"
               disabled={loading || geocoding || !companyLocation}
               onClick={() => void searchDepots(15, brand)}
             >
@@ -782,12 +795,18 @@ export function FournisseurDepotPicker({
       </Card>
 
       {successNotice ? (
-        <div className="fournisseur-add-success flex items-center gap-3 rounded-xl border border-border/80 bg-accent/5 px-4 py-3 text-sm text-accent shadow-sm">
+        <div
+          className={`fournisseur-add-success flex items-center gap-2.5 rounded-xl border border-accent/25 bg-accent/[0.04] px-3.5 py-2.5 text-sm font-medium text-accent ${
+            successLeaving ? "is-leaving" : ""
+          }`}
+          role="status"
+          aria-live="polite"
+        >
           <span
             className={`fournisseur-add-check ${addSuccessAnim ? "is-animated" : ""}`}
             aria-hidden
           >
-            <Check className="h-4 w-4" />
+            <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
           </span>
           <p>{successNotice}</p>
         </div>
@@ -855,10 +874,10 @@ export function FournisseurDepotPicker({
                     return (
                       <div
                         key={depot.osmId}
-                        className={`cursor-pointer rounded-[14px] border px-3 py-3 transition-all ${
+                        className={`cursor-pointer rounded-[14px] border px-3 py-3 transition-all duration-200 ease-out ${
                           selected
-                            ? "border-accent bg-accent/5/80 shadow-sm"
-                            : "border-border/60 bg-white hover:border-accent/30/80"
+                            ? "border-accent bg-accent/[0.06] shadow-sm"
+                            : "border-border/60 bg-white hover:border-accent/40"
                         }`}
                         onClick={() => selectDepot(depot)}
                         onKeyDown={(event) => {
@@ -1019,7 +1038,7 @@ export function FournisseurDepotPicker({
       </div>
 
       {pendingDepot ? (
-        <Card className="rounded-[22px] border-border/80 bg-accent/5/40 p-5 shadow-sm">
+        <Card className="rounded-[22px] border-border/80 bg-accent/[0.04] p-5 shadow-sm">
           <div className="space-y-1">
             <p className="text-sm font-semibold text-foreground">
               Ajouter ce dépôt à vos fournisseurs ?

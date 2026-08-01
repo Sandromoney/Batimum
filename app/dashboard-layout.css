@@ -37,7 +37,7 @@
 .btp-app-page {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 1.75rem;
   width: 100%;
   max-width: 100%;
 }
@@ -49,7 +49,7 @@
 
 .btp-dashboard-stats {
   display: grid;
-  gap: 1.25rem;
+  gap: 1rem;
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -73,14 +73,30 @@
 
 .btp-dashboard-panels {
   display: grid;
-  gap: 1.5rem;
+  gap: 1.25rem;
   grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
 }
 
 @media (min-width: 1024px) {
   .btp-dashboard-panels {
-    gap: 2rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    grid-template-columns: minmax(0, 1.85fr) minmax(280px, 0.9fr);
+  }
+
+  .btp-dashboard-panels > .btp-dashboard-panel-devis {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .btp-dashboard-panels > .btp-dashboard-panel-chart {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .btp-dashboard-panels > .btp-dashboard-panel-interventions {
+    grid-column: 1;
+    grid-row: 2;
   }
 }
 
