@@ -39,7 +39,7 @@ const KPI_ICONS: Record<string, LucideIcon> = {
 };
 
 const KPI_TONES: Record<string, string> = {
-  positive: "border-emerald-100 bg-gradient-to-br from-white to-emerald-50/40",
+  positive: "border-accent bg-gradient-to-br from-white to-accent/40",
   warning: "border-amber-100 bg-gradient-to-br from-white to-amber-50/30",
   neutral: "border-border/60 bg-white",
 };
@@ -53,7 +53,7 @@ function VariationBadge({ value }: { value: number | null }) {
     <span
       className={cn(
         "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold",
-        up ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800",
+        up ? "bg-accent/5 text-accent-hover" : "bg-amber-50 text-amber-800",
       )}
     >
       {up ? (
@@ -117,7 +117,7 @@ function MiniBars({
       ? "bg-amber-400/80"
       : color === "slate"
         ? "bg-slate-400/70"
-        : "bg-emerald-500/80";
+        : "bg-accent/80";
   return (
     <div className="flex h-32 items-end gap-1.5">
       {points.map((point, index) => (
@@ -168,7 +168,7 @@ function ChantierMetricCard({
                 "block rounded-xl border px-3 py-2.5 transition-colors",
                 watch
                   ? "border-amber-200/70 bg-amber-50/40 hover:border-amber-300"
-                  : "border-border/50 hover:border-emerald-300",
+                  : "border-border/50 hover:border-accent/30",
               )}
             >
               <div className="flex items-start justify-between gap-2">
@@ -176,7 +176,7 @@ function ChantierMetricCard({
                 <span
                   className={cn(
                     "shrink-0 text-sm font-semibold tabular-nums",
-                    watch ? "text-amber-800" : "text-emerald-700",
+                    watch ? "text-amber-800" : "text-accent-hover",
                   )}
                 >
                   {item.margePct} %
@@ -259,17 +259,17 @@ export function PilotageDashboardView() {
       ) : null}
 
       {/* Hero — compact premium */}
-      <section className="pilotage-reveal relative overflow-hidden rounded-[22px] border border-emerald-100/80 bg-[linear-gradient(145deg,#ffffff_0%,#f0fdf4_48%,#ffffff_100%)] px-4 py-3.5 shadow-[0_8px_28px_rgba(16,185,129,0.06)] sm:px-5 sm:py-4">
-        <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-emerald-200/15 blur-3xl" />
+      <section className="pilotage-reveal relative overflow-hidden rounded-[22px] border border-accent/80 bg-[linear-gradient(145deg,#ffffff_0%,#f0fdf4_48%,#ffffff_100%)] px-4 py-3.5 shadow-[0_8px_28px_rgba(59, 130, 246,0.06)] sm:px-5 sm:py-4">
+        <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-accent/15 blur-3xl" />
 
         <div className="relative flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
           <div className="min-w-0">
-            <p className="text-xs font-medium text-emerald-800">
+            <p className="text-xs font-medium text-accent">
               Bonjour {model.greetingName} 👋
             </p>
             <h1 className="mt-0.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
               Aujourd&apos;hui votre entreprise fonctionne à{" "}
-              <span className="text-emerald-700">
+              <span className="text-accent-hover">
                 <CountUp value={`${model.potentielPct} %`} />
               </span>{" "}
               <span className="font-medium text-muted-foreground">
@@ -284,9 +284,9 @@ export function PilotageDashboardView() {
             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               Objectif mensuel
             </p>
-            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-emerald-100">
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-accent/10">
               <div
-                className="h-full rounded-full bg-emerald-500 transition-all duration-700 ease-out"
+                className="h-full rounded-full bg-accent transition-all duration-700 ease-out"
                 style={{ width: `${model.objectifPct}%` }}
               />
             </div>
@@ -338,7 +338,7 @@ export function PilotageDashboardView() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-emerald-700 shadow-sm ring-1 ring-emerald-100">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-accent-hover shadow-sm ring-1 ring-accent">
                       <Icon className="h-3.5 w-3.5" />
                     </span>
                     <p className="text-xs font-medium text-muted-foreground">
@@ -484,7 +484,7 @@ export function PilotageDashboardView() {
                       event.tone === "warning"
                         ? "border-amber-200 bg-amber-50/50"
                         : event.tone === "positive"
-                          ? "border-emerald-200 bg-emerald-50/40"
+                          ? "border-border bg-accent/5/40"
                           : "border-border/60 bg-white",
                     )}
                   >
@@ -511,7 +511,7 @@ export function PilotageDashboardView() {
               </li>
             ))}
             {model.alertes.length === 0 ? (
-              <li className="rounded-xl border border-emerald-100 bg-emerald-50/40 px-3 py-2.5 text-sm text-emerald-800">
+              <li className="rounded-xl border border-accent bg-accent/5/40 px-3 py-2.5 text-sm text-accent">
                 Rien d&apos;urgent — bon rythme.
               </li>
             ) : null}
@@ -523,7 +523,7 @@ export function PilotageDashboardView() {
       <Card className="pilotage-reveal border-border/60 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-emerald-700" />
+            <Trophy className="h-4 w-4 text-accent-hover" />
             <h2 className="text-sm font-semibold">Classement des employés</h2>
           </div>
           <p className="text-xs text-muted-foreground">Cliquez pour ouvrir la fiche</p>
@@ -545,12 +545,12 @@ export function PilotageDashboardView() {
               {model.employes.map((row) => (
                 <tr
                   key={row.employe.id}
-                  className="border-t border-border/50 transition-colors hover:bg-emerald-50/30"
+                  className="border-t border-border/50 transition-colors hover:bg-accent/5/30"
                 >
                   <td className="px-2 py-3">
                     <Link
                       href={`/pilotage/employes/${row.employe.id}`}
-                      className="inline-flex items-center gap-2.5 font-medium hover:text-emerald-700"
+                      className="inline-flex items-center gap-2.5 font-medium hover:text-accent-hover"
                     >
                       <EmployeAvatar employe={row.employe} size="sm" />
                       {row.employe.prenom} {row.employe.nom}
@@ -586,7 +586,7 @@ export function PilotageDashboardView() {
       {/* Métiers */}
       <Card className="pilotage-reveal border-border/60 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-emerald-700" />
+          <Users className="h-4 w-4 text-accent-hover" />
           <h2 className="text-sm font-semibold">Meilleur employé par métier</h2>
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -599,7 +599,7 @@ export function PilotageDashboardView() {
               <p className="mt-1 text-sm font-semibold">
                 🥇 {metier.employe?.prenom} {metier.employe?.nom}
               </p>
-              <p className="mt-0.5 text-xs font-medium text-emerald-700">
+              <p className="mt-0.5 text-xs font-medium text-accent-hover">
                 {metier.rentabilitePct.toFixed(0)} %
               </p>
             </div>
@@ -629,7 +629,7 @@ export function PilotageDashboardView() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="pilotage-reveal border-border/60 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-emerald-700" />
+            <Building2 className="h-4 w-4 text-accent-hover" />
             <h2 className="text-sm font-semibold">Comparatif fournisseurs</h2>
           </div>
           <ul className="mt-4 space-y-2">
@@ -648,8 +648,8 @@ export function PilotageDashboardView() {
               </li>
             ) : null}
           </ul>
-          <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3">
-            <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
+          <div className="mt-4 rounded-xl border border-accent bg-accent/5/40 p-3">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-accent">
               <Bot className="h-3.5 w-3.5" />
               Pilotage
             </p>
@@ -660,7 +660,7 @@ export function PilotageDashboardView() {
             </ul>
             <Link
               href="/parametres/bibliotheque?tab=comparatif"
-              className="mt-3 inline-block text-xs font-medium text-emerald-700 hover:underline"
+              className="mt-3 inline-block text-xs font-medium text-accent-hover hover:underline"
             >
               Ouvrir le comparatif de prix →
             </Link>
@@ -669,7 +669,7 @@ export function PilotageDashboardView() {
 
         <Card className="pilotage-reveal border-border/60 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2">
-            <Wallet className="h-4 w-4 text-emerald-700" />
+            <Wallet className="h-4 w-4 text-accent-hover" />
             <h2 className="text-sm font-semibold">Prévision</h2>
           </div>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -706,7 +706,7 @@ export function PilotageDashboardView() {
       {/* Types */}
       <Card className="pilotage-reveal border-border/60 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-2">
-          <HardHat className="h-4 w-4 text-emerald-700" />
+          <HardHat className="h-4 w-4 text-accent-hover" />
           <h2 className="text-sm font-semibold">Rentabilité par type de chantier</h2>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -768,9 +768,9 @@ export function PilotageDashboardView() {
       </Card>
 
       {/* Assistant analyse */}
-      <Card className="pilotage-reveal overflow-hidden border-emerald-100 bg-[linear-gradient(160deg,#ffffff_0%,#f0fdf4_100%)] p-6 shadow-sm sm:p-8">
+      <Card className="pilotage-reveal overflow-hidden border-accent bg-[linear-gradient(160deg,#ffffff_0%,#f0fdf4_100%)] p-6 shadow-sm sm:p-8">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-emerald-700" />
+          <Sparkles className="h-5 w-5 text-accent-hover" />
           <h2 className="text-base font-semibold">
             Pilotage — Analyse du mois
           </h2>
@@ -786,7 +786,7 @@ export function PilotageDashboardView() {
           ))}
         </ul>
         <div className="mt-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+          <p className="text-xs font-semibold uppercase tracking-wide text-accent">
             3 conseils
           </p>
           <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm">

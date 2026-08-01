@@ -26,14 +26,14 @@ export function ChantierBeneficeSummary({
         !hasBenefice
           ? "border-l-border bg-card-elevated/30"
           : isPositive
-            ? "border-l-emerald-500 bg-emerald-500/[0.04]"
+            ? "border-l-success bg-success/[0.04]"
             : "border-l-amber-500 bg-amber-500/[0.04]"
       }`}
     >
       <div className="flex items-start gap-3">
         {hasBenefice ? (
           isPositive ? (
-            <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
+            <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-success" />
           ) : (
             <TrendingDown className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
           )
@@ -65,7 +65,7 @@ export function ChantierBeneficeSummary({
                   className={`font-semibold tabular-nums ${
                     rentabilite.ecartCoutTotal > 0
                       ? "text-amber-300"
-                      : "text-emerald-400"
+                      : "text-success"
                   }`}
                 >
                   {rentabilite.ecartCoutTotal >= 0 ? "+" : ""}

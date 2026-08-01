@@ -25,7 +25,7 @@ type DiagnosticResponse = {
 function renderStatus(label: string, check?: Check) {
   const ok = Boolean(check?.ok);
   return (
-    <p className={ok ? "text-emerald-600" : "text-red-600"}>
+    <p className={ok ? "text-accent" : "text-red-600"}>
       {label} : {ok ? "OK" : `Erreur${check?.error ? ` — ${check.error}` : ""}`}
     </p>
   );

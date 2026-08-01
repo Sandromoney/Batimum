@@ -203,7 +203,7 @@ export function MumIaHistoriqueSection({
                   <p
                     className={`mt-0.5 text-[11px] ${
                       entry.statut === "transforme"
-                        ? "text-emerald-600 dark:text-emerald-400"
+                        ? "text-accent dark:text-accent"
                         : entry.statut === "supprime"
                           ? "text-muted-foreground"
                           : "text-primary"

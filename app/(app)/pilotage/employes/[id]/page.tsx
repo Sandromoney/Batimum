@@ -78,7 +78,7 @@ export default function PilotageEmployePage() {
               {employe.telephone ? ` · ${employe.telephone}` : ""}
             </p>
             {employe.specialitePrincipale ? (
-              <p className="mt-1 text-xs text-emerald-700">
+              <p className="mt-1 text-xs text-accent-hover">
                 Spécialité : {employe.specialitePrincipale}
               </p>
             ) : null}
@@ -154,7 +154,7 @@ export default function PilotageEmployePage() {
                 className="flex min-w-0 flex-1 flex-col items-center gap-1"
               >
                 <div
-                  className="w-full rounded-t-md bg-emerald-500/80"
+                  className="w-full rounded-t-md bg-accent/80"
                   style={{
                     height: `${Math.max(8, (point.heures / maxHeures) * 100)}%`,
                   }}

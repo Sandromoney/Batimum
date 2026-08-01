@@ -127,7 +127,7 @@ function VerifyEmailForm() {
                 </p>
               )}
               {message && (
-                <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
+                <p className="rounded-xl border border-success/30 bg-success/10 px-3 py-2 text-sm text-success-foreground">
                   {message}
                 </p>
               )}

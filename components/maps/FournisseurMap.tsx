@@ -170,7 +170,7 @@ function DepotMarker({
               href={formatWebsiteHref(depot.siteWeb)}
               target="_blank"
               rel="noopener noreferrer"
-              className="batimum-map-popup__line inline-block text-emerald-700 hover:underline"
+              className="batimum-map-popup__line inline-block text-accent-hover hover:underline"
               onClick={(event) => {
                 // Empêche la popup de se refermer par un comportement de clic inattendu
                 event.stopPropagation();
@@ -251,10 +251,10 @@ export default function FournisseurMap({
             center={[company.latitude, company.longitude]}
             radius={radiusMeters}
             pathOptions={{
-              color: "#10b981",
+              color: "#3b82f6",
               weight: 1.5,
               opacity: 0.35,
-              fillColor: "#10b981",
+              fillColor: "#3b82f6",
               fillOpacity: 0.06,
             }}
           />

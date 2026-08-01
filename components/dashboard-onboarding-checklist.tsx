@@ -82,7 +82,7 @@ export function DashboardOnboardingChecklist({ data }: { data: AppData }) {
   if (dismissed) return null;
 
   return (
-    <Card className="overflow-hidden border-[rgba(16,185,129,0.18)] bg-[#f8faf8]">
+    <Card className="overflow-hidden border-[rgba(59, 130, 246,0.18)] bg-[#f8faf8]">
       <div className="flex items-start justify-between gap-4 border-b border-[rgba(15,23,42,0.06)] px-5 py-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">

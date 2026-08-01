@@ -32,7 +32,7 @@ const TONE_STYLES: Record<
   },
   success: {
     icon: TrendingUp,
-    className: "border-emerald-500/20 bg-emerald-500/5",
+    className: "border-accent/20 bg-accent/5",
   },
   neutral: {
     icon: CheckCircle2,

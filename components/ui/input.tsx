@@ -12,7 +12,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
         "placeholder:text-muted-foreground/70",
         "transition-all duration-200",
         "hover:border-border hover:bg-card-elevated/70",
-        "focus:border-primary/60 focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10",
+        "focus:border-[rgb(var(--color-accent)/0.55)] focus:bg-card focus:outline-none focus:ring-4 focus:ring-[rgb(var(--color-accent)/0.12)]",
         props.type === "number" &&
           "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
         className,
@@ -135,7 +135,7 @@ export const Textarea = forwardRef<
         "placeholder:text-muted-foreground/70",
         "transition-all duration-200",
         "hover:border-border hover:bg-card-elevated/70",
-        "focus:border-primary/60 focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10",
+        "focus:border-[rgb(var(--color-accent)/0.55)] focus:bg-card focus:outline-none focus:ring-4 focus:ring-[rgb(var(--color-accent)/0.12)]",
         className,
       )}
       {...props}

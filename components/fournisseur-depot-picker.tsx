@@ -752,7 +752,7 @@ export function FournisseurDepotPicker({
           </div>
           <Button
             type="button"
-            className="h-11 rounded-xl bg-emerald-600 px-6 hover:bg-emerald-700"
+            className="h-11 rounded-xl bg-primary px-6 hover:bg-primary-hover"
             onClick={() => void searchDepots(15)}
             disabled={loading || geocoding || !companyLocation}
           >
@@ -765,7 +765,7 @@ export function FournisseurDepotPicker({
             <button
               key={brand}
               type="button"
-              className="rounded-full border border-border/60 bg-white px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-700"
+              className="rounded-full border border-border/60 bg-white px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-accent/30 hover:bg-accent/5/50 hover:text-accent-hover"
               disabled={loading || geocoding || !companyLocation}
               onClick={() => void searchDepots(15, brand)}
             >
@@ -782,7 +782,7 @@ export function FournisseurDepotPicker({
       </Card>
 
       {successNotice ? (
-        <div className="fournisseur-add-success flex items-center gap-3 rounded-xl border border-emerald-200/80 bg-emerald-50 px-4 py-3 text-sm text-emerald-950 shadow-sm">
+        <div className="fournisseur-add-success flex items-center gap-3 rounded-xl border border-border/80 bg-accent/5 px-4 py-3 text-sm text-accent shadow-sm">
           <span
             className={`fournisseur-add-check ${addSuccessAnim ? "is-animated" : ""}`}
             aria-hidden
@@ -814,7 +814,7 @@ export function FournisseurDepotPicker({
                       type="button"
                       className={`rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
                         sortKey === "distance"
-                          ? "bg-emerald-50 text-emerald-700"
+                          ? "bg-accent/5 text-accent-hover"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                       onClick={() => setSortKey("distance")}
@@ -825,7 +825,7 @@ export function FournisseurDepotPicker({
                       type="button"
                       className={`rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
                         sortKey === "name"
-                          ? "bg-emerald-50 text-emerald-700"
+                          ? "bg-accent/5 text-accent-hover"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                       onClick={() => setSortKey("name")}
@@ -857,8 +857,8 @@ export function FournisseurDepotPicker({
                         key={depot.osmId}
                         className={`cursor-pointer rounded-[14px] border px-3 py-3 transition-all ${
                           selected
-                            ? "border-emerald-500 bg-emerald-50/80 shadow-sm"
-                            : "border-border/60 bg-white hover:border-emerald-300/80"
+                            ? "border-accent bg-accent/5/80 shadow-sm"
+                            : "border-border/60 bg-white hover:border-accent/30/80"
                         }`}
                         onClick={() => selectDepot(depot)}
                         onKeyDown={(event) => {
@@ -871,13 +871,13 @@ export function FournisseurDepotPicker({
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex min-w-0 items-start gap-3">
-                            <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-200/70 bg-emerald-50 text-emerald-700">
+                            <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl border border-border/70 bg-accent/5 text-accent-hover">
                               <Store className="h-4 w-4" />
                             </div>
                             <div className="min-w-0">
                               {depot.enseigne &&
                               depot.enseigne.trim() !== depot.name.trim() ? (
-                                <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-700">
+                                <p className="text-[11px] font-medium uppercase tracking-wide text-accent-hover">
                                   {depot.enseigne}
                                 </p>
                               ) : null}
@@ -895,7 +895,7 @@ export function FournisseurDepotPicker({
                                   .join(" ")}
                               </p>
                               {depot.distanceKm != null ? (
-                                <p className="mt-1 text-xs font-semibold text-emerald-800">
+                                <p className="mt-1 text-xs font-semibold text-accent">
                                   {formatDistanceKm(depot.distanceKm)}
                                 </p>
                               ) : null}
@@ -903,7 +903,7 @@ export function FournisseurDepotPicker({
                                 {depot.telephone ? (
                                   <a
                                     href={`tel:${depot.telephone.replace(/\s/g, "")}`}
-                                    className="block text-emerald-700 hover:underline"
+                                    className="block text-accent-hover hover:underline"
                                     onClick={(event) => event.stopPropagation()}
                                   >
                                     {depot.telephone}
@@ -916,7 +916,7 @@ export function FournisseurDepotPicker({
                                     href={formatWebsiteHref(depot.siteWeb)}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="block text-emerald-700 hover:underline"
+                                    className="block text-accent-hover hover:underline"
                                     onClick={(event) => event.stopPropagation()}
                                   >
                                     {depot.siteWeb.replace(/^https?:\/\//i, "")}
@@ -933,8 +933,8 @@ export function FournisseurDepotPicker({
                             size="sm"
                             className={`min-h-9 shrink-0 rounded-lg px-3 ${
                               selected
-                                ? "bg-emerald-600 hover:bg-emerald-700"
-                                : "bg-emerald-600/90 hover:bg-emerald-700"
+                                ? "bg-primary hover:bg-primary-hover"
+                                : "bg-primary/90 hover:bg-primary-hover"
                             }`}
                             onClick={(event) => {
                               event.stopPropagation();
@@ -983,7 +983,7 @@ export function FournisseurDepotPicker({
                 </div>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/5 text-accent">
                     <MapPin className="h-5 w-5" />
                   </div>
                   <p className="max-w-[220px] text-sm text-muted-foreground">
@@ -1019,7 +1019,7 @@ export function FournisseurDepotPicker({
       </div>
 
       {pendingDepot ? (
-        <Card className="rounded-[22px] border-emerald-200/80 bg-emerald-50/40 p-5 shadow-sm">
+        <Card className="rounded-[22px] border-border/80 bg-accent/5/40 p-5 shadow-sm">
           <div className="space-y-1">
             <p className="text-sm font-semibold text-foreground">
               Ajouter ce dépôt à vos fournisseurs ?
@@ -1043,7 +1043,7 @@ export function FournisseurDepotPicker({
                   .join(", ")}
               </p>
               {pendingDepot.distanceKm != null ? (
-                <p className="font-medium text-emerald-700">
+                <p className="font-medium text-accent-hover">
                   {formatDistanceKm(pendingDepot.distanceKm)}
                 </p>
               ) : null}
@@ -1088,7 +1088,7 @@ export function FournisseurDepotPicker({
             <Button
               type="button"
               size="sm"
-              className="rounded-lg bg-emerald-600 hover:bg-emerald-700"
+              className="rounded-lg bg-primary hover:bg-primary-hover"
               disabled={addingLoading}
               onClick={submitChosenDepot}
             >

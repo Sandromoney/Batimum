@@ -122,7 +122,7 @@ function StarRating() {
       {Array.from({ length: 5 }).map((_, index) => (
         <Star
           key={index}
-          className="h-4 w-4 fill-[#10b981] text-[#10b981]"
+          className="h-4 w-4 fill-[#3b82f6] text-[#3b82f6]"
           aria-hidden="true"
         />
       ))}
@@ -148,7 +148,7 @@ function TestimonialCard({
       <footer className="mt-6 border-t border-[rgba(15,23,42,0.06)] pt-5">
         <div className="flex items-center gap-3">
           <span
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[rgba(16,185,129,0.1)] text-sm font-semibold text-[#0f766e]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[rgba(59,130,246,0.1)] text-sm font-semibold text-[#0f766e]"
             aria-hidden="true"
           >
             {getInitials(name)}
@@ -201,7 +201,7 @@ function FinalMessageBlock({
           style={{ "--line-delay": "0s" } as CSSProperties}
         >
           <span
-            className="text-sm tracking-[0.2em] text-[#10b981]"
+            className="text-sm tracking-[0.2em] text-[#3b82f6]"
             aria-hidden="true"
           >
             ★★★★★
@@ -239,7 +239,7 @@ function FinalMessageBlock({
               }
             >
               <Check
-                className="h-4 w-4 shrink-0 text-[#10b981]"
+                className="h-4 w-4 shrink-0 text-[#3b82f6]"
                 aria-hidden="true"
               />
               {benefit}
@@ -260,7 +260,7 @@ function FinalMessageBlock({
         >
           <Link
             href={getPublicSignupHref()}
-            className="landing-testimonials-conclusion__cta-primary relative inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#10b981] px-8 py-3.5 text-base font-semibold text-white no-underline shadow-[0_10px_28px_rgba(16,185,129,0.28)] transition-all hover:bg-[#059669] hover:shadow-[0_14px_36px_rgba(16,185,129,0.34)] active:scale-[0.98] sm:min-h-[54px] sm:w-auto sm:min-w-[280px]"
+            className="landing-testimonials-conclusion__cta-primary relative inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#3b82f6] px-8 py-3.5 text-base font-semibold text-white no-underline shadow-[0_10px_28px_rgba(59,130,246,0.28)] transition-all hover:bg-[#2563eb] hover:shadow-[0_14px_36px_rgba(59,130,246,0.34)] active:scale-[0.98] sm:min-h-[54px] sm:w-auto sm:min-w-[280px]"
           >
             <span
               className="landing-testimonials-conclusion__cta-glow pointer-events-none absolute inset-0 rounded-xl"
@@ -273,7 +273,7 @@ function FinalMessageBlock({
 
         <button
           type="button"
-          className="landing-testimonials-conclusion__replay mt-5 text-sm font-medium text-[#64748b] underline-offset-4 transition-colors hover:text-[#10b981] hover:underline sm:mt-6"
+          className="landing-testimonials-conclusion__replay mt-5 text-sm font-medium text-[#64748b] underline-offset-4 transition-colors hover:text-[#3b82f6] hover:underline sm:mt-6"
           style={{ "--line-delay": "1.45s" } as CSSProperties}
           onClick={onReplay}
         >
@@ -664,7 +664,7 @@ export function LandingTestimonialsSection() {
                         className={cn(
                           "landing-testimonials-carousel__dot h-2 w-2 rounded-full transition-colors",
                           currentIndex === dotIndex
-                            ? "bg-[#10b981]"
+                            ? "bg-[#3b82f6]"
                             : "bg-[#cbd5e1] hover:bg-[#94a3b8]",
                         )}
                         onClick={() => goToDot(dotIndex)}

@@ -74,7 +74,7 @@ export function AuthMarketingPanel() {
         <h2 className="text-3xl font-semibold leading-tight tracking-tight text-[#0f172a] xl:text-[2rem]">
           Votre entreprise continue de perdre du temps.
           <br />
-          <span className="text-[#10b981]">Pas Batimum.</span>
+          <span className="text-[#3b82f6]">Pas Batimum.</span>
         </h2>
 
         <p className="mt-5 text-sm leading-7 text-[#64748b]">
@@ -83,25 +83,25 @@ export function AuthMarketingPanel() {
 
         <ul className="mt-3 space-y-2 text-sm leading-6 text-[#64748b]">
           <li className="flex gap-2">
-            <span className="text-[#10b981]" aria-hidden="true">
+            <span className="text-[#3b82f6]" aria-hidden="true">
               •
             </span>
             ressaisir des devis
           </li>
           <li className="flex gap-2">
-            <span className="text-[#10b981]" aria-hidden="true">
+            <span className="text-[#3b82f6]" aria-hidden="true">
               •
             </span>
             gérer des plannings sur WhatsApp
           </li>
           <li className="flex gap-2">
-            <span className="text-[#10b981]" aria-hidden="true">
+            <span className="text-[#3b82f6]" aria-hidden="true">
               •
             </span>
             calculer leurs marges sur Excel
           </li>
           <li className="flex gap-2">
-            <span className="text-[#10b981]" aria-hidden="true">
+            <span className="text-[#3b82f6]" aria-hidden="true">
               •
             </span>
             répondre aux appels des équipes
@@ -123,7 +123,7 @@ export function AuthMarketingPanel() {
                 style={{ "--card-delay": `${index * 80}ms` } as CSSProperties}
               >
                 <span
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#10b981]/12 text-[#10b981]"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#3b82f6]/12 text-[#3b82f6]"
                   aria-hidden="true"
                 >
                   <Icon className="h-4 w-4" strokeWidth={2} />
@@ -134,7 +134,7 @@ export function AuthMarketingPanel() {
                 <p className="mt-1 text-xs leading-5 text-[#64748b]">
                   {card.text}
                 </p>
-                <p className="mt-2 text-[0.65rem] font-semibold leading-5 tracking-wide text-[#10b981]">
+                <p className="mt-2 text-[0.65rem] font-semibold leading-5 tracking-wide text-[#3b82f6]">
                   {card.badge}
                 </p>
               </article>

@@ -3,11 +3,11 @@ export const VERIFICATION_EMAIL_SUBJECT =
 
 const BRAND_LOGO_SRC = "/logocomplet-batimum.png";
 
-const EMERALD = "#10B981";
-const EMERALD_DARK = "#047857";
-const BACKGROUND = "#F8FAF8";
-const TEXT = "#1F2937";
-const MUTED = "#6B7280";
+const BRAND = "#111111";
+const BRAND_ACCENT = "#3B82F6";
+const BACKGROUND = "#FFFFFF";
+const TEXT = "#111111";
+const MUTED = "#8A8A8A";
 
 function escapeHtml(value: string): string {
   return value
@@ -83,8 +83,8 @@ export function buildVerificationEmailHtml(code: string): string {
             <td align="center" style="padding:24px 32px 8px 32px;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td align="center" style="background-color:#F0FDF4;border:1px solid ${EMERALD};border-radius:12px;padding:18px 28px;">
-                    <span style="display:inline-block;font-size:32px;line-height:1;font-weight:700;letter-spacing:0.28em;color:${EMERALD_DARK};font-family:'Courier New',Courier,monospace;">
+                  <td align="center" style="background-color:#EFF6FF;border:1px solid ${BRAND_ACCENT};border-radius:12px;padding:18px 28px;">
+                    <span style="display:inline-block;font-size:32px;line-height:1;font-weight:700;letter-spacing:0.28em;color:${BRAND};font-family:'Courier New',Courier,monospace;">
                       ${safeCode}
                     </span>
                   </td>
@@ -95,7 +95,7 @@ export function buildVerificationEmailHtml(code: string): string {
           <tr>
             <td style="padding:8px 32px 0 32px;">
               <p style="margin:0;font-size:14px;line-height:1.6;color:${MUTED};text-align:center;">
-                Ce code est valable <strong style="color:${EMERALD_DARK};font-weight:600;">10&nbsp;minutes</strong>.
+                Ce code est valable <strong style="color:${BRAND};font-weight:600;">10&nbsp;minutes</strong>.
               </p>
             </td>
           </tr>

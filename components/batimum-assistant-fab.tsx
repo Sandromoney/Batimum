@@ -134,19 +134,19 @@ export function BatimumAssistantFab() {
           title="Assistant Batimum"
           aria-label="Ouvrir l'Assistant Batimum"
           className={cn(
-            "group assistant-fab-breathe fixed z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-[0_10px_28px_rgba(16,185,129,0.28)] outline-none transition-all duration-200",
+            "group assistant-fab-breathe fixed z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-[0_10px_28px_rgba(59, 130, 246,0.28)] outline-none transition-all duration-200",
             "bottom-[max(1.375rem,env(safe-area-inset-bottom))] right-[max(1.375rem,env(safe-area-inset-right))]",
-            "hover:scale-[1.04] hover:bg-emerald-700 hover:shadow-[0_14px_34px_rgba(16,185,129,0.36)]",
-            "focus-visible:ring-4 focus-visible:ring-emerald-500/25",
+            "hover:scale-[1.04] hover:bg-primary-hover hover:shadow-[0_14px_34px_rgba(59, 130, 246,0.36)]",
+            "focus-visible:ring-4 focus-visible:ring-accent/25",
             "sm:h-[58px] sm:w-[58px]",
-            quotaExhausted && "bg-emerald-600/55 hover:bg-emerald-600/65",
+            quotaExhausted && "bg-primary/55 hover:bg-primary/65",
           )}
         >
           <Bot className="h-6 w-6" strokeWidth={1.75} />
           {alertCount > 0 && !quotaExhausted ? (
             <span
               className={cn(
-                "absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-emerald-300 ring-2 ring-white",
+                "absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-white",
                 badgePulse && "assistant-fab-badge-pulse",
               )}
             />
@@ -160,7 +160,7 @@ export function BatimumAssistantFab() {
       {/* Panneau conservé monté pour garder historique + brouillon */}
       <div
         className={cn(
-          "fixed z-[70] flex flex-col overflow-hidden border border-emerald-100/80 bg-white shadow-[0_16px_48px_rgba(15,23,42,0.14)]",
+          "fixed z-[70] flex flex-col overflow-hidden border border-accent/80 bg-white shadow-[0_16px_48px_rgba(15,23,42,0.14)]",
           "bottom-0 right-0 h-[100dvh] w-full rounded-none",
           "sm:bottom-5 sm:right-5 sm:h-auto sm:max-h-[min(640px,calc(100vh-5.5rem))] sm:w-[min(460px,calc(100vw-1.5rem))] sm:rounded-[28px]",
           panelOpen
@@ -173,7 +173,7 @@ export function BatimumAssistantFab() {
       >
         <header className="flex items-start justify-between gap-3 border-b border-border/60 bg-[linear-gradient(135deg,#ffffff_0%,#ecfdf5_100%)] px-4 py-3.5">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white">
               <Bot className="h-4 w-4" strokeWidth={1.75} />
             </span>
             <div className="min-w-0">
@@ -189,7 +189,7 @@ export function BatimumAssistantFab() {
             <button
               type="button"
               onClick={() => setUiState("minimized")}
-              className="rounded-lg p-1.5 text-slate-400 outline-none transition-colors hover:bg-white hover:text-foreground focus-visible:ring-2 focus-visible:ring-emerald-500/30"
+              className="rounded-lg p-1.5 text-slate-400 outline-none transition-colors hover:bg-white hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/30"
               aria-label="Réduire l'Assistant Batimum"
             >
               <Minimize2 className="h-4 w-4" strokeWidth={1.75} />
@@ -197,7 +197,7 @@ export function BatimumAssistantFab() {
             <button
               type="button"
               onClick={() => setUiState("stashed")}
-              className="rounded-lg p-1.5 text-slate-400 outline-none transition-colors hover:bg-white hover:text-foreground focus-visible:ring-2 focus-visible:ring-emerald-500/30"
+              className="rounded-lg p-1.5 text-slate-400 outline-none transition-colors hover:bg-white hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/30"
               aria-label="Fermer l'Assistant Batimum"
             >
               <X className="h-4 w-4" strokeWidth={1.75} />

@@ -22,17 +22,17 @@ export function DevisColorPickerPanel({
   className,
 }: DevisColorPickerPanelProps) {
   const [hsv, setHsv] = useState(() => {
-    const parsed = normalizeHex(hex) ?? "#10B981";
+    const parsed = normalizeHex(hex) ?? "#3b82f6";
     const [h, s, v] = hexToHsv(parsed);
     return { h, s, v };
   });
-  const [hexInput, setHexInput] = useState(() => normalizeHex(hex) ?? "#10B981");
+  const [hexInput, setHexInput] = useState(() => normalizeHex(hex) ?? "#3b82f6");
   const svRef = useRef<HTMLDivElement>(null);
   const hueRef = useRef<HTMLDivElement>(null);
   const draggingSv = useRef(false);
   const draggingHue = useRef(false);
   const hsvRef = useRef(hsv);
-  const lastEmittedHexRef = useRef(normalizeHex(hex) ?? "#10B981");
+  const lastEmittedHexRef = useRef(normalizeHex(hex) ?? "#3b82f6");
   hsvRef.current = hsv;
 
   const emit = useCallback(

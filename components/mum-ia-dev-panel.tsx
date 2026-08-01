@@ -218,7 +218,7 @@ export function MumIaDevPanel({ technicalError }: MumIaDevPanelProps) {
 
       {testResult ? (
         <p
-          className={`text-xs ${testResult.ok ? "text-emerald-400" : "text-red-300"}`}
+          className={`text-xs ${testResult.ok ? "text-accent" : "text-red-300"}`}
         >
           {testResult.message}
         </p>

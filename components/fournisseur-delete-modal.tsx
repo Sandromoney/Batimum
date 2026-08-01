@@ -58,7 +58,7 @@ export function FournisseurDeleteModal({
               <li>MUM IA ne pourra plus utiliser ces tarifs.</li>
             </ul>
 
-            <div className="mt-4 rounded-xl border border-emerald-200/80 bg-emerald-50/50 p-3">
+            <div className="mt-4 rounded-xl border border-border/80 bg-accent/5/50 p-3">
               <p className="text-sm font-medium text-foreground">
                 Alternative plus sûre
               </p>

@@ -172,7 +172,7 @@ export default function PublicDevisSignaturePage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
         <Card className="max-w-lg space-y-4 p-8 text-center">
-          <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
+          <CheckCircle2 className="mx-auto h-10 w-10 text-accent" />
           <h1 className="text-xl font-semibold">Devis signé</h1>
           <p className="text-sm text-muted-foreground">
             Merci. Votre signature pour le devis <strong>{devis.numero}</strong> a

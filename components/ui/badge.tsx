@@ -7,13 +7,13 @@ const colors: Record<string, string> = {
   envoyee: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
   accepte: "bg-card-hover text-foreground ring-1 ring-border",
   signe:
-    "bg-emerald-500/15 text-[rgb(var(--color-success-text))] ring-1 ring-emerald-500/30",
+    "bg-success/15 text-success-foreground ring-1 ring-success/30",
   refuse:
     "bg-red-500/15 text-[rgb(var(--color-danger-text))] ring-1 ring-red-500/30",
   expire:
     "bg-orange-500/15 text-[rgb(var(--color-orange-text))] ring-1 ring-orange-500/30",
   archive: "bg-card-hover text-muted ring-1 ring-border",
-  payee: "bg-emerald-500/15 text-[rgb(var(--color-success-text))] ring-1 ring-emerald-500/30",
+  payee: "bg-success/15 text-success-foreground ring-1 ring-success/30",
   en_attente: "bg-card-hover text-muted ring-1 ring-border",
   en_retard:
     "bg-red-500/15 text-[rgb(var(--color-danger-text))] ring-1 ring-red-500/30",
@@ -25,7 +25,7 @@ const colors: Record<string, string> = {
   terminee: "bg-card-hover text-muted ring-1 ring-border",
   annulee: "bg-card-hover text-muted ring-1 ring-border",
   termine:
-    "bg-emerald-500/15 text-[rgb(var(--color-success-text))] ring-1 ring-emerald-500/30",
+    "bg-success/15 text-success-foreground ring-1 ring-success/30",
   suspendu: "bg-card-hover text-muted ring-1 ring-border",
   intervention: "bg-card-hover text-muted ring-1 ring-border",
   deplacement: "bg-card-hover text-muted ring-1 ring-border",

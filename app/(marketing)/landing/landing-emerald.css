@@ -2,31 +2,35 @@
    Scope : .landing-emerald uniquement — n'affecte pas l'app. */
 
 .landing-emerald {
-  --color-primary: 16 185 129;
-  --color-primary-hover: 5 150 105;
+  --color-primary: 17 17 17;
+  --color-primary-hover: 38 38 38;
   --color-primary-foreground: 255 255 255;
-  --color-foreground: 17 24 39;
-  --color-muted-foreground: 95 107 122;
-  --color-background: 248 250 248;
+  --color-foreground: 17 17 17;
+  --color-muted-foreground: 138 138 138;
+  --color-background: 255 255 255;
   --color-card: 255 255 255;
-  --color-card-hover: 255 255 255;
+  --color-card-hover: 250 250 250;
   --color-card-elevated: 255 255 255;
-  --color-border: 229 231 235;
-  --color-muted: 248 250 248;
+  --color-border: 229 229 229;
+  --color-muted: 250 250 250;
   --shadow-glow: none;
-  --shadow-card: 0 8px 24px rgba(15, 23, 42, 0.04);
-  --shadow-card-hover: 0 10px 28px rgba(15, 23, 42, 0.06);
-  --landing-bg: #f8faf8;
+  --shadow-card: 0 8px 24px rgba(17, 17, 17, 0.03);
+  --shadow-card-hover: 0 12px 28px rgba(17, 17, 17, 0.045);
+  --landing-bg: #ffffff;
   --landing-card: #ffffff;
-  --landing-bg-secondary: #f8faf8;
-  --landing-border: rgba(15, 23, 42, 0.06);
-  --landing-text: #111827;
-  --landing-text-muted: #64748b;
-  --landing-surface-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  --landing-bg-secondary: #fafafa;
+  --landing-border: rgba(17, 17, 17, 0.07);
+  --landing-text: #111111;
+  --landing-text-muted: #8a8a8a;
+  --landing-accent: #3b82f6;
+  --landing-accent-hover: #2563eb;
+  --landing-accent-soft: rgba(59, 130, 246, 0.08);
+  --landing-success: #22a06b;
+  --landing-surface-shadow: 0 8px 24px rgba(17, 17, 17, 0.03);
   --landing-card-radius: 18px;
-  background-color: #f8faf8;
+  background-color: #ffffff;
   background-image: none;
-  color: #111827;
+  color: #111111;
   scroll-padding-top: 76px;
   width: 100%;
   max-width: 100%;
@@ -69,18 +73,18 @@ html:has(.landing-emerald) body {
 .landing-emerald .landing-header-btn--primary,
 .landing-emerald .landing-top .landing-btn-primary,
 .landing-emerald .landing-btn-primary {
-  background: #10b981 !important;
+  background: #111111 !important;
   color: #ffffff !important;
-  box-shadow: 0 8px 18px rgba(16, 185, 129, 0.18) !important;
+  box-shadow: 0 8px 18px rgba(17, 17, 17, 0.18) !important;
 }
 
 .landing-emerald .landing-header-btn--primary:hover,
 .landing-emerald .landing-top .landing-btn-primary:hover,
 .landing-emerald .landing-btn-primary.landing-btn-interactive:hover,
 .landing-emerald .landing-hero-main-cta:hover {
-  background: #059669 !important;
+  background: #262626 !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.24) !important;
+  box-shadow: 0 10px 24px rgba(17, 17, 17, 0.24) !important;
 }
 
 /* Hero scene — cartes Terrain / Bureau */
@@ -151,45 +155,45 @@ html:has(.landing-emerald) body {
 
 /* Stat cards */
 .landing-emerald .landing-stat-card__accent {
-  background: #10b981;
+  background: #3b82f6;
 }
 
 /* Badges */
 .landing-emerald .landing-badge {
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.18);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(17, 17, 17, 0.18);
   color: #0f766e;
   box-shadow: none;
 }
 
 .landing-emerald .landing-badge:hover {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.24);
+  background: rgba(17, 17, 17, 0.12);
+  border-color: rgba(17, 17, 17, 0.24);
   box-shadow: none;
 }
 
 .landing-emerald .landing-badge--solid {
-  background: #10b981;
-  border-color: rgba(16, 185, 129, 0.35);
+  background: #111111;
+  border-color: rgba(17, 17, 17, 0.35);
   color: #ffffff;
   box-shadow: var(--landing-surface-shadow);
 }
 
 .landing-emerald .landing-badge--solid:hover {
-  background: #059669;
+  background: #262626;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .landing-emerald .landing-badge--accent {
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.18);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(17, 17, 17, 0.18);
   color: #0f766e;
   box-shadow: none;
 }
 
 .landing-emerald .landing-badge--accent:hover {
   color: #047857;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(17, 17, 17, 0.12);
   box-shadow: none;
 }
 
@@ -209,13 +213,13 @@ html:has(.landing-emerald) body {
 
 /* IA demo flow */
 .landing-emerald .landing-ia-flow__arrow--lit .landing-ia-flow__arrow-icon {
-  color: #10b981;
+  color: #111111;
   filter: none;
 }
 
 .landing-emerald .landing-ia-flow__badge--done,
 .landing-emerald .landing-ia-flow__badge--active {
-  background: #10b981;
+  background: #111111;
   box-shadow: none;
 }
 
@@ -229,7 +233,7 @@ html:has(.landing-emerald) body {
     color: #9ca3af;
   }
   100% {
-    color: #10b981;
+    color: #111111;
     transform: translateY(0);
     filter: none;
   }
@@ -246,13 +250,13 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-ia-flow__arrow--lit .landing-ia-flow__arrow-icon {
-  color: #10b981;
+  color: #111111;
   filter: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .landing-emerald .landing-ia-flow__arrow--lit .landing-ia-flow__arrow-icon {
-    color: #10b981;
+    color: #111111;
   }
 }
 
@@ -290,13 +294,13 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .landing-pricing-trial-label,
 .landing-emerald .landing-pricing-savings-badge {
-  border: 1px solid rgba(16, 185, 129, 0.18);
-  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(17, 17, 17, 0.18);
+  background: rgba(59, 130, 246, 0.08);
   color: #0f766e;
 }
 
 .landing-emerald .landing-pricing-card--yearly {
-  border-color: rgba(16, 185, 129, 0.22) !important;
+  border-color: rgba(17, 17, 17, 0.22) !important;
   box-shadow: var(--landing-surface-shadow) !important;
 }
 
@@ -340,29 +344,29 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-pricing-feature__check {
-  background: rgba(16, 185, 129, 0.08) !important;
-  color: #10b981 !important;
-  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.18);
+  background: rgba(59, 130, 246, 0.08) !important;
+  color: #111111 !important;
+  box-shadow: 0 0 0 1px rgba(17, 17, 17, 0.18);
 }
 
 .landing-emerald .landing-billing-switch__thumb {
-  background: #10b981;
+  background: #111111;
 }
 
 /* Liens */
 .landing-emerald a.text-primary,
 .landing-emerald .text-primary {
-  color: #10b981;
+  color: #111111;
 }
 
 .landing-emerald a.text-primary:hover,
 .landing-emerald a.hover\:text-primary-hover:hover {
-  color: #059669;
+  color: #262626;
 }
 
 /* Cartes interactives — bordure active au survol */
 .landing-emerald .landing-card-interactive:hover {
-  border-color: rgba(16, 185, 129, 0.25);
+  border-color: rgba(17, 17, 17, 0.25);
 }
 
 /* ——— Comparatif premium ——— */
@@ -401,7 +405,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-comparison__th-batimum {
-  background: rgba(16, 185, 129, 0.06) !important;
+  background: rgba(17, 17, 17, 0.06) !important;
   border-left: 1px solid rgba(15, 23, 42, 0.06) !important;
   color: #0f766e !important;
   box-shadow: none !important;
@@ -441,7 +445,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-comparison__cell-batimum {
-  background: rgba(16, 185, 129, 0.06) !important;
+  background: rgba(17, 17, 17, 0.06) !important;
   border-left: 1px solid rgba(15, 23, 42, 0.06) !important;
   box-shadow: none !important;
 }
@@ -460,7 +464,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-comparison__icon--yes {
-  color: #10b981 !important;
+  color: #111111 !important;
   opacity: 1;
 }
 
@@ -479,7 +483,7 @@ html:has(.landing-emerald) body {
   }
 
   .landing-emerald .landing-comparison__row:hover .landing-comparison__cell-batimum {
-    background: rgba(16, 185, 129, 0.08) !important;
+    background: rgba(59, 130, 246, 0.08) !important;
     border-left-color: rgba(15, 23, 42, 0.06) !important;
     box-shadow: none !important;
   }
@@ -518,7 +522,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .hover\:border-white\/\[0\.12\]:hover {
-  border-color: rgba(16, 185, 129, 0.22) !important;
+  border-color: rgba(17, 17, 17, 0.22) !important;
 }
 
 .landing-emerald .text-white,
@@ -545,8 +549,8 @@ html:has(.landing-emerald) body {
   width: fit-content;
   padding: 0.2rem 0.55rem;
   border-radius: 9999px;
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.18);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(17, 17, 17, 0.18);
   color: #0f766e !important;
 }
 
@@ -562,16 +566,16 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald > footer a:hover {
-  color: #059669 !important;
+  color: #262626 !important;
 }
 
 .landing-emerald .landing-hero-scene__line-track,
 .landing-emerald .landing-hero-scene__line {
-  stroke: #10b981;
+  stroke: #111111;
 }
 
 .landing-emerald .landing-hero-scene__node {
-  fill: #10b981;
+  fill: #111111;
 }
 
 .landing-emerald #faq .bg-\[\#0D0D0D\] {
@@ -582,8 +586,8 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald #faq .rounded-full.border {
-  background: rgba(16, 185, 129, 0.08) !important;
-  border-color: rgba(16, 185, 129, 0.18) !important;
+  background: rgba(59, 130, 246, 0.08) !important;
+  border-color: rgba(17, 17, 17, 0.18) !important;
 }
 
 .landing-emerald .landing-diagnostic__option {
@@ -741,7 +745,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-header-employee-link:hover {
-  color: #10b981;
+  color: #111111;
 }
 
 .landing-emerald .landing-nav__mobile-toggle {
@@ -840,11 +844,11 @@ html:has(.landing-emerald) body {
 .landing-emerald .landing-btn-magnetic:hover,
 .landing-emerald .landing-pricing-cta:hover {
   transform: translateY(-1px) !important;
-  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.24) !important;
+  box-shadow: 0 10px 24px rgba(17, 17, 17, 0.24) !important;
 }
 
 .landing-emerald .landing-pricing-cta {
-  box-shadow: 0 8px 18px rgba(16, 185, 129, 0.18) !important;
+  box-shadow: 0 8px 18px rgba(17, 17, 17, 0.18) !important;
 }
 
 /* Cartes IA & diagnostic */
@@ -934,7 +938,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-nav__trigger--open {
-  color: #10b981;
+  color: #111111;
 }
 
 @media (max-width: 1279px) {
@@ -970,7 +974,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-testimonials-carousel__viewport:focus-visible {
-  outline: 2px solid #10b981;
+  outline: 2px solid #111111;
   outline-offset: 4px;
   border-radius: 12px;
 }
@@ -1010,13 +1014,13 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-testimonials-carousel__nav:hover {
-  border-color: rgba(16, 185, 129, 0.28);
-  color: #10b981;
+  border-color: rgba(17, 17, 17, 0.28);
+  color: #111111;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
 }
 
 .landing-emerald .landing-testimonials-carousel__nav:focus-visible {
-  outline: 2px solid #10b981;
+  outline: 2px solid #111111;
   outline-offset: 2px;
 }
 
@@ -1026,7 +1030,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-testimonials-carousel__dot:focus-visible {
-  outline: 2px solid #10b981;
+  outline: 2px solid #111111;
   outline-offset: 2px;
 }
 
@@ -1127,7 +1131,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .landing-testimonials-conclusion {
   border-radius: 28px;
-  border: 1px solid rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(17, 17, 17, 0.18);
   background: #ffffff;
   padding: 2rem 1.5rem;
   box-shadow:
@@ -1218,8 +1222,8 @@ html:has(.landing-emerald) body {
 .landing-emerald .landing-testimonials-conclusion__cta-glow {
   background: radial-gradient(
     ellipse 80% 70% at 50% 50%,
-    rgba(16, 185, 129, 0.28) 0%,
-    rgba(16, 185, 129, 0.08) 45%,
+    rgba(17, 17, 17, 0.28) 0%,
+    rgba(17, 17, 17, 0.08) 45%,
     transparent 72%
   );
   transform: scale(1.35);
@@ -1229,7 +1233,7 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .landing-testimonials-conclusion__cta-primary:focus-visible,
 .landing-emerald .landing-testimonials-conclusion__replay:focus-visible {
-  outline: 2px solid #10b981;
+  outline: 2px solid #111111;
   outline-offset: 2px;
 }
 

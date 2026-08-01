@@ -1219,7 +1219,7 @@ export function BatimumAssistantChat({
             className={cn(
               "mb-0.5 rounded-xl p-2 transition-colors",
               listening
-                ? "bg-emerald-50 text-emerald-700"
+                ? "bg-accent/5 text-accent-hover"
                 : "text-slate-400 hover:bg-slate-50 hover:text-foreground",
             )}
             aria-label="Dicter"
@@ -1238,7 +1238,7 @@ export function BatimumAssistantChat({
               className={cn(
                 "mb-0.5 rounded-xl p-2 transition-colors",
                 voiceReply
-                  ? "bg-emerald-50 text-emerald-700"
+                  ? "bg-accent/5 text-accent-hover"
                   : "text-slate-400 hover:bg-slate-50 hover:text-foreground",
               )}
               aria-label="Réponse vocale"

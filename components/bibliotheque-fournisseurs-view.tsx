@@ -181,7 +181,7 @@ export function BibliothequeFournisseursView({
       />
 
       {notice ? (
-        <div className="rounded-xl border border-emerald-200/80 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-950">
+        <div className="rounded-xl border border-border/80 bg-accent/5 px-4 py-2.5 text-sm text-accent">
           {notice}
         </div>
       ) : null}
@@ -245,7 +245,7 @@ export function BibliothequeFournisseursView({
                           className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
                             archived
                               ? "border-border text-muted-foreground"
-                              : "border-emerald-200 text-emerald-700"
+                              : "border-border text-accent-hover"
                           }`}
                         >
                           {getFournisseurStatusLabel(item)}
