@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { AuthCloseButton } from "@/components/marketing/auth-close-button";
 import { Card } from "@/components/ui/card";
 import {
   ONBOARDING_STEP_LABELS,
@@ -28,15 +29,18 @@ export function OnboardingShell({
   maxWidthClassName = "max-w-xl",
 }: OnboardingShellProps) {
   return (
-    <main className="flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground">
-      <section className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center px-6 py-10">
+    <main className="relative flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground">
+      <div className="auth-close-bar">
+        <AuthCloseButton />
+      </div>
+      <section className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center px-6 pb-10 pt-4">
         <Card className={cn("w-full", maxWidthClassName)}>
-          <Link href="/" className="mb-8 flex justify-center">
+          <Link href="/landing" className="mb-8 flex justify-center">
             <BrandLogo variant="marketing" showSubtitle={false} />
           </Link>
 
           <header className="mb-8">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#666666]">
               Inscription · Étape {step} sur {ONBOARDING_STEP_LABELS.length}
             </p>
             <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
@@ -54,7 +58,7 @@ export function OnboardingShell({
                     <span
                       className={cn(
                         "h-1.5 rounded-full transition-colors",
-                        completed || active ? "bg-primary" : "bg-border",
+                        completed || active ? "bg-[#3b82f6]" : "bg-border",
                       )}
                       title={label}
                     />
@@ -62,7 +66,7 @@ export function OnboardingShell({
                       className={cn(
                         "hidden truncate text-[10px] font-medium sm:block",
                         active
-                          ? "text-primary"
+                          ? "text-[#3b82f6]"
                           : completed
                             ? "text-foreground"
                             : "text-muted-foreground",

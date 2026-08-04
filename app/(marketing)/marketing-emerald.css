@@ -1,28 +1,27 @@
-/* Batimum — thème clair premium (auth, onboarding, légal)
-   Scope : .marketing-emerald — pages marketing hors app connectée. */
+/* Batimum — thème clair premium B&W + accent bleu (auth, onboarding, légal)
+   Aligné sur la landing : blanc / noir / gris clair.
+   Bleu Batimum (#3b82f6) uniquement en accent discret. */
 
 .marketing-emerald {
-  --color-primary: 17 17 17;
-  --color-primary-hover: 38 38 38;
+  --color-primary: 23 23 23;
+  --color-primary-hover: 0 0 0;
   --color-primary-foreground: 255 255 255;
-  --color-accent: 59 130 246;
-  --color-accent-hover: 37 99 235;
   --color-foreground: 17 17 17;
-  --color-muted-foreground: 138 138 138;
+  --color-muted-foreground: 102 102 102;
   --color-background: 255 255 255;
   --color-card: 255 255 255;
-  --color-card-hover: 250 250 250;
+  --color-card-hover: 247 247 248;
   --color-card-elevated: 255 255 255;
-  --color-border: 229 229 229;
-  --color-muted: 138 138 138;
-  --color-success: 34 160 107;
-  --color-success-text: 21 128 61;
-  --shadow-glow: 0 8px 24px rgba(17, 17, 17, 0.08);
-  --shadow-card: 0 12px 32px rgba(17, 17, 17, 0.03);
-  --shadow-card-hover: 0 14px 36px rgba(17, 17, 17, 0.045);
+  --color-border: 231 231 231;
+  --color-muted: 102 102 102;
+  --shadow-glow: none;
+  --shadow-card: 0 8px 24px rgba(17, 17, 17, 0.04);
+  --shadow-card-hover: 0 12px 28px rgba(17, 17, 17, 0.07);
   --shadow-input: none;
   --body-gradient: none;
   --bm-accent: #3b82f6;
+  --bm-accent-hover: #2563eb;
+  --bm-accent-soft: rgba(59, 130, 246, 0.1);
   background-color: #ffffff;
   background-image: none;
   color: #111111;
@@ -37,13 +36,76 @@
   color: inherit;
 }
 
+/* ——— Bouton Fermer (auth) ——— */
+
+.marketing-emerald .auth-close-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  padding: 0.85rem 1rem 0.35rem;
+  background: transparent;
+  pointer-events: none;
+}
+
+.marketing-emerald .auth-close-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.75rem;
+  margin: 0;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: 10px;
+  background: transparent;
+  color: #111111;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.marketing-emerald .auth-close-btn__icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.marketing-emerald .auth-close-btn:hover {
+  background: #f6f7f9;
+  border-color: rgba(17, 17, 17, 0.14);
+}
+
+.marketing-emerald .auth-close-btn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .marketing-emerald .auth-close-bar {
+    padding: 0.75rem 0.75rem 0.25rem;
+  }
+
+  .marketing-emerald .auth-close-btn {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.85rem;
+  }
+}
+
 /* ——— Cartes ——— */
 
 .marketing-emerald .btp-card {
   background: #ffffff !important;
-  border: 1px solid rgba(15, 23, 42, 0.06) !important;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05) !important;
-  border-radius: 20px !important;
+  border: 1px solid rgba(17, 17, 17, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(17, 17, 17, 0.04) !important;
+  border-radius: 16px !important;
 }
 
 /* ——— Typographie ——— */
@@ -51,22 +113,22 @@
 .marketing-emerald h1,
 .marketing-emerald h2,
 .marketing-emerald h3 {
-  color: #0f172a;
+  color: #111111;
 }
 
 .marketing-emerald .text-foreground {
-  color: #0f172a !important;
+  color: #111111 !important;
 }
 
 .marketing-emerald .text-muted-foreground {
-  color: #64748b !important;
+  color: #666666 !important;
 }
 
 /* ——— Labels ——— */
 
 .marketing-emerald label {
-  letter-spacing: 0.08em;
-  color: #64748b !important;
+  letter-spacing: 0.04em;
+  color: #666666 !important;
 }
 
 /* ——— Inputs ——— */
@@ -75,15 +137,15 @@
 .marketing-emerald textarea,
 .marketing-emerald select {
   background: #ffffff !important;
-  border: 1px solid rgba(15, 23, 42, 0.1) !important;
-  color: #0f172a !important;
-  border-radius: 12px !important;
+  border: 1px solid rgba(17, 17, 17, 0.12) !important;
+  color: #111111 !important;
+  border-radius: 10px !important;
   box-shadow: none !important;
 }
 
 .marketing-emerald input::placeholder,
 .marketing-emerald textarea::placeholder {
-  color: #94a3b8 !important;
+  color: #8a8a8a !important;
 }
 
 .marketing-emerald input:not([type="checkbox"]):not([type="radio"]):focus,
@@ -91,7 +153,7 @@
 .marketing-emerald select:focus {
   border-color: rgba(59, 130, 246, 0.45) !important;
   outline: none;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
 }
 
 .marketing-emerald input[type="checkbox"] {
@@ -101,76 +163,76 @@
 /* ——— Boutons ——— */
 
 .marketing-emerald .btp-btn {
-  border-radius: 12px !important;
+  border-radius: 10px !important;
 }
 
 .marketing-emerald .btp-btn.bg-primary {
-  background-color: #111111 !important;
+  background-color: #171717 !important;
   color: #ffffff !important;
-  box-shadow: 0 8px 18px rgba(17, 17, 17, 0.1) !important;
+  box-shadow: none !important;
 }
 
 .marketing-emerald .btp-btn.bg-primary:hover:not(:disabled) {
-  background-color: #262626 !important;
+  background-color: #000000 !important;
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(17, 17, 17, 0.14) !important;
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.12) !important;
 }
 
 .marketing-emerald .btp-btn.border-border\/80,
 .marketing-emerald .btp-btn[class*="border-border"] {
   background: #ffffff !important;
-  border: 1px solid rgba(15, 23, 42, 0.1) !important;
-  color: #0f172a !important;
+  border: 1px solid rgba(17, 17, 17, 0.12) !important;
+  color: #111111 !important;
   box-shadow: none !important;
 }
 
 .marketing-emerald .btp-btn.border-border\/80:hover:not(:disabled),
 .marketing-emerald .btp-btn[class*="border-border"]:hover:not(:disabled) {
-  background: #fafafa !important;
-  border-color: rgba(15, 23, 42, 0.14) !important;
+  background: #f6f7f9 !important;
+  border-color: rgba(17, 17, 17, 0.18) !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+  box-shadow: 0 4px 12px rgba(17, 17, 17, 0.05) !important;
 }
 
 /* ——— Liens ——— */
 
 .marketing-emerald a.text-primary,
 .marketing-emerald .text-primary {
-  color: #3b82f6 !important;
+  color: #111111 !important;
 }
 
 .marketing-emerald a.text-primary:hover,
 .marketing-emerald a.hover\:text-primary-hover:hover,
 .marketing-emerald a.font-medium.text-primary:hover {
-  color: #2563eb !important;
+  color: #000000 !important;
 }
 
 /* ——— Header & footer marketing ——— */
 
 .marketing-emerald .marketing-header {
-  background: #fafafa;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  background: #ffffff;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.06);
 }
 
 .marketing-emerald .marketing-header .landing-btn-secondary {
   background: #ffffff !important;
-  border: 1px solid rgba(15, 23, 42, 0.1) !important;
-  color: #0f172a !important;
+  border: 1px solid rgba(17, 17, 17, 0.12) !important;
+  color: #111111 !important;
   box-shadow: none !important;
-  border-radius: 12px !important;
+  border-radius: 10px !important;
 }
 
 .marketing-emerald .marketing-header .landing-btn-secondary:hover {
-  background: #fafafa !important;
+  background: #f6f7f9 !important;
 }
 
 .marketing-emerald .marketing-footer {
-  background: #fafafa;
-  border-top: 1px solid rgba(15, 23, 42, 0.06) !important;
+  background: #ffffff;
+  border-top: 1px solid rgba(17, 17, 17, 0.06) !important;
 }
 
 .marketing-emerald .marketing-footer a {
-  color: #64748b !important;
+  color: #666666 !important;
 }
 
 .marketing-emerald .marketing-footer a:hover {
@@ -180,20 +242,22 @@
 /* ——— Pages légales ——— */
 
 .marketing-emerald .marketing-legal article {
-  color: #64748b;
+  color: #666666;
 }
 
 .marketing-emerald .marketing-legal h1,
 .marketing-emerald .marketing-legal h2 {
-  color: #0f172a;
+  color: #111111;
 }
 
 .marketing-emerald .marketing-legal a {
   color: #111111;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .marketing-emerald .marketing-legal a:hover {
-  color: #262626;
+  color: #000000;
 }
 
 /* ——— Alertes & séparateurs ——— */
@@ -210,14 +274,14 @@
 
 .marketing-emerald .border-border\/70,
 .marketing-emerald .border-t.border-border\/70 {
-  border-color: rgba(15, 23, 42, 0.08) !important;
+  border-color: rgba(17, 17, 17, 0.08) !important;
 }
 
 .marketing-emerald .bg-card.px-3 {
   background: #ffffff !important;
 }
 
-/* ——— Logo auth (même rendu que landing header) ——— */
+/* ——— Logo auth ——— */
 
 .marketing-emerald .logo-topbar__img {
   width: 160px;
@@ -234,46 +298,53 @@
 /* ——— Onboarding : indicateur d'étapes ——— */
 
 .marketing-emerald .marketing-onboarding-progress {
-  background: rgba(15, 23, 42, 0.08);
+  background: rgba(17, 17, 17, 0.08);
 }
 
 .marketing-emerald .marketing-onboarding-progress__fill {
-  background: #111111;
+  background: #3b82f6;
 }
 
-/* ——— Messages de succès ——— */
+/* ——— Messages de succès (accent bleu discret) ——— */
 
 .marketing-emerald .border-emerald-500\/30.bg-emerald-500\/10 {
-  border-color: rgba(16, 185, 129, 0.25) !important;
-  background: rgba(16, 185, 129, 0.08) !important;
+  border-color: rgba(59, 130, 246, 0.22) !important;
+  background: rgba(59, 130, 246, 0.08) !important;
 }
 
-.marketing-emerald .text-emerald-200 {
-  color: #047857 !important;
+.marketing-emerald .text-emerald-200,
+.marketing-emerald .text-emerald-700 {
+  color: #1d4ed8 !important;
 }
 
 /* ——— CTA inline (pages OAuth) ——— */
 
 .marketing-emerald a.rounded-2xl.bg-primary {
-  border-radius: 12px !important;
-  background: #111111 !important;
-  box-shadow: 0 8px 18px rgba(17, 17, 17, 0.1) !important;
+  border-radius: 10px !important;
+  background: #171717 !important;
+  box-shadow: none !important;
 }
 
 .marketing-emerald a.rounded-2xl.bg-primary:hover {
-  background: #262626 !important;
+  background: #000000 !important;
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(17, 17, 17, 0.14) !important;
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.12) !important;
 }
 
-/* ——— Auth split (connexion / inscription) ——— */
+/* ——— Auth split ——— */
 
 .marketing-emerald .auth-split {
-  background: #fafafa;
+  background: #ffffff;
+  position: relative;
 }
 
 .marketing-emerald .auth-split__form {
-  background: #fafafa;
+  background: #ffffff;
+}
+
+.marketing-emerald .auth-split__panel {
+  background: #f6f7f9 !important;
+  border-left-color: rgba(17, 17, 17, 0.06) !important;
 }
 
 @keyframes authMarketingCardIn {
@@ -290,6 +361,9 @@
 .marketing-emerald .auth-marketing-card {
   animation: authMarketingCardIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: var(--card-delay, 0ms);
+  border-color: rgba(17, 17, 17, 0.06) !important;
+  box-shadow: 0 8px 24px rgba(17, 17, 17, 0.04) !important;
+  border-radius: 16px !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

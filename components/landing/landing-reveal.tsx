@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useInView } from "@/lib/hooks/use-in-view";
 import { cn } from "@/lib/utils";
+import { useLandingExperience } from "@/components/landing/landing-experience";
 
 type RevealDirection = "up" | "left" | "right";
 type RevealVariant = "default" | "title" | "body";
@@ -42,7 +43,9 @@ export function LandingReveal({
   glow = false,
   as: Component = "div",
 }: LandingRevealProps) {
+  const { restore } = useLandingExperience();
   const { ref, inView } = useInView({ once: true, threshold: 0.1 });
+  const visible = restore || inView;
 
   return (
     <Component
@@ -52,12 +55,12 @@ export function LandingReveal({
         variant === "default" && directionClass[direction],
         variantClass[variant],
         glow && "landing-reveal--glow",
-        inView && "landing-reveal--visible",
+        visible && "landing-reveal--visible",
         className,
       )}
       style={
         {
-          "--landing-reveal-delay": `${delay}ms`,
+          "--landing-reveal-delay": restore ? "0ms" : `${delay}ms`,
         } as CSSProperties
       }
     >
@@ -77,14 +80,16 @@ export function LandingRevealStagger({
   className,
   as: Component = "div",
 }: LandingRevealStaggerProps) {
+  const { restore } = useLandingExperience();
   const { ref, inView } = useInView({ threshold: 0.08, once: true });
+  const visible = restore || inView;
 
   return (
     <Component
       ref={ref}
       className={cn(
         "landing-reveal-stagger",
-        inView && "landing-reveal-stagger--visible",
+        visible && "landing-reveal-stagger--visible",
         className,
       )}
     >

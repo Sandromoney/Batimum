@@ -10,6 +10,7 @@ import {
   type LandingNavItem,
   type LandingNavMenu,
 } from "@/lib/landing-nav";
+import { markLandingPastIntro } from "@/components/landing/landing-experience";
 import { cn } from "@/lib/utils";
 
 type LandingNavMenusProps = {
@@ -17,7 +18,7 @@ type LandingNavMenusProps = {
 };
 
 const navTriggerClass =
-  "landing-nav__trigger inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-[#0f172a] transition-colors hover:bg-black/[0.03]";
+  "landing-nav__trigger inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-sm font-medium text-[#111111] transition-colors hover:bg-black/[0.03]";
 
 function DropdownPanel({
   menu,
@@ -63,19 +64,19 @@ function DropdownLink({
       <li>
         <Link
           href={item.href}
-          className="landing-nav-dropdown__link group flex rounded-2xl px-3 py-2.5 no-underline transition-colors hover:bg-[#f8faf8]"
+          className="landing-nav-dropdown__link group flex rounded-2xl px-3 py-2.5 no-underline transition-colors hover:bg-[#f7f7f8]"
           onClick={(event) => {
             if (onNavigate(item.href)) event.preventDefault();
           }}
         >
-          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(15,23,42,0.06)] bg-white text-[#3b82f6] shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(17,17,17,0.08)] bg-white text-[#3b82f6] shadow-[0_2px_8px_rgba(17,17,17,0.04)]">
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
           <span className="landing-nav-dropdown__link-text min-w-0">
-            <span className="block text-sm font-medium text-[#0f172a] group-hover:text-[#3b82f6]">
+            <span className="block text-sm font-medium text-[#111111] group-hover:text-[#3b82f6]">
               {item.label}
             </span>
-            <span className="landing-nav-dropdown__desc mt-0.5 block text-xs text-[#64748b]">
+            <span className="landing-nav-dropdown__desc mt-0.5 block text-xs text-[#666666]">
               {item.description}
             </span>
           </span>
@@ -88,19 +89,19 @@ function DropdownLink({
     <li>
       <Link
         href={item.href}
-        className="flex gap-3 rounded-xl px-2 py-2.5 no-underline hover:bg-[#f8faf8]"
+        className="flex gap-3 rounded-xl px-2 py-2.5 no-underline hover:bg-[#f7f7f8]"
         onClick={(event) => {
           if (onNavigate(item.href)) event.preventDefault();
         }}
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f8faf8] text-[#3b82f6]">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f6f7f9] text-[#3b82f6]">
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
         </span>
         <span>
-          <span className="block text-sm font-medium text-[#0f172a]">
+          <span className="block text-sm font-medium text-[#111111]">
             {item.label}
           </span>
-          <span className="mt-0.5 block text-xs leading-5 text-[#64748b]">
+          <span className="mt-0.5 block text-xs leading-5 text-[#666666]">
             {item.description}
           </span>
         </span>
@@ -138,7 +139,21 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
       const target = document.getElementById(hash);
       if (!target) return false;
 
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Clic volontaire vers une ancre : libérer le pin cinéma
+      // (Hero / post-Hero / hub) pour atteindre la section demandée.
+      markLandingPastIntro();
+      window.dispatchEvent(
+        new CustomEvent("batimum:landing-go-section", { detail: { id: hash } }),
+      );
+
+      window.requestAnimationFrame(() => {
+        window.setTimeout(() => {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 60);
+        window.setTimeout(() => {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 280);
+      });
       closeMenus();
       closeMobile();
       return true;
@@ -226,9 +241,10 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
                 {menu.label}
                 <ChevronDown
                   className={cn(
-                    "h-3.5 w-3.5 text-[#64748b] transition-transform duration-200",
-                    isOpen && "rotate-180",
+                    "landing-nav__chevron h-3 w-3 shrink-0 text-[#8a8a8a] transition-transform duration-200 ease-out",
+                    isOpen && "rotate-180 text-[#111111]",
                   )}
+                  strokeWidth={2.25}
                   aria-hidden="true"
                 />
               </button>
