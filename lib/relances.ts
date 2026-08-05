@@ -38,9 +38,9 @@ import {
 } from "@/lib/email-provider";
 import { RELANCE_NIVEAU_LABELS } from "@/lib/facture-relances-auto";
 import { markFactureEnvoyee, markFactureRelancee } from "@/lib/facture-statut";
+import { wrapCompanyMessageAsBatimumHtml } from "@/lib/email/batimum-transactional-templates";
 import { formatCurrency, generateId } from "@/lib/utils";
 import {
-  buildDevisSignatureHtmlBlock,
   buildDevisSignaturePlainTextBlock,
 } from "@/lib/devis-signature-url";
 
@@ -207,6 +207,17 @@ Consultez le devis dans Batimum pour le suivi commercial.
 
 Cordialement,
 Batimum`,
+    html: wrapCompanyMessageAsBatimumHtml({
+      title: `Devis ${devis.numero} refusé`,
+      preheader: `Devis ${devis.numero} refusé par le client`,
+      message: `Bonjour,
+
+Le client ${clientName} a refusé le devis ${devis.numero} (${devis.titre}).${
+        motif ? `\n\nMotif indiqué : ${motif}` : ""
+      }
+
+Consultez le devis dans Batimum pour le suivi commercial.`,
+    }),
   };
 }
 
@@ -242,7 +253,7 @@ export function buildDevisSignedCompanyEmail({
 
   return {
     destinataire: parametres.email ?? "",
-    objet: `Devis ${devis.numero} signé par ${signedBy}`,
+    objet: `Devis signé : ${devis.numero}`,
     message: `Bonjour,
 
 Le client ${clientName} a signé électroniquement le devis ${devis.numero} (${devis.titre}).
@@ -256,6 +267,18 @@ Consultez le devis dans Batimum pour le suivi commercial.
 
 Cordialement,
 Batimum`,
+    html: wrapCompanyMessageAsBatimumHtml({
+      title: `Devis signé : ${devis.numero}`,
+      preheader: `Devis ${devis.numero} signé`,
+      message: `Bonjour,
+
+Le client ${clientName} a signé électroniquement le devis ${devis.numero} (${devis.titre}).
+
+Signataire : ${signedBy}
+Date : ${devis.signedAt ? new Date(devis.signedAt).toLocaleString("fr-FR") : "—"}
+
+Veuillez trouver le devis signé en pièce jointe.`,
+    }),
   };
 }
 
@@ -271,11 +294,10 @@ export function buildDevisSignedClientEmail({
   signedBy: string;
 }): ReminderEmailPreview {
   const clientName = getClientDisplayName(client);
-  const entreprise = parametres.entreprise;
 
   return {
     destinataire: client?.email ?? "",
-    objet: `Copie de votre devis signé ${devis.numero} — ${entreprise}`,
+    objet: `Devis signé : ${devis.numero}`,
     message: `Bonjour ${clientName},
 
 Merci d'avoir signé électroniquement le devis ${devis.numero} pour ${devis.titre}.
@@ -286,6 +308,20 @@ Veuillez trouver en pièce jointe la copie du devis signé.
 
 Cordialement,
 ${appendSignatureEmail(parametres)}`,
+    html: wrapCompanyMessageAsBatimumHtml({
+      title: `Devis signé : ${devis.numero}`,
+      preheader: `Copie de votre devis signé ${devis.numero}`,
+      message: `Bonjour ${clientName},
+
+Merci d'avoir signé électroniquement le devis ${devis.numero} pour ${devis.titre}.
+
+Signataire : ${signedBy}
+
+Veuillez trouver en pièce jointe la copie du devis signé.
+
+Cordialement,
+${appendSignatureEmail(parametres)}`,
+    }),
   };
 }
 
@@ -366,7 +402,6 @@ export function buildDevisClientSendEmail({
   signatureUrl: string;
 }): DevisEmailPayload {
   const clientName = getClientDisplayName(client);
-  const entreprise = parametres.entreprise;
 
   const message = appendCoordonneesBancairesToText(
     `Bonjour ${clientName},
@@ -384,23 +419,27 @@ ${appendSignatureEmail(parametres)}`,
     parametres,
   );
 
-  const signatureBlock = buildDevisSignatureHtmlBlock(signatureUrl);
+  const html = wrapCompanyMessageAsBatimumHtml({
+    title: "Votre devis est prêt",
+    preheader: `Devis ${devis.numero}`,
+    message: `Bonjour ${clientName},
 
-  const html = `<!DOCTYPE html>
-<html lang="fr">
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;">
-  <p>Bonjour ${clientName},</p>
-  <p>Veuillez trouver ci-joint le devis <strong>${devis.numero}</strong> pour ${devis.titre}.</p>
-  <p>Le devis est joint à cet email au format PDF.</p>
-  ${signatureBlock}
-  <p>Nous restons à votre disposition pour toute question.</p>
-  <p>Cordialement,<br>${appendSignatureEmail(parametres).replace(/\n/g, "<br>")}</p>
-</body>
-</html>`;
+Veuillez trouver ci-joint le devis ${devis.numero} pour ${devis.titre}.
+
+Le devis est joint à cet email au format PDF.
+
+Nous restons à votre disposition pour toute question.
+
+Cordialement,
+${appendSignatureEmail(parametres)}`,
+    button: signatureUrl
+      ? { label: "Voir et signer le devis", href: signatureUrl }
+      : undefined,
+  });
 
   return {
     destinataire: client?.email ?? "",
-    objet: `Votre devis - ${entreprise}`,
+    objet: `Votre devis est prêt — ${devis.numero}`,
     message,
     html,
   };
@@ -495,19 +534,18 @@ Nous restons à votre disposition pour toute question ou précision.
 Cordialement,
 ${appendSignatureEmail(parametres)}`;
 
-  const signatureBlock = buildDevisSignatureHtmlBlock(signatureUrl);
-
   return {
     destinataire: client?.email ?? "",
     objet: sujet,
     message: messageBody,
-    html: `<!DOCTYPE html>
-<html lang="fr">
-<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;">
-  <p>${messageBody.replace(/\n/g, "<br>")}</p>
-  ${signatureUrl ? signatureBlock : ""}
-</body>
-</html>`,
+    html: wrapCompanyMessageAsBatimumHtml({
+      title: "Votre devis est prêt",
+      preheader: sujet,
+      message: messageBody,
+      button: signatureUrl
+        ? { label: "Voir et signer le devis", href: signatureUrl }
+        : undefined,
+    }),
   };
 }
 
@@ -559,10 +597,7 @@ export function buildFactureReminderEmail({
     manuelle: `Relance facture ${facture.numero} en attente de règlement`,
   };
 
-  return {
-    destinataire: client?.email ?? "",
-    objet: objetByNiveau[niveauRelance],
-    message: appendCoordonneesBancairesToText(
+  const message = appendCoordonneesBancairesToText(
       `Bonjour ${clientName},
 
 ${introByNiveau[niveauRelance]}
@@ -572,7 +607,23 @@ Nous vous remercions de bien vouloir procéder au paiement dans les meilleurs d�
 Cordialement,
 ${appendSignatureEmail(parametres)}`,
       parametres,
-    ),
+    );
+
+  return {
+    destinataire: client?.email ?? "",
+    objet:
+      niveauRelance === "manuelle"
+        ? `Nouvelle facture : ${facture.numero}`
+        : objetByNiveau[niveauRelance],
+    message,
+    html: wrapCompanyMessageAsBatimumHtml({
+      title:
+        niveauRelance === "manuelle"
+          ? `Nouvelle facture : ${facture.numero}`
+          : objetByNiveau[niveauRelance],
+      preheader: objetByNiveau[niveauRelance],
+      message,
+    }),
   };
 }
 

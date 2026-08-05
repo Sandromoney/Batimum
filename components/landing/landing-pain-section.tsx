@@ -33,8 +33,10 @@ const LAST_STEP = MICRO_LINES.length + CLOSING_LINES.length;
 const TRANSITION_S = 0.38;
 const WHEEL_THRESHOLD = 48;
 const TOUCH_THRESHOLD = 52;
-/** Delta sous lequel on considère le geste « levé » (fin d’inertie). */
-const LIFT_EPS = 6;
+/** Fin d’inertie trackpad : silence molette avant de réarmer. */
+const WHEEL_QUIET_MS = 520;
+/** À l’entrée depuis le Hero, consommer l’inertie résiduelle. */
+const ENTRY_CONSUME_MS = 900;
 /** Soft fade + depth toward hub gate (hors rythme inter-phrases). */
 const HANDOFF_FADE_MS = 680;
 
@@ -42,8 +44,12 @@ const STEP_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 type StoryPhase = "playing" | "finishedPinned" | "compact";
 type PinMode = "before" | "pin" | "after";
-/** armed = prêt · locked = animation en cours · waitLift = attendre fin d’inertie */
-type GesturePhase = "armed" | "locked" | "waitLift";
+/**
+ * armed = prêt pour un nouveau geste
+ * locked = animation d’apparition en cours (aucun avancement)
+ * waitQuiet = attendre fin d’inertie + silence molette
+ */
+type GesturePhase = "armed" | "locked" | "waitQuiet";
 
 function stepTransition(reduced: boolean | null) {
   return {
@@ -190,8 +196,11 @@ export function LandingPainSection() {
   const [pinMode, setPinMode] = useState<PinMode>("before");
   const pinModeRef = useRef<PinMode>("before");
 
-  const gesturePhaseRef = useRef<GesturePhase>("waitLift");
+  const gesturePhaseRef = useRef<GesturePhase>("waitQuiet");
   const deltaAccumRef = useRef(0);
+  const lastWheelAtRef = useRef(0);
+  const consumeUntilRef = useRef(0);
+  const quietTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handoffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const touchHandledRef = useRef(false);
@@ -207,30 +216,61 @@ export function LandingPainSection() {
     setActiveStep(clamped);
   }, []);
 
+  const clearQuietTimer = useCallback(() => {
+    if (quietTimerRef.current) {
+      clearTimeout(quietTimerRef.current);
+      quietTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleQuietRearm = useCallback(() => {
+    clearQuietTimer();
+    quietTimerRef.current = setTimeout(() => {
+      quietTimerRef.current = null;
+      if (gesturePhaseRef.current !== "waitQuiet") return;
+      if (Date.now() < consumeUntilRef.current) {
+        scheduleQuietRearm();
+        return;
+      }
+      if (Date.now() - lastWheelAtRef.current < WHEEL_QUIET_MS) {
+        scheduleQuietRearm();
+        return;
+      }
+      gesturePhaseRef.current = "armed";
+      deltaAccumRef.current = 0;
+    }, WHEEL_QUIET_MS);
+  }, [clearQuietTimer]);
+
   const lockForAnimation = useCallback(() => {
+    clearQuietTimer();
     gesturePhaseRef.current = "locked";
     deltaAccumRef.current = 0;
     unlockArmedRef.current = true;
-  }, []);
+  }, [clearQuietTimer]);
 
-  /** Appelé quand la phrase entrante a fini d’apparaître — aucun timer. */
+  /** Appelé quand la phrase entrante a fini d’apparaître — aucun timer arbitraire. */
   const onPhraseEnterComplete = useCallback(() => {
     if (!unlockArmedRef.current) return;
     if (gesturePhaseRef.current !== "locked") return;
     unlockArmedRef.current = false;
-    // Attendre la fin d’inertie du geste courant avant le prochain.
-    gesturePhaseRef.current = "waitLift";
+    // Consommer le reste du geste courant + attendre le silence molette.
+    gesturePhaseRef.current = "waitQuiet";
     deltaAccumRef.current = 0;
-  }, []);
+    lastWheelAtRef.current = Date.now();
+    scheduleQuietRearm();
+  }, [scheduleQuietRearm]);
 
-  const noteWheelActivity = useCallback((deltaY: number) => {
-    if (gesturePhaseRef.current !== "waitLift") return;
-    // Geste « levé » : deltas quasi nuls → prêt pour le prochain geste.
-    if (Math.abs(deltaY) <= LIFT_EPS) {
-      gesturePhaseRef.current = "armed";
+  const noteWheelActivity = useCallback(
+    (deltaY: number) => {
+      lastWheelAtRef.current = Date.now();
+      if (gesturePhaseRef.current !== "waitQuiet") return;
+      // Tout delta pendant waitQuiet = encore le même geste / inertie.
+      void deltaY;
       deltaAccumRef.current = 0;
-    }
-  }, []);
+      scheduleQuietRearm();
+    },
+    [scheduleQuietRearm],
+  );
 
   const exitToCompact = useCallback(() => {
     storyCompletedRef.current = true;
@@ -276,7 +316,7 @@ export function LandingPainSection() {
     handoffRef.current = true;
   }, [ready, pastIntro]);
 
-  /** Transition douce vers le hub — hold dernière phrase puis fade. */
+  /** Transition douce vers le hub — hold dernière phrase puis gate « Défilez ». */
   const beginCinematicHandoff = useCallback(() => {
     if (cinematicStartedRef.current || handoffRef.current) return;
     cinematicStartedRef.current = true;
@@ -285,7 +325,7 @@ export function LandingPainSection() {
     storyCompletedRef.current = true;
     setStoryCompleted(true);
 
-    const LAST_PHRASE_HOLD_MS = 720;
+    const LAST_PHRASE_HOLD_MS = 480;
     if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
     handoffTimerRef.current = setTimeout(() => {
       setCinematicOut(true);
@@ -317,7 +357,7 @@ export function LandingPainSection() {
       if (!playing) return "pass";
       if (pinModeRef.current !== "pin") return "pass";
       if (gesturePhaseRef.current === "locked") return "handled";
-      if (gesturePhaseRef.current === "waitLift") return "handled";
+      if (gesturePhaseRef.current === "waitQuiet") return "handled";
 
       const step = activeStepRef.current;
 
@@ -327,6 +367,7 @@ export function LandingPainSection() {
           lockForAnimation();
           return "handled";
         }
+        // Dernière phrase : un geste supplémentaire → hub « Défilez pour commencer »
         lockForAnimation();
         beginCinematicHandoff();
         return "exit";
@@ -365,10 +406,13 @@ export function LandingPainSection() {
         window.scrollTo(0, targetY);
       }
 
-      // Premier ancrage : absorber l’inertie Hero (waitLift, pas de timer).
+      // Premier ancrage : absorber l’inertie Hero (waitQuiet + fenêtre d’entrée).
       if (pinModeRef.current !== "pin") {
-        gesturePhaseRef.current = "waitLift";
+        gesturePhaseRef.current = "waitQuiet";
         deltaAccumRef.current = 0;
+        lastWheelAtRef.current = Date.now();
+        consumeUntilRef.current = Date.now() + ENTRY_CONSUME_MS;
+        scheduleQuietRearm();
       }
       pinModeRef.current = "pin";
       setPinMode("pin");
@@ -381,7 +425,7 @@ export function LandingPainSection() {
       window.removeEventListener("scroll", syncPin);
       window.removeEventListener("resize", syncPin);
     };
-  }, [playing]);
+  }, [playing, scheduleQuietRearm]);
 
   useEffect(() => {
     if (!playing) return;
@@ -391,15 +435,23 @@ export function LandingPainSection() {
       event.preventDefault();
 
       const dy = event.deltaY;
+      lastWheelAtRef.current = Date.now();
 
       if (gesturePhaseRef.current === "locked") {
         deltaAccumRef.current = 0;
         return;
       }
 
-      if (gesturePhaseRef.current === "waitLift") {
+      if (gesturePhaseRef.current === "waitQuiet") {
         noteWheelActivity(dy);
         deltaAccumRef.current = 0;
+        return;
+      }
+
+      if (Date.now() < consumeUntilRef.current) {
+        deltaAccumRef.current = 0;
+        gesturePhaseRef.current = "waitQuiet";
+        scheduleQuietRearm();
         return;
       }
 
@@ -419,7 +471,7 @@ export function LandingPainSection() {
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [playing, applyIntent, noteWheelActivity]);
+  }, [playing, applyIntent, noteWheelActivity, scheduleQuietRearm]);
 
   useEffect(() => {
     if (!playing) return;
@@ -453,10 +505,11 @@ export function LandingPainSection() {
         return;
       }
 
-      // Clavier : pas d’inertie — waitLift → armed immédiatement.
-      if (gesturePhaseRef.current === "waitLift") {
+      // Clavier : geste discret — waitQuiet → armed immédiatement.
+      if (gesturePhaseRef.current === "waitQuiet") {
         gesturePhaseRef.current = "armed";
         deltaAccumRef.current = 0;
+        clearQuietTimer();
       }
 
       const result = applyIntent(direction);
@@ -466,7 +519,7 @@ export function LandingPainSection() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [playing, applyIntent]);
+  }, [playing, applyIntent, clearQuietTimer]);
 
   useEffect(() => {
     if (!playing) return;
@@ -477,9 +530,11 @@ export function LandingPainSection() {
       if (pinModeRef.current !== "pin") return;
       touchStartYRef.current = event.touches[0]?.clientY ?? null;
       touchHandledRef.current = false;
-      if (gesturePhaseRef.current === "waitLift") {
+      // Touch = geste discret : on réarme pour ce geste uniquement.
+      if (gesturePhaseRef.current === "waitQuiet") {
         gesturePhaseRef.current = "armed";
         deltaAccumRef.current = 0;
+        clearQuietTimer();
       }
     };
 
@@ -508,8 +563,9 @@ export function LandingPainSection() {
       if (startY == null) return;
       if (gesturePhaseRef.current === "locked") return;
 
-      if (gesturePhaseRef.current === "waitLift") {
+      if (gesturePhaseRef.current === "waitQuiet") {
         gesturePhaseRef.current = "armed";
+        clearQuietTimer();
       }
 
       const endY = event.changedTouches[0]?.clientY;
@@ -532,7 +588,7 @@ export function LandingPainSection() {
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
     };
-  }, [playing, applyIntent]);
+  }, [playing, applyIntent, clearQuietTimer]);
 
   useLayoutEffect(() => {
     if (!storyCompact) return;
@@ -552,13 +608,13 @@ export function LandingPainSection() {
   useEffect(() => {
     return () => {
       if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
+      if (quietTimerRef.current) clearTimeout(quietTimerRef.current);
     };
   }, []);
 
   // Première phrase déjà visible au montage → pas de lock.
   useEffect(() => {
     if (playing && activeStep === 0 && pinMode === "pin") {
-      // Attendre lift de l’entrée Hero uniquement.
       if (gesturePhaseRef.current === "locked") return;
     }
   }, [playing, activeStep, pinMode]);

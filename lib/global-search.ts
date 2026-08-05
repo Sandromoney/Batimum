@@ -144,7 +144,7 @@ function searchClients(
       category: "clients" as const,
       title: getClientDisplayName(client),
       subtitle: clientSubtitle(client),
-      href: "/clients",
+      href: `/clients/${client.id}`,
     }));
 }
 

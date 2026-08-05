@@ -259,7 +259,7 @@ const SCENE_LOCK_MS = [
 const WHEEL_THRESHOLD = 44;
 const TOUCH_THRESHOLD = 54;
 /** Réarmement uniquement après silence molette (anti multi-saut inertie). */
-const WHEEL_QUIET_MS = 200;
+const WHEEL_QUIET_MS = 520;
 const ENGAGE_GRACE_MS = 280;
 
 type PinMode = "before" | "pin";
@@ -1553,8 +1553,6 @@ export function LandingHubSection() {
   );
 
   const [gateCinematic, setGateCinematic] = useState(false);
-  /** Délai après handoff post-hero → lancement auto du film. */
-  const POST_HERO_AUTO_START_MS = 980;
 
   useEffect(() => {
     const onOpenStart = (event: Event) => {
@@ -1578,23 +1576,28 @@ export function LandingHubSection() {
       mumPlanRef.current = 0;
       setMumPlan(0);
       setHintMode("start");
-      setAwaitingGesture(false);
+      // Étape indépendante : attendre un nouveau geste avant le film.
+      setAwaitingGesture(true);
       setGateCinematic(detail?.cinematic !== false);
       setExperiencePhase("tour");
       pinModeRef.current = "before";
       setPinMode("before");
+      wheelArmedRef.current = false;
       requestAnimationFrame(() => {
         const el = pinRef.current;
         if (!el) return;
         const top = el.getBoundingClientRect().top + window.scrollY;
         window.scrollTo({ top: Math.max(0, top), behavior: "auto" });
+        // Réarmer après absorption de l’inertie du handoff.
+        window.setTimeout(() => {
+          wheelArmedRef.current = true;
+        }, 600);
       });
 
-      if (autoStartTimerRef.current) clearTimeout(autoStartTimerRef.current);
-      autoStartTimerRef.current = setTimeout(() => {
+      if (autoStartTimerRef.current) {
+        clearTimeout(autoStartTimerRef.current);
         autoStartTimerRef.current = null;
-        startFilmPlaybackRef.current();
-      }, POST_HERO_AUTO_START_MS);
+      }
     };
     window.addEventListener("batimum:open-hub-gate", onOpenStart);
     return () => {

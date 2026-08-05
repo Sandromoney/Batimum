@@ -11,7 +11,9 @@
     "lint": "next lint",
     "verify:siren": "node --experimental-strip-types scripts/verify-siren-siret.mts",
     "verify:welcome": "node --experimental-strip-types scripts/verify-dashboard-welcome.mts",
-    "verify:fourniture-map": "node --experimental-strip-types scripts/verify-fourniture-map.mts"
+    "verify:fourniture-map": "node --experimental-strip-types scripts/verify-fourniture-map.mts",
+    "verify:client-fiche": "node --experimental-strip-types scripts/verify-client-fiche.mts",
+    "verify:emails": "node --experimental-strip-types scripts/verify-emails-inventory.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

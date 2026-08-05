@@ -123,7 +123,7 @@ export function findClientByAssistantQuery(
 
 function clientFollowUps(clientId: string): AssistantFollowUpAction[] {
   return [
-    { id: "open-client", label: "Ouvrir la fiche client", kind: "navigate", href: "/clients" },
+    { id: "open-client", label: "Ouvrir la fiche client", kind: "navigate", href: `/clients/${clientId}` },
     {
       id: "create-devis",
       label: "Créer un devis pour ce client",

@@ -24,6 +24,7 @@ import {
 import { generateId, formatDate } from "@/lib/utils";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const empty: Omit<Client, "id" | "createdAt"> = {
   typeClient: "particulier",
@@ -62,6 +63,7 @@ type AddressSuggestion = {
 };
 
 export default function ClientsPage() {
+  const router = useRouter();
   const { data, setData } = useStore();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -254,8 +256,8 @@ export default function ClientsPage() {
         {filtered.map((c) => (
           <Tr
             key={c.id}
-            onClick={() => openEdit(c)}
-            ariaLabel={`Voir le client ${getClientDisplayName(c)}`}
+            onClick={() => router.push(`/clients/${c.id}`)}
+            ariaLabel={`Ouvrir la fiche de ${getClientDisplayName(c)}`}
           >
             <Td>
               <ClientNameDisplay client={c} className="font-medium" />
@@ -273,13 +275,23 @@ export default function ClientsPage() {
             <Td>{formatDate(c.createdAt)}</Td>
             <Td>
               <RowActions>
-                <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openEdit(c);
+                  }}
+                >
                   <Pencil className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="danger"
                   size="sm"
-                  onClick={() => setClientToDelete(c.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setClientToDelete(c.id);
+                  }}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

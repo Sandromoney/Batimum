@@ -91,6 +91,12 @@ export interface Client {
   tvaIntracom?: string;
   codeApe?: string;
   createdAt: string;
+  /** Notes internes liées à la fiche client. */
+  notes?: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+  }>;
   historique?: ClientHistoriqueEntry[];
 }
 
