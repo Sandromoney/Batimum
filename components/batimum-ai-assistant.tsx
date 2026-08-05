@@ -156,6 +156,7 @@ export function BatimumAiAssistant() {
   const [pageContext, setPageContext] = useState<MumIaContextPayload | null>(null);
   const geoPrefillDone = useRef(false);
   const previewRef = useRef<HTMLDivElement | null>(null);
+  const descriptionTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const draftHydrated = useRef(false);
 
   useEffect(() => {
@@ -1050,20 +1051,20 @@ export function BatimumAiAssistant() {
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Décrivez votre chantier
             </span>
-            <textarea
-              value={description}
-              onChange={(event) => {
-                const next = event.target.value;
-                setDescription(next);
-                if (!next.trim()) setDescriptionDicteeVocalement(false);
+            <MumIaVoiceDictation
+              description={description}
+              textareaRef={descriptionTextareaRef}
+              disabled={analyzing || loading}
+              onTranscript={(text, meta) => {
+                setDescription(text);
+                if (meta.fromVoice) setDescriptionDicteeVocalement(true);
                 setAnalysis(null);
                 setStandardDetails(EMPTY_MUM_IA_STANDARD_DETAILS);
                 setOptionalDetailsExpanded(false);
                 setQuestionAnswers({});
-                setAdditionalPrecisions("");
                 setResult(null);
                 setActiveHistoryId(null);
-                const validation = validateMumIaDevisRequest(next);
+                const validation = validateMumIaDevisRequest(text);
                 if (validation.valid) {
                   setError((prev) =>
                     prev === MUM_IA_INSUFFICIENT_INFO_MESSAGE ||
@@ -1073,35 +1074,38 @@ export function BatimumAiAssistant() {
                   );
                 }
               }}
-              rows={7}
-              placeholder="Ex. : Rénovation complète salle de bain 6 m² — dépose carrelage et sanitaires, protection, nouvelle douche italienne, faïence murale, plomberie, 2 points lumineux, peinture plafond, nettoyage et évacuation gravats…"
-              className="min-h-[9rem] w-full resize-y rounded-2xl border border-border/80 bg-card/90 px-4 py-3 text-sm text-foreground shadow-[var(--shadow-input)] placeholder:text-muted-foreground/60 focus:border-primary/60 focus:outline-none focus:ring-4 focus:ring-primary/10"
+              textarea={
+                <textarea
+                  ref={descriptionTextareaRef}
+                  value={description}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    setDescription(next);
+                    if (!next.trim()) setDescriptionDicteeVocalement(false);
+                    setAnalysis(null);
+                    setStandardDetails(EMPTY_MUM_IA_STANDARD_DETAILS);
+                    setOptionalDetailsExpanded(false);
+                    setQuestionAnswers({});
+                    setAdditionalPrecisions("");
+                    setResult(null);
+                    setActiveHistoryId(null);
+                    const validation = validateMumIaDevisRequest(next);
+                    if (validation.valid) {
+                      setError((prev) =>
+                        prev === MUM_IA_INSUFFICIENT_INFO_MESSAGE ||
+                        prev === MUM_IA_EMPTY_DESCRIPTION_MESSAGE
+                          ? null
+                          : prev,
+                      );
+                    }
+                  }}
+                  rows={7}
+                  placeholder="Ex. : Rénovation complète salle de bain 6 m² — dépose carrelage et sanitaires, protection, nouvelle douche italienne, faïence murale, plomberie, 2 points lumineux, peinture plafond, nettoyage et évacuation gravats…"
+                  className="min-h-[9rem] w-full resize-y rounded-2xl border border-border/80 bg-card/90 px-4 py-3 pr-12 pb-11 text-sm text-foreground shadow-[var(--shadow-input)] placeholder:text-muted-foreground/60 focus:border-primary/60 focus:outline-none focus:ring-4 focus:ring-primary/10"
+                />
+              }
             />
           </label>
-
-          <MumIaVoiceDictation
-            description={description}
-            disabled={analyzing || loading}
-            onTranscript={(text, meta) => {
-              setDescription(text);
-              if (meta.fromVoice) setDescriptionDicteeVocalement(true);
-              setAnalysis(null);
-              setStandardDetails(EMPTY_MUM_IA_STANDARD_DETAILS);
-              setOptionalDetailsExpanded(false);
-              setQuestionAnswers({});
-              setResult(null);
-              setActiveHistoryId(null);
-              const validation = validateMumIaDevisRequest(text);
-              if (validation.valid) {
-                setError((prev) =>
-                  prev === MUM_IA_INSUFFICIENT_INFO_MESSAGE ||
-                  prev === MUM_IA_EMPTY_DESCRIPTION_MESSAGE
-                    ? null
-                    : prev,
-                );
-              }
-            }}
-          />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-2">

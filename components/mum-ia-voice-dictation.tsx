@@ -5,17 +5,17 @@ import {
   MUM_IA_VOICE_EXAMPLE,
   MUM_IA_VOICE_MAX_DURATION_SEC,
   MUM_IA_VOICE_MIME_CANDIDATES,
-  MUM_IA_VOICE_PRIVACY_NOTE,
   MUM_IA_VOICE_PROMPT_HINT,
   type MumIaVoiceUiState,
 } from "@/lib/mum-ia/voice-dictation-constants";
-import { Mic, Pause, Play, Square, X, Loader2 } from "lucide-react";
+import { Mic, Loader2 } from "lucide-react";
 import {
   useCallback,
   useEffect,
   useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from "react";
 
 function pickSupportedMimeType(): string {
@@ -51,19 +51,32 @@ type Props = {
   description: string;
   onTranscript: (text: string, meta: { appended: boolean; fromVoice: true }) => void;
   disabled?: boolean;
+  /** Textarea du chantier — micro positionné en bas à droite ; scroll après transcription. */
+  textareaRef?: RefObject<HTMLTextAreaElement | null>;
+  /** Champ description — enveloppé pour placer le micro en bas à droite. */
+  textarea: ReactNode;
 };
 
 export function MumIaVoiceDictation({
   description,
   onTranscript,
   disabled = false,
+  textareaRef,
+  textarea,
 }: Props) {
-  const [uiState, setUiState] = useState<MumIaVoiceUiState>(() =>
-    isMediaRecorderSupported() ? "idle" : "unsupported",
-  );
+  // Toujours "idle" au premier paint (SSR + hydratation) pour éviter un mismatch.
+  const [uiState, setUiState] = useState<MumIaVoiceUiState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [elapsedSec, setElapsedSec] = useState(0);
-  const [level, setLevel] = useState(0);
+
+  useEffect(() => {
+    if (!isMediaRecorderSupported()) {
+      setUiState("unsupported");
+      setErrorMessage(
+        "Votre navigateur ne prend pas en charge la dictée vocale. Saisissez le texte manuellement.",
+      );
+    }
+  }, []);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -90,7 +103,6 @@ export function MumIaVoiceDictation({
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-    setLevel(0);
   }, []);
 
   const releaseStream = useCallback(() => {
@@ -125,15 +137,11 @@ export function MumIaVoiceDictation({
       analyser.fftSize = 256;
       source.connect(analyser);
       analyserRef.current = analyser;
+      // Compteur de niveau conservé pour l’analyseur (sans UI d’onde).
       const data = new Uint8Array(analyser.frequencyBinCount);
-
       const tick = () => {
         if (!analyserRef.current) return;
         analyserRef.current.getByteFrequencyData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i += 1) sum += data[i] ?? 0;
-        const avg = sum / data.length / 255;
-        setLevel(avg);
         rafRef.current = requestAnimationFrame(tick);
       };
       rafRef.current = requestAnimationFrame(tick);
@@ -267,9 +275,16 @@ export function MumIaVoiceDictation({
         setUiState("done");
         cleanupSession();
 
+        requestAnimationFrame(() => {
+          const el = textareaRef?.current;
+          if (el) {
+            el.scrollTop = el.scrollHeight;
+          }
+        });
+
         window.setTimeout(() => {
           if (!unmountedRef.current) setUiState("idle");
-        }, 1600);
+        }, 1200);
       } catch (error) {
         if (error instanceof MumIaAuthError) {
           setErrorMessage("Connectez-vous pour utiliser la dictée vocale.");
@@ -286,7 +301,7 @@ export function MumIaVoiceDictation({
         cleanupSession();
       }
     },
-    [cleanupSession, description, onTranscript],
+    [cleanupSession, description, onTranscript, textareaRef],
   );
 
   const finishRecording = useCallback(() => {
@@ -459,7 +474,7 @@ export function MumIaVoiceDictation({
 
   const micAria =
     uiState === "listening"
-      ? "MUM IA vous écoute — cliquer pour les commandes"
+      ? "Dictée en cours — utilisez Pause ou Terminer"
       : uiState === "paused"
         ? "Dictée en pause"
         : uiState === "transcribing"
@@ -469,134 +484,127 @@ export function MumIaVoiceDictation({
             : "Commencer la dictée vocale";
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <MicButton
-          state={uiState}
-          level={level}
-          disabled={disabled || uiState === "transcribing"}
-          ariaLabel={micAria}
-          onClick={() => {
-            if (uiState === "idle" || uiState === "done" || uiState === "error") {
-              void startRecording();
-            }
-          }}
-        />
-
-        {active ? (
-          <div
-            className="flex min-w-0 flex-1 flex-wrap items-center gap-2"
-            role="status"
-            aria-live="polite"
-          >
-            <span className="text-xs font-medium text-[#2563eb]">
-              {uiState === "requesting_permission"
-                ? "Autorisation du micro…"
-                : uiState === "transcribing"
-                  ? "Transcription en cours…"
-                  : uiState === "paused"
-                    ? "Dictée en pause"
-                    : "MUM IA vous écoute…"}
-            </span>
-            <span
-              className="rounded-md bg-neutral-900 px-2 py-0.5 font-mono text-[11px] tabular-nums text-white"
-              aria-label={`Durée ${formatDuration(elapsedSec)}`}
-            >
-              {formatDuration(elapsedSec)}
-            </span>
-            {uiState === "listening" ? <WaveBars level={level} /> : null}
-          </div>
-        ) : null}
+    <div>
+      <div className="relative">
+        {textarea}
+        <div className="absolute bottom-1.5 right-1.5 z-[1]">
+          <MicButton
+            state={uiState}
+            disabled={disabled || uiState === "transcribing"}
+            ariaLabel={micAria}
+            onClick={() => {
+              if (uiState === "idle" || uiState === "done" || uiState === "error") {
+                void startRecording();
+              }
+            }}
+          />
+        </div>
       </div>
 
-      {uiState === "listening" || uiState === "paused" ? (
-        <div className="flex flex-wrap gap-2">
-          {uiState === "listening" ? (
-            <ControlChip
-              onClick={pauseRecording}
-              ariaLabel="Mettre la dictée en pause"
-              icon={<Pause className="h-3.5 w-3.5" aria-hidden />}
-            >
-              Pause
-            </ControlChip>
-          ) : (
-            <ControlChip
-              onClick={resumeRecording}
-              ariaLabel="Reprendre la dictée"
-              icon={<Play className="h-3.5 w-3.5" aria-hidden />}
-              primary
-            >
-              Reprendre
-            </ControlChip>
+      {active ? (
+        <div
+          className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            {uiState === "listening" ? (
+              <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#2563eb]"
+                aria-hidden
+              />
+            ) : uiState === "transcribing" ||
+              uiState === "requesting_permission" ? (
+              <Loader2
+                className="h-3 w-3 shrink-0 animate-spin text-[#2563eb]"
+                aria-hidden
+              />
+            ) : null}
+            {uiState === "requesting_permission"
+              ? "Autorisation du micro…"
+              : uiState === "transcribing"
+                ? "Transcription…"
+                : uiState === "paused"
+                  ? "Dictée en pause"
+                  : "MUM IA vous écoute…"}
+            {(uiState === "listening" || uiState === "paused") && (
+              <span className="font-mono tabular-nums text-muted-foreground/80">
+                {formatDuration(elapsedSec)}
+              </span>
+            )}
+          </span>
+
+          {(uiState === "listening" || uiState === "paused") && (
+            <span className="inline-flex flex-wrap items-center gap-2 text-[11px]">
+              {uiState === "listening" ? (
+                <button
+                  type="button"
+                  onClick={pauseRecording}
+                  aria-label="Mettre la dictée en pause"
+                  className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb] focus-visible:ring-offset-1"
+                >
+                  Pause
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={resumeRecording}
+                  aria-label="Reprendre la dictée"
+                  className="text-[#2563eb] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb] focus-visible:ring-offset-1"
+                >
+                  Reprendre
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={finishRecording}
+                aria-label="Terminer la dictée"
+                className="font-medium text-[#2563eb] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb] focus-visible:ring-offset-1"
+              >
+                Terminer
+              </button>
+              <button
+                type="button"
+                onClick={cancelRecording}
+                aria-label="Annuler la dictée"
+                className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb] focus-visible:ring-offset-1"
+              >
+                Annuler
+              </button>
+            </span>
           )}
-          <ControlChip
-            onClick={finishRecording}
-            ariaLabel="Terminer la dictée"
-            icon={<Square className="h-3.5 w-3.5" aria-hidden />}
-            primary
-          >
-            Terminer
-          </ControlChip>
-          <ControlChip
-            onClick={cancelRecording}
-            ariaLabel="Annuler la dictée"
-            icon={<X className="h-3.5 w-3.5" aria-hidden />}
-          >
-            Annuler
-          </ControlChip>
         </div>
       ) : null}
 
-      {uiState === "transcribing" ? (
-        <p className="flex items-center gap-2 text-xs text-muted-foreground" role="status">
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2563eb]" aria-hidden />
-          Transcription de votre description…
-        </p>
-      ) : null}
-
       {errorMessage ? (
-        <p className="text-xs text-red-600" role="alert">
+        <p className="mt-1.5 text-xs text-red-600" role="alert">
           {errorMessage}
         </p>
       ) : null}
 
       {uiState === "unsupported" ? (
-        <p className="text-xs text-muted-foreground" role="status">
-          Dictée vocale non disponible sur ce navigateur. La saisie clavier reste
-          disponible.
+        <p className="mt-1.5 text-xs text-muted-foreground" role="status">
+          Dictée vocale non disponible. La saisie clavier reste disponible.
         </p>
       ) : null}
 
       {!active ? (
-        <div className="space-y-1">
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
-            {MUM_IA_VOICE_PROMPT_HINT}
-          </p>
-          <p className="text-[11px] leading-relaxed text-muted-foreground/80">
-            {MUM_IA_VOICE_EXAMPLE}
-          </p>
-          <p className="text-[10px] leading-relaxed text-muted-foreground/70">
-            {MUM_IA_VOICE_PRIVACY_NOTE}
-          </p>
-        </div>
-      ) : (
-        <p className="text-[10px] leading-relaxed text-muted-foreground/70">
-          {MUM_IA_VOICE_PRIVACY_NOTE}
+        <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+          {MUM_IA_VOICE_PROMPT_HINT}{" "}
+          <span className="text-muted-foreground/75">{MUM_IA_VOICE_EXAMPLE}</span>
         </p>
-      )}
+      ) : null}
     </div>
   );
 }
 
 function MicButton({
   state,
-  level,
   disabled,
   ariaLabel,
   onClick,
 }: {
   state: MumIaVoiceUiState;
-  level: number;
   disabled?: boolean;
   ariaLabel: string;
   onClick: () => void;
@@ -607,8 +615,6 @@ function MicButton({
     state === "requesting_permission" || state === "transcribing";
   const errored = state === "error";
 
-  const pulse = 1 + Math.min(0.35, level * 0.8);
-
   return (
     <button
       type="button"
@@ -617,82 +623,24 @@ function MicButton({
       aria-label={ariaLabel}
       aria-pressed={listening || paused}
       className={[
-        "relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb] focus-visible:ring-offset-2",
+        "inline-flex h-10 w-10 items-center justify-center rounded-lg border-0 bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb]/50 focus-visible:ring-offset-1",
         listening
-          ? "border-[#2563eb] bg-[#2563eb] text-white"
+          ? "text-[#2563eb]"
           : paused
-            ? "border-neutral-900 bg-neutral-900 text-white"
+            ? "text-neutral-800"
             : errored
-              ? "border-red-300 bg-white text-red-600"
+              ? "text-red-600 hover:bg-neutral-100/80"
               : busy
-                ? "border-border bg-white text-[#2563eb]"
-                : "border-border bg-white text-neutral-900 hover:border-[#2563eb]/50 hover:text-[#2563eb]",
-        disabled ? "cursor-not-allowed opacity-50" : "",
+                ? "text-[#2563eb]"
+                : "text-neutral-700 hover:bg-neutral-100/90 hover:text-neutral-900",
+        disabled ? "cursor-not-allowed opacity-40" : "",
       ].join(" ")}
     >
-      {listening ? (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-2xl bg-[#2563eb]/25"
-          style={{
-            transform: `scale(${pulse})`,
-            transition: "transform 120ms ease-out",
-          }}
-        />
-      ) : null}
       {busy ? (
-        <Loader2 className="relative h-5 w-5 animate-spin" aria-hidden />
+        <Loader2 className="h-[18px] w-[18px] animate-spin" aria-hidden />
       ) : (
-        <Mic className="relative h-5 w-5" aria-hidden />
+        <Mic className="h-[18px] w-[18px]" strokeWidth={1.75} aria-hidden />
       )}
-    </button>
-  );
-}
-
-function WaveBars({ level }: { level: number }) {
-  const heights = [0.35, 0.7, 1, 0.55, 0.85].map(
-    (base, i) => 6 + base * 14 * (0.35 + level * (1 + (i % 3) * 0.15)),
-  );
-  return (
-    <span className="inline-flex h-5 items-end gap-0.5" aria-hidden>
-      {heights.map((h, i) => (
-        <span
-          key={i}
-          className="w-1 rounded-sm bg-[#2563eb]/80 transition-[height] duration-100"
-          style={{ height: `${h}px` }}
-        />
-      ))}
-    </span>
-  );
-}
-
-function ControlChip({
-  children,
-  onClick,
-  ariaLabel,
-  icon,
-  primary = false,
-}: {
-  children: ReactNode;
-  onClick: () => void;
-  ariaLabel: string;
-  icon: ReactNode;
-  primary?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={ariaLabel}
-      className={[
-        "inline-flex min-h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb] focus-visible:ring-offset-2",
-        primary
-          ? "border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
-          : "border-border bg-white text-neutral-900 hover:border-neutral-400",
-      ].join(" ")}
-    >
-      {icon}
-      {children}
     </button>
   );
 }
