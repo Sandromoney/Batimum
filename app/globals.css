@@ -3975,19 +3975,6 @@ footer img[src="/logocomplet-batimum.png"][alt="Batimum"] {
   }
 }
 
-@keyframes wave {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(12deg);
-  }
-  75% {
-    transform: rotate(-8deg);
-  }
-}
-
 .btp-dashboard-today-track {
   transition: transform 0.85s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;

@@ -10,6 +10,7 @@ import { DashboardTodayDropdown } from "@/components/dashboard-today-dropdown";
 import { DashboardMumIaQuotaCard } from "@/components/dashboard-mum-ia-quota-card";
 import { DashboardOnboardingChecklist } from "@/components/dashboard-onboarding-checklist";
 import { DashboardWelcome } from "@/components/dashboard-welcome";
+import { getAccount } from "@/lib/account";
 import { useStore } from "@/lib/store";
 import { getClientDisplayName } from "@/lib/clients";
 import { devisTotal } from "@/lib/data";
@@ -18,12 +19,12 @@ import { getDevisDisplayStatut } from "@/lib/devis-statut";
 import {
   countChantiersByStatut,
   countClientsCreatedThisMonth,
-  countDashboardUrgentCategories,
-  getDashboardDynamicSubtitle,
-  getDashboardGreetingHour,
-  getDashboardGreetingName,
-  getDashboardTodaySnapshot,
 } from "@/lib/dashboard-today";
+import {
+  buildDashboardWelcomeSubtitleFromData,
+  getDashboardGreetingHour,
+  resolveDashboardWelcomeNameFromSources,
+} from "@/lib/dashboard-welcome";
 import {
   calculateSaasMetrics,
   getPaidInvoiceRevenueEntries,
@@ -51,6 +52,11 @@ function planningEventStart(date: string, heureDebut: string) {
 export default function DashboardPage() {
   const { data, setData } = useStore();
   const [mounted, setMounted] = useState(false);
+  const [welcome, setWelcome] = useState<{
+    greeting: string;
+    name: string;
+    subtitle: string;
+  } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -58,10 +64,6 @@ export default function DashboardPage() {
 
   const referenceDate = mounted ? new Date() : new Date(0);
   const metrics = calculateSaasMetrics(data, referenceDate);
-  const todaySnapshot = useMemo(
-    () => getDashboardTodaySnapshot(data, referenceDate),
-    [data, referenceDate],
-  );
   const chantierStats = useMemo(
     () => countChantiersByStatut(data),
     [data],
@@ -70,13 +72,22 @@ export default function DashboardPage() {
     () => countClientsCreatedThisMonth(data, referenceDate),
     [data, referenceDate],
   );
-  const urgentCategories = countDashboardUrgentCategories(todaySnapshot, data);
-  const greetingName = getDashboardGreetingName(data.parametres.utilisateur);
-  const greeting = getDashboardGreetingHour(referenceDate);
-  const welcomeSubtitle = getDashboardDynamicSubtitle(
-    urgentCategories,
-    referenceDate,
-  );
+
+  useEffect(() => {
+    if (!mounted) return;
+    const now = new Date();
+    const account = getAccount();
+    setWelcome({
+      greeting: getDashboardGreetingHour(now),
+      name: resolveDashboardWelcomeNameFromSources({
+        account,
+        parametres: data.parametres,
+      }),
+      subtitle: buildDashboardWelcomeSubtitleFromData(data, {
+        referenceDate: now,
+      }),
+    });
+  }, [mounted, data]);
 
   const revenueEntries = useMemo(
     () => getPaidInvoiceRevenueEntries(data),
@@ -138,9 +149,10 @@ export default function DashboardPage() {
   return (
     <div className="btp-dashboard">
       <DashboardWelcome
-        greeting={greeting}
-        name={greetingName}
-        subtitle={welcomeSubtitle}
+        ready={Boolean(welcome)}
+        greeting={welcome?.greeting ?? "Bonjour"}
+        name={welcome?.name ?? ""}
+        subtitle={welcome?.subtitle ?? ""}
       />
 
       <DashboardOnboardingChecklist data={data} />

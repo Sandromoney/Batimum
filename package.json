@@ -8,7 +8,8 @@
     "build": "next build",
     "type-check": "tsc --noEmit",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify:welcome": "node --experimental-strip-types scripts/verify-dashboard-welcome.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
