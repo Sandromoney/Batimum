@@ -188,7 +188,7 @@ export function buildChantierAssignmentEmail(input: {
         href: planningUrl,
       },
       footerNote:
-        "Cet email ne contient aucune information de marge, devis ou donnée confidentielle dirigeant.",
+        "Cet email ne contient aucune information financière confidentielle.",
     }),
   };
 }
