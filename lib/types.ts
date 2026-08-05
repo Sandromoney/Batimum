@@ -823,13 +823,27 @@ export interface Parametres {
   siren?: string;
   formeJuridique?: string;
   codeApe?: string;
+  /** Libellé d'activité (NAF) issu du répertoire officiel, si disponible. */
+  libelleActivite?: string;
+  /** Nom commercial / enseigne. */
+  enseigne?: string;
   capitalSocial?: string;
   adresse: string;
+  /** Complément d'adresse (bâtiment, étage…). */
+  adresseComplement?: string;
   ville?: string;
   codePostal?: string;
   departement?: string;
   region?: string;
   pays?: string;
+  /** Date de création de l'unité légale / établissement (ISO date). */
+  dateCreationEntreprise?: string;
+  /** Statut administratif de l'établissement sélectionné. */
+  establishmentStatus?: "actif" | "ferme";
+  /** Établissement siège social. */
+  isSiege?: boolean;
+  /** Dernière vérification via l'API Recherche d'entreprises. */
+  officialDataLastCheckedAt?: string;
   siteInternet?: string;
   email: string;
   /** Email dédié à l'envoi des factures (sinon email principal). */

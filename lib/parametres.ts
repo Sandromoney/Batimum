@@ -235,6 +235,7 @@ export function getMentionTvaPdf(
 export function formatAdresseEntreprise(parametres: Parametres): string {
   const parts = [
     parametres.adresse?.trim(),
+    parametres.adresseComplement?.trim(),
     [parametres.codePostal, parametres.ville].filter(Boolean).join(" ").trim(),
     parametres.pays?.trim(),
   ].filter(Boolean);
