@@ -96,6 +96,9 @@ export interface Client {
     id: string;
     content: string;
     createdAt: string;
+    updatedAt?: string;
+    author?: string;
+    type?: "appel" | "rendez_vous" | "information" | "relance" | "autre";
   }>;
   historique?: ClientHistoriqueEntry[];
 }

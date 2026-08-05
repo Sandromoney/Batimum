@@ -10,7 +10,7 @@ import type {
   StatutDevis,
   StatutFacture,
 } from "@/lib/types";
-import { getClientAddress, getClientDisplayName } from "@/lib/clients";
+import { getClientAddress, getClientDisplayName, normalizeClientPhone } from "@/lib/clients";
 import { formatCurrency } from "@/lib/utils";
 
 export type ClientFicheTab =
@@ -23,6 +23,30 @@ export type ClientFicheTab =
   | "notes"
   | "historique";
 
+export type ClientNoteType =
+  | "appel"
+  | "rendez_vous"
+  | "information"
+  | "relance"
+  | "autre";
+
+export type ClientNote = {
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt?: string;
+  author?: string;
+  type?: ClientNoteType;
+};
+
+export const CLIENT_NOTE_TYPE_LABELS: Record<ClientNoteType, string> = {
+  appel: "Appel",
+  rendez_vous: "Rendez-vous",
+  information: "Information",
+  relance: "Relance",
+  autre: "Autre",
+};
+
 export type ClientFicheTimelineKind =
   | "client"
   | "devis"
@@ -30,7 +54,16 @@ export type ClientFicheTimelineKind =
   | "chantier"
   | "facture"
   | "note"
-  | "document";
+  | "document"
+  | "paiement";
+
+export type ClientFicheTimelineFilter =
+  | "all"
+  | "devis"
+  | "chantier"
+  | "facture"
+  | "note"
+  | "paiement";
 
 export type ClientFicheTimelineEvent = {
   id: string;
@@ -41,6 +74,7 @@ export type ClientFicheTimelineEvent = {
   status?: string;
   amountLabel?: string;
   href?: string;
+  author?: string;
 };
 
 export type ClientFicheSummary = {
@@ -57,12 +91,6 @@ export type ClientFicheSummary = {
   montantEncaisse: number;
   montantDu: number;
   lastActivityAt: string | null;
-};
-
-export type ClientNote = {
-  id: string;
-  content: string;
-  createdAt: string;
 };
 
 const DEVIS_STATUT_LABEL: Record<StatutDevis, string> = {
@@ -107,17 +135,113 @@ const CHANTIERS_EN_COURS: StatutChantier[] = [
 export function getClientNotes(client: Client): ClientNote[] {
   const raw = client.notes;
   if (!Array.isArray(raw)) return [];
-  return raw.filter(
-    (note) =>
-      note &&
-      typeof note.id === "string" &&
-      typeof note.content === "string" &&
-      typeof note.createdAt === "string",
-  );
+  return raw
+    .filter(
+      (note) =>
+        note &&
+        typeof note.id === "string" &&
+        typeof note.content === "string" &&
+        typeof note.createdAt === "string",
+    )
+    .map((note) => ({
+      id: note.id,
+      content: note.content,
+      createdAt: note.createdAt,
+      updatedAt: note.updatedAt,
+      author: note.author,
+      type: note.type,
+    }))
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 }
 
 export function withClientNotes(client: Client, notes: ClientNote[]): Client {
   return { ...client, notes };
+}
+
+/** Numéro E.164 approximatif pour `tel:` / WhatsApp. */
+export function formatClientPhoneE164(client: Client): string | null {
+  const digits = normalizeClientPhone(
+    client.indicatifTelephone,
+    client.telephone,
+  );
+  if (!digits || digits.length < 8) return null;
+  return `+${digits}`;
+}
+
+export function formatClientPhoneDisplay(client: Client): string {
+  const indicatif = client.indicatifTelephone?.trim() || "";
+  const phone = client.telephone?.trim() || "";
+  return [indicatif, phone].filter(Boolean).join(" ").trim();
+}
+
+export function getClientPhoneHref(client: Client): string | null {
+  const e164 = formatClientPhoneE164(client);
+  if (!e164) return null;
+  return `tel:${e164}`;
+}
+
+export function getClientWhatsAppHref(client: Client): string | null {
+  const e164 = formatClientPhoneE164(client);
+  if (!e164) return null;
+  return `https://wa.me/${e164.replace(/\D/g, "")}`;
+}
+
+export function getClientMailtoHref(
+  client: Client,
+  options?: { subject?: string },
+): string | null {
+  const email = client.email?.trim();
+  if (!email) return null;
+  const subject =
+    options?.subject ??
+    `Échange avec ${getClientDisplayName(client)} — Batimum`;
+  return `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+}
+
+/** URL itinéraire universelle (Apple Plans sur iOS, Google Maps sinon). */
+export function getClientDirectionsUrl(client: Client): string | null {
+  const address = getClientAddress(client).trim();
+  if (!address || address === "—") return null;
+  const query = encodeURIComponent(address);
+  if (typeof navigator !== "undefined") {
+    const ua = navigator.userAgent || "";
+    const isApple =
+      /iPhone|iPad|iPod/i.test(ua) ||
+      (/Macintosh/i.test(ua) && "ontouchend" in document);
+    if (isApple) {
+      return `https://maps.apple.com/?daddr=${query}`;
+    }
+  }
+  return `https://www.google.com/maps/dir/?api=1&destination=${query}`;
+}
+
+export function isTouchLikeDevice(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(pointer: coarse)").matches ||
+    navigator.maxTouchPoints > 0
+  );
+}
+
+export function visibleClientFicheTabs(counts: {
+  devis: number;
+  commandes: number;
+  chantiers: number;
+  factures: number;
+  documents: number;
+  notes: number;
+}): ClientFicheTab[] {
+  const tabs: ClientFicheTab[] = ["overview", "historique"];
+  tabs.push("devis");
+  if (counts.commandes > 0) tabs.push("commandes");
+  tabs.push("chantiers");
+  tabs.push("factures");
+  if (counts.documents > 0) tabs.push("documents");
+  tabs.push("notes");
+  return tabs;
 }
 
 function devisAmount(devis: Devis): number {
@@ -356,11 +480,24 @@ export function buildClientFicheTimeline(
       amountLabel: formatCurrency(factureAmount(item)),
       href: "/factures",
     });
+    if (item.statut === "payee") {
+      pushUnique(events, {
+        id: `facture-paid-${item.id}`,
+        kind: "paiement",
+        date: item.datePaiement ?? item.dateEmission,
+        title: `Paiement reçu — ${item.numero}`,
+        status: "Payée",
+        amountLabel: formatCurrency(factureAmount(item)),
+        href: "/factures",
+      });
+    }
     for (const h of item.historique ?? []) {
       if (h.type === "cree") continue;
       pushUnique(events, {
         id: `facture-hist-${h.id}`,
-        kind: "facture",
+        kind: h.type === "payee" || h.label.toLowerCase().includes("pay")
+          ? "paiement"
+          : "facture",
         date: h.date,
         title: h.label || `Facture ${item.numero}`,
         status: FACTURE_STATUT_LABEL[item.statut] ?? item.statut,
@@ -375,12 +512,15 @@ export function buildClientFicheTimeline(
       id: `note-${note.id}`,
       kind: "note",
       date: note.createdAt,
-      title: "Note ajoutée",
+      title: note.type
+        ? `Note — ${CLIENT_NOTE_TYPE_LABELS[note.type]}`
+        : "Note ajoutée",
       subtitle:
         note.content.length > 120
           ? `${note.content.slice(0, 117)}…`
           : note.content,
-      status: "Note",
+      status: note.type ? CLIENT_NOTE_TYPE_LABELS[note.type] : "Note",
+      author: note.author,
     });
   }
 
@@ -420,20 +560,6 @@ export function formatClientFicheDateTime(iso: string): {
   };
 }
 
-export function getClientPhoneHref(client: Client): string | null {
-  const raw = `${client.indicatifTelephone ?? ""}${client.telephone}`.trim();
-  if (!raw) return null;
-  const digits = raw.replace(/[^\d+]/g, "");
-  if (!digits.replace(/\D/g, "")) return null;
-  return `tel:${digits.startsWith("+") ? digits : `+${digits}`}`;
-}
-
-export function getClientMailtoHref(client: Client): string | null {
-  const email = client.email?.trim();
-  if (!email) return null;
-  return `mailto:${email}`;
-}
-
 export function getClientTypeLabel(client: Client): string {
   return client.typeClient === "professionnel" ? "Professionnel" : "Particulier";
 }
@@ -454,12 +580,24 @@ export function chantierStatutLabel(statut: StatutChantier): string {
   return CHANTIER_STATUT_LABEL[statut] ?? statut;
 }
 
+export function matchesTimelineFilter(
+  event: ClientFicheTimelineEvent,
+  filter: ClientFicheTimelineFilter,
+): boolean {
+  if (filter === "all") return true;
+  if (filter === "paiement") return event.kind === "paiement";
+  if (filter === "devis") return event.kind === "devis";
+  if (filter === "chantier") return event.kind === "chantier";
+  if (filter === "facture")
+    return event.kind === "facture" || event.kind === "paiement";
+  if (filter === "note") return event.kind === "note";
+  return true;
+}
+
 export function findOrphanClientNameMatches(
   data: AppData,
   clients: Client[],
 ): { entityType: string; entityId: string; label: string }[] {
-  // Legacy safety: entities without clientId cannot be auto-linked by name.
-  // Current model requires clientId — this reports empty unless bad data appears.
   const orphans: { entityType: string; entityId: string; label: string }[] = [];
   void data;
   void clients;
