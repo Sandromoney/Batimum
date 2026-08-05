@@ -295,7 +295,7 @@ export function ProduitFormModal({
                       <button
                         key={option.id}
                         type="button"
-                        className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm hover:bg-emerald-50"
+                        className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm hover:bg-accent/5"
                         onClick={() => {
                           setUnitOptionId(option.id);
                           setCustomUnit("");
@@ -311,7 +311,7 @@ export function ProduitFormModal({
                     ))}
                     <button
                       type="button"
-                      className="mt-1 w-full rounded-lg px-2 py-2 text-left text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+                      className="mt-1 w-full rounded-lg px-2 py-2 text-left text-sm font-medium text-accent-hover hover:bg-accent/5"
                       onClick={() => {
                         setUnitOptionId("other");
                         setShowUnitList(false);
@@ -378,8 +378,8 @@ export function ProduitFormModal({
                     onClick={() => setSaleMode(id)}
                     className={`rounded-xl border px-3 py-2 text-left text-sm ${
                       saleMode === id
-                        ? "border-emerald-500 bg-emerald-50 text-emerald-900"
-                        : "border-border/70 bg-white hover:border-emerald-300"
+                        ? "border-accent bg-accent/5 text-accent"
+                        : "border-border/70 bg-white hover:border-accent/30"
                     }`}
                   >
                     {label}
@@ -432,7 +432,7 @@ export function ProduitFormModal({
               </div>
             </section>
 
-            <div className="rounded-xl border border-emerald-200/70 bg-emerald-50/40 p-4">
+            <div className="rounded-xl border border-border/70 bg-accent/5/40 p-4">
               <p className="text-sm font-semibold text-foreground">Récapitulatif</p>
               <div className="mt-2 grid gap-1 text-sm text-foreground/90 sm:grid-cols-2">
                 <p>

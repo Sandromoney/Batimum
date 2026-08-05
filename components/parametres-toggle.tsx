@@ -31,7 +31,7 @@ export function ParametresToggle({
         className={cn(
           "relative mt-0.5 h-6 w-11 shrink-0 rounded-full border transition-all duration-200",
           checked
-            ? "border-primary bg-primary shadow-glow"
+            ? "border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]"
             : "border-border bg-card hover:bg-card-hover",
         )}
       >

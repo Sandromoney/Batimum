@@ -21,6 +21,7 @@ import { MumIaConseilsCard } from "@/components/mum-ia-conseils-card";
 import { MumIaOptionalDetailsPanel } from "@/components/mum-ia-optional-details-panel";
 import { MumIaHistoriqueSection } from "@/components/mum-ia-historique-section";
 import { MumIaQuotaBadge } from "@/components/mum-ia-quota-badge";
+import { MumIaVoiceDictation } from "@/components/mum-ia-voice-dictation";
 import {
   buildMumIaReponsesQuestions,
   buildMumIaDescriptionWithPrecisions,
@@ -124,6 +125,8 @@ export function BatimumAiAssistant() {
   const { data, setData } = useStore();
 
   const [description, setDescription] = useState("");
+  const [descriptionDicteeVocalement, setDescriptionDicteeVocalement] =
+    useState(false);
   const [regionCode, setRegionCode] = useState(FRANCE_REGIONS[0]?.code ?? "");
   const [departementCode, setDepartementCode] = useState(
     FRANCE_REGIONS[0]?.departements[0]?.code ?? "",
@@ -153,6 +156,7 @@ export function BatimumAiAssistant() {
   const [pageContext, setPageContext] = useState<MumIaContextPayload | null>(null);
   const geoPrefillDone = useRef(false);
   const previewRef = useRef<HTMLDivElement | null>(null);
+  const descriptionTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const draftHydrated = useRef(false);
 
   useEffect(() => {
@@ -514,6 +518,7 @@ export function BatimumAiAssistant() {
         tauxTVA: ctx.tauxTVA,
         niveauPrix: NIVEAU_PRIX_AUTO,
         villeEntreprise: entrepriseLocalisation?.ville,
+        descriptionDicteeVocalement,
       };
 
       let nextActiveHistoryId = activeHistoryId;
@@ -604,7 +609,6 @@ export function BatimumAiAssistant() {
     setAnalysis(null);
 
     const requestId = crypto.randomUUID();
-    let reserved = false;
 
     const requestBody = {
       descriptionChantier: ctx.description,
@@ -625,68 +629,15 @@ export function BatimumAiAssistant() {
     }
     const startedAt = Date.now();
 
-    const releaseReservation = async () => {
-      if (!reserved) return;
-      try {
-        const releaseResponse = await authenticatedFetch(
-          "/api/ai/usage/release",
-          {
-            method: "POST",
-            body: JSON.stringify({ requestId }),
-          },
-          "quota",
-        );
-        const releasePayload = (await releaseResponse.json()) as {
-          success?: boolean;
-          used?: number;
-          limit?: number;
-          remaining?: number;
-          resetAt?: string;
-        };
-        if (
-          releasePayload.success &&
-          typeof releasePayload.used === "number" &&
-          typeof releasePayload.limit === "number"
-        ) {
-          setServerQuota(
-            buildMumIaQuotaSnapshot({
-              used: releasePayload.used,
-              monthlyIncluded: releasePayload.limit,
-              packCredits: 0,
-              renewalDate: releasePayload.resetAt ?? "",
-              periodStart: "",
-              periodEnd: releasePayload.resetAt ?? "",
-            }),
-          );
-          broadcastMumIaQuotaUpdated({
-            used: releasePayload.used,
-            limit: releasePayload.limit,
-            remaining: releasePayload.remaining,
-            resetAt: releasePayload.resetAt,
-          });
-        } else {
-          await refreshServerQuota();
-          broadcastMumIaQuotaRefresh();
-        }
-      } catch {
-        await refreshServerQuota();
-        broadcastMumIaQuotaRefresh();
-      } finally {
-        reserved = false;
-      }
-    };
-
     try {
+      // Contrôle du plafond sans débit — le crédit n'est consommé qu'après génération réussie
       try {
-        const reserveResponse = await authenticatedFetch(
-          "/api/ai/usage/reserve",
-          {
-            method: "POST",
-            body: JSON.stringify({ requestId }),
-          },
+        const usageResponse = await authenticatedFetch(
+          "/api/ai/usage",
+          { method: "GET" },
           "quota",
         );
-        const reservePayload = (await reserveResponse.json()) as {
+        const usagePayload = (await usageResponse.json()) as {
           success?: boolean;
           limitReached?: boolean;
           message?: string;
@@ -694,13 +645,11 @@ export function BatimumAiAssistant() {
           limit?: number;
           remaining?: number;
           resetAt?: string;
-          technicalFailure?: boolean;
         };
 
-        // Uniquement le vrai plafond 100/100 bloque MUM IA
-        if (reserveResponse.status === 429 || reservePayload.limitReached) {
+        if (usageResponse.status === 429 || usagePayload.limitReached) {
           setError(
-            reservePayload.message ??
+            usagePayload.message ??
               (serverQuota?.renewalDate
                 ? buildMumIaQuotaExceededMessage(serverQuota.renewalDate)
                 : getMumIaUserMessage("quota_exceeded")),
@@ -709,61 +658,29 @@ export function BatimumAiAssistant() {
           return null;
         }
 
-        const limit = reservePayload.limit ?? 100;
-        let used = typeof reservePayload.used === "number" ? reservePayload.used : 0;
-
-        if (reservePayload.technicalFailure) {
-          console.warn("[MUM IA QUOTA] storage unavailable — continuing analysis");
-          used = Math.min(limit, (serverQuota?.used ?? used) + 1);
-        } else if (reservePayload.success !== false) {
-          reserved = true;
+        if (
+          typeof usagePayload.used === "number" &&
+          typeof usagePayload.limit === "number"
+        ) {
+          setServerQuota(
+            buildMumIaQuotaSnapshot({
+              used: usagePayload.used,
+              monthlyIncluded: usagePayload.limit,
+              packCredits: 0,
+              renewalDate: usagePayload.resetAt ?? serverQuota?.renewalDate ?? "",
+              periodStart: serverQuota?.periodStart ?? "",
+              periodEnd: usagePayload.resetAt ?? serverQuota?.periodEnd ?? "",
+            }),
+          );
+          broadcastMumIaQuotaUpdated({
+            used: usagePayload.used,
+            limit: usagePayload.limit,
+            remaining: usagePayload.remaining,
+            resetAt: usagePayload.resetAt ?? serverQuota?.renewalDate,
+          });
         }
-
-        const remaining =
-          typeof reservePayload.remaining === "number" &&
-          !reservePayload.technicalFailure
-            ? reservePayload.remaining
-            : Math.max(0, limit - used);
-
-        setServerQuota(
-          buildMumIaQuotaSnapshot({
-            used,
-            monthlyIncluded: limit,
-            packCredits: 0,
-            renewalDate: reservePayload.resetAt ?? serverQuota?.renewalDate ?? "",
-            periodStart: serverQuota?.periodStart ?? "",
-            periodEnd: reservePayload.resetAt ?? serverQuota?.periodEnd ?? "",
-          }),
-        );
-        broadcastMumIaQuotaUpdated({
-          used,
-          limit,
-          remaining,
-          resetAt: reservePayload.resetAt ?? serverQuota?.renewalDate,
-        });
       } catch (quotaError) {
-        console.warn("[MUM IA QUOTA] reserve call failed — continuing analysis", quotaError);
-        const limit = serverQuota?.limit ?? 100;
-        const used = Math.min(limit, (serverQuota?.used ?? 0) + 1);
-        setServerQuota((previous) =>
-          previous
-            ? {
-                ...previous,
-                used,
-                remaining: Math.max(0, limit - used),
-                limit,
-                monthlyIncluded: limit,
-              }
-            : buildMumIaQuotaSnapshot({
-                used,
-                monthlyIncluded: limit,
-                packCredits: 0,
-                renewalDate: "",
-                periodStart: "",
-                periodEnd: "",
-              }),
-        );
-        broadcastMumIaQuotaUpdated({ used, limit, remaining: Math.max(0, limit - used) });
+        console.warn("[MUM IA QUOTA] check failed — continuing analysis", quotaError);
       }
 
       const response = await authenticatedFetch(
@@ -798,16 +715,6 @@ export function BatimumAiAssistant() {
         if (payload.debugMessage) {
           console.error("[MUM IA] analyze error detail:", payload.debugMessage);
         }
-        // Refus avant IA exploitable (auth / validation / config) → annuler la réservation
-        if (
-          response.status === 400 ||
-          response.status === 401 ||
-          response.status === 403 ||
-          response.status === 429 ||
-          response.status === 503
-        ) {
-          await releaseReservation();
-        }
         applyMumIaFailure(payload);
         return null;
       }
@@ -838,6 +745,7 @@ export function BatimumAiAssistant() {
           tauxTVA: ctx.tauxTVA,
           niveauPrix: NIVEAU_PRIX_AUTO,
           villeEntreprise: entrepriseLocalisation?.ville,
+          descriptionDicteeVocalement,
         },
         analysis: payload.analysis,
       });
@@ -852,7 +760,6 @@ export function BatimumAiAssistant() {
 
       return payload.analysis;
     } catch (networkError) {
-      await releaseReservation();
       if (networkError instanceof MumIaAuthError) {
         applyMumIaFailure({
           code: "unauthenticated",
@@ -998,6 +905,7 @@ export function BatimumAiAssistant() {
 
   const handleVoirHistorique = (entry: MumIaHistoriqueEntry) => {
     setDescription(entry.descriptionChantier);
+    setDescriptionDicteeVocalement(entry.descriptionDicteeVocalement === true);
     setRegionCode(entry.regionCode);
     setDepartementCode(entry.departementCode);
     setTypeChantier(entry.typeChantier);
@@ -1143,19 +1051,20 @@ export function BatimumAiAssistant() {
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Décrivez votre chantier
             </span>
-            <textarea
-              value={description}
-              onChange={(event) => {
-                const next = event.target.value;
-                setDescription(next);
+            <MumIaVoiceDictation
+              description={description}
+              textareaRef={descriptionTextareaRef}
+              disabled={analyzing || loading}
+              onTranscript={(text, meta) => {
+                setDescription(text);
+                if (meta.fromVoice) setDescriptionDicteeVocalement(true);
                 setAnalysis(null);
                 setStandardDetails(EMPTY_MUM_IA_STANDARD_DETAILS);
                 setOptionalDetailsExpanded(false);
                 setQuestionAnswers({});
-                setAdditionalPrecisions("");
                 setResult(null);
                 setActiveHistoryId(null);
-                const validation = validateMumIaDevisRequest(next);
+                const validation = validateMumIaDevisRequest(text);
                 if (validation.valid) {
                   setError((prev) =>
                     prev === MUM_IA_INSUFFICIENT_INFO_MESSAGE ||
@@ -1165,9 +1074,36 @@ export function BatimumAiAssistant() {
                   );
                 }
               }}
-              rows={7}
-              placeholder="Ex. : Rénovation complète salle de bain 6 m² — dépose carrelage et sanitaires, protection, nouvelle douche italienne, faïence murale, plomberie, 2 points lumineux, peinture plafond, nettoyage et évacuation gravats…"
-              className="min-h-[9rem] w-full resize-y rounded-2xl border border-border/80 bg-card/90 px-4 py-3 text-sm text-foreground shadow-[var(--shadow-input)] placeholder:text-muted-foreground/60 focus:border-primary/60 focus:outline-none focus:ring-4 focus:ring-primary/10"
+              textarea={
+                <textarea
+                  ref={descriptionTextareaRef}
+                  value={description}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    setDescription(next);
+                    if (!next.trim()) setDescriptionDicteeVocalement(false);
+                    setAnalysis(null);
+                    setStandardDetails(EMPTY_MUM_IA_STANDARD_DETAILS);
+                    setOptionalDetailsExpanded(false);
+                    setQuestionAnswers({});
+                    setAdditionalPrecisions("");
+                    setResult(null);
+                    setActiveHistoryId(null);
+                    const validation = validateMumIaDevisRequest(next);
+                    if (validation.valid) {
+                      setError((prev) =>
+                        prev === MUM_IA_INSUFFICIENT_INFO_MESSAGE ||
+                        prev === MUM_IA_EMPTY_DESCRIPTION_MESSAGE
+                          ? null
+                          : prev,
+                      );
+                    }
+                  }}
+                  rows={7}
+                  placeholder="Ex. : Rénovation complète salle de bain 6 m² — dépose carrelage et sanitaires, protection, nouvelle douche italienne, faïence murale, plomberie, 2 points lumineux, peinture plafond, nettoyage et évacuation gravats…"
+                  className="min-h-[9rem] w-full resize-y rounded-2xl border border-border/80 bg-card/90 px-4 py-3 pr-12 pb-11 text-sm text-foreground shadow-[var(--shadow-input)] placeholder:text-muted-foreground/60 focus:border-primary/60 focus:outline-none focus:ring-4 focus:ring-primary/10"
+                />
+              }
             />
           </label>
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { EntrepriseSirenLookup } from "@/components/entreprise-siren-lookup";
 import { GoogleContinueButton } from "@/components/google-continue-button";
 import { AuthSplitLayout } from "@/components/marketing/auth-split-layout";
 import { MarketingFooter } from "@/components/marketing-footer";
@@ -13,12 +14,17 @@ import { Input, Label } from "@/components/ui/input";
 import { saveAccount, type UserAccount } from "@/lib/account";
 import { savePendingSignupCredentials } from "@/lib/auth-credentials";
 import { sendEmailVerificationCode } from "@/lib/email-verification/client";
+import type { CompanyPrefillFields } from "@/lib/entreprise/annuaire-lookup";
+import { getLocationFromPostalCode } from "@/lib/french-regions";
 import {
   fetchRecordedTermsAcceptance,
   recordTermsAcceptance,
   TERMS_ACCEPTANCE_REQUIRED_MESSAGE,
 } from "@/lib/legal-acceptance";
 import {
+  emptyCompanyDraft,
+  getOnboardingFlowState,
+  patchOnboardingFlowState,
   saveOnboardingFlowState,
   type OnboardingAccountDraft,
 } from "@/lib/onboarding-flow";
@@ -57,6 +63,13 @@ function SignupForm() {
   const [touched, setTouched] = useState<Partial<Record<SignupField, boolean>>>(
     {},
   );
+  const [companyPrefillApplied, setCompanyPrefillApplied] = useState(false);
+  const [companyPreview, setCompanyPreview] = useState<{
+    entreprise: string;
+    adresse: string;
+    siret: string;
+    activite: string;
+  } | null>(null);
 
   const formValues = useMemo(
     () => ({
@@ -93,6 +106,19 @@ function SignupForm() {
         "Aucun compte n'existe encore pour cette adresse Google. Acceptez les CGU et les CGV pour créer votre compte.",
       );
     }
+
+    const savedCompany = getOnboardingFlowState().company;
+    if (savedCompany?.siret?.trim() && savedCompany.entreprise?.trim()) {
+      setCompanyPrefillApplied(true);
+      setCompanyPreview({
+        entreprise: savedCompany.entreprise,
+        adresse: [savedCompany.adresse, savedCompany.codePostal, savedCompany.ville]
+          .filter(Boolean)
+          .join(", "),
+        siret: savedCompany.siret,
+        activite: savedCompany.libelleActivite || savedCompany.codeApe || "",
+      });
+    }
   }, [router, searchParams]);
 
   if (isPrivateBetaEnabled()) {
@@ -120,6 +146,54 @@ function SignupForm() {
       email: values.email.trim().toLowerCase(),
     };
     saveOnboardingFlowState({ account: draft });
+  }
+
+  function applyOfficialCompany(fields: CompanyPrefillFields) {
+    const location = getLocationFromPostalCode(fields.codePostal);
+    const dirigeant =
+      `${prenom.trim()} ${nom.trim()}`.trim() ||
+      getOnboardingFlowState().company?.dirigeant ||
+      "";
+
+    patchOnboardingFlowState((state) => ({
+      ...state,
+      company: {
+        ...emptyCompanyDraft(email.trim().toLowerCase() || state.account?.email || ""),
+        ...state.company,
+        entreprise: fields.entreprise || state.company?.entreprise || "",
+        enseigne: fields.enseigne,
+        adresse: fields.adresse || state.company?.adresse || "",
+        adresseComplement: fields.adresseComplement,
+        codePostal: fields.codePostal || state.company?.codePostal || "",
+        ville: fields.ville || state.company?.ville || "",
+        pays: fields.pays || "France",
+        departement: location.departement || state.company?.departement || "",
+        region: location.region || state.company?.region || "",
+        siret: fields.siret.replace(/\D/g, ""),
+        siren: fields.siren,
+        formeJuridique: fields.formeJuridique,
+        codeApe: fields.codeApe,
+        libelleActivite: fields.libelleActivite,
+        dateCreationEntreprise: fields.dateCreationEntreprise,
+        establishmentStatus: fields.establishmentStatus,
+        isSiege: fields.isSiege,
+        officialDataLastCheckedAt: fields.officialDataLastCheckedAt,
+        officialDataSource: fields.officialDataSource,
+        officialDataVerificationStatus: fields.officialDataVerificationStatus,
+        dirigeant,
+        email: email.trim().toLowerCase() || state.company?.email || "",
+      },
+    }));
+
+    setCompanyPrefillApplied(true);
+    setCompanyPreview({
+      entreprise: fields.entreprise,
+      adresse: [fields.adresse, fields.codePostal, fields.ville]
+        .filter(Boolean)
+        .join(", "),
+      siret: fields.siret.replace(/\D/g, ""),
+      activite: fields.libelleActivite || fields.codeApe || "",
+    });
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -150,8 +224,19 @@ function SignupForm() {
     setLoading(true);
     persistDraft(formValues);
 
+    patchOnboardingFlowState((state) => ({
+      ...state,
+      company: state.company
+        ? {
+            ...state.company,
+            dirigeant: utilisateur || state.company.dirigeant,
+            email: normalizedEmail || state.company.email,
+          }
+        : state.company,
+    }));
+
     const draft: UserAccount = {
-      entreprise: "",
+      entreprise: getOnboardingFlowState().company?.entreprise?.trim() || "",
       utilisateur,
       prenom: formValues.prenom.trim(),
       nom: formValues.nom.trim(),
@@ -180,23 +265,59 @@ function SignupForm() {
   return (
     <AuthSplitLayout footer={<MarketingFooter />}>
       <Card className="w-full">
-        <Link href="/" className="mb-8 flex justify-center">
+        <Link href="/landing" className="mb-8 flex justify-center">
           <BrandLogo variant="marketing" showSubtitle={false} />
         </Link>
 
         <header className="mb-8">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#666666]">
             Inscription · Étape 1 sur 7
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">
             Créer votre compte
           </h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Quelques informations pour démarrer votre essai gratuit de 7 jours.
+            Quelques informations pour démarrer vos 7 jours d&apos;essai gratuit.
           </p>
         </header>
 
         <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+          <EntrepriseSirenLookup
+            preferSiret
+            compact
+            hasExistingData={companyPrefillApplied}
+            initialValue={companyPreview?.siret ?? ""}
+            onApply={applyOfficialCompany}
+            className="border-neutral-200 shadow-none"
+          />
+
+          {companyPrefillApplied && companyPreview ? (
+            <div className="rounded-xl border border-[#2563eb]/20 bg-[#2563eb]/5 px-4 py-3 text-sm text-neutral-800">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#2563eb]">
+                Entreprise enregistrée pour la suite
+              </p>
+              <p className="mt-1 font-semibold">{companyPreview.entreprise}</p>
+              {companyPreview.adresse ? (
+                <p className="mt-0.5 text-xs text-neutral-600">
+                  {companyPreview.adresse}
+                </p>
+              ) : null}
+              <p className="mt-0.5 text-xs text-neutral-500">
+                SIRET {companyPreview.siret}
+                {companyPreview.activite ? ` · ${companyPreview.activite}` : ""}
+              </p>
+              <p className="mt-2 text-[11px] text-neutral-500">
+                Ces informations seront proposées à l&apos;étape Entreprise. Vous
+                pourrez encore les corriger.
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Pas de SIRET sous la main ? Continuer avec la saisie manuelle à
+              l&apos;étape Entreprise.
+            </p>
+          )}
+
           <section className="grid gap-4 sm:grid-cols-2">
             <section>
               <Label>Prénom</Label>

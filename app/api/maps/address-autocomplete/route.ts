@@ -34,8 +34,9 @@ export async function GET(request: Request) {
   try {
     const url = new URL("https://api-adresse.data.gouv.fr/search/");
     url.searchParams.set("q", q);
-    url.searchParams.set("limit", "6");
+    url.searchParams.set("limit", "8");
     url.searchParams.set("autocomplete", "1");
+    url.searchParams.set("type", "housenumber");
 
     const response = await fetch(url.toString(), {
       headers: { Accept: "application/json" },

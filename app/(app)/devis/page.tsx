@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, useEffect, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { DevisCounters } from "@/components/devis-counters";
 import { DataTable, RowActions, Td, Tr } from "@/components/data-table";
@@ -37,6 +37,7 @@ function todayISO() {
 
 export default function DevisPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data } = useStore();
   const { devis, clients, counters, addDevisBrouillon, removeDevis } =
     useDevisLocal();
@@ -48,6 +49,16 @@ export default function DevisPage() {
   const [devisToDelete, setDevisToDelete] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [quickClientOpen, setQuickClientOpen] = useState(false);
+
+  useEffect(() => {
+    const fromQuery = searchParams.get("clientId")?.trim() ?? "";
+    if (fromQuery && clients.some((client) => client.id === fromQuery)) {
+      setClientId(fromQuery);
+    }
+    if (searchParams.get("nouveau") === "1") {
+      setIsCreateOpen(true);
+    }
+  }, [searchParams, clients]);
 
   const tauxTVA = data.parametres.tva ?? 0;
   const invalidClass = "border-red-500 focus:border-red-500 focus:ring-red-500/20";
@@ -89,8 +100,14 @@ export default function DevisPage() {
 
   function handleCreateDevis(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const lockedDate = todayISO();
+    setDateDevis(lockedDate);
     const client = clients.find((item) => item.id === clientId);
-    const nextErrors = validateDevisCreation({ clientId, dateDevis, client });
+    const nextErrors = validateDevisCreation({
+      clientId,
+      dateDevis: lockedDate,
+      client,
+    });
 
     setErrors(nextErrors);
     if (hasValidationErrors(nextErrors)) {
@@ -100,7 +117,7 @@ export default function DevisPage() {
 
     const created = addDevisBrouillon({
       clientId,
-      dateDevis,
+      dateDevis: lockedDate,
       tauxTVA,
     });
 
@@ -298,9 +315,13 @@ export default function DevisPage() {
             </Label>
             <DateInput
               value={dateDevis}
-              onChangeValue={setDateDevis}
+              onChangeValue={() => undefined}
+              readOnly
               className={errors.dateDevis ? invalidClass : undefined}
             />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Date du jour — non modifiable à la création.
+            </p>
             {errors.dateDevis && (
               <p className="mt-1 text-sm text-danger-foreground">
                 {errors.dateDevis}

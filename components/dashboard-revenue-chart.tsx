@@ -378,7 +378,7 @@ export function DashboardRevenueChart({
                     <div
                       className={cn(
                         "w-full origin-bottom rounded-lg",
-                        hasRevenue ? "bg-[#10B981]" : "bg-slate-200",
+                        hasRevenue ? "bg-[#3b82f6]" : "bg-slate-200",
                         hasRevenue && isHovered && "brightness-110",
                         isDimmed && "opacity-40",
                       )}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { MumIaContextButton } from "@/components/mum-ia-context-button";
 import { DataTable, RowActions, Td, Tr } from "@/components/data-table";
@@ -48,6 +48,7 @@ const statuts: StatutChantier[] = [
 
 export default function ChantiersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data, setData } = useStore();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Chantier | null>(null);
@@ -65,6 +66,37 @@ export default function ChantiersPage() {
   function devisForClient(clientId: string) {
     return data.devis.filter((devis) => devis.clientId === clientId);
   }
+
+  function openCreate(prefillClientId?: string) {
+    const preferred =
+      (prefillClientId &&
+        data.clients.find((client) => client.id === prefillClientId)) ||
+      data.clients[0];
+    setCreateFromDevisId("");
+    setForm({
+      id: generateId(),
+      nom: "",
+      clientId: preferred?.id ?? "",
+      adresse: preferred ? getClientAddress(preferred) : "",
+      statut: "planifie",
+      type: "renovation",
+      typePersonnalise: "",
+      etapes: createEtapesForType("renovation"),
+      dateDebut: new Date().toISOString().slice(0, 10),
+      dateFin: "",
+      budget: 0,
+    });
+    setErrors({});
+    setShowValidationToast(false);
+    setOpen(true);
+  }
+
+  useEffect(() => {
+    if (searchParams.get("nouveau") !== "1") return;
+    const fromQuery = searchParams.get("clientId")?.trim() ?? "";
+    openCreate(fromQuery || undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open once from query
+  }, [searchParams]);
 
   const filteredChantiers = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -84,27 +116,6 @@ export default function ChantiersPage() {
       return haystack.includes(query);
     });
   }, [data.chantiers, data.clients, search]);
-
-  function openCreate() {
-    const firstClient = data.clients[0];
-    setCreateFromDevisId("");
-    setForm({
-      id: generateId(),
-      nom: "",
-      clientId: firstClient?.id ?? "",
-      adresse: firstClient ? getClientAddress(firstClient) : "",
-      statut: "planifie",
-      type: "renovation",
-      typePersonnalise: "",
-      etapes: createEtapesForType("renovation"),
-      dateDebut: new Date().toISOString().slice(0, 10),
-      dateFin: "",
-      budget: 0,
-    });
-    setErrors({});
-    setShowValidationToast(false);
-    setOpen(true);
-  }
 
   function save() {
     if (!form) return;
@@ -174,7 +185,7 @@ export default function ChantiersPage() {
         action={
           <div className="flex flex-wrap items-center gap-2">
             <MumIaContextButton source="chantier" entityLabel="Liste des chantiers" />
-            <Button onClick={openCreate} disabled={!data.clients.length}>
+            <Button onClick={() => openCreate()} disabled={!data.clients.length}>
               <Plus className="h-4 w-4" />
               Nouveau chantier
             </Button>

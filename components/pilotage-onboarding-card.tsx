@@ -29,7 +29,7 @@ export function PilotageOnboardingCard({
               className="flex items-center gap-2.5 rounded-lg border border-border/40 px-3 py-2 text-sm transition-colors hover:bg-card-elevated/40"
             >
               {step.done ? (
-                <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                <Check className="h-3.5 w-3.5 shrink-0 text-accent" />
               ) : (
                 <Circle className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
               )}

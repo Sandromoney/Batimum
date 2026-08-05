@@ -28,23 +28,23 @@ export function Sidebar() {
               className={cn(
                 "group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-300 ease-out",
                 active
-                  ? "bg-primary text-primary-foreground shadow-glow"
-                  : "text-muted hover:translate-x-0.5 hover:bg-card-hover/80 hover:text-foreground",
+                  ? "is-active bg-card-hover text-foreground"
+                  : "text-muted hover:translate-x-0.5 hover:bg-card-hover hover:text-foreground",
               )}
             >
               <span
                 className={cn(
                   "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ease-out",
                   active
-                    ? "bg-primary-foreground/10"
-                    : "bg-transparent group-hover:scale-105 group-hover:bg-card-hover/60",
+                    ? "bg-[rgb(var(--color-accent)/0.1)]"
+                    : "bg-transparent group-hover:scale-105 group-hover:bg-card-hover",
                 )}
               >
                 <Icon
                   className={cn(
                     "h-[1.15rem] w-[1.15rem] transition-all duration-300 ease-out",
                     active
-                      ? "text-primary-foreground"
+                      ? "text-[rgb(var(--color-accent))]"
                       : "text-muted group-hover:text-foreground",
                   )}
                   strokeWidth={active ? 2.25 : 1.75}

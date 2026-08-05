@@ -102,7 +102,7 @@ const config = {
 
       pattern:
 
-        /^(bg|text|border)-(background|foreground|sidebar|card|primary|muted|border|success|danger)(\/(5|10|15|20|25|30|70|80|90|95))?$/,
+        /^(bg|text|border)-(background|foreground|sidebar|card|primary|accent|muted|border|success|danger)(\/(5|10|15|20|25|30|70|80|90|95))?$/,
 
     },
 
@@ -161,6 +161,16 @@ const config = {
           hover: "rgb(var(--color-primary-hover) / <alpha-value>)",
 
           foreground: "rgb(var(--color-primary-foreground) / <alpha-value>)",
+
+        },
+
+        accent: {
+
+          DEFAULT: "rgb(var(--color-accent) / <alpha-value>)",
+
+          hover: "rgb(var(--color-accent-hover) / <alpha-value>)",
+
+          foreground: "rgb(var(--color-accent-foreground) / <alpha-value>)",
 
         },
 

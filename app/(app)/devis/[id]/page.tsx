@@ -79,7 +79,7 @@ import {
   resolveLigneDefaultTva,
   syncDevisMontantsFromLignes,
 } from "@/lib/devis-tva";
-import { isTvaClassique } from "@/lib/parametres";
+import { isTvaClassique, advanceCompteurCommande, advanceCompteurFacture } from "@/lib/parametres";
 import {
   createCommandeFromDevis,
   findCommandeByDevisId,
@@ -645,7 +645,14 @@ ${reminderEmail.message}`,
 
     setStoreData((previous) => {
       const slice = appendFactureWithHistorique(previous, created.facture);
-      return { ...previous, ...slice };
+      return {
+        ...previous,
+        ...slice,
+        parametres: advanceCompteurFacture(
+          previous.parametres,
+          created.facture.numero,
+        ),
+      };
     });
     setTransformMessage("");
     setAcompteModalOpen(false);
@@ -677,7 +684,14 @@ ${reminderEmail.message}`,
         devis: devisItem,
         commande: created,
       });
-      return { ...previous, ...slice };
+      return {
+        ...previous,
+        ...slice,
+        parametres: advanceCompteurCommande(
+          previous.parametres,
+          created.numero,
+        ),
+      };
     });
     setTransformMessage("");
     router.push(`/commandes/${created.id}`);

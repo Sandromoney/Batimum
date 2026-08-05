@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label, PhoneInput, Textarea } from "@/components/ui/input";
@@ -25,6 +26,7 @@ import {
   buildFournisseurManual,
   isOsmIdAlreadyRegistered,
 } from "@/lib/fourniture/fournisseur-storage";
+import { toSavedFournisseurMapPoint } from "@/lib/fourniture/map-points";
 import {
   normalizeForBrandMatch,
   SUPPLIER_SEARCH_SUGGESTIONS,
@@ -46,7 +48,9 @@ type Props = {
   parametres: Parametres;
   companyId: string;
   existingFournisseurs: Fournisseur[];
+  highlightFournisseurId?: string | null;
   onAddFournisseur: (fournisseur: Fournisseur) => boolean;
+  onOpenFournisseur?: (id: string) => void;
 };
 
 type ApiSupplierResult = {
@@ -120,7 +124,9 @@ export function FournisseurDepotPicker({
   parametres,
   companyId,
   existingFournisseurs,
+  highlightFournisseurId = null,
   onAddFournisseur,
+  onOpenFournisseur,
 }: Props) {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -141,8 +147,17 @@ export function FournisseurDepotPicker({
   const [sortKey, setSortKey] = useState<"distance" | "name">("distance");
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
   const [addSuccessAnim, setAddSuccessAnim] = useState(false);
+  const [successLeaving, setSuccessLeaving] = useState(false);
   const [addingLoading, setAddingLoading] = useState(false);
   const [mapRecenterKey, setMapRecenterKey] = useState(0);
+
+  const flashSuccess = useCallback((message: string) => {
+    setSuccessLeaving(false);
+    setAddSuccessAnim(false);
+    setSuccessNotice(message);
+    // Restart check animation on next frame
+    window.requestAnimationFrame(() => setAddSuccessAnim(true));
+  }, []);
 
   const resetSupplierSearch = useCallback(() => {
     setQuery("");
@@ -166,11 +181,17 @@ export function FournisseurDepotPicker({
 
   useEffect(() => {
     if (!successNotice) return;
-    const timer = window.setTimeout(() => {
+    setSuccessLeaving(false);
+    const leaveTimer = window.setTimeout(() => setSuccessLeaving(true), 1600);
+    const clearTimer = window.setTimeout(() => {
       setSuccessNotice(null);
       setAddSuccessAnim(false);
-    }, 3000);
-    return () => window.clearTimeout(timer);
+      setSuccessLeaving(false);
+    }, 1850);
+    return () => {
+      window.clearTimeout(leaveTimer);
+      window.clearTimeout(clearTimer);
+    };
   }, [successNotice]);
 
   const companyLabel = parametres.entreprise?.trim() || "Votre entreprise";
@@ -246,12 +267,6 @@ export function FournisseurDepotPicker({
       cancelled = true;
     };
   }, [parametres.adresse, parametres.codePostal, parametres.ville]);
-
-  useEffect(() => {
-    if (!successNotice) return;
-    const t = window.setTimeout(() => setSuccessNotice(null), 8000);
-    return () => window.clearTimeout(t);
-  }, [successNotice]);
 
   function normalizeForCompare(value: string): string {
     return (value ?? "")
@@ -454,6 +469,7 @@ export function FournisseurDepotPicker({
 
   function selectDepot(depot: OsmDepotResult) {
     setSelectedOsmId(depot.osmId);
+    flashSuccess("✓ Dépôt sélectionné");
   }
 
   function chooseDepot(depot: OsmDepotResult) {
@@ -475,6 +491,7 @@ export function FournisseurDepotPicker({
       commentaireInterne: "",
     });
     setApiError("");
+    flashSuccess("✓ Dépôt sélectionné");
   }
 
   function cancelChosenDepot() {
@@ -557,9 +574,10 @@ export function FournisseurDepotPicker({
 
       const depotName = pendingDepot.name || manual.nom.trim();
       const depotCity = pendingDepot.ville?.trim() || manual.ville.trim();
-      setAddSuccessAnim(true);
-      setSuccessNotice(
-        `${depotName}${depotCity ? ` ${depotCity}` : ""} a été ajouté à vos fournisseurs.`,
+      flashSuccess(
+        `✓ Fournisseur ajouté${depotName ? ` — ${depotName}` : ""}${
+          depotCity ? ` (${depotCity})` : ""
+        }`,
       );
 
       setPendingDepot(null);
@@ -596,16 +614,32 @@ export function FournisseurDepotPicker({
     setManual(EMPTY_MANUAL);
     setShowManual(false);
     setApiError("");
+    flashSuccess("✓ Fournisseur ajouté");
   }
+
+  const savedMapPoints = useMemo(
+    () =>
+      existingFournisseurs
+        .map((item) =>
+          toSavedFournisseurMapPoint(item, {
+            isNew: item.id === highlightFournisseurId,
+          }),
+        )
+        .filter((item): item is NonNullable<typeof item> => item != null),
+    [existingFournisseurs, highlightFournisseurId],
+  );
 
   const mapProps: FournisseurMapProps = {
     company: companyLocation,
     depots,
+    savedFournisseurs: savedMapPoints,
     selectedOsmId,
+    highlightFournisseurId,
     radiusKm: searchAttempted ? radiusKm : 15,
     recenterKey: mapRecenterKey,
     onSelectDepot: selectDepot,
     onConfirmDepot: chooseDepot,
+    onOpenFournisseur,
     emptyMessage: geocodeError ?? COMPANY_ADDRESS_EMPTY_MESSAGE,
   };
 
@@ -643,11 +677,22 @@ export function FournisseurDepotPicker({
             />
           </section>
           <section className="sm:col-span-2">
-            <Label>Adresse</Label>
-            <Input
-              value={manual.adresseDepot}
-              onChange={(e) =>
-                setManual((d) => ({ ...d, adresseDepot: e.target.value }))
+            <AddressAutocomplete
+              label="Adresse"
+              requireSuggestion
+              value={{
+                adresse: manual.adresseDepot,
+                codePostal: manual.codePostal,
+                ville: manual.ville,
+                pays: "France",
+              }}
+              onChange={(next) =>
+                setManual((d) => ({
+                  ...d,
+                  adresseDepot: next.adresse,
+                  codePostal: next.codePostal,
+                  ville: next.ville,
+                }))
               }
             />
           </section>
@@ -655,16 +700,18 @@ export function FournisseurDepotPicker({
             <Label>Ville</Label>
             <Input
               value={manual.ville}
-              onChange={(e) => setManual((d) => ({ ...d, ville: e.target.value }))}
+              readOnly
+              className="bg-card-elevated/60 text-muted-foreground"
+              placeholder="Auto"
             />
           </section>
           <section>
             <Label>Code postal</Label>
             <Input
               value={manual.codePostal}
-              onChange={(e) =>
-                setManual((d) => ({ ...d, codePostal: e.target.value }))
-              }
+              readOnly
+              className="bg-card-elevated/60 text-muted-foreground"
+              placeholder="Auto"
             />
           </section>
           <section>
@@ -752,7 +799,7 @@ export function FournisseurDepotPicker({
           </div>
           <Button
             type="button"
-            className="h-11 rounded-xl bg-emerald-600 px-6 hover:bg-emerald-700"
+            className="h-11 rounded-xl bg-primary px-6 hover:bg-primary-hover"
             onClick={() => void searchDepots(15)}
             disabled={loading || geocoding || !companyLocation}
           >
@@ -765,7 +812,7 @@ export function FournisseurDepotPicker({
             <button
               key={brand}
               type="button"
-              className="rounded-full border border-border/60 bg-white px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-700"
+              className="rounded-full border border-border/60 bg-white px-2.5 py-1 text-xs text-muted-foreground transition-colors duration-200 hover:border-accent/40 hover:bg-accent/[0.05] hover:text-accent-hover"
               disabled={loading || geocoding || !companyLocation}
               onClick={() => void searchDepots(15, brand)}
             >
@@ -782,12 +829,18 @@ export function FournisseurDepotPicker({
       </Card>
 
       {successNotice ? (
-        <div className="fournisseur-add-success flex items-center gap-3 rounded-xl border border-emerald-200/80 bg-emerald-50 px-4 py-3 text-sm text-emerald-950 shadow-sm">
+        <div
+          className={`fournisseur-add-success flex items-center gap-2.5 rounded-xl border border-accent/25 bg-accent/[0.04] px-3.5 py-2.5 text-sm font-medium text-accent ${
+            successLeaving ? "is-leaving" : ""
+          }`}
+          role="status"
+          aria-live="polite"
+        >
           <span
             className={`fournisseur-add-check ${addSuccessAnim ? "is-animated" : ""}`}
             aria-hidden
           >
-            <Check className="h-4 w-4" />
+            <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
           </span>
           <p>{successNotice}</p>
         </div>
@@ -814,7 +867,7 @@ export function FournisseurDepotPicker({
                       type="button"
                       className={`rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
                         sortKey === "distance"
-                          ? "bg-emerald-50 text-emerald-700"
+                          ? "bg-accent/5 text-accent-hover"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                       onClick={() => setSortKey("distance")}
@@ -825,7 +878,7 @@ export function FournisseurDepotPicker({
                       type="button"
                       className={`rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
                         sortKey === "name"
-                          ? "bg-emerald-50 text-emerald-700"
+                          ? "bg-accent/5 text-accent-hover"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                       onClick={() => setSortKey("name")}
@@ -855,10 +908,10 @@ export function FournisseurDepotPicker({
                     return (
                       <div
                         key={depot.osmId}
-                        className={`cursor-pointer rounded-[14px] border px-3 py-3 transition-all ${
+                        className={`cursor-pointer rounded-[14px] border px-3 py-3 transition-all duration-200 ease-out ${
                           selected
-                            ? "border-emerald-500 bg-emerald-50/80 shadow-sm"
-                            : "border-border/60 bg-white hover:border-emerald-300/80"
+                            ? "border-accent bg-accent/[0.06] shadow-sm"
+                            : "border-border/60 bg-white hover:border-accent/40"
                         }`}
                         onClick={() => selectDepot(depot)}
                         onKeyDown={(event) => {
@@ -871,13 +924,13 @@ export function FournisseurDepotPicker({
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex min-w-0 items-start gap-3">
-                            <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-200/70 bg-emerald-50 text-emerald-700">
+                            <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl border border-border/70 bg-accent/5 text-accent-hover">
                               <Store className="h-4 w-4" />
                             </div>
                             <div className="min-w-0">
                               {depot.enseigne &&
                               depot.enseigne.trim() !== depot.name.trim() ? (
-                                <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-700">
+                                <p className="text-[11px] font-medium uppercase tracking-wide text-accent-hover">
                                   {depot.enseigne}
                                 </p>
                               ) : null}
@@ -895,7 +948,7 @@ export function FournisseurDepotPicker({
                                   .join(" ")}
                               </p>
                               {depot.distanceKm != null ? (
-                                <p className="mt-1 text-xs font-semibold text-emerald-800">
+                                <p className="mt-1 text-xs font-semibold text-accent">
                                   {formatDistanceKm(depot.distanceKm)}
                                 </p>
                               ) : null}
@@ -903,7 +956,7 @@ export function FournisseurDepotPicker({
                                 {depot.telephone ? (
                                   <a
                                     href={`tel:${depot.telephone.replace(/\s/g, "")}`}
-                                    className="block text-emerald-700 hover:underline"
+                                    className="block text-accent-hover hover:underline"
                                     onClick={(event) => event.stopPropagation()}
                                   >
                                     {depot.telephone}
@@ -916,7 +969,7 @@ export function FournisseurDepotPicker({
                                     href={formatWebsiteHref(depot.siteWeb)}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="block text-emerald-700 hover:underline"
+                                    className="block text-accent-hover hover:underline"
                                     onClick={(event) => event.stopPropagation()}
                                   >
                                     {depot.siteWeb.replace(/^https?:\/\//i, "")}
@@ -933,8 +986,8 @@ export function FournisseurDepotPicker({
                             size="sm"
                             className={`min-h-9 shrink-0 rounded-lg px-3 ${
                               selected
-                                ? "bg-emerald-600 hover:bg-emerald-700"
-                                : "bg-emerald-600/90 hover:bg-emerald-700"
+                                ? "bg-primary hover:bg-primary-hover"
+                                : "bg-primary/90 hover:bg-primary-hover"
                             }`}
                             onClick={(event) => {
                               event.stopPropagation();
@@ -983,7 +1036,7 @@ export function FournisseurDepotPicker({
                 </div>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/5 text-accent">
                     <MapPin className="h-5 w-5" />
                   </div>
                   <p className="max-w-[220px] text-sm text-muted-foreground">
@@ -1019,7 +1072,7 @@ export function FournisseurDepotPicker({
       </div>
 
       {pendingDepot ? (
-        <Card className="rounded-[22px] border-emerald-200/80 bg-emerald-50/40 p-5 shadow-sm">
+        <Card className="rounded-[22px] border-border/80 bg-accent/[0.04] p-5 shadow-sm">
           <div className="space-y-1">
             <p className="text-sm font-semibold text-foreground">
               Ajouter ce dépôt à vos fournisseurs ?
@@ -1043,7 +1096,7 @@ export function FournisseurDepotPicker({
                   .join(", ")}
               </p>
               {pendingDepot.distanceKm != null ? (
-                <p className="font-medium text-emerald-700">
+                <p className="font-medium text-accent-hover">
                   {formatDistanceKm(pendingDepot.distanceKm)}
                 </p>
               ) : null}
@@ -1088,7 +1141,7 @@ export function FournisseurDepotPicker({
             <Button
               type="button"
               size="sm"
-              className="rounded-lg bg-emerald-600 hover:bg-emerald-700"
+              className="rounded-lg bg-primary hover:bg-primary-hover"
               disabled={addingLoading}
               onClick={submitChosenDepot}
             >

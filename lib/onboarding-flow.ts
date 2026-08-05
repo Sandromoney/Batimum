@@ -17,6 +17,7 @@ export type OnboardingCompanyDraft = {
   entreprise: string;
   dirigeant: string;
   adresse: string;
+  adresseComplement?: string;
   ville: string;
   codePostal: string;
   departement: string;
@@ -25,6 +26,18 @@ export type OnboardingCompanyDraft = {
   email: string;
   siteInternet: string;
   siret: string;
+  siren?: string;
+  formeJuridique?: string;
+  codeApe?: string;
+  libelleActivite?: string;
+  enseigne?: string;
+  pays?: string;
+  dateCreationEntreprise?: string;
+  establishmentStatus?: "actif" | "ferme";
+  isSiege?: boolean;
+  officialDataLastCheckedAt?: string;
+  officialDataSource?: string;
+  officialDataVerificationStatus?: "verified" | "manual" | "partial" | "stale";
   tvaIntracom: string;
 };
 
@@ -64,6 +77,7 @@ export function emptyCompanyDraft(email = ""): OnboardingCompanyDraft {
     entreprise: "",
     dirigeant: "",
     adresse: "",
+    adresseComplement: "",
     ville: "",
     codePostal: "",
     departement: "",
@@ -72,6 +86,18 @@ export function emptyCompanyDraft(email = ""): OnboardingCompanyDraft {
     email,
     siteInternet: "",
     siret: "",
+    siren: "",
+    formeJuridique: "",
+    codeApe: "",
+    libelleActivite: "",
+    enseigne: "",
+    pays: "France",
+    dateCreationEntreprise: "",
+    establishmentStatus: undefined,
+    isSiege: undefined,
+    officialDataLastCheckedAt: "",
+    officialDataSource: "",
+    officialDataVerificationStatus: undefined,
     tvaIntracom: "",
   };
 }

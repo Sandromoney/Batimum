@@ -1,322 +1,193 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { LandingReveal } from "@/components/landing/landing-reveal";
-import { Card } from "@/components/ui/card";
+import { LandingTrialCta } from "@/components/landing/landing-trial-cta";
+import {
+  useLandingExperience,
+  writeLandingSnapshot,
+} from "@/components/landing/landing-experience";
 import { isStripeConfigured } from "@/lib/dev-access";
-import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
 import { getPublicSignupHref, isPrivateBetaEnabled } from "@/lib/private-beta";
-import { cn } from "@/lib/utils";
 
 const MONTHLY_PRICE = 39;
 const YEARLY_MONTHLY_PRICE = 29;
-const YEARLY_TOTAL = 348;
 const YEARLY_SAVINGS = 120;
 
-const PREMIUM_FEATURES = [
-  "IA devis intégrée (MUM IA)",
-  "Pilotage rentabilité",
-  "Gestion employés",
+const FEATURES = [
+  "MUM IA et gestion complète des devis",
   "Signature électronique",
-  "Relances automatiques",
-  "Devis → facture automatiquement",
-  "Clients, devis et chantiers illimités",
-  "Support français",
+  "Clients et historique centralisé",
+  "Planning des équipes",
+  "Espace employé sécurisé",
+  "Suivi des chantiers",
+  "Facturation",
+  "Pilotage et rentabilité",
+  "Mises à jour incluses",
+  "Support",
 ] as const;
 
-type BillingCycle = "monthly" | "yearly";
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-function BillingSwitch({
-  value,
-  onChange,
-}: {
-  value: BillingCycle;
-  onChange: (cycle: BillingCycle) => void;
-}) {
-  return (
-    <div
-      className={cn(
-        "landing-billing-switch relative grid grid-cols-2 rounded-xl p-1 text-sm font-medium",
-        value === "yearly" && "landing-billing-switch--yearly",
-      )}
-      role="tablist"
-      aria-label="Formule d'abonnement"
-    >
-      <span className="landing-billing-switch__thumb" aria-hidden="true" />
-      <button
-        type="button"
-        role="tab"
-        aria-selected={value === "monthly"}
-        onClick={() => onChange("monthly")}
-        className={cn(
-          "landing-billing-switch__btn relative z-10 rounded-lg px-4 py-2 transition-colors duration-300",
-          value === "monthly" && "landing-billing-switch__btn--active",
-        )}
-      >
-        Mensuel
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={value === "yearly"}
-        onClick={() => onChange("yearly")}
-        className={cn(
-          "landing-billing-switch__btn relative z-10 rounded-lg px-4 py-2 transition-colors duration-300",
-          value === "yearly" && "landing-billing-switch__btn--active",
-        )}
-      >
-        Annuel
-      </button>
-    </div>
-  );
-}
+type PlanId = "monthly" | "yearly";
 
-function PricingFeature({ text }: { text: string }) {
-  return (
-    <li className="landing-pricing-feature group flex items-start gap-3 text-sm">
-      <span className="landing-pricing-feature__check mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20">
-        <Check className="h-3.5 w-3.5" aria-hidden="true" />
-      </span>
-      <span className="leading-6 text-foreground/90">{text}</span>
-    </li>
-  );
-}
-
-function PriceDisplay({
-  billingCycle,
-  animDirection,
-  reducedMotion,
-}: {
-  billingCycle: BillingCycle;
-  animDirection: "to-yearly" | "to-monthly" | null;
-  reducedMotion: boolean;
-}) {
-  const isYearly = billingCycle === "yearly";
-
-  return (
-    <p
-      className={cn(
-        "landing-pricing-price-stack inline-flex items-baseline gap-1.5",
-        !reducedMotion && animDirection === "to-yearly" &&
-          "landing-pricing-price-stack--to-yearly",
-        !reducedMotion && animDirection === "to-monthly" &&
-          "landing-pricing-price-stack--to-monthly",
-      )}
-      aria-live="polite"
-    >
-      <span className="relative inline-block h-[3.25rem] w-[5.5rem] overflow-hidden sm:w-[6rem]">
-        <span
-          className={cn(
-            "landing-pricing-price landing-pricing-price--monthly absolute inset-0 text-5xl font-semibold tracking-[-0.04em] text-foreground",
-            !animDirection &&
-              (isYearly
-                ? "landing-pricing-price--resting-below"
-                : "landing-pricing-price--active"),
-          )}
-          aria-hidden={isYearly}
-        >
-          {MONTHLY_PRICE}€
-        </span>
-        <span
-          className={cn(
-            "landing-pricing-price landing-pricing-price--yearly absolute inset-0 text-5xl font-semibold tracking-[-0.04em] text-foreground",
-            !animDirection &&
-              (isYearly
-                ? "landing-pricing-price--active"
-                : "landing-pricing-price--resting-below"),
-          )}
-          aria-hidden={!isYearly}
-        >
-          {YEARLY_MONTHLY_PRICE}€
-        </span>
-      </span>
-      <span className="text-base font-medium text-muted-foreground">/ mois</span>
-    </p>
-  );
+function checkoutHrefFor(plan: PlanId): string {
+  if (isPrivateBetaEnabled()) return "/login";
+  if (isStripeConfigured()) return `/checkout?billing=${plan}`;
+  return getPublicSignupHref();
 }
 
 export function LandingPricingSection() {
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
-  const [yearlyExtrasVisible, setYearlyExtrasVisible] = useState(false);
-  const [badgeVisible, setBadgeVisible] = useState(false);
-  const [cardGlow, setCardGlow] = useState(false);
-  const [priceAnimDirection, setPriceAnimDirection] = useState<
-    "to-yearly" | "to-monthly" | null
-  >(null);
-  const reducedMotion = usePrefersReducedMotion();
-  const stripeReady = isStripeConfigured();
-  const isFirstRender = useRef(true);
+  const reduced = useReducedMotion();
+  const { restore } = useLandingExperience();
 
-  const handleBillingChange = useCallback((cycle: BillingCycle) => {
-    setBillingCycle(cycle);
-  }, []);
+  const t = {
+    duration: reduced || restore ? 0.01 : 0.48,
+    ease: EASE,
+  };
 
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-
-    if (reducedMotion) {
-      setPriceAnimDirection(null);
-      setYearlyExtrasVisible(billingCycle === "yearly");
-      setBadgeVisible(billingCycle === "yearly");
-      setCardGlow(false);
-      return;
-    }
-
-    setPriceAnimDirection(
-      billingCycle === "yearly" ? "to-yearly" : "to-monthly",
-    );
-
-    const animTimer = window.setTimeout(() => setPriceAnimDirection(null), 650);
-
-    if (billingCycle === "yearly") {
-      setCardGlow(true);
-      const glowTimer = window.setTimeout(() => setCardGlow(false), 500);
-      setBadgeVisible(false);
-      const badgeTimer = window.setTimeout(() => setBadgeVisible(true), 360);
-      const extrasTimer = window.setTimeout(() => setYearlyExtrasVisible(true), 320);
-
-      return () => {
-        window.clearTimeout(animTimer);
-        window.clearTimeout(glowTimer);
-        window.clearTimeout(badgeTimer);
-        window.clearTimeout(extrasTimer);
-      };
-    }
-
-    setCardGlow(false);
-    setYearlyExtrasVisible(false);
-    setBadgeVisible(false);
-
-    return () => window.clearTimeout(animTimer);
-  }, [billingCycle, reducedMotion]);
-
-  const checkoutHref = isPrivateBetaEnabled()
-    ? "/login"
-    : stripeReady
-      ? `/checkout?billing=${billingCycle}`
-      : getPublicSignupHref();
+  const plans: Array<{
+    id: PlanId;
+    title: string;
+    price: number;
+    hint: string;
+    featured?: boolean;
+    badge?: string;
+  }> = [
+    {
+      id: "monthly",
+      title: "Sans engagement",
+      price: MONTHLY_PRICE,
+      hint: "Résiliez quand vous le souhaitez.",
+    },
+    {
+      id: "yearly",
+      title: "Engagement annuel",
+      price: YEARLY_MONTHLY_PRICE,
+      hint: `Engagement de 12 mois · ${YEARLY_SAVINGS} € économisés.`,
+      featured: true,
+      badge: `${YEARLY_SAVINGS} € économisés par an`,
+    },
+  ];
 
   return (
-    <section id="plans" className="bg-[#050505] text-white">
-      <div className="mx-auto w-full max-w-7xl px-6 py-20 sm:px-8 lg:px-10">
-      <LandingReveal variant="title">
-        <header className="mx-auto mb-10 max-w-3xl text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
-            Tarifs
-          </p>
-          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            Une seule offre.
-            <br />
-            Tout ce qu&apos;il faut pour gérer une TPE du bâtiment.
-          </h2>
-          <p className="mt-4 text-sm leading-7 text-[#9CA3AF] sm:text-base">
-            7 jours d&apos;essai · sans engagement · support français
-          </p>
-        </header>
-      </LandingReveal>
+    <section id="plans" className="lp-section lp-plans" aria-labelledby="plans-title">
+      <div className="lp-container lp-plans__shell">
+        <LandingReveal>
+          <div className="lp-section-head lp-plans__head">
+            <p className="lp-eyebrow">
+              <span className="lp-eyebrow__dot" aria-hidden="true" />
+              Tarifs
+            </p>
+            <h2 id="plans-title" className="lp-title lp-plans__titleHead">
+              Un tarif simple.{" "}
+              <span className="lp-title-accent">Sans surprise.</span>
+            </h2>
+            <p className="lp-subtitle lp-plans__lead">
+              Une seule offre, toutes les fonctionnalités incluses.
+            </p>
+            <p className="lp-plans__micro">
+              Choisissez simplement votre rythme de paiement.
+            </p>
+          </div>
+        </LandingReveal>
 
-      <LandingReveal delay={100}>
-        <div className="mx-auto max-w-3xl">
-          <Card
-            className={cn(
-              "landing-pricing-card relative overflow-hidden p-6 transition-all duration-[400ms] sm:p-8",
-              billingCycle === "yearly" && "landing-pricing-card--yearly",
-              cardGlow && "landing-pricing-card--glow",
-            )}
-          >
-            <div className="relative">
-              <div className="mb-6 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-                <section>
-                  <div className="mb-3">
-                    <span className="landing-pricing-trial-label">
-                      Essai gratuit • 7 jours
-                    </span>
-                  </div>
-                  <h3 className="text-2xl font-semibold tracking-tight">
-                    Batimum Premium
-                  </h3>
-                </section>
+        <div className="lp-plans__grid">
+          {plans.map((plan, index) => (
+            <motion.article
+              key={plan.id}
+              className={[
+                "lp-plans__card",
+                plan.featured ? "lp-plans__card--featured" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              initial={
+                reduced
+                  ? false
+                  : {
+                      opacity: 0,
+                      y: 16,
+                      scale: plan.featured ? 0.985 : 0.99,
+                    }
+              }
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, amount: 0.28 }}
+              transition={{
+                ...t,
+                delay: reduced ? 0 : plan.featured ? 0.14 : index * 0.08,
+              }}
+            >
+              <h3 className="lp-plans__title">{plan.title}</h3>
 
-                <BillingSwitch value={billingCycle} onChange={handleBillingChange} />
+              <div className="lp-plans__price">
+                <span className="lp-plans__amount">{plan.price}&nbsp;€</span>
+                <span className="lp-plans__period">par mois</span>
               </div>
+              {plan.badge ? (
+                <span className="lp-plans__badge">{plan.badge}</span>
+              ) : null}
+              <p className="lp-plans__hint">{plan.hint}</p>
 
-              <section className="mb-6 rounded-2xl border border-border/70 bg-card/60 p-6 text-center">
-                <div className="flex flex-col items-center">
-                  {billingCycle === "yearly" ? (
-                    <span
-                      className={cn(
-                        "landing-pricing-savings-badge mb-4",
-                        badgeVisible && "landing-pricing-savings-badge--visible",
-                      )}
-                    >
-                      Économisez {YEARLY_SAVINGS}€/an
+              <LandingTrialCta
+                href={checkoutHrefFor(plan.id)}
+                fullWidth
+                buttonClassName="lp-plans__cta"
+                label="Commencer mon essai gratuit"
+              />
+
+              <ul className="lp-plans__features">
+                {FEATURES.map((feature, fi) => (
+                  <motion.li
+                    key={feature}
+                    className="lp-plans__feature"
+                    initial={reduced ? false : { opacity: 0, y: 6 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.2 }}
+                    transition={{
+                      ...t,
+                      delay: reduced ? 0 : 0.18 + fi * 0.03,
+                    }}
+                  >
+                    <span className="lp-plans__check" aria-hidden="true">
+                      <Check size={14} strokeWidth={2.2} />
                     </span>
-                  ) : (
-                    <span className="mb-4 h-6" aria-hidden="true" />
-                  )}
-
-                  <PriceDisplay
-                    billingCycle={billingCycle}
-                    animDirection={priceAnimDirection}
-                    reducedMotion={reducedMotion}
-                  />
-
-                  {billingCycle === "monthly" ? (
-                    <div className="mt-3 space-y-0.5 text-sm text-muted-foreground">
-                      <p>Sans engagement</p>
-                      <p>Annulation à tout moment</p>
-                    </div>
-                  ) : (
-                    <div
-                      className={cn(
-                        "mt-3 space-y-1 text-sm transition-all duration-500",
-                        yearlyExtrasVisible
-                          ? "translate-y-0 opacity-100"
-                          : "translate-y-2 opacity-0",
-                      )}
-                    >
-                      <p className="text-muted-foreground">Facturé annuellement</p>
-                      <p className="text-muted-foreground">{YEARLY_TOTAL}€ / an</p>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              <ul className="grid gap-3 sm:grid-cols-2">
-                {PREMIUM_FEATURES.map((feature) => (
-                  <PricingFeature key={feature} text={feature} />
+                    <span>{feature}</span>
+                  </motion.li>
                 ))}
               </ul>
-
-              <Link
-                href={checkoutHref}
-                className="landing-pricing-cta landing-btn-primary landing-btn-interactive group mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground no-underline shadow-glow transition-all hover:bg-primary-hover active:scale-[0.98]"
-              >
-                Essayer gratuitement — 7 jours
-                <ArrowRight
-                  className="landing-pricing-cta__arrow h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1"
-                  aria-hidden="true"
-                />
-              </Link>
-
-              <p className="mt-3 text-center text-xs text-muted-foreground">
-                Déjà inscrit ?{" "}
-                <Link
-                  href="/login"
-                  className="font-medium text-primary no-underline hover:text-primary-hover"
-                >
-                  Se connecter
-                </Link>
-              </p>
-            </div>
-          </Card>
+            </motion.article>
+          ))}
         </div>
-      </LandingReveal>
+
+        <LandingReveal delay={120}>
+          <ul className="lp-plans__trust">
+            <li>
+              <Check size={14} strokeWidth={2.2} aria-hidden="true" />
+              7 jours d&apos;essai gratuit
+            </li>
+            <li>
+              <Check size={14} strokeWidth={2.2} aria-hidden="true" />
+              Toutes les fonctionnalités incluses
+            </li>
+            <li>
+              <Check size={14} strokeWidth={2.2} aria-hidden="true" />
+              Aucune option cachée
+            </li>
+          </ul>
+          <p className="lp-plans__login">
+            Déjà inscrit ?{" "}
+            <Link
+              href="/login"
+              className="lp-plans__loginLink"
+              onClick={() => writeLandingSnapshot()}
+            >
+              Se connecter
+            </Link>
+          </p>
+        </LandingReveal>
       </div>
     </section>
   );

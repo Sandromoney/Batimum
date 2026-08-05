@@ -1,5 +1,7 @@
 "use client";
 
+import { AddressAutocomplete } from "@/components/address-autocomplete";
+import { EntrepriseSirenLookup } from "@/components/entreprise-siren-lookup";
 import { ParametresChangePassword } from "@/components/parametres-change-password";
 import { ParametresEmployesSection } from "@/components/parametres-employes-section";
 import { PageHeader } from "@/components/page-header";
@@ -41,7 +43,9 @@ import {
   type ValidationErrors,
 } from "@/lib/validations";
 import type { ModeTVA, Parametres, ParametresConnexionEmail } from "@/lib/types";
+import type { CompanyPrefillFields } from "@/lib/entreprise/annuaire-lookup";
 import { cn } from "@/lib/utils";
+import { getLocationFromPostalCode } from "@/lib/french-regions";
 import { Check, Library, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -472,6 +476,44 @@ export default function ParametresPage() {
           modified={sectionModified("entreprise")}
           className={sectionVisible("entreprise") ? undefined : "hidden"}
         >
+          <EntrepriseSirenLookup
+            className="mb-6"
+            showRefresh
+            initialValue={form.siret || form.siren || ""}
+            hasExistingData={Boolean(
+              form.entreprise?.trim() ||
+                form.siret?.trim() ||
+                form.adresse?.trim(),
+            )}
+            lastCheckedAt={form.officialDataLastCheckedAt}
+            onApply={(fields: CompanyPrefillFields) => {
+              const location = getLocationFromPostalCode(fields.codePostal);
+              patch({
+                entreprise: fields.entreprise || form.entreprise,
+                enseigne: fields.enseigne,
+                siret: fields.siret,
+                siren: fields.siren,
+                formeJuridique: fields.formeJuridique || form.formeJuridique,
+                codeApe: fields.codeApe || form.codeApe,
+                libelleActivite: fields.libelleActivite,
+                adresse: fields.adresse || form.adresse,
+                adresseComplement: fields.adresseComplement,
+                codePostal: fields.codePostal || form.codePostal,
+                ville: fields.ville || form.ville,
+                pays: fields.pays || form.pays || "France",
+                departement: location.departement || form.departement,
+                region: location.region || form.region,
+                dateCreationEntreprise: fields.dateCreationEntreprise,
+                establishmentStatus: fields.establishmentStatus,
+                isSiege: fields.isSiege,
+                officialDataLastCheckedAt: fields.officialDataLastCheckedAt,
+                officialDataSource: fields.officialDataSource,
+                officialDataVerificationStatus:
+                  fields.officialDataVerificationStatus,
+              });
+            }}
+          />
+
           <FieldGrid>
             <section className="sm:col-span-2">
               <Label>Nom de l&apos;entreprise</Label>
@@ -484,6 +526,14 @@ export default function ParametresPage() {
               {saveErrors.entreprise ? (
                 <p className="mt-1 text-xs text-red-400">{saveErrors.entreprise}</p>
               ) : null}
+            </section>
+            <section className="sm:col-span-2">
+              <Label>Enseigne / nom commercial</Label>
+              <Input
+                value={form.enseigne ?? ""}
+                onChange={(e) => patch({ enseigne: e.target.value })}
+                placeholder="Optionnel"
+              />
             </section>
           </FieldGrid>
 
@@ -536,6 +586,14 @@ export default function ParametresPage() {
                 />
               </section>
               <section>
+                <Label>Libellé d&apos;activité</Label>
+                <Input
+                  value={form.libelleActivite ?? ""}
+                  onChange={(e) => patch({ libelleActivite: e.target.value })}
+                  placeholder="Si disponible dans le répertoire officiel"
+                />
+              </section>
+              <section>
                 <Label>TVA intracommunautaire</Label>
                 <Input
                   value={form.tvaIntracom ?? ""}
@@ -560,40 +618,69 @@ export default function ParametresPage() {
             </h3>
             <FieldGrid>
               <section className="sm:col-span-2">
-                <Label>Adresse</Label>
-                <Input
-                  value={form.adresse}
-                  onChange={(e) => patch({ adresse: e.target.value })}
-                  placeholder="12 rue des Artisans"
-                  className={saveErrors.adresse ? invalidClass : undefined}
+                <AddressAutocomplete
+                  label="Adresse"
+                  value={{
+                    adresse: form.adresse ?? "",
+                    codePostal: form.codePostal ?? "",
+                    ville: form.ville ?? "",
+                    pays: form.pays ?? "France",
+                  }}
+                  error={
+                    saveErrors.adresse ||
+                    saveErrors.codePostal ||
+                    saveErrors.ville
+                  }
+                  onChange={(next) =>
+                    patch({
+                      adresse: next.adresse,
+                      codePostal: next.codePostal,
+                      ville: next.ville,
+                      pays: next.pays || form.pays || "France",
+                    })
+                  }
                 />
-                {saveErrors.adresse ? (
-                  <p className="mt-1 text-xs text-red-400">{saveErrors.adresse}</p>
-                ) : null}
               </section>
+              <section className="sm:col-span-2">
+                <Label>Complément d&apos;adresse</Label>
+                <Input
+                  value={form.adresseComplement ?? ""}
+                  onChange={(e) => patch({ adresseComplement: e.target.value })}
+                  placeholder="Bâtiment, étage…"
+                />
+              </section>
+              {form.establishmentStatus === "ferme" ? (
+                <p className="sm:col-span-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
+                  Cet établissement est déclaré fermé dans le répertoire
+                  officiel.
+                </p>
+              ) : null}
+              {form.officialDataLastCheckedAt ? (
+                <p className="sm:col-span-2 text-xs text-muted-foreground">
+                  Données officielles vérifiées le{" "}
+                  {new Date(form.officialDataLastCheckedAt).toLocaleString(
+                    "fr-FR",
+                  )}
+                  {form.isSiege ? " · Siège social" : ""}
+                </p>
+              ) : null}
               <section>
                 <Label>Code postal</Label>
                 <Input
                   value={form.codePostal ?? ""}
-                  onChange={(e) => patch({ codePostal: e.target.value })}
-                  placeholder="75011"
-                  className={saveErrors.codePostal ? invalidClass : undefined}
+                  readOnly
+                  className="bg-card-elevated/60 text-muted-foreground"
+                  placeholder="Auto"
                 />
-                {saveErrors.codePostal ? (
-                  <p className="mt-1 text-xs text-red-400">{saveErrors.codePostal}</p>
-                ) : null}
               </section>
               <section>
                 <Label>Ville</Label>
                 <Input
                   value={form.ville ?? ""}
-                  onChange={(e) => patch({ ville: e.target.value })}
-                  placeholder="Paris"
-                  className={saveErrors.ville ? invalidClass : undefined}
+                  readOnly
+                  className="bg-card-elevated/60 text-muted-foreground"
+                  placeholder="Auto"
                 />
-                {saveErrors.ville ? (
-                  <p className="mt-1 text-xs text-red-400">{saveErrors.ville}</p>
-                ) : null}
               </section>
               <section>
                 <Label>Pays</Label>

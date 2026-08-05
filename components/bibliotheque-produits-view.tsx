@@ -517,7 +517,7 @@ export function BibliothequeProduitsView({
       </div>
 
       {notice ? (
-        <div className="rounded-xl border border-emerald-200/80 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-950">
+        <div className="rounded-xl border border-border/80 bg-accent/5 px-4 py-2.5 text-sm text-accent">
           {notice}
         </div>
       ) : null}
@@ -550,12 +550,12 @@ export function BibliothequeProduitsView({
                   onClick={() => setSelectedId(fournisseur.id)}
                   className={`relative rounded-xl border p-3 text-left transition-colors ${
                     active
-                      ? "border-emerald-500 bg-emerald-50/70"
-                      : "border-border/70 bg-white hover:border-emerald-300"
+                      ? "border-accent bg-accent/5/70"
+                      : "border-border/70 bg-white hover:border-accent/30"
                   }`}
                 >
                   {active ? (
-                    <span className="absolute right-2 top-2 text-emerald-600">
+                    <span className="absolute right-2 top-2 text-accent">
                       <Check className="h-4 w-4" />
                     </span>
                   ) : null}
@@ -718,14 +718,14 @@ export function BibliothequeProduitsView({
                           <div className="absolute right-3 z-20 mt-1 w-36 rounded-xl border border-border/80 bg-white p-1 shadow-lg">
                             <button
                               type="button"
-                              className="block w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-emerald-50"
+                              className="block w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-accent/5"
                               onClick={() => openEdit(line)}
                             >
                               Modifier
                             </button>
                             <button
                               type="button"
-                              className="block w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-emerald-50"
+                              className="block w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-accent/5"
                               onClick={() => duplicateProduct(line)}
                             >
                               Dupliquer
@@ -837,7 +837,7 @@ export function BibliothequeProduitsView({
                   <button
                     key={id}
                     type="button"
-                    className="w-full rounded-xl border border-border/70 bg-white p-3 text-left hover:border-emerald-400"
+                    className="w-full rounded-xl border border-border/70 bg-white p-3 text-left hover:border-accent/40"
                     onClick={() => {
                       setImportFormat(id);
                       setImportStep("ready");
@@ -852,7 +852,7 @@ export function BibliothequeProduitsView({
 
             {importStep === "ready" && importFormat ? (
               <div className="mt-4 space-y-3">
-                <label className="flex cursor-pointer flex-col gap-1 rounded-xl border border-dashed border-border/80 bg-white px-4 py-5 text-center text-sm hover:border-emerald-400">
+                <label className="flex cursor-pointer flex-col gap-1 rounded-xl border border-dashed border-border/80 bg-white px-4 py-5 text-center text-sm hover:border-accent/40">
                   <span className="font-medium">
                     Choisir un fichier {importFormat.toUpperCase()}
                   </span>
@@ -872,7 +872,7 @@ export function BibliothequeProduitsView({
                 </label>
 
                 {pendingFile ? (
-                  <div className="rounded-xl border border-border/70 bg-emerald-50/40 p-3 text-sm">
+                  <div className="rounded-xl border border-border/70 bg-accent/5/40 p-3 text-sm">
                     <p className="font-medium">{pendingFile.name}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {(pendingFile.size / 1024).toFixed(1)} Ko ·{" "}
@@ -883,7 +883,7 @@ export function BibliothequeProduitsView({
 
                 {(importFormat === "pdf" || importFormat === "excel") &&
                 pendingFile ? (
-                  <p className="text-xs font-medium text-emerald-800">
+                  <p className="text-xs font-medium text-accent">
                     Cette analyse utilisera 1 crédit IA.
                   </p>
                 ) : null}

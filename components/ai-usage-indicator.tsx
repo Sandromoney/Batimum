@@ -10,7 +10,7 @@ function ringColor(percent: number): string {
   if (percent >= 100) return "#dc2626";
   if (percent >= 85) return "#ef4444";
   if (percent >= 60) return "#f59e0b";
-  return "#059669";
+  return "#2563eb";
 }
 
 export function AiUsageIndicator() {
@@ -59,7 +59,7 @@ export function AiUsageIndicator() {
           "flex items-center gap-1.5 rounded-full border bg-white px-1.5 py-1 shadow-sm transition-colors",
           lowQuota
             ? "border-red-200 hover:border-red-300"
-            : "border-border/70 hover:border-emerald-200",
+            : "border-border/70 hover:border-border",
           percent >= 100 && "ring-2 ring-red-200/80",
         )}
         aria-label={`MUM IA : ${used} / ${total}`}

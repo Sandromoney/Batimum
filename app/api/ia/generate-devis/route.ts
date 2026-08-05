@@ -17,6 +17,7 @@ import {
   openAiNotConfiguredResponse,
 } from "@/lib/openai-server";
 import { checkUserAiQuota } from "@/lib/ai-usage-store";
+import { consumeAiCreditAfterSuccess } from "@/lib/ai/ai-credits";
 import { getMumIaUserMessage } from "@/lib/mum-ia-errors";
 import { mumIaServerDebug } from "@/lib/mum-ia-debug";
 import {
@@ -301,7 +302,7 @@ export async function POST(request: Request) {
             operationId: generationId,
             category: "mum_devis",
             checkBefore: true,
-            // Crédit uniquement après devis exploitable (ci-dessous)
+            // Débit explicite après devis exploitable (pas après OpenAI seul)
             trackAfterSuccess: false,
           },
     });
@@ -392,7 +393,57 @@ export async function POST(request: Request) {
       repaired: built.repaired,
     });
 
-    // Quota déjà réservé au clic « Analyser et préparer le devis » (pas de 2e débit ici).
+    let quotaPayload:
+      | {
+          used: number;
+          limit: number;
+          remaining: number;
+          monthlyIncluded: number;
+          packCredits: number;
+          renewalDate: string;
+          periodStart: string;
+          periodEnd: string;
+        }
+      | undefined;
+
+    if (!bypassQuota) {
+      const consumed = await consumeAiCreditAfterSuccess(
+        authUser.id,
+        "mum_devis",
+        generationId,
+      );
+      const current = consumed.usage
+        ? {
+            used: consumed.usage.creditsUsed,
+            limit: consumed.usage.quotaTotal,
+            remaining: Math.max(
+              0,
+              consumed.usage.quotaTotal - consumed.usage.creditsUsed,
+            ),
+            monthlyIncluded: consumed.usage.quotaTotal,
+            packCredits: 0,
+            renewalDate: "",
+            periodStart: "",
+            periodEnd: "",
+          }
+        : await checkUserAiQuota(authUser.id).then((q) => ({
+            used: q.used,
+            limit: q.limit,
+            remaining: Math.max(0, q.limit - q.used),
+            monthlyIncluded: q.monthlyIncluded,
+            packCredits: 0,
+            renewalDate: q.renewalDate,
+            periodStart: q.periodStart,
+            periodEnd: q.periodEnd,
+          }));
+      quotaPayload = current;
+      if (!consumed.ok) {
+        console.warn("[MUM IA] quota consume after success failed", {
+          userId: authUser.id,
+          error: consumed.error,
+        });
+      }
+    }
 
     const { devis: result, rapport } = verifyAndCompleteAiDevis(built.result, {
       descriptionChantier: input.descriptionChantier,
@@ -417,33 +468,6 @@ export async function POST(request: Request) {
       coefficientRegionalManuel: input.coefficientRegionalManuel,
       ratioEntries: input.ratioEntries,
     });
-
-    let quotaPayload:
-      | {
-          used: number;
-          limit: number;
-          remaining: number;
-          monthlyIncluded: number;
-          packCredits: number;
-          renewalDate: string;
-          periodStart: string;
-          periodEnd: string;
-        }
-      | undefined;
-
-    if (!bypassQuota) {
-      const current = await checkUserAiQuota(authUser.id);
-      quotaPayload = {
-        used: current.used,
-        limit: current.limit,
-        remaining: Math.max(0, current.limit - current.used),
-        monthlyIncluded: current.monthlyIncluded,
-        packCredits: current.packCredits,
-        renewalDate: current.renewalDate,
-        periodStart: current.periodStart,
-        periodEnd: current.periodEnd,
-      };
-    }
 
     return NextResponse.json({
       success: true,

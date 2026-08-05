@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
+import { EntrepriseSirenLookup } from "@/components/entreprise-siren-lookup";
 import {
   OnboardingNav,
   OnboardingShell,
@@ -13,6 +14,7 @@ import {
   saveAccount,
 } from "@/lib/account";
 import { getCredentials } from "@/lib/auth-credentials";
+import type { CompanyPrefillFields } from "@/lib/entreprise/annuaire-lookup";
 import { getLocationFromPostalCode } from "@/lib/french-regions";
 import {
   canAccessCompanyOnboarding,
@@ -104,6 +106,15 @@ export default function ConfigurerEntreprisePage() {
     setReady(true);
   }, [router]);
 
+  // Filet de sécurité : ne jamais rester bloqué sur « Chargement… ».
+  useEffect(() => {
+    if (ready) return;
+    const timer = window.setTimeout(() => {
+      setReady(true);
+    }, 8_000);
+    return () => window.clearTimeout(timer);
+  }, [ready]);
+
   function patch(partial: Partial<OnboardingCompanyDraft>) {
     setForm((current) => {
       const next = { ...current, ...partial, email: accountEmail || current.email };
@@ -121,6 +132,49 @@ export default function ConfigurerEntreprisePage() {
     setError("");
   }
 
+  function hasFilledCompanyFields(draft: OnboardingCompanyDraft): boolean {
+    return Boolean(
+      draft.entreprise.trim() ||
+        draft.adresse.trim() ||
+        draft.siret.trim() ||
+        draft.formeJuridique?.trim() ||
+        draft.codeApe?.trim(),
+    );
+  }
+
+  function applyOfficialCompany(fields: CompanyPrefillFields) {
+    const location = getLocationFromPostalCode(fields.codePostal);
+    const hasAddress = Boolean(
+      fields.adresse.trim() && fields.codePostal.trim() && fields.ville.trim(),
+    );
+    if (hasAddress) {
+      setAddressSelected(true);
+      setAddressError("");
+    }
+    patch({
+      entreprise: fields.entreprise || form.entreprise,
+      enseigne: fields.enseigne,
+      adresse: fields.adresse || form.adresse,
+      adresseComplement: fields.adresseComplement,
+      codePostal: fields.codePostal || form.codePostal,
+      ville: fields.ville || form.ville,
+      pays: fields.pays || form.pays || "France",
+      departement: location.departement || form.departement,
+      region: location.region || form.region,
+      siret: fields.siret.replace(/\D/g, ""),
+      siren: fields.siren,
+      formeJuridique: fields.formeJuridique,
+      codeApe: fields.codeApe,
+      libelleActivite: fields.libelleActivite,
+      dateCreationEntreprise: fields.dateCreationEntreprise,
+      establishmentStatus: fields.establishmentStatus,
+      isSiege: fields.isSiege,
+      officialDataLastCheckedAt: fields.officialDataLastCheckedAt,
+      officialDataSource: fields.officialDataSource,
+      officialDataVerificationStatus: fields.officialDataVerificationStatus,
+    });
+  }
+
   function validate(): boolean {
     if (!form.entreprise.trim()) {
       setError("Le nom de l'entreprise est obligatoire.");
@@ -130,7 +184,16 @@ export default function ConfigurerEntreprisePage() {
       setError("Le nom du dirigeant est obligatoire.");
       return false;
     }
-    if (!addressSelected || !form.adresse.trim()) {
+    if (!form.adresse.trim()) {
+      setAddressError(
+        form.officialDataLastCheckedAt
+          ? "Complétez l'adresse (absente du répertoire officiel) via les suggestions."
+          : "Sélectionnez une adresse dans les suggestions.",
+      );
+      setError("L'adresse est obligatoire.");
+      return false;
+    }
+    if (!addressSelected && !form.officialDataLastCheckedAt) {
       setAddressError("Sélectionnez une adresse dans les suggestions.");
       setError("L'adresse doit être choisie dans la liste de suggestions.");
       return false;
@@ -199,14 +262,31 @@ export default function ConfigurerEntreprisePage() {
         entreprise: companyPayload.entreprise,
         utilisateur: companyPayload.dirigeant,
         adresse: companyPayload.adresse,
+        adresseComplement: companyPayload.adresseComplement?.trim() || "",
         ville: companyPayload.ville,
         codePostal: companyPayload.codePostal,
         departement: companyPayload.departement.trim(),
         region: companyPayload.region.trim(),
+        pays: companyPayload.pays?.trim() || "France",
         telephone: companyPayload.telephone,
         email: accountEmail,
         siteInternet: companyPayload.siteInternet.trim(),
         siret: companyPayload.siret,
+        siren: companyPayload.siren?.trim() || undefined,
+        formeJuridique: companyPayload.formeJuridique?.trim() || undefined,
+        codeApe: companyPayload.codeApe?.trim() || undefined,
+        libelleActivite: companyPayload.libelleActivite?.trim() || undefined,
+        enseigne: companyPayload.enseigne?.trim() || undefined,
+        dateCreationEntreprise:
+          companyPayload.dateCreationEntreprise?.trim() || undefined,
+        establishmentStatus: companyPayload.establishmentStatus,
+        isSiege: companyPayload.isSiege,
+        officialDataLastCheckedAt:
+          companyPayload.officialDataLastCheckedAt?.trim() || undefined,
+        officialDataSource:
+          companyPayload.officialDataSource?.trim() || undefined,
+        officialDataVerificationStatus:
+          companyPayload.officialDataVerificationStatus || undefined,
         tvaIntracom: companyPayload.tvaIntracom,
       }),
     );
@@ -245,6 +325,14 @@ export default function ConfigurerEntreprisePage() {
       maxWidthClassName="max-w-2xl"
     >
       <section className="space-y-5">
+        <EntrepriseSirenLookup
+          compact
+          initialValue={form.siret || form.siren || ""}
+          hasExistingData={hasFilledCompanyFields(form)}
+          lastCheckedAt={form.officialDataLastCheckedAt}
+          onApply={applyOfficialCompany}
+        />
+
         <section>
           <Label>Nom de l&apos;entreprise</Label>
           <Input
@@ -253,6 +341,16 @@ export default function ConfigurerEntreprisePage() {
             required
           />
         </section>
+
+        {form.enseigne ? (
+          <section>
+            <Label>Enseigne / nom commercial</Label>
+            <Input
+              value={form.enseigne}
+              onChange={(event) => patch({ enseigne: event.target.value })}
+            />
+          </section>
+        ) : null}
 
         <section>
           <Label>Nom du dirigeant</Label>
@@ -268,6 +366,7 @@ export default function ConfigurerEntreprisePage() {
             adresse: form.adresse,
             codePostal: form.codePostal,
             ville: form.ville,
+            pays: form.pays ?? "France",
           }}
           error={addressError}
           onChange={(next) => {
@@ -282,11 +381,23 @@ export default function ConfigurerEntreprisePage() {
               adresse: next.adresse,
               codePostal: next.codePostal,
               ville: next.ville,
+              pays: next.pays || form.pays || "France",
               departement: location.departement,
               region: location.region,
             });
           }}
         />
+
+        <section>
+          <Label>Complément d&apos;adresse (optionnel)</Label>
+          <Input
+            value={form.adresseComplement ?? ""}
+            onChange={(event) =>
+              patch({ adresseComplement: event.target.value })
+            }
+            placeholder="Bâtiment, étage…"
+          />
+        </section>
 
         <section className="grid gap-4 sm:grid-cols-2">
           <section>
@@ -352,13 +463,32 @@ export default function ConfigurerEntreprisePage() {
             <Input
               value={form.siret}
               inputMode="numeric"
-              maxLength={14}
+              maxLength={17}
               onChange={(event) =>
                 patch({
                   siret: event.target.value.replace(/\D/g, "").slice(0, 14),
+                  siren: event.target.value.replace(/\D/g, "").slice(0, 9),
                 })
               }
               placeholder="14 chiffres"
+            />
+          </section>
+          <section>
+            <Label>Forme juridique</Label>
+            <Input
+              value={form.formeJuridique ?? ""}
+              onChange={(event) =>
+                patch({ formeJuridique: event.target.value })
+              }
+              placeholder="Ex. : SAS, SARL"
+            />
+          </section>
+          <section>
+            <Label>Code APE</Label>
+            <Input
+              value={form.codeApe ?? ""}
+              onChange={(event) => patch({ codeApe: event.target.value })}
+              placeholder="Ex. : 43.22A"
             />
           </section>
           <section>
@@ -377,6 +507,24 @@ export default function ConfigurerEntreprisePage() {
             />
           </section>
         </section>
+
+        {form.libelleActivite ? (
+          <section>
+            <Label>Activité</Label>
+            <Input
+              value={form.libelleActivite}
+              onChange={(event) =>
+                patch({ libelleActivite: event.target.value })
+              }
+            />
+          </section>
+        ) : null}
+
+        {form.establishmentStatus === "ferme" ? (
+          <p className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
+            Cet établissement est déclaré fermé dans le répertoire officiel.
+          </p>
+        ) : null}
 
         {error ? (
           <p className="rounded-xl border btp-alert-error px-3 py-2 text-sm">

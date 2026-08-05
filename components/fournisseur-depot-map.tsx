@@ -65,7 +65,7 @@ export function FournisseurDepotMap({
           radius: 8,
           color: "#ffffff",
           weight: 2,
-          fillColor: "#10B981",
+          fillColor: "#3b82f6",
           fillOpacity: 1,
         });
         companyMarker.bindPopup(
@@ -79,9 +79,9 @@ export function FournisseurDepotMap({
         const isSelected = depot.osmId === selectedOsmId;
         const marker = L.circleMarker([depot.latitude, depot.longitude], {
           radius: isSelected ? 9 : 7,
-          color: isSelected ? "#10B981" : "#ffffff",
+          color: isSelected ? "#3b82f6" : "#ffffff",
           weight: 2,
-          fillColor: isSelected ? "#10B981" : "#2563EB",
+          fillColor: isSelected ? "#3b82f6" : "#2563EB",
           fillOpacity: 0.95,
         });
 
@@ -119,8 +119,8 @@ export function FournisseurDepotMap({
           button.style.marginTop = "8px";
           button.style.padding = "4px 10px";
           button.style.borderRadius = "8px";
-          button.style.border = "1px solid #10B981";
-          button.style.background = "#10B981";
+          button.style.border = "1px solid #3b82f6";
+          button.style.background = "#3b82f6";
           button.style.color = "#fff";
           button.style.cursor = "pointer";
           button.style.fontSize = "11px";

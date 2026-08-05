@@ -272,10 +272,12 @@ export function DevisEditorForm({
             <DateInput
               className={cn(compactControlClass, errors.dateDevis && invalidClass)}
               value={dateDevis}
-              onChangeValue={(value) =>
-                onUpdateDevis({ date: value, dateDevis: value })
-              }
+              onChangeValue={() => undefined}
+              readOnly
             />
+            <span className="text-[10px] text-muted-foreground">
+              Date de création — verrouillée
+            </span>
           </CompactField>
 
           <CompactField label="Validité du devis">

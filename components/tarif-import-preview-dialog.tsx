@@ -79,7 +79,7 @@ export function TarifImportPreviewDialog({
             seront jamais écrasés automatiquement.
           </p>
           {creditNotice ? (
-            <p className="mt-2 text-xs font-medium text-emerald-800">{creditNotice}</p>
+            <p className="mt-2 text-xs font-medium text-accent">{creditNotice}</p>
           ) : null}
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" size="sm" variant="secondary" onClick={() => selectAll(true)}>

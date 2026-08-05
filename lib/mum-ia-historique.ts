@@ -15,6 +15,7 @@ export type MumIaHistoriqueContext = {
   tauxTVA: number;
   niveauPrix: BtpNiveauPrix;
   villeEntreprise?: string;
+  descriptionDicteeVocalement?: boolean;
 };
 
 export type MumIaHistoriqueFilters = {
@@ -48,6 +49,7 @@ export function normalizeMumIaHistorique(
       createdAt: entry.createdAt || new Date().toISOString(),
       titre: String(entry.titre ?? "Devis IA"),
       descriptionChantier: String(entry.descriptionChantier ?? ""),
+      descriptionDicteeVocalement: entry.descriptionDicteeVocalement === true,
       precisionsSupplementaires: entry.precisionsSupplementaires?.trim() || undefined,
       regionCode: String(entry.regionCode ?? ""),
       regionLabel: String(entry.regionLabel ?? ""),
@@ -88,6 +90,7 @@ export function createMumIaHistoriqueAnalyseEntry(params: {
     createdAt: new Date().toISOString(),
     titre,
     descriptionChantier: context.descriptionChantier,
+    descriptionDicteeVocalement: context.descriptionDicteeVocalement === true,
     regionCode: context.regionCode,
     regionLabel: context.regionLabel,
     departementCode: context.departementCode,
@@ -118,6 +121,7 @@ export function createMumIaHistoriqueEntry(params: {
     createdAt: new Date().toISOString(),
     titre: devisIa.titre || "Devis IA",
     descriptionChantier: context.descriptionChantier,
+    descriptionDicteeVocalement: context.descriptionDicteeVocalement === true,
     precisionsSupplementaires: params.precisionsSupplementaires?.trim() || undefined,
     regionCode: context.regionCode,
     regionLabel: context.regionLabel,

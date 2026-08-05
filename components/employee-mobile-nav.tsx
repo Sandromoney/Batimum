@@ -121,23 +121,23 @@ export function EmployeeMobileNav({
                     className={cn(
                       "group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-all duration-200",
                       active
-                        ? "bg-primary text-primary-foreground shadow-glow"
-                        : "text-muted hover:bg-card-hover/80 hover:text-foreground",
+                        ? "is-active bg-card-hover text-foreground"
+                        : "text-muted hover:bg-card-hover hover:text-foreground",
                     )}
                   >
                     <span
                       className={cn(
                         "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-200",
                         active
-                          ? "bg-primary-foreground/10"
-                          : "bg-transparent group-hover:bg-card-hover/60",
+                          ? "bg-[rgb(var(--color-accent)/0.1)]"
+                          : "bg-transparent group-hover:bg-card-hover",
                       )}
                     >
                       <Icon
                         className={cn(
                           "h-[1.1rem] w-[1.1rem] transition-colors duration-200",
                           active
-                            ? "text-primary-foreground"
+                            ? "text-[rgb(var(--color-accent))]"
                             : "text-muted group-hover:text-foreground",
                         )}
                         strokeWidth={active ? 2.25 : 1.75}

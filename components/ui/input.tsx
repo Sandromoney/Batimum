@@ -12,7 +12,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
         "placeholder:text-muted-foreground/70",
         "transition-all duration-200",
         "hover:border-border hover:bg-card-elevated/70",
-        "focus:border-primary/60 focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10",
+        "focus:border-[rgb(var(--color-accent)/0.55)] focus:bg-card focus:outline-none focus:ring-4 focus:ring-[rgb(var(--color-accent)/0.12)]",
         props.type === "number" &&
           "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
         className,
@@ -27,13 +27,18 @@ export function DateInput({
   onChangeValue,
   className,
   required,
+  readOnly,
+  disabled,
 }: {
   value: string;
   onChangeValue: (value: string) => void;
   className?: string;
   required?: boolean;
+  readOnly?: boolean;
+  disabled?: boolean;
 }) {
   const [displayValue, setDisplayValue] = useState(isoDateToDateFR(value));
+  const locked = Boolean(readOnly || disabled);
 
   function formatDateInput(value: string) {
     const digits = value.replace(/\D/g, "").slice(0, 8);
@@ -55,8 +60,15 @@ export function DateInput({
       placeholder="JJ/MM/AAAA"
       value={displayValue}
       required={required}
-      className={className}
+      readOnly={locked}
+      disabled={disabled}
+      aria-readonly={locked || undefined}
+      className={cn(
+        className,
+        locked && "cursor-default bg-card-elevated/60 text-muted-foreground",
+      )}
       onChange={(event) => {
+        if (locked) return;
         const nextValue = formatDateInput(event.target.value);
         setDisplayValue(nextValue);
 
@@ -135,7 +147,7 @@ export const Textarea = forwardRef<
         "placeholder:text-muted-foreground/70",
         "transition-all duration-200",
         "hover:border-border hover:bg-card-elevated/70",
-        "focus:border-primary/60 focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10",
+        "focus:border-[rgb(var(--color-accent)/0.55)] focus:bg-card focus:outline-none focus:ring-4 focus:ring-[rgb(var(--color-accent)/0.12)]",
         className,
       )}
       {...props}

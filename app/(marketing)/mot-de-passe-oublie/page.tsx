@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { AuthCloseButton } from "@/components/marketing/auth-close-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
@@ -49,10 +50,13 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
-      <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-10">
+    <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
+      <div className="auth-close-bar">
+        <AuthCloseButton />
+      </div>
+      <section className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-6xl items-center justify-center px-6 py-10">
         <Card className="w-full max-w-md">
-          <Link href="/" className="mb-8 flex items-center gap-3">
+          <Link href="/landing" className="mb-8 flex items-center gap-3">
             <BrandLogo variant="marketing" showSubtitle={false} />
           </Link>
 

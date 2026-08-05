@@ -24,8 +24,8 @@ export function StatCard({
     <Card
       className={cn(
         "group relative flex min-w-0 items-start justify-between gap-4 p-5",
-        "border-border/70 transition-all duration-200 ease-out",
-        "hover:-translate-y-[3px] hover:border-border hover:shadow-[0_14px_32px_rgba(15,23,42,0.08)]",
+        "border-border/70 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        "hover:-translate-y-[2px] hover:border-border hover:shadow-[0_14px_32px_rgba(15,23,42,0.08)]",
         className,
       )}
     >

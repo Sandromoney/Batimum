@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { AuthCloseButton } from "@/components/marketing/auth-close-button";
 import { VerificationCodeInput } from "@/components/marketing/verification-code-input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -81,10 +82,13 @@ function VerifyEmailForm() {
     : false;
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
-      <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-10">
+    <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
+      <div className="auth-close-bar">
+        <AuthCloseButton />
+      </div>
+      <section className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-6xl items-center justify-center px-6 py-10">
         <Card className="w-full max-w-md">
-          <Link href="/" className="mb-8 flex items-center gap-3">
+          <Link href="/landing" className="mb-8 flex items-center gap-3">
             <BrandLogo variant="marketing" showSubtitle={false} />
           </Link>
 
@@ -127,7 +131,7 @@ function VerifyEmailForm() {
                 </p>
               )}
               {message && (
-                <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
+                <p className="rounded-xl border border-[#3b82f6]/30 bg-[#3b82f6]/10 px-3 py-2 text-sm text-[#1d4ed8]">
                   {message}
                 </p>
               )}

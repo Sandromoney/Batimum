@@ -142,6 +142,15 @@ export function getOpenAiModel(): string {
   return value || OPENAI_DEFAULT_MODEL;
 }
 
+/** Modèle STT (Whisper / gpt-4o-*-transcribe). Défaut whisper-1. */
+export function getOpenAiTranscribeModel(): string {
+  const specific = resolveEnvValue("OPENAI_TRANSCRIBE_MODEL").value;
+  if (specific) return specific;
+  const legacy = resolveEnvValue("OPENAI_WHISPER_MODEL").value;
+  if (legacy) return legacy;
+  return "whisper-1";
+}
+
 /** Modèle GPT par mode — jamais hardcodé hors de ce mapping. */
 export function getOpenAiModelForMode(mode: OpenAiMode): string {
   const envKey =

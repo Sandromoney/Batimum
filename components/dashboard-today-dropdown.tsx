@@ -27,7 +27,7 @@ const PRIORITY_ICON: Record<
   critical: { Icon: AlertCircle, className: "text-red-500" },
   warning: { Icon: AlertTriangle, className: "text-orange-500" },
   info: { Icon: Info, className: "text-slate-400" },
-  success: { Icon: CheckCircle2, className: "text-emerald-500" },
+  success: { Icon: CheckCircle2, className: "text-accent" },
 };
 
 function worstPriority(items: TodayMenuItem[]): TodayMenuPriority {
