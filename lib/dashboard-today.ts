@@ -404,12 +404,14 @@ export function getDashboardGreetingName(utilisateur: string) {
   return trimmed.split(/\s+/)[0] ?? trimmed;
 }
 
+/** @deprecated Préférer `getDashboardGreetingHour` depuis `@/lib/dashboard-welcome`. */
 export function getDashboardGreetingHour(referenceDate = new Date()) {
   const hour = referenceDate.getHours();
-  if (hour < 18) return "Bonjour";
+  if (hour >= 5 && hour < 18) return "Bonjour";
   return "Bonsoir";
 }
 
+/** @deprecated Préférer `buildDashboardWelcomeSubtitleFromData`. */
 export function getDashboardDynamicSubtitle(
   urgentCategories: number,
   referenceDate = new Date(),

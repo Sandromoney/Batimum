@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DashboardWelcome } from "@/components/dashboard-welcome";
 import { EmployeeTaskCard } from "@/components/employee-task-card";
 import { Card } from "@/components/ui/card";
 import { countUniqueChantiersToday } from "@/lib/employee-planning";
+import { getDashboardGreetingHour } from "@/lib/dashboard-welcome";
 import { useEmployeeSession } from "@/lib/hooks/use-employee-session";
 import { useEmployeeTasks } from "@/lib/hooks/use-employee-tasks";
 import { formatDateFR } from "@/lib/utils";
@@ -14,7 +15,14 @@ import { CalendarDays, ChevronRight, ClipboardList } from "lucide-react";
 export default function EmployeeHomePage() {
   const { displayName } = useEmployeeSession();
   const { contexts } = useEmployeeTasks();
+  const [greeting, setGreeting] = useState("Bonjour");
+  const [ready, setReady] = useState(false);
   const today = new Date().toISOString().slice(0, 10);
+
+  useEffect(() => {
+    setGreeting(getDashboardGreetingHour(new Date()));
+    setReady(true);
+  }, []);
 
   const todayContexts = useMemo(
     () => contexts.filter((item) => item.event.date === today),
@@ -36,7 +44,8 @@ export default function EmployeeHomePage() {
   return (
     <div className="btp-app-page space-y-6 py-4 sm:space-y-8 sm:py-6">
       <DashboardWelcome
-        greeting="Bonjour"
+        ready={ready}
+        greeting={greeting}
         name={displayName}
         subtitle={`${formatDateFR(today)} — ${daySummary}`}
       />

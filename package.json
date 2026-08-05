@@ -9,7 +9,8 @@
     "type-check": "tsc --noEmit",
     "start": "next start",
     "lint": "next lint",
-    "verify:siren": "node --experimental-strip-types scripts/verify-siren-siret.mts"
+    "verify:siren": "node --experimental-strip-types scripts/verify-siren-siret.mts",
+    "verify:welcome": "node --experimental-strip-types scripts/verify-dashboard-welcome.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
