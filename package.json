@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "verify:siren": "node --experimental-strip-types scripts/verify-siren-siret.mts",
-    "verify:welcome": "node --experimental-strip-types scripts/verify-dashboard-welcome.mts"
+    "verify:welcome": "node --experimental-strip-types scripts/verify-dashboard-welcome.mts",
+    "verify:fourniture-map": "node --experimental-strip-types scripts/verify-fourniture-map.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

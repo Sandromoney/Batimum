@@ -170,6 +170,8 @@ export default function ConfigurerEntreprisePage() {
       establishmentStatus: fields.establishmentStatus,
       isSiege: fields.isSiege,
       officialDataLastCheckedAt: fields.officialDataLastCheckedAt,
+      officialDataSource: fields.officialDataSource,
+      officialDataVerificationStatus: fields.officialDataVerificationStatus,
     });
   }
 
@@ -281,6 +283,10 @@ export default function ConfigurerEntreprisePage() {
         isSiege: companyPayload.isSiege,
         officialDataLastCheckedAt:
           companyPayload.officialDataLastCheckedAt?.trim() || undefined,
+        officialDataSource:
+          companyPayload.officialDataSource?.trim() || undefined,
+        officialDataVerificationStatus:
+          companyPayload.officialDataVerificationStatus || undefined,
         tvaIntracom: companyPayload.tvaIntracom,
       }),
     );

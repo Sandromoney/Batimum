@@ -722,6 +722,10 @@ export interface Fournisseur {
   codePostal: string;
   latitude?: number;
   longitude?: number;
+  /** Date ISO du dernier géocodage réussi. */
+  geocodedAt?: string;
+  /** Source du géocodage (api-adresse, osm, manual…). */
+  geocodingSource?: "api_adresse" | "openstreetmap" | "manual" | "annuaire";
   /** Distance estimée depuis l'entreprise (km). */
   distanceKm?: number;
   telephone?: string;
@@ -844,6 +848,10 @@ export interface Parametres {
   isSiege?: boolean;
   /** Dernière vérification via l'API Recherche d'entreprises. */
   officialDataLastCheckedAt?: string;
+  /** Source des données officielles (ex. recherche-entreprises.api.gouv.fr). */
+  officialDataSource?: string;
+  /** Statut de vérification des données entreprise. */
+  officialDataVerificationStatus?: "verified" | "manual" | "partial" | "stale";
   siteInternet?: string;
   email: string;
   /** Email dédié à l'envoi des factures (sinon email principal). */

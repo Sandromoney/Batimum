@@ -128,6 +128,8 @@ export function buildFournisseurFromDepot(input: {
     codePostal: input.codePostal,
     latitude: input.latitude,
     longitude: input.longitude,
+    geocodedAt: now,
+    geocodingSource: isAnnuaire ? "annuaire" : "openstreetmap",
     distanceKm: input.distanceKm,
     telephone: input.telephone,
     email: input.email,

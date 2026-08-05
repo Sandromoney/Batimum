@@ -30,6 +30,8 @@ export type EntrepriseSirenLookupProps = {
   className?: string;
   /** Variante compacte pour onboarding. */
   compact?: boolean;
+  /** Met l'accent sur le SIRET (inscription). */
+  preferSiret?: boolean;
 };
 
 function formatAddress(etab: OfficialEstablishment): string {
@@ -59,6 +61,7 @@ export function EntrepriseSirenLookup({
   initialValue = "",
   className,
   compact = false,
+  preferSiret = false,
 }: EntrepriseSirenLookupProps) {
   const inputId = useId();
   const [value, setValue] = useState(() => {
@@ -207,10 +210,14 @@ export function EntrepriseSirenLookup({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-neutral-900">
-            Recherche officielle SIREN / SIRET
+            {preferSiret
+              ? "Numéro SIRET"
+              : "Recherche officielle SIREN / SIRET"}
           </h3>
           <p className="mt-1 text-xs text-neutral-500">
-            Préremplissage via l&apos;Annuaire des Entreprises (data.gouv.fr).
+            {preferSiret
+              ? "Je saisis mon numéro, Batimum s'occupe du reste."
+              : "Préremplissage via l'Annuaire des Entreprises (data.gouv.fr)."}
           </p>
         </div>
         {showRefresh && lastCheckedAt ? (
@@ -221,7 +228,9 @@ export function EntrepriseSirenLookup({
       </div>
 
       <form onSubmit={handleSearch} className="mt-4 space-y-2">
-        <Label htmlFor={inputId}>Numéro SIREN ou SIRET</Label>
+        <Label htmlFor={inputId}>
+          {preferSiret ? "Numéro SIRET" : "Numéro SIREN ou SIRET"}
+        </Label>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             id={inputId}
@@ -232,7 +241,7 @@ export function EntrepriseSirenLookup({
             }}
             inputMode="numeric"
             autoComplete="off"
-            placeholder="123 456 789"
+            placeholder={preferSiret ? "123 456 789 00012" : "123 456 789"}
             className="border-neutral-200 bg-white text-neutral-900 focus-visible:ring-[#2563eb]"
             disabled={loading}
           />
@@ -260,7 +269,9 @@ export function EntrepriseSirenLookup({
           </button>
         </div>
         <p className="text-[11px] text-neutral-400">
-          Ex. 123 456 789 ou 123 456 789 00012
+          {preferSiret
+            ? "14 chiffres — les espaces sont acceptés et normalisés automatiquement."
+            : "Ex. 123 456 789 ou 123 456 789 00012"}
         </p>
       </form>
 

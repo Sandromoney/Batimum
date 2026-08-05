@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label, PhoneInput, Textarea } from "@/components/ui/input";
 import { FournisseurDeleteModal } from "@/components/fournisseur-delete-modal";
 import { FournisseurDepotPicker } from "@/components/fournisseur-depot-picker";
 import { normalizeEntreprisePriceLibrary } from "@/lib/entreprise-price-library/normalize";
+import {
+  clearFournisseurCoordinatesOnAddressChange,
+  ensureFournisseursCoordinates,
+} from "@/lib/fourniture/ensure-coordinates";
 import {
   countTarifsForFournisseur,
   filterFournisseursForCompany,
@@ -49,6 +53,8 @@ export function BibliothequeFournisseursView({
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const geocodeInFlight = useRef(false);
+  const geocodeAttemptedKey = useRef("");
 
   const opened = safeFournisseurs.find((item) => item.id === openedId) ?? null;
   const deleteTarget =
@@ -59,7 +65,7 @@ export function BibliothequeFournisseursView({
 
   useEffect(() => {
     if (!highlightedId) return;
-    const timer = window.setTimeout(() => setHighlightedId(null), 1200);
+    const timer = window.setTimeout(() => setHighlightedId(null), 2200);
     return () => window.clearTimeout(timer);
   }, [highlightedId]);
 
@@ -68,6 +74,53 @@ export function BibliothequeFournisseursView({
     const timer = window.setTimeout(() => setNotice(null), 3000);
     return () => window.clearTimeout(timer);
   }, [notice]);
+
+  // Géocode et persiste les coordonnées manquantes (évite de regéocoder à chaque affichage).
+  useEffect(() => {
+    const list = parametres.fournisseurs ?? [];
+    const pending = list.filter((item) => {
+      if (item.status === "archived") return false;
+      const hasCoords =
+        typeof item.latitude === "number" &&
+        Number.isFinite(item.latitude) &&
+        typeof item.longitude === "number" &&
+        Number.isFinite(item.longitude);
+      if (hasCoords && item.geocodedAt) return false;
+      if (hasCoords && !item.geocodedAt) return true;
+      return Boolean(
+        item.adresseDepot?.trim() ||
+          item.codePostal?.trim() ||
+          item.ville?.trim(),
+      );
+    });
+    if (pending.length === 0 || geocodeInFlight.current) return;
+
+    const attemptKey = pending
+      .map(
+        (item) =>
+          `${item.id}|${item.adresseDepot}|${item.codePostal}|${item.ville}|${item.latitude ?? ""}|${item.longitude ?? ""}|${item.geocodedAt ?? ""}`,
+      )
+      .join(";");
+    if (attemptKey === geocodeAttemptedKey.current) return;
+
+    let cancelled = false;
+    geocodeInFlight.current = true;
+    geocodeAttemptedKey.current = attemptKey;
+
+    void (async () => {
+      try {
+        const { next, updatedIds } = await ensureFournisseursCoordinates(list);
+        if (cancelled || updatedIds.length === 0) return;
+        onParametresChange({ fournisseurs: next });
+      } finally {
+        geocodeInFlight.current = false;
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [parametres.fournisseurs, onParametresChange]);
 
   function patch(next: Partial<Parametres>) {
     onParametresChange(next);
@@ -110,13 +163,17 @@ export function BibliothequeFournisseursView({
     });
     setHighlightedId(normalized.id);
     setOpenedId(null);
+    setNotice("Fournisseur ajouté");
     return true;
   }
 
   function updateFournisseur(next: Fournisseur) {
+    const previous =
+      (parametres.fournisseurs ?? []).find((item) => item.id === next.id) ?? next;
+    const withCoords = clearFournisseurCoordinatesOnAddressChange(previous, next);
     patch({
       fournisseurs: (parametres.fournisseurs ?? []).map((item) =>
-        item.id === next.id ? touchFournisseurUpdated(next) : item,
+        item.id === next.id ? touchFournisseurUpdated(withCoords) : item,
       ),
     });
   }
@@ -137,7 +194,6 @@ export function BibliothequeFournisseursView({
   }
 
   function confirmDeleteFournisseur(id: string) {
-    // Re-vérification atomique du nombre de produits liés (état courant).
     const liveCount = countTarifsForFournisseur(
       parametres.tarifsFournisseurs ?? [],
       id,
@@ -177,7 +233,9 @@ export function BibliothequeFournisseursView({
         existingFournisseurs={safeFournisseurs.filter(
           (item) => !isFournisseurArchived(item),
         )}
+        highlightFournisseurId={highlightedId}
         onAddFournisseur={addFournisseur}
+        onOpenFournisseur={openFournisseur}
       />
 
       {notice ? (

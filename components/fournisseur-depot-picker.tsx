@@ -26,6 +26,7 @@ import {
   buildFournisseurManual,
   isOsmIdAlreadyRegistered,
 } from "@/lib/fourniture/fournisseur-storage";
+import { toSavedFournisseurMapPoint } from "@/lib/fourniture/map-points";
 import {
   normalizeForBrandMatch,
   SUPPLIER_SEARCH_SUGGESTIONS,
@@ -47,7 +48,9 @@ type Props = {
   parametres: Parametres;
   companyId: string;
   existingFournisseurs: Fournisseur[];
+  highlightFournisseurId?: string | null;
   onAddFournisseur: (fournisseur: Fournisseur) => boolean;
+  onOpenFournisseur?: (id: string) => void;
 };
 
 type ApiSupplierResult = {
@@ -121,7 +124,9 @@ export function FournisseurDepotPicker({
   parametres,
   companyId,
   existingFournisseurs,
+  highlightFournisseurId = null,
   onAddFournisseur,
+  onOpenFournisseur,
 }: Props) {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -612,14 +617,29 @@ export function FournisseurDepotPicker({
     flashSuccess("✓ Fournisseur ajouté");
   }
 
+  const savedMapPoints = useMemo(
+    () =>
+      existingFournisseurs
+        .map((item) =>
+          toSavedFournisseurMapPoint(item, {
+            isNew: item.id === highlightFournisseurId,
+          }),
+        )
+        .filter((item): item is NonNullable<typeof item> => item != null),
+    [existingFournisseurs, highlightFournisseurId],
+  );
+
   const mapProps: FournisseurMapProps = {
     company: companyLocation,
     depots,
+    savedFournisseurs: savedMapPoints,
     selectedOsmId,
+    highlightFournisseurId,
     radiusKm: searchAttempted ? radiusKm : 15,
     recenterKey: mapRecenterKey,
     onSelectDepot: selectDepot,
     onConfirmDepot: chooseDepot,
+    onOpenFournisseur,
     emptyMessage: geocodeError ?? COMPANY_ADDRESS_EMPTY_MESSAGE,
   };
 

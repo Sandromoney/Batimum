@@ -69,6 +69,8 @@ const SECTION_FIELD_KEYS: Partial<
     "establishmentStatus",
     "isSiege",
     "officialDataLastCheckedAt",
+    "officialDataSource",
+    "officialDataVerificationStatus",
     "email",
     "emailFacturation",
     "telephone",

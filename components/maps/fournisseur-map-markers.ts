@@ -23,3 +23,25 @@ export function createDepotMarkerIcon(selected = false): L.DivIcon {
     popupAnchor: [0, selected ? -16 : -12],
   });
 }
+
+/** Petit point rouge pour un fournisseur enregistré. */
+export function createSavedFournisseurMarkerIcon(
+  options?: { isNew?: boolean; count?: number },
+): L.DivIcon {
+  const isNew = Boolean(options?.isNew);
+  const count = options?.count ?? 1;
+  const multi = count > 1;
+  return L.divIcon({
+    className: "batimum-map-marker-wrap",
+    html: multi
+      ? `<div class="batimum-map-marker batimum-map-marker--saved-cluster${
+          isNew ? " is-new" : ""
+        }"><span>${count}</span></div>`
+      : `<div class="batimum-map-marker batimum-map-marker--saved${
+          isNew ? " is-new" : ""
+        }"><span></span></div>`,
+    iconSize: multi ? [28, 28] : [14, 14],
+    iconAnchor: multi ? [14, 14] : [7, 7],
+    popupAnchor: [0, multi ? -14 : -8],
+  });
+}

@@ -517,6 +517,8 @@ export type CompanyPrefillFields = {
   establishmentStatus: EstablishmentStatus;
   isSiege: boolean;
   officialDataLastCheckedAt: string;
+  officialDataSource: string;
+  officialDataVerificationStatus: "verified" | "manual" | "partial";
 };
 
 export function toPrefillFields(
@@ -542,5 +544,8 @@ export function toPrefillFields(
     establishmentStatus: establishment.status,
     isSiege: establishment.isSiege,
     officialDataLastCheckedAt: checkedAt,
+    officialDataSource: "recherche-entreprises.api.gouv.fr",
+    officialDataVerificationStatus:
+      establishment.status === "ferme" ? "partial" : "verified",
   };
 }

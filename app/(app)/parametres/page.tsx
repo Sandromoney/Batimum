@@ -507,6 +507,9 @@ export default function ParametresPage() {
                 establishmentStatus: fields.establishmentStatus,
                 isSiege: fields.isSiege,
                 officialDataLastCheckedAt: fields.officialDataLastCheckedAt,
+                officialDataSource: fields.officialDataSource,
+                officialDataVerificationStatus:
+                  fields.officialDataVerificationStatus,
               });
             }}
           />

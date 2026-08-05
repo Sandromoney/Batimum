@@ -36,6 +36,8 @@ export type OnboardingCompanyDraft = {
   establishmentStatus?: "actif" | "ferme";
   isSiege?: boolean;
   officialDataLastCheckedAt?: string;
+  officialDataSource?: string;
+  officialDataVerificationStatus?: "verified" | "manual" | "partial" | "stale";
   tvaIntracom: string;
 };
 
@@ -94,6 +96,8 @@ export function emptyCompanyDraft(email = ""): OnboardingCompanyDraft {
     establishmentStatus: undefined,
     isSiege: undefined,
     officialDataLastCheckedAt: "",
+    officialDataSource: "",
+    officialDataVerificationStatus: undefined,
     tvaIntracom: "",
   };
 }
