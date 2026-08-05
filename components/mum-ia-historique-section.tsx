@@ -187,6 +187,11 @@ export function MumIaHistoriqueSection({
                       ? ` · ${formatHistoriqueHeure(entry.createdAt)}`
                       : ""}
                   </p>
+                  {entry.descriptionDicteeVocalement ? (
+                    <p className="mt-0.5 text-[10px] text-muted-foreground/80">
+                      Description dictée vocalement
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">
                     {entry.statut === "analyse" ? (
                       <span className="text-muted-foreground font-normal">—</span>

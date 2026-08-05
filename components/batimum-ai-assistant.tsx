@@ -21,6 +21,7 @@ import { MumIaConseilsCard } from "@/components/mum-ia-conseils-card";
 import { MumIaOptionalDetailsPanel } from "@/components/mum-ia-optional-details-panel";
 import { MumIaHistoriqueSection } from "@/components/mum-ia-historique-section";
 import { MumIaQuotaBadge } from "@/components/mum-ia-quota-badge";
+import { MumIaVoiceDictation } from "@/components/mum-ia-voice-dictation";
 import {
   buildMumIaReponsesQuestions,
   buildMumIaDescriptionWithPrecisions,
@@ -124,6 +125,8 @@ export function BatimumAiAssistant() {
   const { data, setData } = useStore();
 
   const [description, setDescription] = useState("");
+  const [descriptionDicteeVocalement, setDescriptionDicteeVocalement] =
+    useState(false);
   const [regionCode, setRegionCode] = useState(FRANCE_REGIONS[0]?.code ?? "");
   const [departementCode, setDepartementCode] = useState(
     FRANCE_REGIONS[0]?.departements[0]?.code ?? "",
@@ -514,6 +517,7 @@ export function BatimumAiAssistant() {
         tauxTVA: ctx.tauxTVA,
         niveauPrix: NIVEAU_PRIX_AUTO,
         villeEntreprise: entrepriseLocalisation?.ville,
+        descriptionDicteeVocalement,
       };
 
       let nextActiveHistoryId = activeHistoryId;
@@ -740,6 +744,7 @@ export function BatimumAiAssistant() {
           tauxTVA: ctx.tauxTVA,
           niveauPrix: NIVEAU_PRIX_AUTO,
           villeEntreprise: entrepriseLocalisation?.ville,
+          descriptionDicteeVocalement,
         },
         analysis: payload.analysis,
       });
@@ -899,6 +904,7 @@ export function BatimumAiAssistant() {
 
   const handleVoirHistorique = (entry: MumIaHistoriqueEntry) => {
     setDescription(entry.descriptionChantier);
+    setDescriptionDicteeVocalement(entry.descriptionDicteeVocalement === true);
     setRegionCode(entry.regionCode);
     setDepartementCode(entry.departementCode);
     setTypeChantier(entry.typeChantier);
@@ -1049,6 +1055,7 @@ export function BatimumAiAssistant() {
               onChange={(event) => {
                 const next = event.target.value;
                 setDescription(next);
+                if (!next.trim()) setDescriptionDicteeVocalement(false);
                 setAnalysis(null);
                 setStandardDetails(EMPTY_MUM_IA_STANDARD_DETAILS);
                 setOptionalDetailsExpanded(false);
@@ -1071,6 +1078,30 @@ export function BatimumAiAssistant() {
               className="min-h-[9rem] w-full resize-y rounded-2xl border border-border/80 bg-card/90 px-4 py-3 text-sm text-foreground shadow-[var(--shadow-input)] placeholder:text-muted-foreground/60 focus:border-primary/60 focus:outline-none focus:ring-4 focus:ring-primary/10"
             />
           </label>
+
+          <MumIaVoiceDictation
+            description={description}
+            disabled={analyzing || loading}
+            onTranscript={(text, meta) => {
+              setDescription(text);
+              if (meta.fromVoice) setDescriptionDicteeVocalement(true);
+              setAnalysis(null);
+              setStandardDetails(EMPTY_MUM_IA_STANDARD_DETAILS);
+              setOptionalDetailsExpanded(false);
+              setQuestionAnswers({});
+              setResult(null);
+              setActiveHistoryId(null);
+              const validation = validateMumIaDevisRequest(text);
+              if (validation.valid) {
+                setError((prev) =>
+                  prev === MUM_IA_INSUFFICIENT_INFO_MESSAGE ||
+                  prev === MUM_IA_EMPTY_DESCRIPTION_MESSAGE
+                    ? null
+                    : prev,
+                );
+              }
+            }}
+          />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-2">

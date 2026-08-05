@@ -1067,6 +1067,8 @@ export interface MumIaHistoriqueEntry {
   createdAt: string;
   titre: string;
   descriptionChantier: string;
+  /** Indique que la description a été (au moins en partie) dictée vocalement. */
+  descriptionDicteeVocalement?: boolean;
   /** Précisions libres ajoutées avant génération. */
   precisionsSupplementaires?: string;
   regionCode: string;

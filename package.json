@@ -13,7 +13,8 @@
     "verify:welcome": "node --experimental-strip-types scripts/verify-dashboard-welcome.mts",
     "verify:fourniture-map": "node --experimental-strip-types scripts/verify-fourniture-map.mts",
     "verify:client-fiche": "node --experimental-strip-types scripts/verify-client-fiche.mts",
-    "verify:emails": "node --experimental-strip-types scripts/verify-emails-inventory.mts"
+    "verify:emails": "node --experimental-strip-types scripts/verify-emails-inventory.mts",
+    "verify:mum-ia-voice": "node --experimental-strip-types scripts/verify-mum-ia-voice.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

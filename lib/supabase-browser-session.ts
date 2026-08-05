@@ -11,6 +11,7 @@ export type MumIaFetchAction =
   | "verifier-config-serveur"
   | "analyser"
   | "generer"
+  | "transcrire"
   | "comprendre"
   | "assistant-chat"
   | "quota";
