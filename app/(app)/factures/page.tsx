@@ -66,6 +66,10 @@ import {
   resolveTotalProjetTTC,
   TYPE_FACTURE_LABELS,
 } from "@/lib/factures";
+import {
+  advanceCompteurAvoir,
+  advanceCompteurFacture,
+} from "@/lib/parametres";
 import { formatCurrency, formatDate, formatDateTimeFR, generateId } from "@/lib/utils";
 import { Download, FileMinus, Plus, Trash2 } from "lucide-react";
 
@@ -219,6 +223,9 @@ export default function FacturesPage() {
       return {
         ...prev,
         ...historiqueSlice,
+        parametres: exists
+          ? prev.parametres
+          : advanceCompteurFacture(prev.parametres, factureToSave.numero),
       };
     });
     setOpen(false);
@@ -267,6 +274,7 @@ export default function FacturesPage() {
       return {
         ...prev,
         avoirs: nextAvoirs,
+        parametres: advanceCompteurAvoir(prev.parametres, created.numero),
         factures: prev.factures.map((facture) =>
           facture.id === avoirTarget.id
             ? syncFactureAfterAvoir(facture, nextAvoirs)

@@ -10,6 +10,7 @@ import {
   createDevisBrouillon,
   type CreateDevisBrouillonInput,
 } from "@/lib/devis";
+import { advanceCompteurDevis } from "@/lib/parametres";
 import type { Devis } from "@/lib/types";
 
 export type DevisCounters = {
@@ -66,6 +67,7 @@ export function useDevisLocal() {
       setData((prev) => ({
         ...prev,
         devis: [recorded.devis, ...prev.devis],
+        parametres: advanceCompteurDevis(prev.parametres, recorded.devis.numero),
         clients: recorded.client
           ? prev.clients.map((item) =>
               item.id === recorded.client!.id ? recorded.client! : item,

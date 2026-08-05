@@ -224,7 +224,11 @@ export default function FournisseurMap({
         maxZoom={FRANCE_MAX_ZOOM}
         maxBounds={FRANCE_MAX_BOUNDS}
         maxBoundsViscosity={0.95}
-        scrollWheelZoom
+        scrollWheelZoom="center"
+        wheelPxPerZoomLevel={140}
+        zoomSnap={0.25}
+        zoomDelta={0.5}
+        wheelDebounceTime={40}
         zoomControl={false}
         attributionControl
         style={{ height: "100%", width: "100%" }}

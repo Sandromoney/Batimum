@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label, PhoneInput, Textarea } from "@/components/ui/input";
@@ -656,11 +657,22 @@ export function FournisseurDepotPicker({
             />
           </section>
           <section className="sm:col-span-2">
-            <Label>Adresse</Label>
-            <Input
-              value={manual.adresseDepot}
-              onChange={(e) =>
-                setManual((d) => ({ ...d, adresseDepot: e.target.value }))
+            <AddressAutocomplete
+              label="Adresse"
+              requireSuggestion
+              value={{
+                adresse: manual.adresseDepot,
+                codePostal: manual.codePostal,
+                ville: manual.ville,
+                pays: "France",
+              }}
+              onChange={(next) =>
+                setManual((d) => ({
+                  ...d,
+                  adresseDepot: next.adresse,
+                  codePostal: next.codePostal,
+                  ville: next.ville,
+                }))
               }
             />
           </section>
@@ -668,16 +680,18 @@ export function FournisseurDepotPicker({
             <Label>Ville</Label>
             <Input
               value={manual.ville}
-              onChange={(e) => setManual((d) => ({ ...d, ville: e.target.value }))}
+              readOnly
+              className="bg-card-elevated/60 text-muted-foreground"
+              placeholder="Auto"
             />
           </section>
           <section>
             <Label>Code postal</Label>
             <Input
               value={manual.codePostal}
-              onChange={(e) =>
-                setManual((d) => ({ ...d, codePostal: e.target.value }))
-              }
+              readOnly
+              className="bg-card-elevated/60 text-muted-foreground"
+              placeholder="Auto"
             />
           </section>
           <section>

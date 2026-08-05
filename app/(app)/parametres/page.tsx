@@ -1,5 +1,6 @@
 "use client";
 
+import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { ParametresChangePassword } from "@/components/parametres-change-password";
 import { ParametresEmployesSection } from "@/components/parametres-employes-section";
 import { PageHeader } from "@/components/page-header";
@@ -560,40 +561,46 @@ export default function ParametresPage() {
             </h3>
             <FieldGrid>
               <section className="sm:col-span-2">
-                <Label>Adresse</Label>
-                <Input
-                  value={form.adresse}
-                  onChange={(e) => patch({ adresse: e.target.value })}
-                  placeholder="12 rue des Artisans"
-                  className={saveErrors.adresse ? invalidClass : undefined}
+                <AddressAutocomplete
+                  label="Adresse"
+                  value={{
+                    adresse: form.adresse ?? "",
+                    codePostal: form.codePostal ?? "",
+                    ville: form.ville ?? "",
+                    pays: form.pays ?? "France",
+                  }}
+                  error={
+                    saveErrors.adresse ||
+                    saveErrors.codePostal ||
+                    saveErrors.ville
+                  }
+                  onChange={(next) =>
+                    patch({
+                      adresse: next.adresse,
+                      codePostal: next.codePostal,
+                      ville: next.ville,
+                      pays: next.pays || form.pays || "France",
+                    })
+                  }
                 />
-                {saveErrors.adresse ? (
-                  <p className="mt-1 text-xs text-red-400">{saveErrors.adresse}</p>
-                ) : null}
               </section>
               <section>
                 <Label>Code postal</Label>
                 <Input
                   value={form.codePostal ?? ""}
-                  onChange={(e) => patch({ codePostal: e.target.value })}
-                  placeholder="75011"
-                  className={saveErrors.codePostal ? invalidClass : undefined}
+                  readOnly
+                  className="bg-card-elevated/60 text-muted-foreground"
+                  placeholder="Auto"
                 />
-                {saveErrors.codePostal ? (
-                  <p className="mt-1 text-xs text-red-400">{saveErrors.codePostal}</p>
-                ) : null}
               </section>
               <section>
                 <Label>Ville</Label>
                 <Input
                   value={form.ville ?? ""}
-                  onChange={(e) => patch({ ville: e.target.value })}
-                  placeholder="Paris"
-                  className={saveErrors.ville ? invalidClass : undefined}
+                  readOnly
+                  className="bg-card-elevated/60 text-muted-foreground"
+                  placeholder="Auto"
                 />
-                {saveErrors.ville ? (
-                  <p className="mt-1 text-xs text-red-400">{saveErrors.ville}</p>
-                ) : null}
               </section>
               <section>
                 <Label>Pays</Label>

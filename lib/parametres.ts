@@ -296,6 +296,23 @@ export function generateNextNumeroDevis(
   return `${prefix}${String(next).padStart(3, "0")}`;
 }
 
+/** Avance le compteur devis au-delà du numéro venant d'être attribué. */
+export function advanceCompteurDevis(
+  parametres: Parametres | undefined,
+  numero: string,
+): Parametres {
+  const p = normalizeParametres(parametres);
+  const prefix = buildNumeroPrefix(
+    p.prefixeDevis ?? DEFAULT_PREFIXE_DEVIS,
+    p.anneeAutomatique !== false,
+  );
+  const fromNumero = maxSequenceFromDocuments([numero], prefix);
+  return {
+    ...p,
+    compteurDevis: Math.max(p.compteurDevis ?? 1, fromNumero + 1),
+  };
+}
+
 export function generateNextNumeroFacture(
   factures: Facture[],
   parametres?: Parametres,
@@ -311,6 +328,22 @@ export function generateNextNumeroFacture(
   );
   const next = Math.max(p.compteurFacture ?? 1, fromDocs + 1);
   return `${prefix}${String(next).padStart(3, "0")}`;
+}
+
+export function advanceCompteurFacture(
+  parametres: Parametres | undefined,
+  numero: string,
+): Parametres {
+  const p = normalizeParametres(parametres);
+  const prefix = buildNumeroPrefix(
+    p.prefixeFacture ?? DEFAULT_PREFIXE_FACTURE,
+    p.anneeAutomatique !== false,
+  );
+  const fromNumero = maxSequenceFromDocuments([numero], prefix);
+  return {
+    ...p,
+    compteurFacture: Math.max(p.compteurFacture ?? 1, fromNumero + 1),
+  };
 }
 
 export function generateNextNumeroAvoir(
@@ -330,6 +363,22 @@ export function generateNextNumeroAvoir(
   return `${prefix}${String(next).padStart(3, "0")}`;
 }
 
+export function advanceCompteurAvoir(
+  parametres: Parametres | undefined,
+  numero: string,
+): Parametres {
+  const p = normalizeParametres(parametres);
+  const prefix = buildNumeroPrefix(
+    p.prefixeAvoir ?? DEFAULT_PREFIXE_AVOIR,
+    p.anneeAutomatique !== false,
+  );
+  const fromNumero = maxSequenceFromDocuments([numero], prefix);
+  return {
+    ...p,
+    compteurAvoir: Math.max(p.compteurAvoir ?? 1, fromNumero + 1),
+  };
+}
+
 export function generateNextNumeroCommande(
   commandes: Commande[],
   parametres?: Parametres,
@@ -345,6 +394,22 @@ export function generateNextNumeroCommande(
   );
   const next = Math.max(p.compteurCommande ?? 1, fromDocs + 1);
   return `${prefix}${String(next).padStart(3, "0")}`;
+}
+
+export function advanceCompteurCommande(
+  parametres: Parametres | undefined,
+  numero: string,
+): Parametres {
+  const p = normalizeParametres(parametres);
+  const prefix = buildNumeroPrefix(
+    p.prefixeCommande ?? DEFAULT_PREFIXE_COMMANDE,
+    p.anneeAutomatique !== false,
+  );
+  const fromNumero = maxSequenceFromDocuments([numero], prefix);
+  return {
+    ...p,
+    compteurCommande: Math.max(p.compteurCommande ?? 1, fromNumero + 1),
+  };
 }
 
 export function syncParametresForSave(form: Parametres): Parametres {

@@ -234,37 +234,60 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!account?.supabaseUserId || isEmployeAccount(account)) return;
     if (ownerIdRef.current !== account.supabaseUserId) return;
 
+    const persistCloud = async () => {
+      const result = await saveUserSettings({
+        parametres: data.parametres,
+        employes: data.employes,
+        appData: data,
+        localImportCompletedAt: importCompletedAtRef.current,
+        operational: {
+          planning: data.planning,
+          chantiers: data.chantiers,
+          affectations: data.affectations,
+          clients: data.clients,
+        },
+        workspace: appDataToWorkspace(
+          data,
+          importCompletedAtRef.current,
+        ),
+      });
+      if (!result.ok) {
+        setSyncError(result.error ?? "Échec synchronisation Supabase.");
+      } else if (result.missingColumns) {
+        setSyncError(
+          "Schéma Supabase incomplet. Exécutez scripts/APPLY_COMPANY_WORKSPACE.sql",
+        );
+      } else {
+        setSyncError(null);
+      }
+      return result;
+    };
+
     const timer = window.setTimeout(() => {
-      void (async () => {
-        const result = await saveUserSettings({
-          parametres: data.parametres,
-          employes: data.employes,
-          appData: data,
-          localImportCompletedAt: importCompletedAtRef.current,
-          operational: {
-            planning: data.planning,
-            chantiers: data.chantiers,
-            affectations: data.affectations,
-            clients: data.clients,
-          },
-          workspace: appDataToWorkspace(
-            data,
-            importCompletedAtRef.current,
-          ),
-        });
-        if (!result.ok) {
-          setSyncError(result.error ?? "Échec synchronisation Supabase.");
-        } else if (result.missingColumns) {
-          setSyncError(
-            "Schéma Supabase incomplet. Exécutez scripts/APPLY_COMPANY_WORKSPACE.sql",
-          );
-        } else {
-          setSyncError(null);
-        }
-      })();
+      void persistCloud();
     }, 1500);
 
-    return () => window.clearTimeout(timer);
+    function flushNow() {
+      window.clearTimeout(timer);
+      const ownerId = ownerIdRef.current;
+      if (ownerId) writeScopedCache(ownerId, data);
+      void persistCloud();
+    }
+
+    function onVisibility() {
+      if (document.visibilityState === "hidden") flushNow();
+    }
+
+    window.addEventListener("beforeunload", flushNow);
+    window.addEventListener("pagehide", flushNow);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("beforeunload", flushNow);
+      window.removeEventListener("pagehide", flushNow);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [data, hydrated, cloudReady]);
 
   const update = useCallback((patch: Partial<AppData>) => {

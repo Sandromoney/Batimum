@@ -604,7 +604,6 @@ export function BatimumAiAssistant() {
     setAnalysis(null);
 
     const requestId = crypto.randomUUID();
-    let reserved = false;
 
     const requestBody = {
       descriptionChantier: ctx.description,
@@ -625,68 +624,15 @@ export function BatimumAiAssistant() {
     }
     const startedAt = Date.now();
 
-    const releaseReservation = async () => {
-      if (!reserved) return;
-      try {
-        const releaseResponse = await authenticatedFetch(
-          "/api/ai/usage/release",
-          {
-            method: "POST",
-            body: JSON.stringify({ requestId }),
-          },
-          "quota",
-        );
-        const releasePayload = (await releaseResponse.json()) as {
-          success?: boolean;
-          used?: number;
-          limit?: number;
-          remaining?: number;
-          resetAt?: string;
-        };
-        if (
-          releasePayload.success &&
-          typeof releasePayload.used === "number" &&
-          typeof releasePayload.limit === "number"
-        ) {
-          setServerQuota(
-            buildMumIaQuotaSnapshot({
-              used: releasePayload.used,
-              monthlyIncluded: releasePayload.limit,
-              packCredits: 0,
-              renewalDate: releasePayload.resetAt ?? "",
-              periodStart: "",
-              periodEnd: releasePayload.resetAt ?? "",
-            }),
-          );
-          broadcastMumIaQuotaUpdated({
-            used: releasePayload.used,
-            limit: releasePayload.limit,
-            remaining: releasePayload.remaining,
-            resetAt: releasePayload.resetAt,
-          });
-        } else {
-          await refreshServerQuota();
-          broadcastMumIaQuotaRefresh();
-        }
-      } catch {
-        await refreshServerQuota();
-        broadcastMumIaQuotaRefresh();
-      } finally {
-        reserved = false;
-      }
-    };
-
     try {
+      // Contrôle du plafond sans débit — le crédit n'est consommé qu'après génération réussie
       try {
-        const reserveResponse = await authenticatedFetch(
-          "/api/ai/usage/reserve",
-          {
-            method: "POST",
-            body: JSON.stringify({ requestId }),
-          },
+        const usageResponse = await authenticatedFetch(
+          "/api/ai/usage",
+          { method: "GET" },
           "quota",
         );
-        const reservePayload = (await reserveResponse.json()) as {
+        const usagePayload = (await usageResponse.json()) as {
           success?: boolean;
           limitReached?: boolean;
           message?: string;
@@ -694,13 +640,11 @@ export function BatimumAiAssistant() {
           limit?: number;
           remaining?: number;
           resetAt?: string;
-          technicalFailure?: boolean;
         };
 
-        // Uniquement le vrai plafond 100/100 bloque MUM IA
-        if (reserveResponse.status === 429 || reservePayload.limitReached) {
+        if (usageResponse.status === 429 || usagePayload.limitReached) {
           setError(
-            reservePayload.message ??
+            usagePayload.message ??
               (serverQuota?.renewalDate
                 ? buildMumIaQuotaExceededMessage(serverQuota.renewalDate)
                 : getMumIaUserMessage("quota_exceeded")),
@@ -709,61 +653,29 @@ export function BatimumAiAssistant() {
           return null;
         }
 
-        const limit = reservePayload.limit ?? 100;
-        let used = typeof reservePayload.used === "number" ? reservePayload.used : 0;
-
-        if (reservePayload.technicalFailure) {
-          console.warn("[MUM IA QUOTA] storage unavailable — continuing analysis");
-          used = Math.min(limit, (serverQuota?.used ?? used) + 1);
-        } else if (reservePayload.success !== false) {
-          reserved = true;
+        if (
+          typeof usagePayload.used === "number" &&
+          typeof usagePayload.limit === "number"
+        ) {
+          setServerQuota(
+            buildMumIaQuotaSnapshot({
+              used: usagePayload.used,
+              monthlyIncluded: usagePayload.limit,
+              packCredits: 0,
+              renewalDate: usagePayload.resetAt ?? serverQuota?.renewalDate ?? "",
+              periodStart: serverQuota?.periodStart ?? "",
+              periodEnd: usagePayload.resetAt ?? serverQuota?.periodEnd ?? "",
+            }),
+          );
+          broadcastMumIaQuotaUpdated({
+            used: usagePayload.used,
+            limit: usagePayload.limit,
+            remaining: usagePayload.remaining,
+            resetAt: usagePayload.resetAt ?? serverQuota?.renewalDate,
+          });
         }
-
-        const remaining =
-          typeof reservePayload.remaining === "number" &&
-          !reservePayload.technicalFailure
-            ? reservePayload.remaining
-            : Math.max(0, limit - used);
-
-        setServerQuota(
-          buildMumIaQuotaSnapshot({
-            used,
-            monthlyIncluded: limit,
-            packCredits: 0,
-            renewalDate: reservePayload.resetAt ?? serverQuota?.renewalDate ?? "",
-            periodStart: serverQuota?.periodStart ?? "",
-            periodEnd: reservePayload.resetAt ?? serverQuota?.periodEnd ?? "",
-          }),
-        );
-        broadcastMumIaQuotaUpdated({
-          used,
-          limit,
-          remaining,
-          resetAt: reservePayload.resetAt ?? serverQuota?.renewalDate,
-        });
       } catch (quotaError) {
-        console.warn("[MUM IA QUOTA] reserve call failed — continuing analysis", quotaError);
-        const limit = serverQuota?.limit ?? 100;
-        const used = Math.min(limit, (serverQuota?.used ?? 0) + 1);
-        setServerQuota((previous) =>
-          previous
-            ? {
-                ...previous,
-                used,
-                remaining: Math.max(0, limit - used),
-                limit,
-                monthlyIncluded: limit,
-              }
-            : buildMumIaQuotaSnapshot({
-                used,
-                monthlyIncluded: limit,
-                packCredits: 0,
-                renewalDate: "",
-                periodStart: "",
-                periodEnd: "",
-              }),
-        );
-        broadcastMumIaQuotaUpdated({ used, limit, remaining: Math.max(0, limit - used) });
+        console.warn("[MUM IA QUOTA] check failed — continuing analysis", quotaError);
       }
 
       const response = await authenticatedFetch(
@@ -797,16 +709,6 @@ export function BatimumAiAssistant() {
       if (!response.ok || !payload.success || !payload.analysis) {
         if (payload.debugMessage) {
           console.error("[MUM IA] analyze error detail:", payload.debugMessage);
-        }
-        // Refus avant IA exploitable (auth / validation / config) → annuler la réservation
-        if (
-          response.status === 400 ||
-          response.status === 401 ||
-          response.status === 403 ||
-          response.status === 429 ||
-          response.status === 503
-        ) {
-          await releaseReservation();
         }
         applyMumIaFailure(payload);
         return null;
@@ -852,7 +754,6 @@ export function BatimumAiAssistant() {
 
       return payload.analysis;
     } catch (networkError) {
-      await releaseReservation();
       if (networkError instanceof MumIaAuthError) {
         applyMumIaFailure({
           code: "unauthenticated",
