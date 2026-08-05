@@ -106,6 +106,15 @@ export default function ConfigurerEntreprisePage() {
     setReady(true);
   }, [router]);
 
+  // Filet de sécurité : ne jamais rester bloqué sur « Chargement… ».
+  useEffect(() => {
+    if (ready) return;
+    const timer = window.setTimeout(() => {
+      setReady(true);
+    }, 8_000);
+    return () => window.clearTimeout(timer);
+  }, [ready]);
+
   function patch(partial: Partial<OnboardingCompanyDraft>) {
     setForm((current) => {
       const next = { ...current, ...partial, email: accountEmail || current.email };

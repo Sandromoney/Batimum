@@ -20,6 +20,25 @@ import { useStore } from "@/lib/store";
 import { createClient } from "@/utils/supabase/client";
 
 const EMPLOYEE_HOME = "/planning-employe";
+const LAYOUT_RESOLVE_TIMEOUT_MS = 8_000;
+
+async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  fallback: T,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 export function AppLayoutRouter({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -41,74 +60,100 @@ export function AppLayoutRouter({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     async function resolveLayout() {
-      // Espace employé : uniquement cookie employé.
-      if (pathname.startsWith(EMPLOYEE_HOME)) {
-        const session = await fetchEmployeeSession();
-        if (cancelled) return;
-        if (!session.ok || !session.account) {
-          // Dirigeant connecté qui atterrit ici → dashboard, pas login employé.
-          const supabase = createClient();
-          if (supabase) {
-            const { data } = await supabase.auth.getSession();
-            if (data.session?.user && data.session.access_token) {
-              clearAccount();
-              setLayoutState("redirecting");
-              router.replace("/dashboard");
-              return;
-            }
-          }
-          clearAccount();
-          setLayoutState("redirecting");
-          router.replace("/login-employe");
-          return;
-        }
-        saveAccount(session.account);
-        setIsEmploye(true);
-        setLayoutState("ready");
-        return;
-      }
-
-      // Pages dirigeant : session Supabase prioritaire sur l'ancien cookie employé.
-      const supabase = createClient();
-      if (supabase) {
-        const { data } = await supabase.auth.getSession();
-        const hasDirectorSession = Boolean(
-          data.session?.user && data.session.access_token,
-        );
-        if (cancelled) return;
-
-        if (hasDirectorSession) {
-          // Un dirigeant connecté ne doit jamais être renvoyé vers l'espace employé.
-          await logoutEmploye();
+      try {
+        // Espace employé : uniquement cookie employé.
+        if (pathname.startsWith(EMPLOYEE_HOME)) {
+          const session = await withTimeout(
+            fetchEmployeeSession(),
+            LAYOUT_RESOLVE_TIMEOUT_MS,
+            { ok: false as const },
+          );
           if (cancelled) return;
-          const account = getAccount();
-          if (isEmployeAccount(account)) {
+          if (!session.ok || !session.account) {
+            // Dirigeant connecté qui atterrit ici → dashboard, pas login employé.
+            const supabase = createClient();
+            if (supabase) {
+              const { data } = await withTimeout(
+                supabase.auth.getSession(),
+                LAYOUT_RESOLVE_TIMEOUT_MS,
+                { data: { session: null } } as Awaited<
+                  ReturnType<typeof supabase.auth.getSession>
+                >,
+              );
+              if (data.session?.user && data.session.access_token) {
+                clearAccount();
+                setLayoutState("redirecting");
+                router.replace("/dashboard");
+                return;
+              }
+            }
             clearAccount();
+            setLayoutState("redirecting");
+            router.replace("/login-employe");
+            return;
           }
-          setIsEmploye(false);
+          saveAccount(session.account);
+          setIsEmploye(true);
           setLayoutState("ready");
           return;
         }
-      }
 
-      // Pas de session dirigeant : si cookie employé valide → espace employé.
-      const employeeSession = await fetchEmployeeSession();
-      if (cancelled) return;
-      if (employeeSession.ok && employeeSession.account) {
-        saveAccount(employeeSession.account);
-        setLayoutState("redirecting");
-        router.replace(EMPLOYEE_HOME);
-        return;
-      }
+        // Pages dirigeant : session Supabase prioritaire sur l'ancien cookie employé.
+        const supabase = createClient();
+        if (supabase) {
+          const { data } = await withTimeout(
+            supabase.auth.getSession(),
+            LAYOUT_RESOLVE_TIMEOUT_MS,
+            { data: { session: null } } as Awaited<
+              ReturnType<typeof supabase.auth.getSession>
+            >,
+          );
+          const hasDirectorSession = Boolean(
+            data.session?.user && data.session.access_token,
+          );
+          if (cancelled) return;
 
-      const account = getAccount();
-      if (isEmployeAccount(account)) {
-        clearAccount();
-      }
+          if (hasDirectorSession) {
+            // Un dirigeant connecté ne doit jamais être renvoyé vers l'espace employé.
+            await withTimeout(logoutEmploye(), 3_000, undefined);
+            if (cancelled) return;
+            const account = getAccount();
+            if (isEmployeAccount(account)) {
+              clearAccount();
+            }
+            setIsEmploye(false);
+            setLayoutState("ready");
+            return;
+          }
+        }
 
-      if (cancelled) return;
-      setIsEmploye(false);
-      setLayoutState("ready");
+        // Pas de session dirigeant : si cookie employé valide → espace employé.
+        const employeeSession = await withTimeout(
+          fetchEmployeeSession(),
+          LAYOUT_RESOLVE_TIMEOUT_MS,
+          { ok: false as const },
+        );
+        if (cancelled) return;
+        if (employeeSession.ok && employeeSession.account) {
+          saveAccount(employeeSession.account);
+          setLayoutState("redirecting");
+          router.replace(EMPLOYEE_HOME);
+          return;
+        }
+
+        const account = getAccount();
+        if (isEmployeAccount(account)) {
+          clearAccount();
+        }
+
+        if (cancelled) return;
+        setIsEmploye(false);
+        setLayoutState("ready");
+      } catch {
+        if (cancelled) return;
+        setIsEmploye(false);
+        setLayoutState("ready");
+      }
     }
 
     setLayoutState("loading");
