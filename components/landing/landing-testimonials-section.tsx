@@ -7,20 +7,28 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import { LandingReveal } from "@/components/landing/landing-reveal";
 import { LandingTrialCta } from "@/components/landing/landing-trial-cta";
 import {
   LANDING_TESTIMONIALS,
-  LANDING_TESTIMONIALS_ARE_PLACEHOLDERS,
   type LandingTestimonial,
 } from "@/lib/landing-testimonials";
 
 function Stars() {
   return (
-    <p className="lp-voices__stars" aria-hidden="true">
-      {"★★★★★"}
+    <p className="lp-voices__stars" aria-label="5 étoiles">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <Star
+          key={index}
+          className="lp-voices__star"
+          size={14}
+          strokeWidth={0}
+          fill="currentColor"
+          aria-hidden="true"
+        />
+      ))}
     </p>
   );
 }
@@ -57,17 +65,21 @@ export function LandingTestimonialsSection() {
   const dragStartOffset = useRef(0);
   const [paused, setPaused] = useState(false);
 
-  // Boucle : contenu doublé pour un défilement continu sans saut.
-  const loopItems = [...LANDING_TESTIMONIALS, ...LANDING_TESTIMONIALS];
+  // Triple pour un défilement horizontal infini sans trou visible.
+  const loopItems = [
+    ...LANDING_TESTIMONIALS,
+    ...LANDING_TESTIMONIALS,
+    ...LANDING_TESTIMONIALS,
+  ];
 
   const applyOffset = useCallback((value: number) => {
     const el = trackRef.current;
     if (!el) return;
-    const half = el.scrollWidth / 2;
+    const loopWidth = el.scrollWidth / 3;
     let next = value;
-    if (half > 0) {
-      while (next >= half) next -= half;
-      while (next < 0) next += half;
+    if (loopWidth > 0) {
+      while (next >= loopWidth) next -= loopWidth;
+      while (next < 0) next += loopWidth;
     }
     offsetRef.current = next;
     el.style.transform = `translate3d(${-next}px, 0, 0)`;
@@ -83,7 +95,7 @@ export function LandingTestimonialsSection() {
 
     let raf = 0;
     let last = performance.now();
-    const speed = 0.032; // px / ms — très lent et continu
+    const speed = 0.038;
 
     const tick = (now: number) => {
       const dt = Math.min(40, now - last);
@@ -136,9 +148,6 @@ export function LandingTestimonialsSection() {
       id="temoignages"
       className="lp-section lp-voices"
       aria-labelledby="testimonials-title"
-      data-placeholders={
-        LANDING_TESTIMONIALS_ARE_PLACEHOLDERS ? "true" : "false"
-      }
     >
       <div className="lp-container">
         <LandingReveal>
@@ -155,11 +164,6 @@ export function LandingTestimonialsSection() {
               Des retours de dirigeants et d’équipes qui veulent passer moins de
               temps à chercher les informations et davantage à avancer.
             </p>
-            {LANDING_TESTIMONIALS_ARE_PLACEHOLDERS ? (
-              <p className="lp-voices__disclaimer">
-                Aperçu des retours utilisateurs
-              </p>
-            ) : null}
           </div>
         </LandingReveal>
       </div>

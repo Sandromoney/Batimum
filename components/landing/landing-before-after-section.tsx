@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { LandingReveal } from "@/components/landing/landing-reveal";
 import { LandingTrialCta } from "@/components/landing/landing-trial-cta";
@@ -50,7 +50,7 @@ export function LandingBeforeAfterSection() {
   const reduced = useReducedMotion();
 
   const t = {
-    duration: reduced ? 0.01 : 0.4,
+    duration: reduced ? 0.01 : 0.45,
     ease: EASE,
   };
 
@@ -60,7 +60,7 @@ export function LandingBeforeAfterSection() {
       aria-labelledby="before-after-title"
       id="avant-apres"
     >
-      <div className="lp-container">
+      <div className="lp-container lp-ba__container">
         <LandingReveal>
           <div className="lp-section-head lp-ba__head">
             <p className="lp-eyebrow">
@@ -79,13 +79,24 @@ export function LandingBeforeAfterSection() {
         </LandingReveal>
 
         <LandingReveal delay={80}>
-          <div className="lp-ba__table" role="table" aria-label="Avant et avec Batimum">
+          <div
+            className="lp-ba__table"
+            role="table"
+            aria-label="Avant et avec Batimum"
+          >
             <div className="lp-ba__tableHead" role="row">
-              <div className="lp-ba__colHead lp-ba__colHead--before" role="columnheader">
+              <div
+                className="lp-ba__colHead lp-ba__colHead--before"
+                role="columnheader"
+              >
                 Avant Batimum
               </div>
-              <div className="lp-ba__colHead lp-ba__colHead--after" role="columnheader">
-                <Check size={13} strokeWidth={2.4} aria-hidden="true" />
+              <div className="lp-ba__colHeadSpacer" aria-hidden="true" />
+              <div
+                className="lp-ba__colHead lp-ba__colHead--after"
+                role="columnheader"
+              >
+                <Check size={15} strokeWidth={2.6} aria-hidden="true" />
                 Avec Batimum
               </div>
             </div>
@@ -96,12 +107,12 @@ export function LandingBeforeAfterSection() {
                   key={row.id}
                   className="lp-ba__tableRow"
                   role="row"
-                  initial={reduced ? false : { opacity: 0, y: 10 }}
+                  initial={reduced ? false : { opacity: 0, y: 12 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.35 }}
+                  viewport={{ once: true, amount: 0.3 }}
                   transition={{
                     ...t,
-                    delay: reduced ? 0 : index * 0.07,
+                    delay: reduced ? 0 : index * 0.06,
                   }}
                 >
                   <div className="lp-ba__cell lp-ba__cell--before" role="cell">
@@ -109,7 +120,7 @@ export function LandingBeforeAfterSection() {
                     <p>{row.before}</p>
                   </div>
                   <div className="lp-ba__cellArrow" aria-hidden="true">
-                    <span />
+                    <ArrowRight size={16} strokeWidth={2.2} />
                   </div>
                   <div className="lp-ba__cell lp-ba__cell--after" role="cell">
                     <span className="lp-ba__mobileLabel lp-ba__mobileLabel--after">
