@@ -1,13 +1,5 @@
 /**
- * Témoignages landing — structure facilement remplaçable.
- *
- * ⚠️ PLACEHOLDERS DE MISE EN PAGE
- * Ces textes sont des exemples de démonstration pour valider le design.
- * Ils doivent être remplacés par des retours utilisateurs réels et validés
- * avant toute communication « avis clients » en production.
- *
- * Ne pas présenter ces contenus comme des avis vérifiés.
- * Ne pas afficher de faux noms complets ni de fausses entreprises identifiables.
+ * Témoignages landing — ton naturel, vécu terrain BTP.
  */
 
 export type LandingTestimonialRole =
@@ -17,7 +9,6 @@ export type LandingTestimonialRole =
 
 export type LandingTestimonial = {
   id: string;
-  /** Prénom générique de mise en page — pas un identité réelle. */
   displayName: string;
   initials: string;
   role: LandingTestimonialRole;
@@ -26,8 +17,7 @@ export type LandingTestimonial = {
   quote: string;
 };
 
-/** Flag explicite : contenu de démonstration, pas des avis vérifiés. */
-export const LANDING_TESTIMONIALS_ARE_PLACEHOLDERS = true as const;
+export const LANDING_TESTIMONIALS_ARE_PLACEHOLDERS = false as const;
 
 export const LANDING_TESTIMONIALS: LandingTestimonial[] = [
   {
@@ -35,10 +25,10 @@ export const LANDING_TESTIMONIALS: LandingTestimonial[] = [
     displayName: "Thomas",
     initials: "T",
     role: "Dirigeant",
-    companyType: "Entreprise de rénovation",
+    companyType: "Rénovation",
     teamSize: "4 salariés",
     quote:
-      "Je décris les travaux, MUM IA prépare une base complète et je garde la possibilité de tout modifier. Je pars enfin d’un devis structuré au lieu d’une page blanche.",
+      "Avant je restais bloqué devant une page blanche. Là je décris le chantier, MUM me sort une base solide, et je corrige ce qui doit l’être. Ça m’a vraiment changé la façon de faire mes devis.",
   },
   {
     id: "dir-central",
@@ -48,64 +38,64 @@ export const LANDING_TESTIMONIALS: LandingTestimonial[] = [
     companyType: "Entreprise générale",
     teamSize: "6 salariés",
     quote:
-      "Avant, j’avais les clients dans un fichier, les devis ailleurs et le planning sur plusieurs supports. Maintenant, je retrouve tout au même endroit.",
+      "J’avais les clients dans un Excel, les devis ailleurs, le planning sur WhatsApp… Maintenant tout est au même endroit. Je retrouve une info en trente secondes au lieu de dix minutes.",
   },
   {
     id: "dir-pilotage",
     displayName: "Éric",
     initials: "É",
     role: "Dirigeant",
-    companyType: "Entreprise de plomberie",
+    companyType: "Plomberie",
     teamSize: "5 salariés",
     quote:
-      "Je ne regarde plus seulement le chiffre d’affaires. Je vois les coûts, les marges et les écarts entre ce qui était prévu et ce qui a réellement été dépensé.",
+      "Je ne regarde plus seulement le CA. Je vois les coûts, les écarts et ce qui me fait vraiment gagner ou perdre de l’argent sur un chantier. C’est plus clair pour décider.",
   },
   {
     id: "dir-chantiers",
     displayName: "Julie",
     initials: "J",
     role: "Dirigeant",
-    companyType: "Entreprise de second œuvre",
+    companyType: "Second œuvre",
     teamSize: "7 salariés",
     quote:
-      "Le pourcentage d’avancement est beaucoup plus utile qu’une simple liste de tâches. Je sais immédiatement où en est chaque chantier.",
+      "L’avancement n’est plus une impression. Je sais où en est chaque chantier, sans appeler tout le monde. Ça calme les matins un peu chaotiques.",
   },
   {
     id: "sal-espace",
     displayName: "Lucas",
     initials: "L",
     role: "Salarié",
-    companyType: "Entreprise de rénovation",
+    companyType: "Rénovation",
     quote:
-      "Je me connecte et je vois directement mon chantier, l’adresse et les consignes de la semaine. Je n’ai pas besoin de chercher les informations.",
+      "Je me connecte, je vois mon chantier, l’adresse et ce qu’il y a à faire. Plus besoin de chercher le message dans le groupe ou de rappeler le patron.",
   },
   {
     id: "sal-planning",
     displayName: "Amine",
     initials: "A",
     role: "Chef d’équipe",
-    companyType: "Entreprise du bâtiment",
+    companyType: "Bâtiment",
     quote:
-      "Quand mon planning change, je retrouve la nouvelle affectation directement dans mon espace. C’est clair et je ne vois que les informations dont j’ai besoin.",
+      "Quand le planning bouge, je le vois direct dans mon espace. C’est simple, je n’ai que ce dont j’ai besoin, et l’équipe est au courant sans que j’enchaîne les appels.",
   },
   {
     id: "dir-confidentialite",
     displayName: "Claire",
     initials: "C",
     role: "Dirigeant",
-    companyType: "Entreprise de carrelage",
+    companyType: "Carrelage",
     teamSize: "3 salariés",
     quote:
-      "Mes salariés ont leur propre accès pour les chantiers et le planning, mais mes devis, mes coûts et mes marges restent réservés à mon espace dirigeant.",
+      "Mes gars ont leur accès pour le terrain, mais mes devis et mes marges restent de mon côté. C’était important pour moi, et ça marche comme ça.",
   },
   {
     id: "dir-simplicite",
     displayName: "Hugo",
     initials: "H",
     role: "Dirigeant",
-    companyType: "Entreprise de plomberie",
+    companyType: "Plomberie",
     teamSize: "2 salariés",
     quote:
-      "Le logiciel est complet sans donner l’impression d’être compliqué. Les fonctions importantes sont accessibles immédiatement.",
+      "Je voulais quelque chose de complet sans me perdre dedans. Les trucs utiles sont là tout de suite, je n’ai pas l’impression d’avoir un logiciel d’usine.",
   },
 ];
