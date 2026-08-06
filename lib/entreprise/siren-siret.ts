@@ -110,3 +110,16 @@ export function validateSirenSiretInput(raw: string): SirenSiretValidation {
     error: "Indiquez un SIREN (9 chiffres) ou un SIRET (14 chiffres).",
   };
 }
+
+/**
+ * Numéro de TVA intracommunautaire français dérivé du SIREN
+ * (formule officielle : FR + clé + SIREN).
+ * Retourne "" si le SIREN est invalide.
+ */
+export function computeFrenchTvaIntracomFromSiren(sirenOrSiret: string): string {
+  const digits = normalizeSirenSiretInput(sirenOrSiret);
+  const siren = digits.length >= 9 ? digits.slice(0, 9) : "";
+  if (siren.length !== 9 || !/^\d{9}$/.test(siren)) return "";
+  const key = (12 + 3 * (Number(siren) % 97)) % 97;
+  return `FR${String(key).padStart(2, "0")}${siren}`;
+}

@@ -15,6 +15,7 @@ import {
 } from "@/lib/account";
 import { getCredentials } from "@/lib/auth-credentials";
 import type { CompanyPrefillFields } from "@/lib/entreprise/annuaire-lookup";
+import { computeFrenchTvaIntracomFromSiren } from "@/lib/entreprise/siren-siret";
 import { getLocationFromPostalCode } from "@/lib/french-regions";
 import {
   canAccessCompanyOnboarding,
@@ -166,6 +167,7 @@ export default function ConfigurerEntreprisePage() {
       formeJuridique: fields.formeJuridique,
       codeApe: fields.codeApe,
       libelleActivite: fields.libelleActivite,
+      tvaIntracom: fields.tvaIntracom || form.tvaIntracom,
       dateCreationEntreprise: fields.dateCreationEntreprise,
       establishmentStatus: fields.establishmentStatus,
       isSiege: fields.isSiege,
@@ -326,6 +328,8 @@ export default function ConfigurerEntreprisePage() {
     >
       <section className="space-y-5">
         <EntrepriseSirenLookup
+          preferSiret
+          autoApply={!hasFilledCompanyFields(form)}
           compact
           initialValue={form.siret || form.siren || ""}
           hasExistingData={hasFilledCompanyFields(form)}
@@ -464,12 +468,21 @@ export default function ConfigurerEntreprisePage() {
               value={form.siret}
               inputMode="numeric"
               maxLength={17}
-              onChange={(event) =>
+              onChange={(event) => {
+                const siret = event.target.value.replace(/\D/g, "").slice(0, 14);
+                const siren = siret.slice(0, 9);
+                const tva =
+                  siret.length === 14
+                    ? computeFrenchTvaIntracomFromSiren(siren)
+                    : "";
                 patch({
-                  siret: event.target.value.replace(/\D/g, "").slice(0, 14),
-                  siren: event.target.value.replace(/\D/g, "").slice(0, 9),
-                })
-              }
+                  siret,
+                  siren,
+                  ...(tva && !form.tvaIntracom.trim()
+                    ? { tvaIntracom: tva }
+                    : {}),
+                });
+              }}
               placeholder="14 chiffres"
             />
           </section>
