@@ -4,6 +4,7 @@ export type SupplierSearchSource =
   | "openstreetmap"
   | "nominatim"
   | "annuaire_entreprises"
+  | "google_places"
   | "manual";
 
 export type SupplierSearchResult = {

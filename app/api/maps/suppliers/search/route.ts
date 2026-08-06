@@ -75,6 +75,7 @@ export async function POST(request: Request) {
       radiusKm,
       ville: ville || undefined,
       codePostal: codePostal || undefined,
+      companyAddress: body.companyAddress?.trim() || undefined,
     });
 
     logSupplierSearch("passesTried", outcome.debug.passesTried);
