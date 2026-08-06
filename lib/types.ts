@@ -73,7 +73,7 @@ export type TypeChantier =
   | "cuisine"
   | "autre";
 
-export type TypeClient = "particulier" | "professionnel";
+export type TypeClient = "particulier" | "professionnel" | "entite_publique";
 
 export interface Client {
   id: string;
@@ -897,7 +897,12 @@ export interface Parametres {
   prefixeFacture?: string;
   prefixeAvoir?: string;
   prefixeCommande?: string;
+  /** Inclure l'année courante dans les numéros (ex. DEV-2026-001). */
   anneeAutomatique?: boolean;
+  /** Séparateur entre préfixe, année et compteur (défaut « - »). */
+  separateurNumero?: string;
+  /** Nombre de chiffres du compteur (1–8, défaut 3 → 001). */
+  longueurCompteur?: number;
   compteurDevis?: number;
   compteurFacture?: number;
   compteurAvoir?: number;

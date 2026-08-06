@@ -1,5 +1,6 @@
 const CREDENTIALS_KEY = "btp-gestion-credentials";
 const PENDING_SIGNUP_KEY = "btp-pending-signup";
+const PENDING_PASSWORD_KEY = "btp-pending-signup-password";
 
 import type { AppRole } from "@/lib/auth-types";
 
@@ -144,6 +145,28 @@ export async function savePendingSignupCredentials(
   if (typeof window !== "undefined") {
     sessionStorage.setItem(PENDING_SIGNUP_KEY, normalized);
   }
+}
+
+/** Mot de passe en clair, temporaire, jusqu'à la provision Supabase Auth. */
+export function savePendingSignupPassword(password: string): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(PENDING_PASSWORD_KEY, password);
+}
+
+export function peekPendingSignupPassword(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(PENDING_PASSWORD_KEY);
+}
+
+export function clearPendingSignupPassword(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(PENDING_PASSWORD_KEY);
+}
+
+export function takePendingSignupPassword(): string | null {
+  const password = peekPendingSignupPassword();
+  clearPendingSignupPassword();
+  return password;
 }
 
 export function finalizePendingSignupCredentials(email: string): void {

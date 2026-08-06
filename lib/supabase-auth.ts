@@ -34,7 +34,7 @@ export function ensureAppAccountFromSupabaseUser(user: User): UserAccount {
       ...existing,
       supabaseUserId: userId,
       email: email || existing.email,
-      entreprise: existing.entreprise?.trim() || "Compte test",
+      entreprise: existing.entreprise?.trim() || "",
       utilisateur: existing.utilisateur?.trim() || displayNameFromUser(user),
       subscriptionStatus: existing.subscriptionStatus ?? "active",
       onboardingCompleted: existing.onboardingCompleted ?? true,
@@ -45,7 +45,7 @@ export function ensureAppAccountFromSupabaseUser(user: User): UserAccount {
   }
 
   const account: UserAccount = {
-    entreprise: "Compte test",
+    entreprise: "",
     utilisateur: displayNameFromUser(user),
     email,
     telephone: "",

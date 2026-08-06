@@ -1,7 +1,28 @@
 import type { Client, TypeClient } from "@/lib/types";
 
-export function normalizeTypeClient(type?: TypeClient): TypeClient {
-  return type === "professionnel" ? "professionnel" : "particulier";
+export function normalizeTypeClient(type?: TypeClient | string | null): TypeClient {
+  if (type === "professionnel") return "professionnel";
+  if (type === "entite_publique") return "entite_publique";
+  return "particulier";
+}
+
+export function getTypeClientLabel(type?: TypeClient | string | null): string {
+  switch (normalizeTypeClient(type)) {
+    case "professionnel":
+      return "Professionnel";
+    case "entite_publique":
+      return "Entité publique";
+    default:
+      return "Particulier";
+  }
+}
+
+/** Professionnel ou entité publique — champs SIRET / raison sociale. */
+export function isClientOrganisation(
+  client?: Pick<Client, "typeClient"> | null,
+): boolean {
+  const type = normalizeTypeClient(client?.typeClient);
+  return type === "professionnel" || type === "entite_publique";
 }
 
 export function normalizeClient(client: Client): Client {
@@ -75,7 +96,7 @@ export function resolveClientIdForDocument(
 export function isClientProfessionnel(
   client?: Pick<Client, "typeClient">,
 ): boolean {
-  return normalizeTypeClient(client?.typeClient) === "professionnel";
+  return isClientOrganisation(client);
 }
 
 export function getClientDisplayName(client?: Pick<Client, "nom" | "prenom" | "societe">) {
@@ -133,7 +154,6 @@ export function hasDevisChantierAddress(
 export function hasIncompleteProClientInfo(
   client?: Pick<Client, "typeClient" | "siret">,
 ): boolean {
-  if (!isClientProfessionnel(client)) return false;
+  if (!isClientOrganisation(client)) return false;
   return !client?.siret?.trim();
 }
-

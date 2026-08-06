@@ -87,7 +87,11 @@ export type FactureElectroniqueExport = {
 };
 
 function isClientProfessionnel(client?: Client) {
-  return client?.typeClient === "professionnel" || Boolean(client?.siret?.trim());
+  return (
+    client?.typeClient === "professionnel" ||
+    client?.typeClient === "entite_publique" ||
+    Boolean(client?.siret?.trim())
+  );
 }
 
 export function validateParametresEFacturation(

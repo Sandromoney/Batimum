@@ -53,6 +53,8 @@ export async function POST(request: Request) {
     entreprise?: string;
     utilisateur?: string;
     telephone?: string;
+    siret?: string;
+    supabaseUserId?: string;
     billingCycle?: "monthly" | "yearly";
   };
 
@@ -84,6 +86,8 @@ export async function POST(request: Request) {
   const entreprise = body.entreprise?.trim() ?? "";
   const utilisateur = body.utilisateur?.trim() ?? "";
   const telephone = body.telephone?.trim() ?? "";
+  const siret = body.siret?.replace(/\D/g, "") ?? "";
+  const supabaseUserId = body.supabaseUserId?.trim() ?? "";
 
   if (!email) {
     return NextResponse.json(
@@ -100,6 +104,7 @@ export async function POST(request: Request) {
     priceId,
     billingCycle,
     trial_period_days: 7,
+    client_reference_id: supabaseUserId || undefined,
     success_url: `${appUrl}/dashboard?checkout=success`,
     cancel_url: `${appUrl}/signup?checkout=cancel`,
   });
@@ -110,6 +115,7 @@ export async function POST(request: Request) {
       locale: "fr",
       payment_method_collection: "always",
       customer_email: email,
+      client_reference_id: supabaseUserId || undefined,
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
         trial_period_days: 7,
@@ -117,12 +123,16 @@ export async function POST(request: Request) {
           entreprise,
           utilisateur,
           telephone,
+          siret,
+          supabaseUserId,
         },
       },
       metadata: {
         entreprise,
         utilisateur,
         telephone,
+        siret,
+        supabaseUserId,
       },
       success_url: `${appUrl}/abonnement/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/abonnement/cancel`,

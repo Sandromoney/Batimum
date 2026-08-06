@@ -1,17 +1,11 @@
 import type { AppData } from "@/lib/types";
 import { DEFAULT_BIBLIOTHEQUE_ENTREPRISE } from "@/lib/bibliotheque-entreprise";
-import { DEFAULT_PARAMETRES, normalizeParametres } from "@/lib/parametres";
+import { freshCompanyParametres } from "@/lib/parametres";
 
 /** Workspace vide pour un compte cloud — jamais les données démo. */
 export function emptyAppData(partialParametres?: Partial<AppData["parametres"]>): AppData {
   return {
-    parametres: normalizeParametres({
-      ...DEFAULT_PARAMETRES,
-      ...partialParametres,
-      entreprise: partialParametres?.entreprise ?? "",
-      email: partialParametres?.email ?? "",
-      utilisateur: partialParametres?.utilisateur ?? "",
-    }),
+    parametres: freshCompanyParametres(partialParametres),
     bibliothequeEntreprise: DEFAULT_BIBLIOTHEQUE_ENTREPRISE,
     mumIaHistorique: [],
     clients: [],

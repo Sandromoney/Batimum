@@ -10,7 +10,7 @@ import type {
   StatutDevis,
   StatutFacture,
 } from "@/lib/types";
-import { getClientAddress, getClientDisplayName, normalizeClientPhone } from "@/lib/clients";
+import { getClientAddress, getClientDisplayName, getTypeClientLabel, normalizeClientPhone } from "@/lib/clients";
 import { formatCurrency } from "@/lib/utils";
 
 export type ClientFicheTab =
@@ -561,7 +561,7 @@ export function formatClientFicheDateTime(iso: string): {
 }
 
 export function getClientTypeLabel(client: Client): string {
-  return client.typeClient === "professionnel" ? "Professionnel" : "Particulier";
+  return getTypeClientLabel(client.typeClient);
 }
 
 export function getClientFullAddress(client: Client): string {

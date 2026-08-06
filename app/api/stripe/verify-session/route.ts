@@ -58,6 +58,9 @@ export async function POST(request: Request) {
       entreprise: session.metadata?.entreprise,
       utilisateur: session.metadata?.utilisateur,
       telephone: session.metadata?.telephone,
+      siret: session.metadata?.siret,
+      supabaseUserId:
+        session.metadata?.supabaseUserId || session.client_reference_id || null,
       stripeCustomerId: customerId,
       stripeSubscriptionId: subscription.id,
       subscriptionStatus: mapped.status,

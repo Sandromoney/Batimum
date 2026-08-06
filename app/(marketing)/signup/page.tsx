@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { saveAccount, type UserAccount } from "@/lib/account";
-import { savePendingSignupCredentials } from "@/lib/auth-credentials";
+import { savePendingSignupCredentials, savePendingSignupPassword } from "@/lib/auth-credentials";
 import { sendEmailVerificationCode } from "@/lib/email-verification/client";
 import type { CompanyPrefillFields } from "@/lib/entreprise/annuaire-lookup";
 import { getLocationFromPostalCode } from "@/lib/french-regions";
@@ -69,6 +69,9 @@ function SignupForm() {
     adresse: string;
     siret: string;
     activite: string;
+    formeJuridique?: string;
+    ville?: string;
+    codePostal?: string;
   } | null>(null);
 
   const formValues = useMemo(
@@ -117,6 +120,9 @@ function SignupForm() {
           .join(", "),
         siret: savedCompany.siret,
         activite: savedCompany.libelleActivite || savedCompany.codeApe || "",
+        formeJuridique: savedCompany.formeJuridique,
+        ville: savedCompany.ville,
+        codePostal: savedCompany.codePostal,
       });
     }
   }, [router, searchParams]);
@@ -193,6 +199,9 @@ function SignupForm() {
         .join(", "),
       siret: fields.siret.replace(/\D/g, ""),
       activite: fields.libelleActivite || fields.codeApe || "",
+      formeJuridique: fields.formeJuridique,
+      ville: fields.ville,
+      codePostal: fields.codePostal,
     });
   }
 
@@ -251,6 +260,7 @@ function SignupForm() {
 
     saveAccount(draft);
     await savePendingSignupCredentials(normalizedEmail, formValues.password);
+    savePendingSignupPassword(formValues.password);
     const sendResult = await sendEmailVerificationCode(normalizedEmail);
     setLoading(false);
 
@@ -284,6 +294,7 @@ function SignupForm() {
         <form className="space-y-5" onSubmit={handleSubmit} noValidate>
           <EntrepriseSirenLookup
             preferSiret
+            autoApply
             compact
             hasExistingData={companyPrefillApplied}
             initialValue={companyPreview?.siret ?? ""}
@@ -297,6 +308,11 @@ function SignupForm() {
                 Entreprise enregistrée pour la suite
               </p>
               <p className="mt-1 font-semibold">{companyPreview.entreprise}</p>
+              {companyPreview.formeJuridique ? (
+                <p className="mt-0.5 text-xs text-neutral-600">
+                  {companyPreview.formeJuridique}
+                </p>
+              ) : null}
               {companyPreview.adresse ? (
                 <p className="mt-0.5 text-xs text-neutral-600">
                   {companyPreview.adresse}

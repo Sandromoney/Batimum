@@ -86,6 +86,8 @@ const SECTION_FIELD_KEYS: Partial<
   ],
   numerotation: [
     "anneeAutomatique",
+    "separateurNumero",
+    "longueurCompteur",
     "prefixeDevis",
     "compteurDevis",
     "prefixeFacture",

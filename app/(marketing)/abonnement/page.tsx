@@ -16,6 +16,7 @@ import {
   PAYMENT_NOT_READY_MESSAGE,
 } from "@/lib/dev-access";
 import { needsSubscriptionCheckout } from "@/lib/onboarding";
+import { getOnboardingFlowState } from "@/lib/onboarding-flow";
 import { getPublicSignupHref } from "@/lib/private-beta";
 import { SIGNUP_STRIPE_ERROR_MESSAGE } from "@/lib/signup-validation";
 
@@ -80,6 +81,7 @@ export default function AbonnementPage() {
     setLoading(true);
 
     const account = getAccount();
+    const company = getOnboardingFlowState().company;
 
     try {
       const response = await fetch("/api/stripe/checkout", {
@@ -88,9 +90,11 @@ export default function AbonnementPage() {
         body: JSON.stringify({
           email,
           billingCycle: "monthly",
-          entreprise: account?.entreprise ?? "",
+          entreprise: account?.entreprise || company?.entreprise || "",
           utilisateur: account?.utilisateur ?? "",
-          telephone: account?.telephone ?? "",
+          telephone: account?.telephone || company?.telephone || "",
+          siret: company?.siret || "",
+          supabaseUserId: account?.supabaseUserId ?? "",
         }),
       });
 
