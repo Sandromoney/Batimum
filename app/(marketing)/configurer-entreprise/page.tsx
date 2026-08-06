@@ -327,6 +327,8 @@ export default function ConfigurerEntreprisePage() {
       <section className="space-y-5">
         <EntrepriseSirenLookup
           compact
+          preferSiret
+          autoApply={!hasFilledCompanyFields(form)}
           initialValue={form.siret || form.siren || ""}
           hasExistingData={hasFilledCompanyFields(form)}
           lastCheckedAt={form.officialDataLastCheckedAt}

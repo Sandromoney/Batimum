@@ -20,9 +20,9 @@ import {
   DEFAULT_BIBLIOTHEQUE_ENTREPRISE,
   normalizeBibliothequeEntreprise,
 } from "@/lib/bibliotheque-entreprise";
-import { DEFAULT_PARAMETRES, normalizeParametres } from "@/lib/parametres";
+import { freshCompanyParametres, normalizeParametres } from "@/lib/parametres";
 import { normalizeMumIaHistorique } from "@/lib/mum-ia-historique";
-import { normalizeClient } from "@/lib/clients";
+import { normalizeClient, normalizeTypeClient } from "@/lib/clients";
 
 /** Payload cloud = AppData métier + métadonnées d'import. */
 export type CompanyWorkspacePayload = {
@@ -62,7 +62,7 @@ export type UserSettingsPayload = {
 
 export function emptyWorkspacePayload(): CompanyWorkspacePayload {
   return {
-    parametres: normalizeParametres(DEFAULT_PARAMETRES),
+    parametres: freshCompanyParametres(),
     employes: [],
     clients: [],
     devis: [],
@@ -123,8 +123,7 @@ export function normalizeWorkspacePayload(
     clients: asArray<Client>(value.clients).map((client) =>
       normalizeClient({
         ...client,
-        typeClient:
-          client.typeClient === "professionnel" ? "professionnel" : "particulier",
+        typeClient: normalizeTypeClient(client.typeClient),
         email: client.email ?? "",
         adresse: client.adresse ?? "",
         codePostal: client.codePostal ?? "",

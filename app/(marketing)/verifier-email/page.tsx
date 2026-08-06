@@ -12,10 +12,84 @@ import { getAccount, updateAccount } from "@/lib/account";
 import {
   getCredentials,
   getPendingSignupEmail,
+  peekPendingSignupPassword,
+  clearPendingSignupPassword,
   resendVerificationCode,
   verifyEmailCode,
 } from "@/lib/auth-credentials";
+import { getOnboardingFlowState } from "@/lib/onboarding-flow";
 import { canAccessCompanyOnboarding } from "@/lib/onboarding";
+import { ensureAppAccountFromSupabaseUser } from "@/lib/supabase-auth";
+import { createClient } from "@/utils/supabase/client";
+
+async function provisionAndSignInDirector(email: string): Promise<{
+  ok: boolean;
+  message?: string;
+}> {
+  const password = peekPendingSignupPassword();
+  if (!password) {
+    return {
+      ok: false,
+      message:
+        "Session d'inscription expirée. Reprenez l'inscription pour créer votre espace entreprise.",
+    };
+  }
+
+  const account = getAccount();
+  const company = getOnboardingFlowState().company;
+
+  const response = await fetch("/api/auth/provision-director", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email,
+      password,
+      entreprise: account?.entreprise || company?.entreprise || "",
+      utilisateur: account?.utilisateur || "",
+      telephone: account?.telephone || company?.telephone || "",
+      siret: company?.siret || "",
+    }),
+  });
+
+  const payload = (await response.json().catch(() => null)) as {
+    ok?: boolean;
+    userId?: string;
+    error?: string;
+  } | null;
+
+  if (!response.ok || !payload?.ok || !payload.userId) {
+    return {
+      ok: false,
+      message: payload?.error ?? "Impossible de créer votre compte entreprise.",
+    };
+  }
+
+  const supabase = createClient();
+  if (!supabase) {
+    return { ok: false, message: "Configuration Supabase manquante." };
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error || !data.user) {
+    return {
+      ok: false,
+      message: error?.message ?? "Connexion après création impossible.",
+    };
+  }
+
+  ensureAppAccountFromSupabaseUser(data.user);
+  updateAccount({
+    supabaseUserId: data.user.id,
+    entreprise: account?.entreprise || company?.entreprise || "",
+    telephone: account?.telephone || company?.telephone || "",
+  });
+  clearPendingSignupPassword();
+  return { ok: true };
+}
 
 function VerifyEmailForm() {
   const router = useRouter();
@@ -45,10 +119,17 @@ function VerifyEmailForm() {
 
     setLoading(true);
     const result = await verifyEmailCode(email, code);
+    if (!result.ok) {
+      setLoading(false);
+      setError(result.message);
+      return;
+    }
+
+    const provision = await provisionAndSignInDirector(email);
     setLoading(false);
 
-    if (!result.ok) {
-      setError(result.message);
+    if (!provision.ok) {
+      setError(provision.message ?? "Provision entreprise impossible.");
       return;
     }
 
@@ -112,73 +193,59 @@ function VerifyEmailForm() {
               </p>
               <Button
                 className="w-full"
-                onClick={() => router.push("/configurer-entreprise")}
+                onClick={async () => {
+                  setLoading(true);
+                  const provision = await provisionAndSignInDirector(email);
+                  setLoading(false);
+                  if (!provision.ok) {
+                    setError(provision.message ?? "Provision impossible.");
+                    return;
+                  }
+                  router.push("/configurer-entreprise");
+                }}
+                disabled={loading}
               >
                 Continuer l&apos;onboarding
               </Button>
-            </section>
-          ) : (
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              <VerificationCodeInput
-                value={code}
-                onChange={setCode}
-                disabled={loading}
-              />
-
-              {error && (
-                <p className="rounded-xl border btp-alert-error px-3 py-2 text-sm">
+              {error ? (
+                <p className="text-sm text-red-400" role="alert">
                   {error}
                 </p>
-              )}
-              {message && (
-                <p className="rounded-xl border border-[#3b82f6]/30 bg-[#3b82f6]/10 px-3 py-2 text-sm text-[#1d4ed8]">
-                  {message}
+              ) : null}
+            </section>
+          ) : (
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              <VerificationCodeInput value={code} onChange={setCode} />
+              {error ? (
+                <p className="text-sm text-red-400" role="alert">
+                  {error}
                 </p>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading || code.length !== 6}
-              >
-                {loading ? "Vérification…" : "Vérifier le code"}
+              ) : null}
+              {message ? (
+                <p className="text-sm text-muted-foreground">{message}</p>
+              ) : null}
+              <Button className="w-full" type="submit" disabled={loading}>
+                {loading ? "Vérification…" : "Valider le code"}
               </Button>
-
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                className="w-full"
-                disabled={resending || !email}
-                onClick={() => void handleResend()}
+                onClick={handleResend}
+                disabled={resending}
+                className="w-full text-sm text-muted-foreground underline-offset-2 hover:underline"
               >
                 {resending ? "Envoi…" : "Renvoyer le code"}
-              </Button>
+              </button>
             </form>
           )}
-
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            <Link
-              href="/login"
-              className="font-medium text-primary transition-colors hover:text-primary-hover hover:underline"
-            >
-              Retour à la connexion
-            </Link>
-          </p>
         </Card>
       </section>
     </main>
   );
 }
 
-export default function VerifyEmailPage() {
+export default function VerifierEmailPage() {
   return (
-    <Suspense
-      fallback={
-        <main className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-          Chargement…
-        </main>
-      }
-    >
+    <Suspense>
       <VerifyEmailForm />
     </Suspense>
   );

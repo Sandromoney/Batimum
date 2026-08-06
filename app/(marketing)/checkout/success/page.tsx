@@ -54,6 +54,8 @@ function CheckoutSuccessContent() {
           utilisateur: payload.utilisateur ?? existing?.utilisateur ?? "",
           email: payload.email ?? existing?.email ?? "",
           telephone: payload.telephone ?? existing?.telephone ?? "",
+          prenom: existing?.prenom,
+          nom: existing?.nom,
           subscriptionStatus: payload.subscriptionStatus as SubscriptionStatus,
           stripeCustomerId: payload.stripeCustomerId,
           stripeSubscriptionId: payload.stripeSubscriptionId,
@@ -61,6 +63,12 @@ function CheckoutSuccessContent() {
           currentPeriodEnd: payload.currentPeriodEnd,
           createdAt: existing?.createdAt ?? new Date().toISOString(),
           onboardingCompleted: existing?.onboardingCompleted ?? false,
+          onboardingStep: existing?.onboardingStep,
+          supabaseUserId:
+            existing?.supabaseUserId ||
+            payload.supabaseUserId ||
+            undefined,
+          legalAcceptance: existing?.legalAcceptance,
         };
 
         saveAccount(account);

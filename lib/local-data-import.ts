@@ -31,8 +31,9 @@ function parseAppData(raw: string): AppData | null {
             normalizeClient({
               ...client,
               typeClient:
-                client.typeClient === "professionnel"
-                  ? "professionnel"
+                client.typeClient === "professionnel" ||
+                client.typeClient === "entite_publique"
+                  ? client.typeClient
                   : "particulier",
               email: client.email ?? "",
               adresse: client.adresse ?? "",

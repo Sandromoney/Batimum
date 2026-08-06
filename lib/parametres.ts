@@ -11,6 +11,8 @@ export const DEFAULT_PREFIXE_DEVIS = "DEV";
 export const DEFAULT_PREFIXE_FACTURE = "FAC";
 export const DEFAULT_PREFIXE_AVOIR = "AV";
 export const DEFAULT_PREFIXE_COMMANDE = "COM";
+export const DEFAULT_SEPARATEUR_NUMERO = "-";
+export const DEFAULT_LONGUEUR_COMPTEUR = 3;
 
 export const DEFAULT_PARAMETRES: Parametres = {
   entreprise: "BTP Pro Services",
@@ -54,6 +56,8 @@ export const DEFAULT_PARAMETRES: Parametres = {
   prefixeAvoir: DEFAULT_PREFIXE_AVOIR,
   prefixeCommande: DEFAULT_PREFIXE_COMMANDE,
   anneeAutomatique: true,
+  separateurNumero: DEFAULT_SEPARATEUR_NUMERO,
+  longueurCompteur: DEFAULT_LONGUEUR_COMPTEUR,
   compteurDevis: 1,
   compteurFacture: 1,
   compteurAvoir: 1,
@@ -124,6 +128,8 @@ export function normalizeParametres(
     prefixeAvoir: (p.prefixeAvoir?.trim() || DEFAULT_PREFIXE_AVOIR).toUpperCase(),
     prefixeCommande: (p.prefixeCommande?.trim() || DEFAULT_PREFIXE_COMMANDE).toUpperCase(),
     anneeAutomatique: p.anneeAutomatique !== false,
+    separateurNumero: normalizeSeparateurNumero(p.separateurNumero),
+    longueurCompteur: normalizeLongueurCompteur(p.longueurCompteur),
     compteurDevis: Math.max(1, Number(p.compteurDevis) || 1),
     compteurFacture: Math.max(1, Number(p.compteurFacture) || 1),
     compteurAvoir: Math.max(1, Number(p.compteurAvoir) || 1),
@@ -190,6 +196,61 @@ export function deriveSirenFromSiret(siret: string): string {
   return digits.slice(0, 9);
 }
 
+export function normalizeSeparateurNumero(value?: string | null): string {
+  if (value === undefined || value === null) return DEFAULT_SEPARATEUR_NUMERO;
+  const trimmed = String(value).slice(0, 3);
+  if (trimmed.length === 0) return DEFAULT_SEPARATEUR_NUMERO;
+  return trimmed;
+}
+
+export function normalizeLongueurCompteur(value?: number | null): number {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n)) return DEFAULT_LONGUEUR_COMPTEUR;
+  return Math.min(8, Math.max(1, n));
+}
+
+/** Paramètres entreprise vides + numérotation par défaut (nouveaux comptes). */
+export function freshCompanyParametres(
+  partial?: Partial<Parametres> | null,
+): Parametres {
+  return normalizeParametres({
+    ...DEFAULT_PARAMETRES,
+    entreprise: "",
+    siret: "",
+    siren: "",
+    formeJuridique: "",
+    adresse: "",
+    adresseComplement: "",
+    ville: "",
+    codePostal: "",
+    pays: "France",
+    siteInternet: "",
+    codeApe: "",
+    libelleActivite: "",
+    capitalSocial: "",
+    email: "",
+    emailFacturation: "",
+    telephone: "",
+    tvaIntracom: "",
+    utilisateur: "",
+    logoEntreprise: "",
+    logoApplication: "",
+    logoPdf: "",
+    prefixeDevis: DEFAULT_PREFIXE_DEVIS,
+    prefixeFacture: DEFAULT_PREFIXE_FACTURE,
+    prefixeAvoir: DEFAULT_PREFIXE_AVOIR,
+    prefixeCommande: DEFAULT_PREFIXE_COMMANDE,
+    anneeAutomatique: true,
+    separateurNumero: DEFAULT_SEPARATEUR_NUMERO,
+    longueurCompteur: DEFAULT_LONGUEUR_COMPTEUR,
+    compteurDevis: 1,
+    compteurFacture: 1,
+    compteurAvoir: 1,
+    compteurCommande: 1,
+    ...partial,
+  });
+}
+
 export function getEmailFacturation(parametres: Parametres): string {
   return parametres.emailFacturation?.trim() || parametres.email.trim();
 }
@@ -245,12 +306,14 @@ export function formatAdresseEntreprise(parametres: Parametres): string {
 function buildNumeroPrefix(
   basePrefix: string,
   anneeAutomatique: boolean,
+  separateur: string = DEFAULT_SEPARATEUR_NUMERO,
 ): string {
   const base = (basePrefix.trim() || DEFAULT_PREFIXE_DEVIS).toUpperCase();
+  const sep = normalizeSeparateurNumero(separateur);
   if (anneeAutomatique) {
-    return `${base}-${new Date().getFullYear()}-`;
+    return `${base}${sep}${new Date().getFullYear()}${sep}`;
   }
-  return `${base}-`;
+  return `${base}${sep}`;
 }
 
 function extractSequence(numero: string, fullPrefix: string): number | null {
@@ -270,17 +333,24 @@ function maxSequenceFromDocuments(
   return sequences.length > 0 ? Math.max(...sequences) : 0;
 }
 
+function formatSequence(compteur: number, longueur: number): string {
+  const pad = normalizeLongueurCompteur(longueur);
+  return String(Math.max(1, compteur)).padStart(pad, "0");
+}
+
 export function formatNumeroExample(
   prefixe: string,
   anneeAutomatique: boolean,
   compteur: number,
+  options?: { separateur?: string; longueurCompteur?: number },
 ): string {
   const base = (prefixe.trim() || DEFAULT_PREFIXE_DEVIS).toUpperCase();
-  const seq = String(Math.max(1, compteur)).padStart(3, "0");
+  const sep = normalizeSeparateurNumero(options?.separateur);
+  const seq = formatSequence(compteur, options?.longueurCompteur ?? DEFAULT_LONGUEUR_COMPTEUR);
   if (anneeAutomatique) {
-    return `${base}-${new Date().getFullYear()}-${seq}`;
+    return `${base}${sep}${new Date().getFullYear()}${sep}${seq}`;
   }
-  return `${base}-${seq}`;
+  return `${base}${sep}${seq}`;
 }
 
 export function generateNextNumeroDevis(
@@ -288,13 +358,17 @@ export function generateNextNumeroDevis(
   parametres?: Parametres,
 ): string {
   const p = normalizeParametres(parametres);
-  const prefix = buildNumeroPrefix(p.prefixeDevis ?? DEFAULT_PREFIXE_DEVIS, p.anneeAutomatique !== false);
+  const prefix = buildNumeroPrefix(
+    p.prefixeDevis ?? DEFAULT_PREFIXE_DEVIS,
+    p.anneeAutomatique !== false,
+    p.separateurNumero,
+  );
   const fromDocs = maxSequenceFromDocuments(
     devis.map((item) => item.numero),
     prefix,
   );
   const next = Math.max(p.compteurDevis ?? 1, fromDocs + 1);
-  return `${prefix}${String(next).padStart(3, "0")}`;
+  return `${prefix}${formatSequence(next, p.longueurCompteur ?? DEFAULT_LONGUEUR_COMPTEUR)}`;
 }
 
 /** Avance le compteur devis au-delà du numéro venant d'être attribué. */
@@ -306,6 +380,7 @@ export function advanceCompteurDevis(
   const prefix = buildNumeroPrefix(
     p.prefixeDevis ?? DEFAULT_PREFIXE_DEVIS,
     p.anneeAutomatique !== false,
+    p.separateurNumero,
   );
   const fromNumero = maxSequenceFromDocuments([numero], prefix);
   return {
@@ -322,13 +397,14 @@ export function generateNextNumeroFacture(
   const prefix = buildNumeroPrefix(
     p.prefixeFacture ?? DEFAULT_PREFIXE_FACTURE,
     p.anneeAutomatique !== false,
+    p.separateurNumero,
   );
   const fromDocs = maxSequenceFromDocuments(
     factures.map((item) => item.numero),
     prefix,
   );
   const next = Math.max(p.compteurFacture ?? 1, fromDocs + 1);
-  return `${prefix}${String(next).padStart(3, "0")}`;
+  return `${prefix}${formatSequence(next, p.longueurCompteur ?? DEFAULT_LONGUEUR_COMPTEUR)}`;
 }
 
 export function advanceCompteurFacture(
@@ -339,6 +415,7 @@ export function advanceCompteurFacture(
   const prefix = buildNumeroPrefix(
     p.prefixeFacture ?? DEFAULT_PREFIXE_FACTURE,
     p.anneeAutomatique !== false,
+    p.separateurNumero,
   );
   const fromNumero = maxSequenceFromDocuments([numero], prefix);
   return {
@@ -355,13 +432,14 @@ export function generateNextNumeroAvoir(
   const prefix = buildNumeroPrefix(
     p.prefixeAvoir ?? DEFAULT_PREFIXE_AVOIR,
     p.anneeAutomatique !== false,
+    p.separateurNumero,
   );
   const fromDocs = maxSequenceFromDocuments(
     avoirs.map((item) => item.numero),
     prefix,
   );
   const next = Math.max(p.compteurAvoir ?? 1, fromDocs + 1);
-  return `${prefix}${String(next).padStart(3, "0")}`;
+  return `${prefix}${formatSequence(next, p.longueurCompteur ?? DEFAULT_LONGUEUR_COMPTEUR)}`;
 }
 
 export function advanceCompteurAvoir(
@@ -372,6 +450,7 @@ export function advanceCompteurAvoir(
   const prefix = buildNumeroPrefix(
     p.prefixeAvoir ?? DEFAULT_PREFIXE_AVOIR,
     p.anneeAutomatique !== false,
+    p.separateurNumero,
   );
   const fromNumero = maxSequenceFromDocuments([numero], prefix);
   return {
@@ -388,13 +467,14 @@ export function generateNextNumeroCommande(
   const prefix = buildNumeroPrefix(
     p.prefixeCommande ?? DEFAULT_PREFIXE_COMMANDE,
     p.anneeAutomatique !== false,
+    p.separateurNumero,
   );
   const fromDocs = maxSequenceFromDocuments(
     commandes.map((item) => item.numero),
     prefix,
   );
   const next = Math.max(p.compteurCommande ?? 1, fromDocs + 1);
-  return `${prefix}${String(next).padStart(3, "0")}`;
+  return `${prefix}${formatSequence(next, p.longueurCompteur ?? DEFAULT_LONGUEUR_COMPTEUR)}`;
 }
 
 export function advanceCompteurCommande(
@@ -405,6 +485,7 @@ export function advanceCompteurCommande(
   const prefix = buildNumeroPrefix(
     p.prefixeCommande ?? DEFAULT_PREFIXE_COMMANDE,
     p.anneeAutomatique !== false,
+    p.separateurNumero,
   );
   const fromNumero = maxSequenceFromDocuments([numero], prefix);
   return {

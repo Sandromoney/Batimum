@@ -32,6 +32,11 @@ export type EntrepriseSirenLookupProps = {
   compact?: boolean;
   /** Met l'accent sur le SIRET (inscription). */
   preferSiret?: boolean;
+  /**
+   * Applique automatiquement le préremplissage dès qu'un établissement
+   * unique et actif est trouvé (inscription / onboarding).
+   */
+  autoApply?: boolean;
 };
 
 function formatAddress(etab: OfficialEstablishment): string {
@@ -62,6 +67,7 @@ export function EntrepriseSirenLookup({
   className,
   compact = false,
   preferSiret = false,
+  autoApply = false,
 }: EntrepriseSirenLookupProps) {
   const inputId = useId();
   const [value, setValue] = useState(() => {
@@ -123,10 +129,33 @@ export function EntrepriseSirenLookup({
       }
 
       setResult(data);
-      setSelectedSiret(data.company.preselectedSiret);
+      const preselected =
+        data.company.establishments.find(
+          (e) => e.siret === data.company.preselectedSiret,
+        ) ?? data.company.establishments[0] ?? null;
+      setSelectedSiret(preselected?.siret ?? data.company.preselectedSiret);
       setValue(formatSirenSiretDisplay(validation.digits));
 
-      if (data.company.diffusionPartielle) {
+      const canAutoApply =
+        autoApply &&
+        Boolean(preselected) &&
+        preselected!.status === "actif" &&
+        data.company.companyStatus !== "ferme" &&
+        data.company.establishments.filter((e) => e.status === "actif")
+          .length === 1 &&
+        !hasExistingData;
+
+      if (canAutoApply && preselected) {
+        const fields = toPrefillFields(
+          data.company,
+          preselected,
+          data.checkedAt,
+        );
+        onApply(fields);
+        setInfo(
+          "Informations officielles appliquées automatiquement. Vous pouvez encore les corriger.",
+        );
+      } else if (data.company.diffusionPartielle) {
         setInfo(
           "Certaines informations de cette entreprise sont en diffusion partielle dans le répertoire officiel.",
         );
@@ -138,7 +167,7 @@ export function EntrepriseSirenLookup({
         setInfo(
           `Cette entreprise compte ${data.company.nombreEtablissementsOuverts} établissements ouverts. Le siège est proposé ; saisissez le SIRET de l'établissement concerné pour le sélectionner précisément.`,
         );
-      } else if (multi) {
+      } else if ((data.company.establishments.length ?? 0) > 1) {
         setInfo(
           "Plusieurs établissements correspondent. Sélectionnez celui utilisé par Batimum.",
         );

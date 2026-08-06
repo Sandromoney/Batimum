@@ -37,7 +37,7 @@ import {
   type ClientNoteType,
 } from "@/lib/client-fiche";
 import { markClientModified } from "@/lib/client-historique";
-import { getClientAddress, getClientDisplayName } from "@/lib/clients";
+import { getClientAddress, getClientDisplayName, isClientOrganisation, normalizeTypeClient } from "@/lib/clients";
 import { calculateChantierAvancement, getChantierEtapes } from "@/lib/chantiers";
 import { downloadDevisPdf } from "@/lib/devis-pdf";
 import { downloadFacturePdf } from "@/lib/facture-pdf";
@@ -125,7 +125,7 @@ type ClientEditForm = {
 
 function buildEditForm(client: Client): ClientEditForm {
   return {
-    typeClient: client.typeClient === "professionnel" ? "professionnel" : "particulier",
+    typeClient: normalizeTypeClient(client.typeClient),
     nom: client.nom ?? "",
     prenom: client.prenom ?? "",
     societe: client.societe ?? "",
@@ -375,7 +375,7 @@ export function ClientFicheView({ clientId }: { clientId: string }) {
   const whatsappHref = client ? getClientWhatsAppHref(client) : null;
   const mailHref = client ? getClientMailtoHref(client) : null;
   const directionsUrl = client ? getClientDirectionsUrl(client) : null;
-  const isPro = client?.typeClient === "professionnel";
+  const isPro = isClientOrganisation(client);
 
   function showToast(message: string) {
     setToast(message);
@@ -429,8 +429,7 @@ export function ClientFicheView({ clientId }: { clientId: string }) {
       adresse: editForm.adresse.trim(),
       codePostal: editForm.codePostal.trim(),
       ville: editForm.ville.trim(),
-      siret:
-        editForm.typeClient === "professionnel"
+      siret: isClientOrganisation({ typeClient: editForm.typeClient })
           ? editForm.siret.trim() || undefined
           : undefined,
     });
@@ -1318,6 +1317,7 @@ export function ClientFicheView({ clientId }: { clientId: string }) {
               >
                 <option value="particulier">Particulier</option>
                 <option value="professionnel">Professionnel</option>
+                <option value="entite_publique">Entité publique</option>
               </Select>
             </div>
 
@@ -1418,7 +1418,7 @@ export function ClientFicheView({ clientId }: { clientId: string }) {
               </div>
             </div>
 
-            {editForm.typeClient === "professionnel" ? (
+            {isClientOrganisation({ typeClient: editForm.typeClient }) ? (
               <div>
                 <Label htmlFor="client-siret">SIRET</Label>
                 <Input

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, PhoneInput, Select } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { RequiredMark } from "@/components/required-mark";
-import { findDuplicateClient } from "@/lib/clients";
+import { findDuplicateClient, isClientOrganisation } from "@/lib/clients";
 import { useStore } from "@/lib/store";
 import type { Client, TypeClient } from "@/lib/types";
 import {
@@ -98,7 +98,7 @@ export function DevisQuickClientModal({
     handleClose();
   }
 
-  const isPro = form.typeClient === "professionnel";
+  const isPro = isClientOrganisation(form);
 
   return (
     <Modal open={open} onClose={handleClose} title="Nouveau client">
@@ -121,6 +121,7 @@ export function DevisQuickClientModal({
           >
             <option value="particulier">Particulier</option>
             <option value="professionnel">Professionnel</option>
+            <option value="entite_publique">Entité publique</option>
           </Select>
         </section>
 

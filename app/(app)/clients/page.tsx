@@ -367,6 +367,7 @@ export default function ClientsPage() {
             >
               <option value="particulier">Particulier</option>
               <option value="professionnel">Professionnel</option>
+              <option value="entite_publique">Entité publique</option>
             </Select>
           </section>
           <section>

@@ -385,11 +385,19 @@ export default function ParametresPage() {
     form.prefixeDevis ?? "DEV",
     form.anneeAutomatique !== false,
     form.compteurDevis ?? 1,
+    {
+      separateur: form.separateurNumero,
+      longueurCompteur: form.longueurCompteur,
+    },
   );
   const exempleFacture = formatNumeroExample(
     form.prefixeFacture ?? "FAC",
     form.anneeAutomatique !== false,
     form.compteurFacture ?? 1,
+    {
+      separateur: form.separateurNumero,
+      longueurCompteur: form.longueurCompteur,
+    },
   );
 
   return (
@@ -801,7 +809,7 @@ export default function ParametresPage() {
 
         <ParametresSection
           title="Numérotation"
-          description="Préfixes et compteurs pour les prochains devis et factures"
+          description="Personnalisez préfixes, séparateur, longueur du compteur et année pour devis et factures"
           modified={sectionModified("numerotation")}
           className={sectionVisible("numerotation") ? undefined : "hidden"}
         >
@@ -812,6 +820,42 @@ export default function ParametresPage() {
             onChange={(anneeAutomatique) => patch({ anneeAutomatique })}
           />
           <FieldGrid>
+            <section>
+              <Label>Séparateur</Label>
+              <Input
+                value={form.separateurNumero ?? "-"}
+                maxLength={3}
+                onChange={(e) =>
+                  patch({
+                    separateurNumero: e.target.value.slice(0, 3) || "-",
+                  })
+                }
+                placeholder="-"
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                Entre préfixe, année et compteur (ex. - ou /)
+              </p>
+            </section>
+            <section>
+              <Label>Longueur du compteur</Label>
+              <Input
+                type="number"
+                min={1}
+                max={8}
+                value={form.longueurCompteur ?? 3}
+                onChange={(e) =>
+                  patch({
+                    longueurCompteur: Math.min(
+                      8,
+                      Math.max(1, Number(e.target.value) || 3),
+                    ),
+                  })
+                }
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                1 à 8 chiffres (défaut 3 → 001)
+              </p>
+            </section>
             <section>
               <Label>Préfixe devis</Label>
               <Input
@@ -866,7 +910,8 @@ export default function ParametresPage() {
           <p className="text-xs leading-relaxed text-muted-foreground">
             Les numéros existants sont conservés. Les nouveaux documents utilisent
             le plus grand compteur entre votre réglage et la suite logique déjà
-            présente.
+            présente. Les nouveaux comptes démarrent avec DEV / FAC, année
+            automatique, séparateur « - » et compteur sur 3 chiffres.
           </p>
         </ParametresSection>
 
