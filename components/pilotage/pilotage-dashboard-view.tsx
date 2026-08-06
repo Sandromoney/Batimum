@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { EmployeAvatar } from "@/components/employe-avatar";
 import { PilotageOnboardingCard } from "@/components/pilotage-onboarding-card";
+import { PilotageTresoreriePanel } from "@/components/pilotage/pilotage-tresorerie-panel";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
@@ -317,6 +318,8 @@ export function PilotageDashboardView() {
           </div>
         </div>
       </section>
+
+      <PilotageTresoreriePanel data={data} />
 
       {/* KPI */}
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

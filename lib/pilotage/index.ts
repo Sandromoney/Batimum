@@ -9,3 +9,6 @@ export * from "./alerts";
 export * from "./reliability";
 export * from "./dashboard-engine";
 export * from "./supplier-insights";
+export * from "./depenses";
+export * from "./tresorerie";
+export * from "./facture-fournisseur-ia";
