@@ -1,10 +1,13 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  Building2,
   CalendarDays,
-  FileText,
-  FolderKanban,
+  FileSignature,
+  HardHat,
   Lock,
+  Package,
+  Receipt,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -29,43 +32,83 @@ export type LandingNavSimpleLink = {
   href: string;
 };
 
+export type LandingNavPromo = {
+  id: string;
+  label: string;
+  badge: string;
+  title: string;
+  subtitle: string;
+  /** Lien optionnel — uniquement si la section existe sur la landing. */
+  moreHref?: string;
+  moreLabel?: string;
+};
+
 export type LandingNavEntry =
   | { type: "menu"; menu: LandingNavMenu }
-  | { type: "link"; link: LandingNavSimpleLink };
+  | { type: "link"; link: LandingNavSimpleLink }
+  | { type: "promo"; promo: LandingNavPromo };
 
-const DECOUVRIR_MENU: LandingNavMenu = {
-  id: "decouvrir",
-  label: "Découvrir Batimum",
+/** Hub cinéma = section réelle des fonctionnalités sur la landing actuelle. */
+const HUB = "/landing#ecosysteme";
+
+const FONCTIONNALITES_MENU: LandingNavMenu = {
+  id: "fonctionnalites",
+  label: "Fonctionnalités",
+  intro: "Les outils essentiels pour piloter votre entreprise BTP.",
   items: [
     {
-      label: "Présentation",
-      href: "/landing#ecosysteme",
-      description: "Voir Batimum en action.",
+      label: "MUM IA et création de devis",
+      href: HUB,
+      description: "Une base de devis complète, prête à modifier.",
       icon: Sparkles,
     },
     {
-      label: "Devis & MUM IA",
-      href: "/landing#ecosysteme",
-      description: "Devis préparés plus rapidement.",
-      icon: FileText,
+      label: "Signature électronique",
+      href: HUB,
+      description: "Faites signer vos devis plus simplement.",
+      icon: FileSignature,
     },
     {
-      label: "Planning",
-      href: "/landing#ecosysteme",
-      description: "Équipes organisées au même endroit.",
+      label: "Clients et historique centralisé",
+      href: HUB,
+      description: "Tout le dossier client au même endroit.",
+      icon: Users,
+    },
+    {
+      label: "Chantiers et suivi d’avancement",
+      href: HUB,
+      description: "Progression claire, chantier par chantier.",
+      icon: HardHat,
+    },
+    {
+      label: "Planning des équipes",
+      href: HUB,
+      description: "Organisez les affectations sans friction.",
       icon: CalendarDays,
     },
     {
-      label: "Chantiers",
-      href: "/landing#ecosysteme",
-      description: "Suivi clair, bureau et terrain.",
-      icon: FolderKanban,
+      label: "Espace employé sécurisé",
+      href: "/landing#faq",
+      description: "Accès terrain séparé du compte dirigeant.",
+      icon: Lock,
     },
     {
-      label: "Pilotage",
-      href: "/landing#avant-apres",
-      description: "Marges et rentabilité visibles.",
+      label: "Facturation",
+      href: HUB,
+      description: "Factures liées à vos devis et chantiers.",
+      icon: Receipt,
+    },
+    {
+      label: "Pilotage et rentabilité",
+      href: HUB,
+      description: "Marges, coûts et vision d’ensemble.",
       icon: BarChart3,
+    },
+    {
+      label: "Fournisseurs et tarifs",
+      href: HUB,
+      description: "Vos prix et fournisseurs sous contrôle.",
+      icon: Package,
     },
   ],
 };
@@ -93,15 +136,25 @@ const EQUIPES_MENU: LandingNavMenu = {
       label: "Confidentialité",
       href: "/landing#faq",
       description: "Droits séparés pour protéger votre entreprise.",
-      icon: Sparkles,
+      icon: Building2,
     },
   ],
 };
 
-/** Top bar — liens utiles uniquement. */
+const FACTURATION_ELECTRONIQUE_PROMO: LandingNavPromo = {
+  id: "facturation-electronique",
+  label: "Facturation électronique",
+  badge: "2026–2027",
+  title: "Préparez votre entreprise à la facturation électronique avec Batimum.",
+  subtitle:
+    "Compatibilité Factur-X et connecteur Pennylane en préparation.",
+};
+
+/** Top bar — ordre marketing demandé. */
 export const LANDING_NAV_ENTRIES: LandingNavEntry[] = [
-  { type: "menu", menu: DECOUVRIR_MENU },
+  { type: "menu", menu: FONCTIONNALITES_MENU },
   { type: "menu", menu: EQUIPES_MENU },
+  { type: "promo", promo: FACTURATION_ELECTRONIQUE_PROMO },
   {
     type: "link",
     link: {
