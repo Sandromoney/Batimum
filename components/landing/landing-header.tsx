@@ -18,10 +18,19 @@ export function LandingHeader() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 12);
+      });
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   return (
@@ -32,49 +41,51 @@ export function LandingHeader() {
           scrolled && "landing-header-bar--scrolled",
         )}
       >
-        <div className="landing-header-grid">
-          <div className="landing-header-logo-container">
-            <Link
-              href="/landing"
-              className="landing-logo-enter no-underline"
-              aria-label="BATIMUM"
-            >
-              <img
-                src="/logo-batimum.png"
-                alt="Batimum"
-                className="landing-header-logo"
-              />
-            </Link>
-          </div>
+        <div className="landing-header-bar__inner">
+          <div className="landing-header-grid">
+            <div className="landing-header-logo-container">
+              <Link
+                href="/landing"
+                className="landing-logo-enter no-underline"
+                aria-label="BATIMUM"
+              >
+                <img
+                  src="/logo-batimum.png"
+                  alt="Batimum"
+                  className="landing-header-logo"
+                />
+              </Link>
+            </div>
 
-          <LandingNavMenus className="landing-header-nav flex min-w-0 items-center justify-center" />
+            <LandingNavMenus className="landing-header-nav flex min-w-0 items-center justify-center" />
 
-          <div className="landing-header-actions flex items-center gap-3">
-            <Link
-              href="/login"
-              className={btnHeaderSecondaryClass}
-              onClick={() => writeLandingSnapshot()}
-            >
-              Connexion
-            </Link>
-            <Link
-              href={getPublicSignupHref()}
-              className={btnHeaderPrimaryClass}
-              onClick={() => writeLandingSnapshot()}
-            >
-              <span className="hidden sm:inline">
-                {isPrivateBetaEnabled()
-                  ? "Se connecter"
-                  : "Essayer gratuitement"}
-              </span>
-              <span className="sm:hidden">
-                {isPrivateBetaEnabled() ? "Connexion" : "Essayer"}
-              </span>
-              <ArrowRight
-                className="landing-btn-arrow h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5"
-                aria-hidden="true"
-              />
-            </Link>
+            <div className="landing-header-actions flex items-center gap-3">
+              <Link
+                href="/login"
+                className={btnHeaderSecondaryClass}
+                onClick={() => writeLandingSnapshot()}
+              >
+                Connexion
+              </Link>
+              <Link
+                href={getPublicSignupHref()}
+                className={btnHeaderPrimaryClass}
+                onClick={() => writeLandingSnapshot()}
+              >
+                <span className="hidden sm:inline">
+                  {isPrivateBetaEnabled()
+                    ? "Se connecter"
+                    : "Essayer gratuitement"}
+                </span>
+                <span className="sm:hidden">
+                  {isPrivateBetaEnabled() ? "Connexion" : "Essayer"}
+                </span>
+                <ArrowRight
+                  className="landing-btn-arrow h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
+              </Link>
+            </div>
           </div>
         </div>
       </header>
