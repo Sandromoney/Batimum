@@ -12,6 +12,7 @@ import type {
 } from "@/lib/maps/supplier-search-types";
 import { logSupplierSearch } from "@/lib/maps/supplier-search-logger";
 import { searchSuppliersAnnuaire } from "@/lib/maps/search-suppliers-annuaire";
+import { searchSuppliersGoogle } from "@/lib/maps/search-suppliers-google";
 import { searchSuppliersNominatim } from "@/lib/maps/search-suppliers-nominatim";
 import { searchSuppliersOverpass } from "@/lib/maps/search-suppliers-overpass";
 
@@ -181,65 +182,78 @@ export async function searchSuppliers(input: {
   radiusKm: number;
   ville?: string;
   codePostal?: string;
+  companyAddress?: string;
 }): Promise<SupplierSearchOutcome> {
   const passesTried: string[] = [];
   const sourcesUsed = new Set<string>();
   const batches: SupplierSearchResult[][] = [];
 
-  const annuaireEarly = searchSuppliersAnnuaire(input);
+  const googlePromise = searchSuppliersGoogle(input).catch((error) => {
+    logSupplierSearch(
+      "googlePlacesError",
+      error instanceof Error ? error.message : String(error),
+    );
+    return { results: [] as SupplierSearchResult[], passesTried: ["google:error"] };
+  });
 
-  const nominatim = await searchSuppliersNominatim(input);
+  const nominatimPromise = searchSuppliersNominatim(input).catch((error) => {
+    logSupplierSearch(
+      "nominatimError",
+      error instanceof Error ? error.message : String(error),
+    );
+    return {
+      results: [] as SupplierSearchResult[],
+      passesTried: ["nominatim:error"],
+    };
+  });
+
+  const overpassPromise = searchSuppliersOverpass({
+    query: input.query,
+    latitude: input.latitude,
+    longitude: input.longitude,
+    radiusMeters: Math.round(input.radiusKm * 1000),
+  })
+    .then((overpass) => mapOverpassResults(overpass.results))
+    .catch((error) => {
+      logSupplierSearch(
+        "overpassError",
+        error instanceof Error ? error.message : String(error),
+      );
+      return [] as SupplierSearchResult[];
+    });
+
+  const annuairePromise = searchSuppliersAnnuaire(input);
+
+  const [google, nominatim, overpassMapped, annuaire] = await Promise.all([
+    googlePromise,
+    nominatimPromise,
+    overpassPromise,
+    annuairePromise,
+  ]);
+
+  passesTried.push(...google.passesTried);
+  if (google.results.length > 0) {
+    sourcesUsed.add("google_places");
+    batches.push(google.results);
+  }
+
   passesTried.push(...nominatim.passesTried.map((p) => `nominatim:${p}`));
   if (nominatim.results.length > 0) {
     sourcesUsed.add("nominatim");
     batches.push(nominatim.results);
   }
 
-  let annuaireResults: SupplierSearchResult[] = [];
-  let annuaireQueries: string[] = [];
+  passesTried.push("overpass:primary");
+  if (overpassMapped.length > 0) {
+    sourcesUsed.add("openstreetmap");
+    batches.push(overpassMapped);
+  }
 
-  if (nominatim.results.length === 0) {
-    logSupplierSearch("fallback", "overpass+annuaire_entreprises (parallel)");
-
-    const overpassPromise = searchSuppliersOverpass({
-      query: input.query,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      radiusMeters: Math.round(input.radiusKm * 1000),
-    })
-      .then((overpass) => mapOverpassResults(overpass.results))
-      .catch((error) => {
-        logSupplierSearch(
-          "overpassError",
-          error instanceof Error ? error.message : String(error),
-        );
-        return [] as SupplierSearchResult[];
-      });
-
-    const [overpassMapped, annuaire] = await Promise.all([
-      overpassPromise,
-      annuaireEarly,
-    ]);
-
-    annuaireResults = annuaire.results;
-    annuaireQueries = annuaire.queriesTried;
-
-    passesTried.push("overpass:primary");
-    if (overpassMapped.length > 0) {
-      sourcesUsed.add("openstreetmap");
-      batches.push(overpassMapped);
-    }
-
-    passesTried.push(...annuaireQueries.map((q) => `annuaire:${q}`));
-    if (annuaireResults.length > 0) {
-      sourcesUsed.add("annuaire_entreprises");
-      batches.push(annuaireResults);
-    }
-  } else {
-    const annuaire = await annuaireEarly;
-    annuaireResults = annuaire.results;
-    annuaireQueries = annuaire.queriesTried;
-    passesTried.push(...annuaireQueries.map((q) => `enrich:${q}`));
+  const annuaireResults = annuaire.results;
+  passesTried.push(...annuaire.queriesTried.map((q) => `annuaire:${q}`));
+  if (annuaireResults.length > 0) {
+    sourcesUsed.add("annuaire_entreprises");
+    batches.push(annuaireResults);
   }
 
   const rawCountBeforeDedup = batches.flat().length;

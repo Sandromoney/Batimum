@@ -6,6 +6,7 @@
 export type SupplierContactFieldSource =
   | "openstreetmap"
   | "entreprise_public_data"
+  | "google_places"
   | "manual"
   | "unavailable";
 
@@ -171,6 +172,8 @@ export function contactSourcePriority(
   switch (source) {
     case "manual":
       return 40;
+    case "google_places":
+      return 35;
     case "openstreetmap":
       return 30;
     case "entreprise_public_data":

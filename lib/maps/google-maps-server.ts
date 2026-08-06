@@ -1,4 +1,5 @@
 import { distanceKmBetween } from "@/lib/maps/geo";
+import { inferEnseigneFromQuery } from "@/lib/fourniture/brand-normalization";
 
 export type GeocodedLocation = {
   latitude: number;
@@ -20,26 +21,6 @@ export type DepotPlaceResult = {
   siteWeb?: string;
 };
 
-const KNOWN_BRANDS = [
-  "Point.P",
-  "CEDEO",
-  "Gedimat",
-  "BigMat",
-  "Rexel",
-  "Richardson",
-] as const;
-
-export function inferEnseigneFromQuery(query: string): string {
-  const normalized = query.toLowerCase().replace(/\s+/g, "");
-  for (const brand of KNOWN_BRANDS) {
-    const brandNorm = brand.toLowerCase().replace(/\./g, "");
-    if (normalized.includes(brandNorm) || brandNorm.includes(normalized)) {
-      return brand;
-    }
-  }
-  return query.trim();
-}
-
 function parseAddressComponents(
   components: Array<{ long_name: string; short_name: string; types: string[] }>,
 ): { ville: string; codePostal: string } {
@@ -57,6 +38,7 @@ export function getGoogleMapsServerKey(): string | undefined {
   return (
     process.env.GOOGLE_MAPS_API_KEY?.trim() ||
     process.env.GOOGLE_PLACES_API_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ||
     undefined
   );
 }
@@ -69,6 +51,7 @@ export async function geocodeAddress(
   url.searchParams.set("address", address);
   url.searchParams.set("key", apiKey);
   url.searchParams.set("region", "fr");
+  url.searchParams.set("language", "fr");
 
   const response = await fetch(url.toString(), { next: { revalidate: 3600 } });
   const data = (await response.json()) as {
@@ -95,6 +78,7 @@ async function fetchPlaceDetails(
 ): Promise<{
   telephone?: string;
   siteWeb?: string;
+  email?: string;
   ville: string;
   codePostal: string;
   adresse: string;
@@ -103,7 +87,7 @@ async function fetchPlaceDetails(
   url.searchParams.set("place_id", placeId);
   url.searchParams.set(
     "fields",
-    "name,formatted_address,formatted_phone_number,website,address_components,geometry",
+    "name,formatted_address,formatted_phone_number,international_phone_number,website,address_components,geometry",
   );
   url.searchParams.set("key", apiKey);
   url.searchParams.set("language", "fr");
@@ -114,6 +98,7 @@ async function fetchPlaceDetails(
     result?: {
       formatted_address?: string;
       formatted_phone_number?: string;
+      international_phone_number?: string;
       website?: string;
       address_components?: Array<{
         long_name: string;
@@ -126,7 +111,8 @@ async function fetchPlaceDetails(
   const result = data.result;
   const parsed = parseAddressComponents(result?.address_components ?? []);
   return {
-    telephone: result?.formatted_phone_number,
+    telephone:
+      result?.formatted_phone_number || result?.international_phone_number,
     siteWeb: result?.website,
     ville: parsed.ville,
     codePostal: parsed.codePostal,
@@ -140,27 +126,48 @@ export async function searchDepotsNearCompany(input: {
   apiKey: string;
   maxResults?: number;
   maxDistanceKm?: number;
+  locationBias?: { latitude: number; longitude: number };
 }): Promise<{
   company: GeocodedLocation;
   depots: DepotPlaceResult[];
 }> {
-  const company = await geocodeAddress(input.companyAddress, input.apiKey);
+  const enseigne = inferEnseigneFromQuery(input.query);
+  let company =
+    (await geocodeAddress(input.companyAddress, input.apiKey)) ?? null;
+
+  if (!company && input.locationBias) {
+    company = {
+      latitude: input.locationBias.latitude,
+      longitude: input.locationBias.longitude,
+      formattedAddress: input.companyAddress,
+    };
+  }
+
   if (!company) {
     throw new Error("Impossible de géocoder l'adresse de l'entreprise.");
   }
 
-  const enseigne = inferEnseigneFromQuery(input.query);
-  const searchUrl = new URL("https://maps.googleapis.com/maps/api/place/textsearch/json");
-  searchUrl.searchParams.set("query", `${enseigne} ${input.companyAddress}`);
-  searchUrl.searchParams.set(
-    "location",
-    `${company.latitude},${company.longitude}`,
+  const biasLat = input.locationBias?.latitude ?? company.latitude;
+  const biasLng = input.locationBias?.longitude ?? company.longitude;
+  const radiusMeters = Math.min(
+    Math.round((input.maxDistanceKm ?? 50) * 1000),
+    50_000,
   );
-  searchUrl.searchParams.set("radius", "50000");
+
+  // Text Search autour de l'entreprise — variantes d'enseigne (Point P, CEDEO…).
+  const searchUrl = new URL(
+    "https://maps.googleapis.com/maps/api/place/textsearch/json",
+  );
+  searchUrl.searchParams.set("query", `${enseigne} matériaux`);
+  searchUrl.searchParams.set("location", `${biasLat},${biasLng}`);
+  searchUrl.searchParams.set("radius", String(radiusMeters));
   searchUrl.searchParams.set("key", input.apiKey);
   searchUrl.searchParams.set("language", "fr");
+  searchUrl.searchParams.set("region", "fr");
 
-  const response = await fetch(searchUrl.toString(), { next: { revalidate: 300 } });
+  const response = await fetch(searchUrl.toString(), {
+    next: { revalidate: 300 },
+  });
   const data = (await response.json()) as {
     status: string;
     results?: Array<{
@@ -172,22 +179,43 @@ export async function searchDepotsNearCompany(input: {
   };
 
   if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+    // Repli sans « matériaux » si le status échoue pour autre raison.
     throw new Error(`Recherche Google Places : ${data.status}`);
   }
 
-  const rawResults = (data.results ?? []).slice(0, input.maxResults ?? 12);
+  let rawResults = data.results ?? [];
+
+  // Si trop peu de résultats, 2ᵉ passe avec la requête brute.
+  if (rawResults.length < 3) {
+    const fallbackUrl = new URL(
+      "https://maps.googleapis.com/maps/api/place/textsearch/json",
+    );
+    fallbackUrl.searchParams.set("query", enseigne);
+    fallbackUrl.searchParams.set("location", `${biasLat},${biasLng}`);
+    fallbackUrl.searchParams.set("radius", String(radiusMeters));
+    fallbackUrl.searchParams.set("key", input.apiKey);
+    fallbackUrl.searchParams.set("language", "fr");
+    fallbackUrl.searchParams.set("region", "fr");
+    const fallbackResponse = await fetch(fallbackUrl.toString(), {
+      next: { revalidate: 300 },
+    });
+    const fallbackData = (await fallbackResponse.json()) as typeof data;
+    if (fallbackData.status === "OK" && fallbackData.results?.length) {
+      const seen = new Set(rawResults.map((r) => r.place_id));
+      for (const item of fallbackData.results) {
+        if (!seen.has(item.place_id)) rawResults.push(item);
+      }
+    }
+  }
+
+  rawResults = rawResults.slice(0, input.maxResults ?? 16);
   const depots: DepotPlaceResult[] = [];
 
   for (const place of rawResults) {
     if (!place.geometry?.location) continue;
     const lat = place.geometry.location.lat;
     const lng = place.geometry.location.lng;
-    const distanceKm = distanceKmBetween(
-      company.latitude,
-      company.longitude,
-      lat,
-      lng,
-    );
+    const distanceKm = distanceKmBetween(biasLat, biasLng, lat, lng);
     if (distanceKm > (input.maxDistanceKm ?? 80)) continue;
 
     const details = await fetchPlaceDetails(place.place_id, input.apiKey);
