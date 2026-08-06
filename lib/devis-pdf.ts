@@ -248,11 +248,11 @@ export async function buildDevisPdfDoc({
   addSectionTitle("Lignes du devis");
   const ligneDefaultTva = resolveLigneDefaultTva(devis, parametres.tva ?? 20);
   const table = {
-    description: margin + 2,
-    quantite: 82,
-    unite: 96,
-    prix: 116,
-    tva: 132,
+    description: margin + 2, // 14
+    quantite: 72,
+    unite: 76,
+    prix: 108,
+    tva: 114,
     totalHt: 152,
     total: pageWidth - margin - 2,
     right: pageWidth - margin,

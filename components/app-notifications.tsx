@@ -130,12 +130,16 @@ export function AppNotifications() {
 
     processingFactureRelances.current = true;
 
-    void processPendingFactureRelanceEmails(data).then(
-      ({ data: updated, sentCount }) => {
-        processingFactureRelances.current = false;
+    void processPendingFactureRelanceEmails(data)
+      .then(({ data: updated, sentCount }) => {
         if (sentCount > 0) setData(updated);
-      },
-    );
+      })
+      .catch((error) => {
+        console.error("[notifications] relances facture", error);
+      })
+      .finally(() => {
+        processingFactureRelances.current = false;
+      });
   }, [data.relances, hydrated, setData, data]);
 
   useEffect(() => {
@@ -151,12 +155,16 @@ export function AppNotifications() {
 
     processingDevisRelances.current = true;
 
-    void processPendingDevisRelanceEmails(data).then(
-      ({ data: updated, sentCount }) => {
-        processingDevisRelances.current = false;
+    void processPendingDevisRelanceEmails(data)
+      .then(({ data: updated, sentCount }) => {
         if (sentCount > 0) setData(updated);
-      },
-    );
+      })
+      .catch((error) => {
+        console.error("[notifications] relances devis", error);
+      })
+      .finally(() => {
+        processingDevisRelances.current = false;
+      });
   }, [data.relances, hydrated, setData, data]);
 
   useEffect(() => {

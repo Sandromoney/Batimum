@@ -83,6 +83,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const ownerIdRef = useRef<string | null>(null);
   const skipNextPersist = useRef(false);
   const importCompletedAtRef = useRef<string | null>(null);
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
   useLayoutEffect(() => {
     let cancelled = false;
@@ -235,19 +237,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (ownerIdRef.current !== account.supabaseUserId) return;
 
     const persistCloud = async () => {
+      const snapshot = dataRef.current;
       const result = await saveUserSettings({
-        parametres: data.parametres,
-        employes: data.employes,
-        appData: data,
+        parametres: snapshot.parametres,
+        employes: snapshot.employes,
+        appData: snapshot,
         localImportCompletedAt: importCompletedAtRef.current,
         operational: {
-          planning: data.planning,
-          chantiers: data.chantiers,
-          affectations: data.affectations,
-          clients: data.clients,
+          planning: snapshot.planning,
+          chantiers: snapshot.chantiers,
+          affectations: snapshot.affectations,
+          clients: snapshot.clients,
         },
         workspace: appDataToWorkspace(
-          data,
+          snapshot,
           importCompletedAtRef.current,
         ),
       });
@@ -270,7 +273,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     function flushNow() {
       window.clearTimeout(timer);
       const ownerId = ownerIdRef.current;
-      if (ownerId) writeScopedCache(ownerId, data);
+      if (ownerId) writeScopedCache(ownerId, dataRef.current);
       void persistCloud();
     }
 

@@ -10,6 +10,10 @@ function detectRuntimeEnvironment(): "local" | "preview" | "production" {
 }
 
 export async function GET() {
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const nodeEnv = process.env.NODE_ENV?.trim() || "unknown";
   const vercelEnv = process.env.VERCEL_ENV?.trim() || "local";
 

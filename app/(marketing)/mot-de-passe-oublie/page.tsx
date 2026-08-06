@@ -28,25 +28,44 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/reinitialiser-mot-de-passe")}`;
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-      email.trim().toLowerCase(),
-      { redirectTo },
-    );
+    try {
+      const response = await fetch("/api/auth/password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        success?: boolean;
+        message?: string;
+      } | null;
 
-    setLoading(false);
+      if (!response.ok || !payload?.success) {
+        // Repli : email natif Supabase
+        const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/reinitialiser-mot-de-passe")}`;
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+          email.trim().toLowerCase(),
+          { redirectTo },
+        );
+        if (resetError) {
+          setError(
+            resetError.message ||
+              payload?.message ||
+              "Impossible d'envoyer l'email de réinitialisation.",
+          );
+          setLoading(false);
+          return;
+        }
+      }
 
-    if (resetError) {
-      setError(
-        resetError.message ||
-          "Impossible d'envoyer l'email de réinitialisation.",
+      setMessage(
+        payload?.message ||
+          "Si un compte existe pour cet email, un lien de réinitialisation vient d'être envoyé. Vérifiez votre boîte de réception.",
       );
-      return;
+    } catch {
+      setError("Impossible d'envoyer l'email de réinitialisation.");
     }
 
-    setMessage(
-      "Si un compte existe pour cet email, un lien de réinitialisation vient d'être envoyé. Vérifiez votre boîte de réception.",
-    );
+    setLoading(false);
   }
 
   return (
@@ -65,8 +84,8 @@ export default function ForgotPasswordPage() {
               Mot de passe oublié
             </h1>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Indiquez votre email. Vous recevrez un lien officiel Supabase pour
-              choisir un nouveau mot de passe.
+              Indiquez votre email. Vous recevrez un lien Batimum pour choisir un
+              nouveau mot de passe.
             </p>
           </header>
 

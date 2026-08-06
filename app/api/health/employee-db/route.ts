@@ -5,6 +5,10 @@ import { createAdminClient } from "@/utils/supabase/admin";
 export const runtime = "nodejs";
 
 export async function GET() {
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const supabase = createAdminClient();
   if (!supabase) {
     return NextResponse.json(

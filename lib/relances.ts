@@ -708,7 +708,23 @@ export async function processPendingFactureRelanceEmails(data: AppData) {
       ? result.simulated
         ? "envoyee_simulee"
         : "envoyee"
-      : "envoyee_simulee";
+      : "preparee";
+
+    if (!result.success) {
+      nextData = {
+        ...nextData,
+        relances: nextData.relances.map((item) =>
+          item.id === relance.id
+            ? {
+                ...item,
+                statut: "preparee",
+                message: result.message || "Échec d'envoi — nouvelle tentative prévue",
+              }
+            : item,
+        ),
+      };
+      continue;
+    }
 
     nextData = {
       ...nextData,
@@ -874,10 +890,26 @@ export async function processPendingDevisRelanceEmails(data: AppData) {
       ? result.simulated
         ? "envoyee_simulee"
         : "envoyee"
-      : "envoyee_simulee";
+      : "preparee";
 
     const label =
       DEVIS_RELANCE_NIVEAU_LABELS[niveau] ?? "Relance automatique devis";
+
+    if (!result.success) {
+      nextData = {
+        ...nextData,
+        relances: nextData.relances.map((item) =>
+          item.id === relance.id
+            ? {
+                ...item,
+                statut: "preparee",
+                message: result.message || "Échec d'envoi — nouvelle tentative prévue",
+              }
+            : item,
+        ),
+      };
+      continue;
+    }
 
     nextData = {
       ...nextData,
