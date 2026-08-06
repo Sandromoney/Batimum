@@ -6,6 +6,10 @@ import assert from "node:assert/strict";
 import {
   buildClientFicheTimeline,
   computeClientFicheSummary,
+  filterEntitiesForClient,
+  listClientPayments,
+  partitionClientDevis,
+  visibleClientFicheTabs,
 } from "../lib/client-fiche.ts";
 import type { AppData, Client, Devis, Facture, Chantier } from "../lib/types.ts";
 
@@ -113,5 +117,37 @@ const timeline = buildClientFicheTimeline(data, client);
 assert.ok(timeline.some((e) => e.title.includes("Client créé")));
 assert.ok(timeline.some((e) => e.title.includes("DEV-1")));
 assert.ok(timeline.some((e) => e.kind === "facture"));
+assert.ok(timeline.some((e) => e.kind === "paiement"));
+assert.ok(timeline.some((e) => e.kind === "chantier"));
+
+const linked = filterEntitiesForClient(data, "c1");
+assert.equal(linked.devis.length, 2);
+assert.equal(linked.factures.length, 2);
+assert.equal(linked.chantiers.length, 1);
+
+const groups = partitionClientDevis(linked.devis);
+assert.equal(groups.brouillons.length, 1);
+assert.equal(groups.signes.length, 1);
+
+const payments = listClientPayments(linked.factures);
+assert.equal(payments.length, 1);
+assert.equal(payments[0]?.numero, "FAC-1");
+
+const tabs = visibleClientFicheTabs({
+  devis: linked.devis.length,
+  commandes: 0,
+  chantiers: linked.chantiers.length,
+  factures: linked.factures.length,
+  paiements: payments.length,
+  documents: 0,
+  notes: 0,
+});
+assert.ok(tabs.includes("paiements"));
+assert.ok(tabs.includes("documents"));
+assert.ok(tabs.includes("devis"));
+assert.ok(tabs.includes("chantiers"));
+assert.ok(tabs.includes("factures"));
+assert.ok(tabs.includes("notes"));
+assert.ok(tabs.includes("historique"));
 
 console.log("verify-client-fiche: ok");

@@ -19,6 +19,7 @@ export type ClientFicheTab =
   | "commandes"
   | "chantiers"
   | "factures"
+  | "paiements"
   | "documents"
   | "notes"
   | "historique";
@@ -231,6 +232,7 @@ export function visibleClientFicheTabs(counts: {
   commandes: number;
   chantiers: number;
   factures: number;
+  paiements: number;
   documents: number;
   notes: number;
 }): ClientFicheTab[] {
@@ -239,9 +241,56 @@ export function visibleClientFicheTabs(counts: {
   if (counts.commandes > 0) tabs.push("commandes");
   tabs.push("chantiers");
   tabs.push("factures");
-  if (counts.documents > 0) tabs.push("documents");
+  tabs.push("paiements");
+  tabs.push("documents");
   tabs.push("notes");
   return tabs;
+}
+
+/** Bloc texte prêt à coller (nom, téléphone, email, adresse). */
+export function formatClientCoordinatesBlock(client: Client): string {
+  const lines = [
+    getClientDisplayName(client),
+    formatClientPhoneDisplay(client) || null,
+    client.email?.trim() || null,
+    getClientAddress(client) !== "—" ? getClientAddress(client) : null,
+  ].filter(Boolean);
+  return lines.join("\n");
+}
+
+export function listClientPayments(factures: Facture[]) {
+  return factures
+    .filter((item) => item.statut === "payee")
+    .map((item) => ({
+      id: item.id,
+      numero: item.numero,
+      date: item.datePaiement ?? item.dateEmission,
+      montant: factureAmount(item),
+      facture: item,
+    }))
+    .sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+}
+
+export function partitionClientDevis(devis: Devis[]) {
+  const brouillons = devis.filter((d) => d.statut === "brouillon");
+  const envoyes = devis.filter(
+    (d) =>
+      d.statut === "envoye" ||
+      d.statut === "en_attente" ||
+      d.statut === "en_retard",
+  );
+  const signes = devis.filter(
+    (d) => d.statut === "signe" || d.statut === "accepte",
+  );
+  const autres = devis.filter(
+    (d) =>
+      !brouillons.includes(d) &&
+      !envoyes.includes(d) &&
+      !signes.includes(d),
+  );
+  return { brouillons, envoyes, signes, autres };
 }
 
 function devisAmount(devis: Devis): number {
