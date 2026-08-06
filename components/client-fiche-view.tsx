@@ -18,6 +18,7 @@ import {
   devisStatutLabel,
   factureStatutLabel,
   filterEntitiesForClient,
+  formatClientCoordinatesBlock,
   formatClientFicheDateTime,
   getClientDirectionsUrl,
   getClientFullAddress,
@@ -27,7 +28,9 @@ import {
   getClientTypeLabel,
   getClientWhatsAppHref,
   isTouchLikeDevice,
+  listClientPayments,
   matchesTimelineFilter,
+  partitionClientDevis,
   visibleClientFicheTabs,
   withClientNotes,
   type ClientFicheTab,
@@ -73,6 +76,7 @@ const TAB_ORDER: ClientFicheTab[] = [
   "commandes",
   "chantiers",
   "factures",
+  "paiements",
   "documents",
   "notes",
 ];
@@ -84,6 +88,7 @@ const TAB_LABELS: Record<ClientFicheTab, string> = {
   commandes: "Commandes",
   chantiers: "Chantiers",
   factures: "Factures",
+  paiements: "Paiements",
   documents: "Documents",
   notes: "Notes",
 };
@@ -339,6 +344,16 @@ export function ClientFicheView({ clientId }: { clientId: string }) {
     [linked],
   );
 
+  const payments = useMemo(
+    () => (linked ? listClientPayments(linked.factures) : []),
+    [linked],
+  );
+
+  const devisGroups = useMemo(
+    () => (linked ? partitionClientDevis(linked.devis) : null),
+    [linked],
+  );
+
   const visibleTabs = useMemo(
     () =>
       linked
@@ -347,11 +362,12 @@ export function ClientFicheView({ clientId }: { clientId: string }) {
             commandes: linked.commandes.length,
             chantiers: linked.chantiers.length,
             factures: linked.factures.length,
+            paiements: payments.length,
             documents: documents.length,
             notes: notes.length,
           })
         : TAB_ORDER,
-    [linked, documents.length, notes.length],
+    [linked, documents.length, notes.length, payments.length],
   );
 
   useEffect(() => {
@@ -718,26 +734,12 @@ export function ClientFicheView({ clientId }: { clientId: string }) {
             )}
 
             {mailHref ? (
-              <>
-                <a href={mailHref}>
-                  <Button type="button" size="sm" variant="secondary">
-                    <Mail className="mr-1.5 h-3.5 w-3.5" />
-                    Envoyer un email
-                  </Button>
-                </a>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  aria-label="Copier l'email"
-                  onClick={() =>
-                    client.email && handleCopy(client.email, "Email copié")
-                  }
-                >
-                  <Copy className="mr-1.5 h-3.5 w-3.5" />
-                  Copier email
+              <a href={mailHref}>
+                <Button type="button" size="sm" variant="secondary">
+                  <Mail className="mr-1.5 h-3.5 w-3.5" />
+                  Envoyer un mail
                 </Button>
-              </>
+              </a>
             ) : (
               <Button type="button" size="sm" variant="ghost" onClick={openEditModal}>
                 <Mail className="mr-1.5 h-3.5 w-3.5" />
@@ -749,7 +751,7 @@ export function ClientFicheView({ clientId }: { clientId: string }) {
               <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
                 <Button type="button" size="sm" variant="secondary">
                   <Navigation className="mr-1.5 h-3.5 w-3.5" />
-                  Itinéraire
+                  Ouvrir l&apos;adresse
                 </Button>
               </a>
             ) : (
@@ -758,6 +760,21 @@ export function ClientFicheView({ clientId }: { clientId: string }) {
                 Ajouter une adresse
               </Button>
             )}
+
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() =>
+                handleCopy(
+                  formatClientCoordinatesBlock(client),
+                  "Coordonnées copiées",
+                )
+              }
+            >
+              <Copy className="mr-1.5 h-3.5 w-3.5" />
+              Copier les coordonnées
+            </Button>
 
             <Link href={`/devis?clientId=${client.id}&nouveau=1`}>
               <Button type="button" size="sm">
@@ -788,14 +805,14 @@ export function ClientFicheView({ clientId }: { clientId: string }) {
 
       {/* Zone B — Résumé */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
-        <StatCard label="Devis" value={summary.devisTotal} />
-        <StatCard label="Commandes" value={summary.commandes} />
+        <StatCard label="Devis brouillons" value={summary.devisBrouillons} />
+        <StatCard label="Devis envoyés" value={summary.devisEnvoyes} />
+        <StatCard label="Devis signés" value={summary.devisSignes} />
         <StatCard label="Chantiers en cours" value={summary.chantiersEnCours} />
         <StatCard label="Factures" value={summary.factures} />
-        <StatCard label="Montant facturé" value={formatCurrency(summary.montantFacture)} />
+        <StatCard label="Paiements" value={payments.length} />
         <StatCard label="Encaissé" value={formatCurrency(summary.montantEncaisse)} />
         <StatCard label="Reste dû" value={formatCurrency(summary.montantDu)} />
-        <StatCard label="Dernière activité" value={lastActivityLabel} />
       </div>
 
       {/* Zone C — Onglets */}
@@ -933,56 +950,81 @@ export function ClientFicheView({ clientId }: { clientId: string }) {
       ) : null}
 
       {tab === "devis" ? (
-        <Card className="border-border/70 bg-white p-5 shadow-sm">
-          {linked.devis.length === 0 ? (
+        linked.devis.length === 0 || !devisGroups ? (
+          <Card className="border-border/70 bg-white p-5 shadow-sm">
             <EmptyState
               message="Aucun devis n'est encore lié à ce client."
               actionHref={`/devis?clientId=${client.id}&nouveau=1`}
               actionLabel="Créer un devis"
             />
-          ) : (
-            <ul className="divide-y divide-border/60">
-              {linked.devis.map((item) => (
-                <li
-                  key={item.id}
-                  className="flex flex-wrap items-center justify-between gap-3 py-3"
-                >
-                  <div className="min-w-0">
-                    <Link
-                      href={`/devis/${item.id}`}
-                      className="text-sm font-semibold text-foreground hover:text-[#2563eb]"
-                    >
-                      {item.numero} — {item.titre}
-                    </Link>
-                    <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                      {formatDate((item.dateCreation ?? item.date).slice(0, 10))}
-                      <Pill>{devisStatutLabel(item.statut)}</Pill>
-                    </p>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {(
+              [
+                { key: "brouillons" as const, title: "Devis brouillons" },
+                { key: "envoyes" as const, title: "Devis envoyés" },
+                { key: "signes" as const, title: "Devis signés" },
+                { key: "autres" as const, title: "Autres devis" },
+              ] as const
+            )
+              .filter((section) => devisGroups[section.key].length > 0 || section.key !== "autres")
+              .map((section) => (
+                <Card key={section.key} className="border-border/70 bg-white p-5 shadow-sm">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <h2 className="text-sm font-semibold">{section.title}</h2>
+                    <Pill>{devisGroups[section.key].length}</Pill>
                   </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <p className="text-sm font-medium tabular-nums">
-                      {item.montantTTC != null ? formatCurrency(item.montantTTC) : "—"}
-                    </p>
-                    <Link href={`/devis/${item.id}`}>
-                      <Button type="button" size="sm" variant="secondary">
-                        Ouvrir
-                      </Button>
-                    </Link>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => void handleDownloadDevisPdf(item.id)}
-                    >
-                      <FileText className="mr-1.5 h-3.5 w-3.5" />
-                      PDF
-                    </Button>
-                  </div>
-                </li>
+                  {devisGroups[section.key].length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Aucun élément.</p>
+                  ) : (
+                    <ul className="divide-y divide-border/60">
+                      {devisGroups[section.key].map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex flex-wrap items-center justify-between gap-3 py-3"
+                        >
+                          <div className="min-w-0">
+                            <Link
+                              href={`/devis/${item.id}`}
+                              className="text-sm font-semibold text-foreground hover:text-[#2563eb]"
+                            >
+                              {item.numero} — {item.titre}
+                            </Link>
+                            <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                              {formatDate((item.dateCreation ?? item.date).slice(0, 10))}
+                              <Pill>{devisStatutLabel(item.statut)}</Pill>
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-3">
+                            <p className="text-sm font-medium tabular-nums">
+                              {item.montantTTC != null
+                                ? formatCurrency(item.montantTTC)
+                                : "—"}
+                            </p>
+                            <Link href={`/devis/${item.id}`}>
+                              <Button type="button" size="sm" variant="secondary">
+                                Ouvrir
+                              </Button>
+                            </Link>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => void handleDownloadDevisPdf(item.id)}
+                            >
+                              <FileText className="mr-1.5 h-3.5 w-3.5" />
+                              PDF
+                            </Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Card>
               ))}
-            </ul>
-          )}
-        </Card>
+          </div>
+        )
       ) : null}
 
       {tab === "commandes" ? (
@@ -1136,6 +1178,48 @@ export function ClientFicheView({ clientId }: { clientId: string }) {
                   </li>
                 );
               })}
+            </ul>
+          )}
+        </Card>
+      ) : null}
+
+      {tab === "paiements" ? (
+        <Card className="border-border/70 bg-white p-5 shadow-sm">
+          {payments.length === 0 ? (
+            <EmptyState
+              message="Aucun paiement enregistré pour ce client."
+              actionHref="/factures"
+              actionLabel="Voir les factures"
+            />
+          ) : (
+            <ul className="divide-y divide-border/60">
+              {payments.map((payment) => (
+                <li
+                  key={payment.id}
+                  className="flex flex-wrap items-center justify-between gap-3 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">
+                      Paiement — {payment.numero}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {formatDate(payment.date.slice(0, 10))}
+                      <span className="mx-1.5">·</span>
+                      Facture payée
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <p className="text-sm font-semibold tabular-nums text-emerald-700">
+                      {formatCurrency(payment.montant)}
+                    </p>
+                    <Link href="/factures">
+                      <Button type="button" size="sm" variant="secondary">
+                        Voir la facture
+                      </Button>
+                    </Link>
+                  </div>
+                </li>
+              ))}
             </ul>
           )}
         </Card>
