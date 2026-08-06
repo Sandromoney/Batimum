@@ -1,5 +1,6 @@
 import { formatNatureJuridique } from "@/lib/entreprise/nature-juridique";
 import {
+  computeFrenchTvaIntracomFromSiren,
   formatSirenSiretDisplay,
   type SirenSiretKind,
   validateSirenSiretInput,
@@ -513,6 +514,8 @@ export type CompanyPrefillFields = {
   codePostal: string;
   ville: string;
   pays: string;
+  /** TVA FR dérivée du SIREN (modifiable ensuite). */
+  tvaIntracom: string;
   dateCreationEntreprise: string;
   establishmentStatus: EstablishmentStatus;
   isSiege: boolean;
@@ -539,6 +542,7 @@ export function toPrefillFields(
     codePostal: establishment.postalCode ?? "",
     ville: establishment.city ?? "",
     pays: establishment.country ?? "France",
+    tvaIntracom: computeFrenchTvaIntracomFromSiren(company.siren),
     dateCreationEntreprise:
       establishment.dateCreation || company.dateCreation || "",
     establishmentStatus: establishment.status,

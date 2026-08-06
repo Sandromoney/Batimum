@@ -44,6 +44,7 @@ import {
 } from "@/lib/validations";
 import type { ModeTVA, Parametres, ParametresConnexionEmail } from "@/lib/types";
 import type { CompanyPrefillFields } from "@/lib/entreprise/annuaire-lookup";
+import { computeFrenchTvaIntracomFromSiren } from "@/lib/entreprise/siren-siret";
 import { cn } from "@/lib/utils";
 import { getLocationFromPostalCode } from "@/lib/french-regions";
 import { Check, Library, Sparkles } from "lucide-react";
@@ -478,6 +479,8 @@ export default function ParametresPage() {
         >
           <EntrepriseSirenLookup
             className="mb-6"
+            preferSiret
+            autoApply={false}
             showRefresh
             initialValue={form.siret || form.siren || ""}
             hasExistingData={Boolean(
@@ -503,6 +506,7 @@ export default function ParametresPage() {
                 pays: fields.pays || form.pays || "France",
                 departement: location.departement || form.departement,
                 region: location.region || form.region,
+                tvaIntracom: fields.tvaIntracom || form.tvaIntracom,
                 dateCreationEntreprise: fields.dateCreationEntreprise,
                 establishmentStatus: fields.establishmentStatus,
                 isSiege: fields.isSiege,
@@ -556,7 +560,15 @@ export default function ParametresPage() {
                   value={form.siret}
                   onChange={(e) => {
                     const siret = e.target.value;
-                    patch({ siret, siren: deriveSirenFromSiret(siret) });
+                    const siren = deriveSirenFromSiret(siret);
+                    const tva = computeFrenchTvaIntracomFromSiren(siren);
+                    patch({
+                      siret,
+                      siren,
+                      ...(tva && !form.tvaIntracom?.trim()
+                        ? { tvaIntracom: tva }
+                        : {}),
+                    });
                   }}
                   placeholder="123 456 789 00012"
                 />

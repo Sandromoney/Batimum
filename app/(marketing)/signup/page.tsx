@@ -69,6 +69,7 @@ function SignupForm() {
     adresse: string;
     siret: string;
     activite: string;
+    tvaIntracom?: string;
   } | null>(null);
 
   const formValues = useMemo(
@@ -117,6 +118,7 @@ function SignupForm() {
           .join(", "),
         siret: savedCompany.siret,
         activite: savedCompany.libelleActivite || savedCompany.codeApe || "",
+        tvaIntracom: savedCompany.tvaIntracom,
       });
     }
   }, [router, searchParams]);
@@ -174,6 +176,7 @@ function SignupForm() {
         formeJuridique: fields.formeJuridique,
         codeApe: fields.codeApe,
         libelleActivite: fields.libelleActivite,
+        tvaIntracom: fields.tvaIntracom || state.company?.tvaIntracom || "",
         dateCreationEntreprise: fields.dateCreationEntreprise,
         establishmentStatus: fields.establishmentStatus,
         isSiege: fields.isSiege,
@@ -193,6 +196,7 @@ function SignupForm() {
         .join(", "),
       siret: fields.siret.replace(/\D/g, ""),
       activite: fields.libelleActivite || fields.codeApe || "",
+      tvaIntracom: fields.tvaIntracom,
     });
   }
 
@@ -284,6 +288,7 @@ function SignupForm() {
         <form className="space-y-5" onSubmit={handleSubmit} noValidate>
           <EntrepriseSirenLookup
             preferSiret
+            autoApply
             compact
             hasExistingData={companyPrefillApplied}
             initialValue={companyPreview?.siret ?? ""}
@@ -305,6 +310,9 @@ function SignupForm() {
               <p className="mt-0.5 text-xs text-neutral-500">
                 SIRET {companyPreview.siret}
                 {companyPreview.activite ? ` · ${companyPreview.activite}` : ""}
+                {companyPreview.tvaIntracom
+                  ? ` · TVA ${companyPreview.tvaIntracom}`
+                  : ""}
               </p>
               <p className="mt-2 text-[11px] text-neutral-500">
                 Ces informations seront proposées à l&apos;étape Entreprise. Vous

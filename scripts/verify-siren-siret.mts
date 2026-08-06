@@ -3,6 +3,7 @@
  * Usage : node --experimental-strip-types scripts/verify-siren-siret.mts
  */
 import {
+  computeFrenchTvaIntracomFromSiren,
   formatSirenSiretDisplay,
   normalizeSirenSiretInput,
   passesLuhn,
@@ -65,6 +66,14 @@ assert(validateSirenSiretInput("123456789").ok === false, "SIREN Luhn invalide")
 }
 assert(passesLuhn("356000000"), "La Poste SIREN Luhn");
 assert(formatSirenSiretDisplay("552081317") === "552 081 317", "format affichage SIREN");
+assert(
+  computeFrenchTvaIntracomFromSiren("552081317") === "FR03552081317",
+  "TVA EDF depuis SIREN",
+);
+assert(
+  computeFrenchTvaIntracomFromSiren("55208131766522") === "FR03552081317",
+  "TVA EDF depuis SIRET",
+);
 
 console.log("\n2. API Recherche d'entreprises (officielle, sans clé)");
 const sirenData = await search("552081317");
