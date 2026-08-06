@@ -9,6 +9,7 @@ import {
   LANDING_NAV_ENTRIES,
   type LandingNavItem,
   type LandingNavMenu,
+  type LandingNavPromo,
 } from "@/lib/landing-nav";
 import { markLandingPastIntro } from "@/components/landing/landing-experience";
 import { cn } from "@/lib/utils";
@@ -18,7 +19,9 @@ type LandingNavMenusProps = {
 };
 
 const navTriggerClass =
-  "landing-nav__trigger inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-sm font-medium text-[#111111] transition-colors hover:bg-black/[0.03]";
+  "landing-nav__trigger inline-flex items-center gap-1 rounded-lg px-2 py-2 text-sm font-medium text-[#111111] transition-colors hover:bg-black/[0.03]";
+
+const CLOSE_DELAY_MS = 140;
 
 function DropdownPanel({
   menu,
@@ -44,6 +47,33 @@ function DropdownPanel({
           />
         ))}
       </ul>
+    </div>
+  );
+}
+
+function PromoPanel({
+  promo,
+  onNavigate,
+}: {
+  promo: LandingNavPromo;
+  onNavigate: (href: string) => boolean;
+}) {
+  return (
+    <div className="landing-nav-dropdown__panel landing-nav-promo p-4">
+      <p className="landing-nav-promo__badge">{promo.badge}</p>
+      <p className="landing-nav-promo__title">{promo.title}</p>
+      <p className="landing-nav-promo__subtitle">{promo.subtitle}</p>
+      {promo.moreHref && promo.moreLabel ? (
+        <Link
+          href={promo.moreHref}
+          className="landing-nav-promo__more"
+          onClick={(event) => {
+            if (onNavigate(promo.moreHref!)) event.preventDefault();
+          }}
+        >
+          {promo.moreLabel}
+        </Link>
+      ) : null}
     </div>
   );
 }
@@ -116,10 +146,35 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpandedId, setMobileExpandedId] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearCloseTimer = useCallback(() => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
 
   const closeMenus = useCallback(() => {
+    clearCloseTimer();
     setOpenMenuId(null);
-  }, []);
+  }, [clearCloseTimer]);
+
+  const scheduleCloseMenus = useCallback(() => {
+    clearCloseTimer();
+    closeTimerRef.current = setTimeout(() => {
+      setOpenMenuId(null);
+      closeTimerRef.current = null;
+    }, CLOSE_DELAY_MS);
+  }, [clearCloseTimer]);
+
+  const openMenu = useCallback(
+    (id: string) => {
+      clearCloseTimer();
+      setOpenMenuId(id);
+    },
+    [clearCloseTimer],
+  );
 
   const closeMobile = useCallback(() => {
     setMobileOpen(false);
@@ -131,16 +186,13 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
       const hash = getLandingNavHash(href);
       if (!hash) return false;
 
-      const onLanding =
-        pathname === "/landing" || pathname === "/landing/";
+      const onLanding = pathname === "/landing" || pathname === "/landing/";
 
       if (!onLanding) return false;
 
       const target = document.getElementById(hash);
       if (!target) return false;
 
-      // Clic volontaire vers une ancre : libérer le pin cinéma
-      // (Hero / post-Hero / hub) pour atteindre la section demandée.
       markLandingPastIntro();
       window.dispatchEvent(
         new CustomEvent("batimum:landing-go-section", { detail: { id: hash } }),
@@ -190,6 +242,10 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
     };
   }, [mobileOpen]);
 
+  useEffect(() => {
+    return () => clearCloseTimer();
+  }, [clearCloseTimer]);
+
   return (
     <nav
       ref={navRef}
@@ -214,6 +270,57 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
             );
           }
 
+          if (entry.type === "promo") {
+            const promo = entry.promo;
+            const isOpen = openMenuId === promo.id;
+            return (
+              <li
+                key={promo.id}
+                className="landing-nav__item relative"
+                onMouseEnter={() => openMenu(promo.id)}
+                onMouseLeave={scheduleCloseMenus}
+              >
+                <button
+                  type="button"
+                  className={cn(
+                    navTriggerClass,
+                    "landing-nav__trigger--promo",
+                    isOpen && "landing-nav__trigger--open",
+                  )}
+                  aria-expanded={isOpen}
+                  aria-haspopup="true"
+                  onClick={() =>
+                    setOpenMenuId((current) =>
+                      current === promo.id ? null : promo.id,
+                    )
+                  }
+                  onFocus={() => openMenu(promo.id)}
+                >
+                  <span>{promo.label}</span>
+                  <span className="landing-nav__yearBadge">{promo.badge}</span>
+                  <ChevronDown
+                    className={cn(
+                      "landing-nav__chevron h-3 w-3 shrink-0 text-[#8a8a8a] transition-transform duration-200 ease-out",
+                      isOpen && "rotate-180 text-[#111111]",
+                    )}
+                    strokeWidth={2.25}
+                    aria-hidden="true"
+                  />
+                </button>
+                <div
+                  className={cn(
+                    "landing-nav-dropdown landing-nav-dropdown--promo pointer-events-none absolute left-1/2 top-full z-50 -translate-x-1/2 pt-2 opacity-0",
+                    isOpen && "landing-nav-dropdown--open pointer-events-auto",
+                  )}
+                  onMouseEnter={() => openMenu(promo.id)}
+                  onMouseLeave={scheduleCloseMenus}
+                >
+                  <PromoPanel promo={promo} onNavigate={scrollToSection} />
+                </div>
+              </li>
+            );
+          }
+
           const menu = entry.menu;
           const isOpen = openMenuId === menu.id;
 
@@ -221,8 +328,8 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
             <li
               key={menu.id}
               className="landing-nav__item relative"
-              onMouseEnter={() => setOpenMenuId(menu.id)}
-              onMouseLeave={() => setOpenMenuId(null)}
+              onMouseEnter={() => openMenu(menu.id)}
+              onMouseLeave={scheduleCloseMenus}
             >
               <button
                 type="button"
@@ -237,6 +344,7 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
                     current === menu.id ? null : menu.id,
                   )
                 }
+                onFocus={() => openMenu(menu.id)}
               >
                 {menu.label}
                 <ChevronDown
@@ -251,10 +359,12 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
 
               <div
                 className={cn(
-                  "landing-nav-dropdown pointer-events-none absolute left-1/2 top-[calc(100%+0.5rem)] z-50 -translate-x-1/2 opacity-0",
+                  "landing-nav-dropdown pointer-events-none absolute left-1/2 top-full z-50 -translate-x-1/2 pt-2 opacity-0",
                   `landing-nav-dropdown--${menu.id}`,
                   isOpen && "landing-nav-dropdown--open pointer-events-auto",
                 )}
+                onMouseEnter={() => openMenu(menu.id)}
+                onMouseLeave={scheduleCloseMenus}
               >
                 <DropdownPanel menu={menu} onNavigate={scrollToSection} />
               </div>
@@ -325,6 +435,72 @@ export function LandingNavMenus({ className }: LandingNavMenusProps) {
                   >
                     {entry.link.label}
                   </Link>
+                );
+              }
+
+              if (entry.type === "promo") {
+                const promo = entry.promo;
+                const expanded = mobileExpandedId === promo.id;
+                return (
+                  <div
+                    key={promo.id}
+                    className="mb-2 overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white"
+                  >
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left text-sm font-semibold text-[#0f172a]"
+                      aria-expanded={expanded}
+                      onClick={() =>
+                        setMobileExpandedId((current) =>
+                          current === promo.id ? null : promo.id,
+                        )
+                      }
+                    >
+                      <span className="inline-flex min-w-0 flex-wrap items-center gap-2">
+                        {promo.label}
+                        <span className="landing-nav__yearBadge">
+                          {promo.badge}
+                        </span>
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 shrink-0 text-[#64748b] transition-transform duration-200",
+                          expanded && "rotate-180",
+                        )}
+                        aria-hidden="true"
+                      />
+                    </button>
+                    <div
+                      className={cn(
+                        "grid transition-[grid-template-rows] duration-300 ease-out",
+                        expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                      )}
+                    >
+                      <div className="overflow-hidden">
+                        <div className="space-y-2 border-t border-[rgba(15,23,42,0.06)] px-4 py-3">
+                          <p className="text-sm font-medium text-[#111111]">
+                            {promo.title}
+                          </p>
+                          <p className="text-xs leading-5 text-[#64748b]">
+                            {promo.subtitle}
+                          </p>
+                          {promo.moreHref && promo.moreLabel ? (
+                            <Link
+                              href={promo.moreHref}
+                              className="inline-flex text-xs font-semibold text-[#3b82f6] no-underline"
+                              onClick={(event) => {
+                                if (scrollToSection(promo.moreHref!)) {
+                                  event.preventDefault();
+                                }
+                              }}
+                            >
+                              {promo.moreLabel}
+                            </Link>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 );
               }
 

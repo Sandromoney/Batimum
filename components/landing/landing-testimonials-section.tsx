@@ -7,7 +7,7 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Star } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import { LandingReveal } from "@/components/landing/landing-reveal";
 import { LandingTrialCta } from "@/components/landing/landing-trial-cta";
@@ -19,8 +19,17 @@ import {
 
 function Stars() {
   return (
-    <p className="lp-voices__stars" aria-hidden="true">
-      {"★★★★★"}
+    <p className="lp-voices__stars" aria-label="5 étoiles">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <Star
+          key={index}
+          className="lp-voices__star"
+          size={14}
+          strokeWidth={0}
+          fill="currentColor"
+          aria-hidden="true"
+        />
+      ))}
     </p>
   );
 }
@@ -83,7 +92,7 @@ export function LandingTestimonialsSection() {
 
     let raf = 0;
     let last = performance.now();
-    const speed = 0.032; // px / ms — très lent et continu
+    const speed = 0.032;
 
     const tick = (now: number) => {
       const dt = Math.min(40, now - last);
@@ -97,17 +106,6 @@ export function LandingTestimonialsSection() {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [reduced, applyOffset]);
-
-  const nudge = useCallback(
-    (dir: -1 | 1) => {
-      const el = trackRef.current;
-      if (!el) return;
-      const card = el.querySelector<HTMLElement>(".lp-voices__card");
-      const step = (card?.offsetWidth ?? 320) + 16;
-      applyOffset(offsetRef.current + dir * step);
-    },
-    [applyOffset],
-  );
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     const el = trackRef.current;
@@ -190,25 +188,6 @@ export function LandingTestimonialsSection() {
               <VoiceCard key={`${item.id}-${index}`} item={item} />
             ))}
           </div>
-        </div>
-
-        <div className="lp-voices__railControls">
-          <button
-            type="button"
-            className="lp-voices__railBtn"
-            aria-label="Avis précédent"
-            onClick={() => nudge(-1)}
-          >
-            <ChevronLeft size={16} strokeWidth={1.8} />
-          </button>
-          <button
-            type="button"
-            className="lp-voices__railBtn"
-            aria-label="Avis suivant"
-            onClick={() => nudge(1)}
-          >
-            <ChevronRight size={16} strokeWidth={1.8} />
-          </button>
         </div>
       </div>
 

@@ -48,30 +48,6 @@ export function LandingPricingSection() {
     ease: EASE,
   };
 
-  const plans: Array<{
-    id: PlanId;
-    title: string;
-    price: number;
-    hint: string;
-    featured?: boolean;
-    badge?: string;
-  }> = [
-    {
-      id: "monthly",
-      title: "Sans engagement",
-      price: MONTHLY_PRICE,
-      hint: "Résiliez quand vous le souhaitez.",
-    },
-    {
-      id: "yearly",
-      title: "Engagement annuel",
-      price: YEARLY_MONTHLY_PRICE,
-      hint: `Engagement de 12 mois · ${YEARLY_SAVINGS} € économisés.`,
-      featured: true,
-      badge: `${YEARLY_SAVINGS} € économisés par an`,
-    },
-  ];
-
   return (
     <section id="plans" className="lp-section lp-plans" aria-labelledby="plans-title">
       <div className="lp-container lp-plans__shell">
@@ -95,71 +71,93 @@ export function LandingPricingSection() {
         </LandingReveal>
 
         <div className="lp-plans__grid">
-          {plans.map((plan, index) => (
-            <motion.article
-              key={plan.id}
-              className={[
-                "lp-plans__card",
-                plan.featured ? "lp-plans__card--featured" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              initial={
-                reduced
-                  ? false
-                  : {
-                      opacity: 0,
-                      y: 16,
-                      scale: plan.featured ? 0.985 : 0.99,
-                    }
-              }
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, amount: 0.28 }}
-              transition={{
-                ...t,
-                delay: reduced ? 0 : plan.featured ? 0.14 : index * 0.08,
-              }}
-            >
-              <h3 className="lp-plans__title">{plan.title}</h3>
+          <motion.article
+            className="lp-plans__card"
+            initial={reduced ? false : { opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.28 }}
+            transition={{ ...t, delay: reduced ? 0 : 0.06 }}
+          >
+            <h3 className="lp-plans__title">Sans engagement</h3>
+            <p className="lp-plans__subtitle">
+              Restez libre, résiliez quand vous le souhaitez.
+            </p>
 
-              <div className="lp-plans__price">
-                <span className="lp-plans__amount">{plan.price}&nbsp;€</span>
-                <span className="lp-plans__period">par mois</span>
-              </div>
-              {plan.badge ? (
-                <span className="lp-plans__badge">{plan.badge}</span>
-              ) : null}
-              <p className="lp-plans__hint">{plan.hint}</p>
+            <div className="lp-plans__price">
+              <span className="lp-plans__amount">{MONTHLY_PRICE}&nbsp;€</span>
+              <span className="lp-plans__period">/ mois</span>
+            </div>
 
-              <LandingTrialCta
-                href={checkoutHrefFor(plan.id)}
-                fullWidth
-                buttonClassName="lp-plans__cta"
-                label="Commencer mon essai gratuit"
-              />
+            <LandingTrialCta
+              href={checkoutHrefFor("monthly")}
+              fullWidth
+              buttonClassName="lp-plans__cta"
+              label="Commencer mon essai gratuit"
+              showTrialNote={false}
+            />
+            <p className="lp-plans__reassure">
+              7 jours d&apos;essai gratuit · Sans engagement
+            </p>
 
-              <ul className="lp-plans__features">
-                {FEATURES.map((feature, fi) => (
-                  <motion.li
-                    key={feature}
-                    className="lp-plans__feature"
-                    initial={reduced ? false : { opacity: 0, y: 6 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.2 }}
-                    transition={{
-                      ...t,
-                      delay: reduced ? 0 : 0.18 + fi * 0.03,
-                    }}
-                  >
-                    <span className="lp-plans__check" aria-hidden="true">
-                      <Check size={14} strokeWidth={2.2} />
-                    </span>
-                    <span>{feature}</span>
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.article>
-          ))}
+            <ul className="lp-plans__features">
+              {FEATURES.map((feature) => (
+                <li key={feature} className="lp-plans__feature">
+                  <span className="lp-plans__check" aria-hidden="true">
+                    <Check size={14} strokeWidth={2.4} />
+                  </span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.article>
+
+          <motion.article
+            className="lp-plans__card lp-plans__card--featured"
+            initial={reduced ? false : { opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.28 }}
+            transition={{ ...t, delay: reduced ? 0 : 0.14 }}
+          >
+            <div className="lp-plans__badgeRow">
+              <span className="lp-plans__badge">Le plus avantageux</span>
+            </div>
+            <h3 className="lp-plans__title">Engagement annuel</h3>
+            <p className="lp-plans__subtitle">
+              Le meilleur tarif pour piloter votre entreprise toute l’année.
+            </p>
+
+            <div className="lp-plans__price">
+              <span className="lp-plans__amount">
+                {YEARLY_MONTHLY_PRICE}&nbsp;€
+              </span>
+              <span className="lp-plans__period">/ mois</span>
+            </div>
+            <p className="lp-plans__savings">
+              {YEARLY_SAVINGS}&nbsp;€ économisés par an
+            </p>
+
+            <LandingTrialCta
+              href={checkoutHrefFor("yearly")}
+              fullWidth
+              buttonClassName="lp-plans__cta lp-plans__cta--featured"
+              label="Démarrer avec l’offre annuelle"
+              showTrialNote={false}
+            />
+            <p className="lp-plans__reassure">
+              7 jours d&apos;essai gratuit · 12 mois d&apos;engagement
+            </p>
+
+            <ul className="lp-plans__features">
+              {FEATURES.map((feature) => (
+                <li key={feature} className="lp-plans__feature">
+                  <span className="lp-plans__check" aria-hidden="true">
+                    <Check size={14} strokeWidth={2.4} />
+                  </span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.article>
         </div>
 
         <LandingReveal delay={120}>

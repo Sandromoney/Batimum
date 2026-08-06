@@ -3653,7 +3653,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-nav__desktop {
-  gap: 1.05rem;
+  gap: 0.55rem;
   flex-wrap: nowrap;
   white-space: nowrap;
   justify-content: center;
@@ -3733,9 +3733,69 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-nav-dropdown--fonctionnalites {
-  width: 520px;
+  width: 420px;
   max-width: calc(100vw - 32px);
 }
+
+.landing-emerald .landing-nav-dropdown--promo {
+  width: 340px;
+  max-width: calc(100vw - 32px);
+}
+
+.landing-emerald .landing-nav__yearBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.12rem 0.45rem;
+  background: rgba(17, 17, 17, 0.05);
+  color: #555555;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.landing-emerald .landing-nav-promo__badge {
+  display: inline-flex;
+  margin: 0 0 0.65rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.landing-emerald .landing-nav-promo__title {
+  margin: 0;
+  color: #111111;
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.4;
+}
+
+.landing-emerald .landing-nav-promo__subtitle {
+  margin: 0.55rem 0 0;
+  color: #666666;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.landing-emerald .landing-nav-promo__more {
+  display: inline-flex;
+  margin-top: 0.85rem;
+  color: #3b82f6;
+  font-size: 0.8rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.landing-emerald .landing-nav-promo__more:hover {
+  text-decoration: underline;
+}
+
 
 .landing-emerald .landing-nav-dropdown--metiers,
 .landing-emerald .landing-nav-dropdown--equipes {
@@ -11187,13 +11247,18 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-voices__stars {
-  margin: 0 0 0.15rem;
+  margin: 0 0 0.2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.16rem;
   color: #111111;
-  opacity: 0.32;
-  font-size: 0.68rem;
-  letter-spacing: 0.16em;
+  opacity: 1;
   line-height: 1;
-  font-weight: 500;
+}
+
+.landing-emerald .lp-voices__star {
+  color: #111111;
+  fill: #111111;
 }
 
 .landing-emerald .lp-voices__quote {
@@ -11247,11 +11312,7 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-voices__railControls {
-  display: flex;
-  justify-content: center;
-  gap: 0.4rem;
-  margin-top: 0.25rem;
-  opacity: 0.55;
+  display: none;
 }
 
 .landing-emerald .lp-voices__railWrap:hover .lp-voices__railControls,
@@ -11341,12 +11402,12 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .lp-plans__shell {
-  max-width: 52rem;
+  max-width: 58rem;
   margin-inline: auto;
 }
 
 .landing-emerald .lp-plans__head {
-  margin-bottom: clamp(1.75rem, 3.5vw, 2.5rem);
+  margin-bottom: clamp(1.85rem, 3.8vw, 2.75rem);
   margin-inline: auto;
   max-width: 36rem;
   text-align: center;
@@ -11374,13 +11435,12 @@ html:has(.landing-emerald) body {
 
 .landing-emerald .lp-plans__grid {
   display: grid;
-  gap: 1rem;
-  max-width: 52rem;
+  gap: 1.15rem;
+  max-width: 58rem;
   margin-inline: auto;
   align-items: stretch;
 }
 
-/* Mobile : offre annuelle en premier pour la conversion */
 .landing-emerald .lp-plans__card--featured {
   order: -1;
 }
@@ -11388,7 +11448,7 @@ html:has(.landing-emerald) body {
 @media (min-width: 820px) {
   .landing-emerald .lp-plans__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.15rem;
+    gap: 1.35rem;
   }
 
   .landing-emerald .lp-plans__card--featured {
@@ -11400,102 +11460,144 @@ html:has(.landing-emerald) body {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.7rem;
+  min-height: 100%;
   background: #ffffff;
-  border: 1px solid rgba(17, 17, 17, 0.07);
-  border-radius: 22px;
-  padding: 1.55rem 1.4rem 1.45rem;
-  box-shadow: 0 10px 28px rgba(17, 17, 17, 0.03);
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 1.5rem;
+  padding: 1.7rem 1.55rem 1.55rem;
+  box-shadow: 0 12px 32px rgba(17, 17, 17, 0.035);
   transition:
-    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.28s ease,
-    border-color 0.28s ease;
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
 }
 
 .landing-emerald .lp-plans__card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(17, 17, 17, 0.1);
-  box-shadow: 0 14px 34px rgba(17, 17, 17, 0.055);
+  transform: translateY(-4px);
+  border-color: rgba(17, 17, 17, 0.12);
+  box-shadow: 0 18px 40px rgba(17, 17, 17, 0.06);
 }
 
 .landing-emerald .lp-plans__card--featured {
-  background: linear-gradient(165deg, #ffffff 0%, #f7faff 100%);
-  border-color: rgba(59, 130, 246, 0.18);
+  background: #ffffff;
+  border-color: rgba(59, 130, 246, 0.28);
   box-shadow:
     0 14px 36px rgba(17, 17, 17, 0.045),
-    0 0 0 1px rgba(59, 130, 246, 0.05);
+    0 0 0 1px rgba(59, 130, 246, 0.08);
 }
 
-@media (min-width: 820px) {
-  .landing-emerald .lp-plans__card--featured {
-    transform: translateY(-4px);
-  }
+.landing-emerald .lp-plans__card--featured:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow:
+    0 18px 42px rgba(17, 17, 17, 0.06),
+    0 0 0 1px rgba(59, 130, 246, 0.12);
+}
 
-  .landing-emerald .lp-plans__card--featured:hover {
-    transform: translateY(-7px);
-  }
+.landing-emerald .lp-plans__badgeRow {
+  display: flex;
+  margin-bottom: 0.15rem;
 }
 
 .landing-emerald .lp-plans__badge {
   position: static;
   display: inline-flex;
-  align-self: flex-start;
   align-items: center;
-  margin-top: 0.15rem;
   border-radius: 999px;
-  padding: 0.32rem 0.75rem;
+  padding: 0.34rem 0.8rem;
   background: rgba(59, 130, 246, 0.1);
   color: #2563eb;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
 .landing-emerald .lp-plans__title {
-  margin: 0.15rem 0 0;
+  margin: 0;
   color: #111111;
-  font-size: 1.2rem;
+  font-size: 1.28rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.landing-emerald .lp-plans__subtitle {
+  margin: 0;
+  color: #666666;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  min-height: 2.7em;
 }
 
 .landing-emerald .lp-plans__price {
   display: flex;
   align-items: baseline;
-  gap: 0.45rem;
-  margin-top: 0.15rem;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
 }
 
 .landing-emerald .lp-plans__amount {
   color: #111111;
-  font-size: clamp(2.4rem, 4vw, 2.85rem);
+  font-size: clamp(2.5rem, 4.2vw, 3rem);
   font-weight: 700;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.045em;
   line-height: 1;
 }
 
 .landing-emerald .lp-plans__period {
-  color: #8a8a8a;
+  color: #666666;
   font-size: 0.95rem;
   font-weight: 550;
 }
 
-.landing-emerald .lp-plans__hint {
+.landing-emerald .lp-plans__savings {
   margin: 0;
-  color: #666666;
-  font-size: 0.92rem;
-  line-height: 1.45;
+  color: #2563eb;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.landing-emerald .lp-plans__hint {
+  display: none;
+}
+
+.landing-emerald .lp-plans__reassure {
+  margin: -0.15rem 0 0.35rem;
+  color: #8a8a8a;
+  font-size: 0.78rem;
+  font-weight: 550;
+  text-align: center;
+  line-height: 1.35;
 }
 
 .landing-emerald .lp-plans__cta {
   margin-top: 0.35rem;
-  border-radius: 999px;
-  padding: 0.85rem 1.2rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  width: 100%;
+  min-height: 3rem;
+  border-radius: 0.9rem !important;
+  background: #111111 !important;
+  color: #ffffff !important;
+  font-weight: 650 !important;
+  box-shadow: none !important;
+  transition:
+    background-color 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease !important;
 }
+
+.landing-emerald .lp-plans__cta:hover {
+  background: #000000 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(17, 17, 17, 0.14) !important;
+}
+
+.landing-emerald .lp-plans__cta--featured {
+  background: #111111 !important;
+}
+
 
 .landing-emerald .lp-plans__features {
   list-style: none;
@@ -11503,29 +11605,30 @@ html:has(.landing-emerald) body {
   padding: 0.85rem 0 0;
   border-top: 1px solid rgba(17, 17, 17, 0.06);
   display: grid;
-  gap: 0.55rem;
+  gap: 0.62rem;
+  flex: 1;
 }
 
 .landing-emerald .lp-plans__feature {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  color: #111111;
-  font-size: 0.94rem;
-  font-weight: 550;
-  line-height: 1.35;
+  display: grid;
+  grid-template-columns: 1.15rem 1fr;
+  gap: 0.65rem;
+  align-items: start;
+  color: #222222;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
 }
 
 .landing-emerald .lp-plans__check {
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  background: rgba(59, 130, 246, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.08rem;
   color: #3b82f6;
-  margin-top: 0.05rem;
 }
 
 .landing-emerald .lp-plans__trust {
@@ -11571,6 +11674,17 @@ html:has(.landing-emerald) body {
 .landing-emerald .lp-plans__loginLink:hover {
   text-decoration-color: rgba(17, 17, 17, 0.5);
 }
+@media (prefers-reduced-motion: reduce) {
+  .landing-emerald .lp-plans__card,
+  .landing-emerald .lp-plans__card:hover,
+  .landing-emerald .lp-plans__card--featured,
+  .landing-emerald .lp-plans__card--featured:hover,
+  .landing-emerald .lp-plans__cta:hover {
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   .landing-emerald .lp-ba__card,
