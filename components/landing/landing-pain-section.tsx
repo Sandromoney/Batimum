@@ -10,6 +10,7 @@ import {
   type RefObject,
 } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 import {
   useLandingExperience,
 } from "@/components/landing/landing-experience";
@@ -33,12 +34,19 @@ const LAST_STEP = MICRO_LINES.length + CLOSING_LINES.length;
 const TRANSITION_S = 0.38;
 const WHEEL_THRESHOLD = 48;
 const TOUCH_THRESHOLD = 52;
-/** Fin d’inertie trackpad : silence molette avant de réarmer. */
-const WHEEL_QUIET_MS = 520;
+/**
+ * Écart max entre événements d’une même rafale (inertie trackpad).
+ * Au-delà = nouveau geste distinct, même s’il arrive rapidement.
+ */
+const BURST_GAP_MS = 120;
+/** Silence après la fin d’une rafale consommée avant réarmement. */
+const BURST_END_MS = 100;
 /** À l’entrée depuis le Hero, consommer l’inertie résiduelle. */
 const ENTRY_CONSUME_MS = 900;
 /** Soft fade + depth toward hub gate (hors rythme inter-phrases). */
 const HANDOFF_FADE_MS = 680;
+/** Rappel discret après inactivité post-animation. */
+const IDLE_HINT_MS = 5000;
 
 const STEP_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -47,7 +55,7 @@ type PinMode = "before" | "pin" | "after";
 /**
  * armed = prêt pour un nouveau geste
  * locked = animation d’apparition en cours (aucun avancement)
- * waitQuiet = attendre fin d’inertie + silence molette
+ * waitQuiet = fin de rafale / inertie du geste consommé
  */
 type GesturePhase = "armed" | "locked" | "waitQuiet";
 
@@ -202,10 +210,12 @@ export function LandingPainSection() {
   const consumeUntilRef = useRef(0);
   const quietTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handoffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const touchHandledRef = useRef(false);
   /** Empêche un double unlock si Framer fire plusieurs completes. */
   const unlockArmedRef = useRef(false);
+  const [showIdleHint, setShowIdleHint] = useState(false);
 
   const narrativeActive = !reduced && !storyCompact;
   const playing = narrativeActive && !storyCompleted;
@@ -223,6 +233,32 @@ export function LandingPainSection() {
     }
   }, []);
 
+  const clearIdleHintTimer = useCallback(() => {
+    if (idleHintTimerRef.current) {
+      clearTimeout(idleHintTimerRef.current);
+      idleHintTimerRef.current = null;
+    }
+  }, []);
+
+  const hideIdleHint = useCallback(() => {
+    clearIdleHintTimer();
+    setShowIdleHint(false);
+  }, [clearIdleHintTimer]);
+
+  const scheduleIdleHint = useCallback(() => {
+    clearIdleHintTimer();
+    setShowIdleHint(false);
+    if (!playing || pinModeRef.current !== "pin") return;
+    if (storyCompletedRef.current || handoffRef.current) return;
+    idleHintTimerRef.current = setTimeout(() => {
+      idleHintTimerRef.current = null;
+      if (gesturePhaseRef.current === "locked") return;
+      if (storyCompletedRef.current || handoffRef.current) return;
+      if (pinModeRef.current !== "pin") return;
+      setShowIdleHint(true);
+    }, IDLE_HINT_MS);
+  }, [clearIdleHintTimer, playing]);
+
   const scheduleQuietRearm = useCallback(() => {
     clearQuietTimer();
     quietTimerRef.current = setTimeout(() => {
@@ -232,45 +268,34 @@ export function LandingPainSection() {
         scheduleQuietRearm();
         return;
       }
-      if (Date.now() - lastWheelAtRef.current < WHEEL_QUIET_MS) {
+      if (Date.now() - lastWheelAtRef.current < BURST_END_MS) {
         scheduleQuietRearm();
         return;
       }
       gesturePhaseRef.current = "armed";
       deltaAccumRef.current = 0;
-    }, WHEEL_QUIET_MS);
-  }, [clearQuietTimer]);
+      scheduleIdleHint();
+    }, BURST_END_MS);
+  }, [clearQuietTimer, scheduleIdleHint]);
 
   const lockForAnimation = useCallback(() => {
     clearQuietTimer();
+    hideIdleHint();
     gesturePhaseRef.current = "locked";
     deltaAccumRef.current = 0;
     unlockArmedRef.current = true;
-  }, [clearQuietTimer]);
+  }, [clearQuietTimer, hideIdleHint]);
 
-  /** Appelé quand la phrase entrante a fini d’apparaître — aucun timer arbitraire. */
+  /** Appelé quand la phrase entrante a fini d’apparaître — aucun timer arbitraire long. */
   const onPhraseEnterComplete = useCallback(() => {
     if (!unlockArmedRef.current) return;
     if (gesturePhaseRef.current !== "locked") return;
     unlockArmedRef.current = false;
-    // Consommer le reste du geste courant + attendre le silence molette.
+    // Attendre uniquement la fin de la rafale en cours (inertie), pas un délai fixe.
     gesturePhaseRef.current = "waitQuiet";
     deltaAccumRef.current = 0;
-    lastWheelAtRef.current = Date.now();
     scheduleQuietRearm();
   }, [scheduleQuietRearm]);
-
-  const noteWheelActivity = useCallback(
-    (deltaY: number) => {
-      lastWheelAtRef.current = Date.now();
-      if (gesturePhaseRef.current !== "waitQuiet") return;
-      // Tout delta pendant waitQuiet = encore le même geste / inertie.
-      void deltaY;
-      deltaAccumRef.current = 0;
-      scheduleQuietRearm();
-    },
-    [scheduleQuietRearm],
-  );
 
   const exitToCompact = useCallback(() => {
     storyCompletedRef.current = true;
@@ -324,6 +349,7 @@ export function LandingPainSection() {
     gesturePhaseRef.current = "locked";
     storyCompletedRef.current = true;
     setStoryCompleted(true);
+    hideIdleHint();
 
     const LAST_PHRASE_HOLD_MS = 480;
     if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
@@ -336,7 +362,7 @@ export function LandingPainSection() {
         }, Math.round(HANDOFF_FADE_MS * 0.55));
       }, Math.round(HANDOFF_FADE_MS * 0.4));
     }, LAST_PHRASE_HOLD_MS);
-  }, [openHubGate, exitToCompact]);
+  }, [openHubGate, exitToCompact, hideIdleHint]);
 
   useEffect(() => {
     const onHubOpen = () => {
@@ -435,24 +461,35 @@ export function LandingPainSection() {
       event.preventDefault();
 
       const dy = event.deltaY;
-      lastWheelAtRef.current = Date.now();
+      const now = Date.now();
+      const prevWheelAt = lastWheelAtRef.current;
+      lastWheelAtRef.current = now;
+      hideIdleHint();
 
       if (gesturePhaseRef.current === "locked") {
         deltaAccumRef.current = 0;
         return;
       }
 
-      if (gesturePhaseRef.current === "waitQuiet") {
-        noteWheelActivity(dy);
-        deltaAccumRef.current = 0;
-        return;
-      }
-
-      if (Date.now() < consumeUntilRef.current) {
+      if (now < consumeUntilRef.current) {
         deltaAccumRef.current = 0;
         gesturePhaseRef.current = "waitQuiet";
         scheduleQuietRearm();
         return;
+      }
+
+      if (gesturePhaseRef.current === "waitQuiet") {
+        const gap = now - prevWheelAt;
+        if (gap < BURST_GAP_MS) {
+          // Même rafale / inertie — ignorer, prolonger l’attente de fin de rafale.
+          deltaAccumRef.current = 0;
+          scheduleQuietRearm();
+          return;
+        }
+        // Nouvelle rafale après un écart → nouveau geste, traiter immédiatement.
+        clearQuietTimer();
+        gesturePhaseRef.current = "armed";
+        deltaAccumRef.current = 0;
       }
 
       // armed
@@ -471,7 +508,13 @@ export function LandingPainSection() {
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [playing, applyIntent, noteWheelActivity, scheduleQuietRearm]);
+  }, [
+    playing,
+    applyIntent,
+    scheduleQuietRearm,
+    clearQuietTimer,
+    hideIdleHint,
+  ]);
 
   useEffect(() => {
     if (!playing) return;
@@ -506,6 +549,7 @@ export function LandingPainSection() {
       }
 
       // Clavier : geste discret — waitQuiet → armed immédiatement.
+      hideIdleHint();
       if (gesturePhaseRef.current === "waitQuiet") {
         gesturePhaseRef.current = "armed";
         deltaAccumRef.current = 0;
@@ -519,7 +563,7 @@ export function LandingPainSection() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [playing, applyIntent, clearQuietTimer]);
+  }, [playing, applyIntent, clearQuietTimer, hideIdleHint]);
 
   useEffect(() => {
     if (!playing) return;
@@ -530,6 +574,7 @@ export function LandingPainSection() {
       if (pinModeRef.current !== "pin") return;
       touchStartYRef.current = event.touches[0]?.clientY ?? null;
       touchHandledRef.current = false;
+      hideIdleHint();
       // Touch = geste discret : on réarme pour ce geste uniquement.
       if (gesturePhaseRef.current === "waitQuiet") {
         gesturePhaseRef.current = "armed";
@@ -588,7 +633,7 @@ export function LandingPainSection() {
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
     };
-  }, [playing, applyIntent, clearQuietTimer]);
+  }, [playing, applyIntent, clearQuietTimer, hideIdleHint]);
 
   useLayoutEffect(() => {
     if (!storyCompact) return;
@@ -609,6 +654,7 @@ export function LandingPainSection() {
     return () => {
       if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
       if (quietTimerRef.current) clearTimeout(quietTimerRef.current);
+      if (idleHintTimerRef.current) clearTimeout(idleHintTimerRef.current);
     };
   }, []);
 
@@ -672,6 +718,18 @@ export function LandingPainSection() {
               reduced={reduced}
               onEnterComplete={onPhraseEnterComplete}
             />
+            {showIdleHint ? (
+              <div className="lp-story__idleHint" aria-hidden="true">
+                <span className="lp-story__idleHintText">
+                  Défilez pour continuer
+                </span>
+                <ChevronDown
+                  className="lp-story__idleHintIcon"
+                  size={14}
+                  strokeWidth={2}
+                />
+              </div>
+            ) : null}
           </div>
         </div>
       )}

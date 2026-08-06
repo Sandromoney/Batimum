@@ -74,17 +74,62 @@ html:has(.landing-emerald) body {
   display: none !important;
 }
 
-/* ——— Header ——— */
-.landing-emerald .landing-header-bar {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+/* ——— Header flottant (discret en haut, compact au scroll) ——— */
+.landing-emerald .landing-header-bar,
+.landing-emerald header.landing-header-bar,
+.landing-emerald .landing-top header.landing-header-bar {
+  height: auto;
+  padding: 0.65rem clamp(0.65rem, 2vw, 1.15rem) 0;
+  background: transparent;
+  border: none;
+  border-bottom: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+  transition: padding 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .landing-emerald .landing-header-bar--scrolled {
-  border-bottom-color: #e7e7e7;
-  box-shadow: 0 8px 24px rgba(17, 17, 17, 0.04);
+  padding: 0.5rem clamp(0.85rem, 3vw, 1.75rem) 0;
+  border-bottom-color: transparent;
+  box-shadow: none;
+}
+
+.landing-emerald .landing-header-bar__inner {
+  pointer-events: auto;
+  max-width: 80rem;
+  width: 100%;
+  margin-inline: auto;
+  height: 4.75rem;
+  border-radius: 1.1rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(17, 17, 17, 0.04);
+  box-shadow: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    max-width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+}
+
+.landing-emerald .landing-header-bar--scrolled .landing-header-bar__inner {
+  max-width: min(72rem, calc(100% - 0.5rem));
+  height: 3.65rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(17, 17, 17, 0.09);
+  box-shadow:
+    0 10px 28px rgba(17, 17, 17, 0.07),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .landing-emerald .landing-header-btn--secondary {
@@ -3581,11 +3626,11 @@ html:has(.landing-emerald) body {
 }
 
 .landing-emerald .landing-header-spacer {
-  height: 76px;
+  height: 5.9rem;
 }
 
 .landing-emerald .landing-hero-section--viewport {
-  min-height: calc(100dvh - 76px);
+  min-height: calc(100dvh - 5.9rem);
 }
 
 /* Grille navbar — logo | menu centré | boutons */
@@ -3594,26 +3639,31 @@ html:has(.landing-emerald) body {
   grid-template-columns: 150px minmax(0, 1fr) auto;
   column-gap: 0.75rem;
   align-items: center;
-  height: 76px;
-  max-width: 80rem;
+  height: 100%;
+  max-width: none;
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 24px;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 0 1.15rem 0 1.25rem;
   box-sizing: border-box;
+  transition: padding 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-emerald .landing-header-bar--scrolled .landing-header-grid {
+  padding: 0 1rem 0 1.15rem;
 }
 
 @media (min-width: 640px) {
   .landing-emerald .landing-header-grid {
-    padding-left: 32px;
-    padding-right: 32px;
+    padding-left: 1.35rem;
+    padding-right: 1.2rem;
   }
 }
 
 @media (min-width: 1024px) {
   .landing-emerald .landing-header-grid {
-    padding-left: 40px;
-    padding-right: 40px;
+    padding-left: 1.5rem;
+    padding-right: 1.35rem;
   }
 }
 
@@ -3886,6 +3936,53 @@ html:has(.landing-emerald) body {
   position: absolute;
   top: auto;
   bottom: 0;
+}
+
+.landing-emerald .lp-story__idleHint {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.4rem, 4.5vh, 2.4rem);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  pointer-events: none;
+  z-index: 3;
+  color: #3a3a3a;
+  animation: lp-story-idle-hint 1.8s ease-in-out infinite;
+}
+
+.landing-emerald .lp-story__idleHintText {
+  font-size: 0.78rem;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  color: #2f2f2f;
+  white-space: nowrap;
+}
+
+.landing-emerald .lp-story__idleHintIcon {
+  color: #2f2f2f;
+  opacity: 0.7;
+}
+
+@keyframes lp-story-idle-hint {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateX(-50%) translateY(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-emerald .lp-story__idleHint {
+    animation: none;
+    opacity: 0.75;
+  }
 }
 
 .landing-emerald .lp-story__staticWrap {
